@@ -26,9 +26,7 @@ const Layout = ({ children }) => {
                         <Link to="/" className={`hover:text-white transition-colors ${location.pathname === '/' ? 'text-white' : ''}`}>
                             FEED
                         </Link>
-                        <Link to="/about" className="hover:text-white transition-colors">
-                            ABOUT
-                        </Link>
+
                     </nav>
 
                     <button className="md:hidden text-white p-2">
