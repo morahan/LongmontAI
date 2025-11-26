@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
-import { editions } from '../data/content';
+import { editions } from '../articles';
 import ContentBlock from '../components/ContentBlock';
 
 const Edition: React.FC = () => {

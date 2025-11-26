@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Yarn
+.yarn/cache
+.yarn/install-state.gz
+
+# TypeScript
+tsconfig.tsbuildinfo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

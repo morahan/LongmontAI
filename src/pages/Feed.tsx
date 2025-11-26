@@ -1,5 +1,5 @@
 import React from 'react';
-import { editions } from '../data/content';
+import { editions } from '../articles';
 import EditionCard from '../components/EditionCard';
 import { motion } from 'framer-motion';
 

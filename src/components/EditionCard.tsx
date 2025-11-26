@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight } from 'lucide-react';
-import { Edition } from '../data/content';
+import { Edition } from '../articles';
 
 interface EditionCardProps {
     edition: Edition;
@@ -36,7 +36,7 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
             </p>
 
             <Link
-                to={`/ edition / ${edition.id} `}
+                to={`/edition/${edition.id}`}
                 className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-[var(--accent-cyan)] transition-colors"
             >
                 READ EDITION <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

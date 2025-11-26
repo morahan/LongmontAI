@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ExternalLink, Code, Play } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { ContentItem } from '../data/content';
+import { ContentItem } from '../articles';
 
 interface ContentBlockProps {
     item: ContentItem;

@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
                             <BrainCircuit size={20} className="text-[var(--accent-cyan)]" />
                         </div>
-                        <span className="font-bold tracking-tight text-lg">Longmont AI - Meetup</span>
+                        <span className="font-bold tracking-tight text-lg">LongmontAI</span>
                     </Link>
 
 
@@ -46,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <footer className="border-t border-[var(--glass-border)] py-12 mt-auto">
                 <div className="container text-center">
-                    <p className="text-[var(--text-muted)] text-sm">© {new Date().getFullYear()} AI Innovations. Curated by Intelligence. (v1.2)</p>
+                    <p className="text-[var(--text-muted)] text-sm">© {new Date().getFullYear()} LongmontAI. Curated by Intelligence.</p>
                 </div>
             </footer>
         </div>
