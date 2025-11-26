@@ -1,8 +1,14 @@
 import React from 'react';
-import { ExternalLink, Play, Code } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 
-const ContentBlock = ({ item }) => {
+import { ExternalLink, Code, Play } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { ContentItem } from '../data/content';
+
+interface ContentBlockProps {
+    item: ContentItem;
+}
+
+const ContentBlock: React.FC<ContentBlockProps> = ({ item }) => {
     switch (item.type) {
         case 'text':
         case 'markdown':

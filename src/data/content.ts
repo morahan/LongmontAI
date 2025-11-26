@@ -1,4 +1,22 @@
-export const editions = [
+export interface ContentItem {
+  type: 'text' | 'image' | 'video' | 'link' | 'code' | 'markdown';
+  content?: string;
+  url?: string;
+  caption?: string;
+  title?: string;
+  description?: string;
+  language?: string;
+}
+
+export interface Edition {
+  id: string;
+  date: string;
+  title: string;
+  summary: string;
+  items: ContentItem[];
+}
+
+export const editions: Edition[] = [
   {
     id: 'edition-2025-11-26-combined',
     date: '2025-11-26',

@@ -3,7 +3,7 @@ import { editions } from '../data/content';
 import EditionCard from '../components/EditionCard';
 import { motion } from 'framer-motion';
 
-const Feed = () => {
+const Feed: React.FC = () => {
     return (
         <div className="max-w-3xl mx-auto">
             <div className="mb-20 text-center pt-10">

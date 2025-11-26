@@ -5,7 +5,7 @@ import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
 import { editions } from '../data/content';
 import ContentBlock from '../components/ContentBlock';
 
-const Edition = () => {
+const Edition: React.FC = () => {
     const { id } = useParams();
     const edition = editions.find(e => e.id === id);
 
