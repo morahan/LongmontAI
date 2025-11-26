@@ -22,12 +22,7 @@ const Layout = ({ children }) => {
                         <span className="font-bold tracking-tight text-lg">Longmont AI - Meetup</span>
                     </Link>
 
-                    <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--text-secondary)]">
-                        <Link to="/" className={`hover:text-white transition-colors ${location.pathname === '/' ? 'text-white' : ''}`}>
-                            FEED
-                        </Link>
 
-                    </nav>
 
 
                 </div>
