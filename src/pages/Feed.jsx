@@ -31,7 +31,7 @@ const Feed = () => {
                 </motion.p>
             </div>
 
-            <div className="flex flex-col gap-16 relative pb-20">
+            <div className="flex flex-col gap-24 relative pb-20">
                 <div className="absolute left-8 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[var(--glass-border)] to-transparent hidden md:block"></div>
                 {editions.map((edition, index) => (
                     <EditionCard key={edition.id} edition={edition} index={index} />

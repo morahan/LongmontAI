@@ -9,7 +9,7 @@ const EditionCard = ({ edition, index }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-colors duration-300 group"
+            className="glass-panel p-10 hover:border-[var(--accent-cyan)] transition-colors duration-300 group"
         >
             <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs mb-3 font-mono">
                 <Calendar size={14} />

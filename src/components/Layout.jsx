@@ -19,7 +19,7 @@ const Layout = ({ children }) => {
                         <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
                             <BrainCircuit size={20} className="text-[var(--accent-cyan)]" />
                         </div>
-                        <span className="font-bold tracking-tight text-lg">AI Longmont</span>
+                        <span className="font-bold tracking-tight text-lg">Longmont AI - Meetup</span>
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--text-secondary)]">
