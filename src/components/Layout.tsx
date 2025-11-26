@@ -46,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <footer className="border-t border-[var(--glass-border)] py-12 mt-auto">
                 <div className="container text-center">
-                    <p className="text-[var(--text-muted)] text-sm">© {new Date().getFullYear()} AI Innovations. Curated by Intelligence. (v1.1)</p>
+                    <p className="text-[var(--text-muted)] text-sm">© {new Date().getFullYear()} AI Innovations. Curated by Intelligence. (v1.2)</p>
                 </div>
             </footer>
         </div>
