@@ -6,6 +6,19 @@ import { motion } from 'framer-motion';
 const Feed: React.FC = () => {
     return (
         <div className="max-w-3xl mx-auto">
+            <div className="mt-6 mb-8 p-4 text-center bg-[var(--accent-cyan)]/10 rounded-lg border border-[var(--accent-cyan)]/20">
+                <p className="text-[var(--text-primary)]">
+                    Welcome to Longmont AI. To join our next meetup in 2026 check out{' '}
+                    <a
+                        href="https://www.meetup.com/longmont-ai-for-business-owners-and-creators"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[var(--accent-cyan)] hover:underline"
+                    >
+                        meetup.com/longmont-ai-for-business-owners-and-creators
+                    </a>
+                </p>
+            </div>
             <div className="mb-20 text-center pt-10">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
