@@ -29,9 +29,7 @@ const Layout = ({ children }) => {
 
                     </nav>
 
-                    <button className="md:hidden text-white p-2">
-                        <Menu size={24} />
-                    </button>
+
                 </div>
             </header>
 
