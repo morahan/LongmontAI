@@ -1,10 +1,16 @@
 export const editions = [
   {
-    id: 'edition-2025-11-26-model-wars',
+    id: 'edition-2025-11-26-combined',
     date: '2025-11-26',
-    title: 'Model Wars: Gemini 3, Grok 4.1 & Prometheus',
-    summary: 'A visual breakdown of the latest AI benchmarks, the rise of xAI\'s Grok 4.1, and Jeff Bezos\'s massive entry into the AI arena with Project Prometheus.',
+    title: 'AI Intelligence Report: Nov 26, 2025',
+    summary: 'A comprehensive look at today\'s major AI developments: benchmark wars, space-based computing, autonomous systems, and emerging trends.',
     items: [
+      {
+        type: 'markdown',
+        content: `## Model Wars: The Battle for AI Supremacy
+
+The landscape of AI models continues to shift dramatically as major players release increasingly capable systems.`
+      },
       {
         type: 'markdown',
         content: `### Gemini 3: Deep Think Dominance
@@ -64,15 +70,13 @@ In the first-ever "Vending-Bench" competition, **Gemini 3 Pro** earned more prof
         type: 'image',
         url: '/images/gemini-economy.png',
         caption: 'Gemini 3 delivers breakthrough profitability in AI-run economic simulations.'
-      }
-    ]
-  },
-  {
-    id: 'edition-2025-11-26-cosmos',
-    date: '2025-11-26',
-    title: 'Cosmic Simulations & Orbital Compute',
-    summary: 'A look at how Deep Learning is revolutionizing galaxy-scale simulations and why the future of AI infrastructure is inevitably heading to space.',
-    items: [
+      },
+      {
+        type: 'markdown',
+        content: `## Cosmic Simulations & Orbital Compute
+
+Breaking new ground in both scientific simulation and infrastructure planning.`
+      },
       {
         type: 'markdown',
         content: `### 100 Billion Stars: A New Era of Simulation
@@ -115,15 +119,14 @@ We are looking at potentially **100GW deployed in space** within a decade, possi
 *   **Waymo**: Now generating **1GB of data per second** per car.
 *   **Zipline**: Performing an autonomous air delivery every **30 seconds**.
 *   **Drone Swarms**: China recently demonstrated a swarm of **16,000 drones** creating massive aerial light shows.`
-      }
-    ]
-  },
-  {
-    id: 'edition-2025-11-25-insights',
-    date: '2025-11-25',
-    title: 'AntiGravity Insights: The Missing Links',
-    summary: 'A roundup of critical developments from the past two weeks, covering OpenAI\'s silent moves, the humanoid robotics explosion, and the sovereign AI race.',
-    items: [
+      },
+      {
+        type: 'markdown',
+        content: `## Additional Insights: The Missing Links
+*AI researched and written*
+
+Critical developments that deserve attention.`
+      },
       {
         type: 'markdown',
         content: `### OpenAI's "Orion" Silence
