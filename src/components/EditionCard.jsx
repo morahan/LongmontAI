@@ -6,10 +6,15 @@ import { ArrowRight, Calendar } from 'lucide-react';
 const EditionCard = ({ edition, index }) => {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="glass-panel p-10 hover:border-[var(--accent-cyan)] transition-colors duration-300 group"
+            transition={{
+                delay: index * 0.15,
+                duration: 0.6,
+                ease: [0.16, 1, 0.3, 1]
+            }}
+            whileHover={{ scale: 1.02 }}
+            className="glass-panel p-10 hover:border-[var(--accent-cyan)] transition-all duration-300 group"
         >
             <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs mb-3 font-mono">
                 <Calendar size={14} />
