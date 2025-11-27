@@ -1,36 +1,47 @@
 import { Edition } from './types';
 
 export const edition_2025_11_20: Edition = {
-  id: 'edition-1',
+  id: 'edition-2025-11-20-ai-tools',
   date: '2025-11-20',
-  title: 'The Dawn of Agentic AI',
-  summary: 'Exploring the shift from chat-based AI to autonomous agents capable of complex reasoning and task execution.',
+  title: 'AI Tools Used to create this site',
+  summary: 'A transparent look at the generative and non-generative AI tools that powered the creation of this platform.',
   items: [
     {
-      type: 'text',
-      content: 'Agentic AI represents a fundamental shift in how we interact with artificial intelligence. Instead of just answering questions, these systems can actively plan, execute, and verify tasks.'
-    },
-    {
       type: 'image',
-      url: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1965&auto=format&fit=crop',
-      caption: 'Neural networks visualizing complex decision paths.'
+      url: '/images/ai-tools-header.png',
+      caption: 'Generated with Midjourney using prompt: "futuristic digital infrastructure, glowing nodes, network connections, blue and purple neon colors, high tech, 8k resolution"'
     },
     {
-      type: 'link',
-      url: 'https://deepmind.google/technologies/gemini/',
-      title: 'Google DeepMind - Gemini',
-      description: 'Learn more about the multimodal capabilities of Gemini.'
+      type: 'markdown',
+      content: `## Generative AI Tools
+The following advanced AI systems were instrumental in building this website:
+
+*   **Gemini**: Google's multimodal AI model.
+*   **Antigravity**: An advanced agentic coding assistant.
+*   **Cursor**: An AI-powered code editor.
+*   **Claude Opus 4.5**: Anthropic's high-capability model.
+*   **Midjourney**: For generating high-quality imagery.
+*   **Claude Code**: Anthropic's coding assistant.`
     },
     {
-      type: 'code',
-      language: 'python',
-      content: `def autonomous_agent(task):
-    plan = create_plan(task)
-    while not plan.is_complete():
-        action = plan.next_step()
-        result = execute(action)
-        plan.update(result)
-    return plan.outcome`
+      type: 'markdown',
+      content: `## Non-Generative Tools
+*Disclosure: The following tools were used for infrastructure, runtime, and development support but are not generative AI.*
+
+*   **React**
+*   **Vite**
+*   **TypeScript**
+*   **Vercel**
+*   **Github**
+*   **Godaddy**
+*   **World Wide Web**
+*   **HTTPS**
+*   **TCPIP**
+*   **Nanobannan**
+*   **etc.**
+
+---
+*last updated: 2025.11.26*`
     }
   ]
 };
