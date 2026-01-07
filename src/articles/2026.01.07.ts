@@ -1,337 +1,377 @@
 import { Edition } from './types';
 
 export const edition_2026_01_07: Edition = {
-  id: 'edition-2026-01-07-ai-highlights',
+  id: 'edition-2026-01-07-meetup-recap',
   date: '2026-01-07',
-  title: 'AI Infrastructure & Competition: The Week in Review',
-  summary: 'A curated roundup of critical AI developments spanning hardware innovation, model performance, market competition, and emerging tools.',
+  title: 'Jan 7th AI Longmont Meetup: Deep Dive into MOE and Model Efficiency',
+  summary: 'A comprehensive technical discussion covering Mixture of Experts (MOE) architecture, model efficiency, Nvidia optimizations, and the latest developments in AI infrastructure and tokenomics.',
   items: [
     {
       type: 'markdown',
-      content: `## AI Hardware Innovation: The Wearable Future
+      content: `## Welcome to the Jan 7th AI Longmont Meetup
 
-The race to put AI on your face is heating up. This week brought a significant announcement in the wearable AI space.`
+This week's meetup featured an in-depth exploration of cutting-edge AI architecture concepts, with special focus on Mixture of Experts (MOE) and model efficiency. The discussion was primarily sourced from the **[Nvidia AI Podcast](https://www.nvidia.com/en-us/ai-data-science/ai-podcast/)**.`
     },
     {
       type: 'markdown',
-      content: `### Pickle 1: AI Glasses with Adaptive Memory
+      content: `## Featured AI Tools
 
-Pickle has unveiled the **Pickle 1 AI glasses**, positioning them as a direct competitor to Meta's Ray-Bans and upcoming offerings from Apple and Google. What sets Pickle apart is its focus on **adaptive memory** that learns and adjusts to users over time.`
+Before diving into the technical content, we highlighted three powerful AI tools transforming workflows:
+
+### Pomelli - Marketing Automation
+Simply provide a link and Pomelli handles the rest of your marketing automation needs.
+
+### Gamma - Slide Deck Generation
+Transform ideas into professional presentations with AI-powered slide generation.
+
+### Granola - Notetaking
+Intelligent note-taking that captures and organizes meeting content automatically.`
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2026-01-02 at 7.05.09 PM.png',
-      caption: 'Pickle 1 AI glasses debut with memory that "adapts" to users over time.'
+      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/ai-tools-list-simgym-scouts-vybe.png',
+      caption: 'Modern AI tools are becoming increasingly specialized for specific workflows.'
     },
     {
       type: 'markdown',
-      content: `**Key Features:**
-- **$799 introductory price** with shipments starting Q2 2026
-- **AR displays and built-in cameras** for seamless integration
-- **Pickle OS** with app integrations to gather context across sources
-- **Interactive avatars** with visual and voice assistance
-- Available in **black and silver**, with support for prescription lenses
+      content: `## Continual Learning: The Next Frontier
 
-The adaptive memory system is the standout feature - the glasses learn your preferences, routines, and needs over time, making the AI assistant increasingly personalized.`
+One of the most exciting developments on the horizon is continual learning - AI systems that can learn on the job, much like humans do.
+
+### Timeline Predictions
+
+According to **Dwarkesh Patel**, we're looking at:
+- **1-2 years**: Continual learning capabilities begin to emerge
+- **5-10 years**: Human-level on-the-job learning becomes reality
+
+This represents a fundamental shift from static models that require retraining to systems that adapt continuously.`
     },
     {
       type: 'markdown',
-      content: `## AI Model Performance: The Acceleration Continues
+      content: `## Understanding Model Architecture: Size vs Speed
 
-AI capabilities are doubling faster than most people realize. New data shows the exponential pace of progress.`
-    },
-    {
-      type: 'markdown',
-      content: `### 196-Day Doubling Time: What It Means
+Traditionally, AI model development has focused on a simple principle:
 
-A comprehensive analysis of AI model performance from GPT-2 (2019) through Claude Opus 4.5 (2026) reveals a **doubling time of just 196 days**. This means AI capabilities are growing at an exponential rate with an R² of 0.98 - showing remarkably consistent acceleration.`
+### The Old Paradigm: Bigger = Smarter
+
+**Size → Smarts**
+Models increased in size (7B, 14B, 20B, 200B parameters) as they got "smarter" - essentially storing more information in their "brain."
+
+**Offbeat Analogy:**
+Think of it like going into a test with more notes. More parameters means more information at your fingertips.
+
+### The Challenge: Size → Time
+
+**The Problem:**
+Larger models require activating ALL parameters in the neural network to generate a response, leading to:
+- Increased time to first token
+- Slower tokens per second
+- Higher computational costs
+
+This is where **Mixture of Experts (MOE)** enters the picture as a game-changing optimization.`
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2026-01-02 at 6.26.30 PM.png',
-      caption: 'AI model performance doubling every 196 days from GPT-2 to Claude Opus 4.5.'
+      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/ai-model-performance-doubling-time.png',
+      caption: 'AI model performance continues to accelerate at an exponential rate.'
     },
     {
       type: 'markdown',
-      content: `**What this means:**
-- Tasks that took AI **4 hours** in 2020 now take **4 minutes**
-- By this time next year, that same task could take **15 seconds**
-- The gap between "impressive demo" and "production ready" is shrinking rapidly
+      content: `## Nvidia's Hardware Optimizations
 
-This acceleration has profound implications for businesses, workers, and society at large. The window to adapt is measured in months, not years.`
+Nvidia is pushing the boundaries of what's possible with AI hardware:
+
+### Key Innovations
+
+**FP4 (Floating Point 4)**
+Instead of just binary (0,1), FP4 uses four bits: 0, 1, 2, 3. This allows for more nuanced representations with minimal overhead.
+
+**End-to-End Co-Design**
+Optimization goes beyond hardware itself - software and hardware are designed together for maximum efficiency.
+
+**GB 200 Architecture**
+- **72 GPUs per rack** (up from 8)
+- **200GB connections between GPUs** using copper wires
+- Explicit goal: **Reduce cost per token**
+
+### Performance Gains
+
+The results are dramatic:
+- **50% increase in hardware cost**
+- **15X improvement in efficiency** (measured in tokens per watt-hour)
+
+Nvidia's explicit goal is making AI more accessible through aggressive cost reduction per token generated.`
     },
     {
       type: 'markdown',
-      content: `### Text-to-Video: The New Frontier
+      content: `## MOE: Mixture of Experts Explained
 
-In the generative media space, **Runway Gen-4.5** has taken the top spot on the Artificial Analysis Text-to-Video Leaderboard with an impressive ELO score of **1247**, outperforming Veo 3, Kling 2.5, and Sora 2 Pro.`
+Mixture of Experts represents a fundamental rethinking of how AI models operate.
+
+### The Core Concept
+
+Instead of activating ALL parameters for every query, MOE models:
+1. Use specialized "experts" for different types of tasks
+2. Route queries to relevant experts only
+3. Activate a small fraction of total parameters per request
+
+### Real-World Example: Kimi K2
+
+**Kimi K2 uses ~3% of parameters per request**
+
+This means trillion-parameter models can be extremely efficient by reasoning about what to activate rather than activating everything.
+
+### The Architecture
+
+**Router System:**
+- Multiple layers of routers
+- Each layer routes to different experts
+- Experts compute numerical outputs
+- Information passes through layers until final output
+
+**Example Query: "How do I make a pizza?"**
+1. First layer router activates relevant experts
+2. Experts compute and pass results to next layer
+3. Different router selects different experts
+4. Process repeats until final layer generates output: "First take the dough…"
+
+**Important Note:**
+Experts are NOT hard-coded (like "math expert" or "geography expert"). They emerge naturally during training as the AI clusters related data together.`
+    },
+    {
+      type: 'markdown',
+      content: `### MOE Analogy: The Company
+
+Think of MOE like a company:
+- **Not a single Einstein** who knows everything
+- **Domain-specific knowledge** distributed across team members
+- **Parallel processing** - multiple experts working simultaneously
+- **Efficient communication** between team members
+
+### Performance Comparison
+
+Let's compare traditional models with MOE:
+
+#### Llama 405B (Traditional)
+- **Artificial Analysis Intelligence Score:** 28
+- **Parameters Activated:** All 405B
+- **Cost for Benchmark:** ~$200
+
+#### GPT OSS 120B (MOE)
+- **Artificial Analysis Intelligence Score:** 61 (2.2x better!)
+- **Parameters Activated:** ~5B (~1% of Llama's activated parameters)
+- **Cost for Benchmark:** ~$75 (3x cheaper)
+
+**The Math:**
+- Uses 99% fewer active parameters
+- But only 3x cost savings (not 99x)
+- **Why?** The hidden cost of experts needing to communicate very quickly
+
+### The Challenge: Inter-Expert Communication
+
+The critical bottleneck in MOE is ensuring experts can communicate without going idle. This requires:
+- Ultra-high-bandwidth connections
+- Specialized hardware (like Nvidia's MVLink)
+- Careful architectural design`
+    },
+    {
+      type: 'markdown',
+      content: `## The DeepSeek Breakthrough
+
+**DeepSeek** changed the game by publishing their MOE research publicly:
+
+### DeepSeek R1 Specifications
+- **256 Experts**
+- Publicly published research papers
+- Enabled rapid industry adoption
+
+**Nvidia's Response:**
+Quickly adapted hardware to run MOE efficiently, recognizing the paradigm shift.
+
+### Key Insight
+
+ChatGPT was likely using MOE before DeepSeek, but wasn't publicly discussing it. DeepSeek's open approach accelerated the entire industry's adoption of MOE architectures.`
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.02.37 PM.png',
-      caption: 'Runway Gen-4.5 leads the text-to-video leaderboard as of November 30, 2025.'
+      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/us-china-ai-models-comparison.png',
+      caption: 'The competitive landscape between US and Chinese AI models is evolving rapidly.'
     },
     {
       type: 'markdown',
-      content: `This marks a critical inflection point: AI-generated video is now good enough for commercial workflows in advertising, social media, and content production. The era of "photorealistic AI video" has arrived.`
-    },
-    {
-      type: 'markdown',
-      content: `## Brain-Computer Interfaces: The Race Intensifies
+      content: `## Tokenomics: The Economics of AI
 
-While Neuralink grabs headlines, competitors are making significant strides.`
+Understanding the economics of token generation is crucial for grasping AI's business models.
+
+### The Fundamental Principle
+
+**AI Hardware Enables or Unlocks Training and Inference Capabilities**
+
+Different hardware generations unlock different levels of performance and cost efficiency.
+
+### DeepSeek R1 on Hopper (H200)
+
+**Hardware:**
+- 8 GPUs in a server
+- MVLink Switch for data transfer at GB and TB/second
+
+**Performance:**
+- **$1 per million tokens generated**
+
+### DeepSeek R1 on GB 200
+
+**Hardware:**
+- 72 GPUs in rack (MVL 72 architecture)
+- 50% more expensive hardware
+- Can parallelize all experts across 72 GPUs as one "thinking machine"
+
+**Performance:**
+- **15X improvement in performance**
+- **10X reduction in cost per token**
+- **$0.10 per million tokens generated**
+
+### Key Takeaway
+
+Investment in new hardware + software innovations = dramatically better performance on models trained on older generations.
+
+**Nvidia's Generation Goal:**
+**10X improvement in inference cost** with each hardware generation. This likely applies to training new models as well.`
     },
     {
       type: 'markdown',
-      content: `### Paradromics Gets FDA Approval for Clinical Trials
+      content: `## Network Topology: Torus vs Mesh
 
-**Paradromics** has received FDA approval to begin its first long-term human trial of its brain implant, positioning itself as a serious competitor to Neuralink in the brain-computer interface (BCI) space.`
+Understanding how GPUs connect is crucial for MOE efficiency.
+
+### The Problem
+
+MOE requires experts to communicate rapidly. Network topology determines how efficiently this happens.
+
+### Visualization
+
+For detailed visualizations comparing Torus and Mesh networks, see:
+**[Claude Network Topology Visualization](https://claude.ai/chat/e3f3fcb4-429e-4595-93be-8c2f7679e6a4)**
+
+### Key Differences
+
+**Torus Network:**
+- Fewer edge nodes
+- Fewer hops between nodes
+- More efficient for MOE communication
+
+**Nvidia's Approach:**
+Aiming for general-purpose rather than optimized for a particular model or company.`
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-11-26 at 6.25.23 PM.png',
-      caption: 'Paradromics brain implant enters clinical trials as Neuralink rival.'
+      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/transformer-explainer-spaceship-planet.png',
+      caption: 'Understanding AI architecture requires visualizing complex interconnections.'
     },
     {
       type: 'markdown',
-      content: `**Trial Details:**
-- Study begins with **2 non-speaking volunteers**
-- Focus: Restoring communication by **decoding imagined speech into text**
-- Technology: **20x20 mm grid** with hundreds of penetrating electrodes
-- Goal: Read signals from individual neurons for unprecedented precision
+      content: `## Case Study: Kimi K2
 
-Unlike Neuralink's focus on broader applications, Paradromics is laser-focused on restoring communication for those who have lost the ability to speak - a narrower but immediately impactful use case.`
-    },
-    {
-      type: 'markdown',
-      content: `## The US-China AI Competition: A Strategic Shift
+Kimi K2 represents the cutting edge of MOE architecture.
 
-The geopolitical landscape of AI is evolving rapidly, with China's open-source strategy gaining traction.`
-    },
-    {
-      type: 'markdown',
-      content: `### US Startups Embrace Chinese Open-Source Models
+### Specifications
 
-A surprising trend has emerged: **US startups are increasingly adopting Chinese open-source AI models** as the performance gap narrows. Chinese models like Kimi K2 Thinking (Moonshot AI) are now competitive with American counterparts like GPT-5 and Claude Sonnet 4.5.`
+**Model Size:**
+- **1 Trillion Parameter Model**
+- **32B Active Parameters** (3% activation rate)
+- **97% of parameters remain inactive** per query
+
+**Architecture:**
+- **61-Layer Neural Network**
+- **340 Experts total**
+- **6-7 Experts per layer**
+- All experts need rapid communication
+
+### Hardware Requirements
+
+**According to Nvidia engineers:**
+Kimi K2 is only possible to run efficiently with **MVLink connectivity** - the ultra-high-bandwidth connection technology that allows experts to communicate without bottlenecks.
+
+### Visualization
+
+For detailed architecture visualization:
+**[Kimi K2 Architecture Visualization](https://claude.ai/chat/e3f3fcb4-429e-4595-93be-8c2f7679e6a4)**`
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.48.05 PM.png',
-      caption: 'US startups increasingly adopt Chinese open-source AI as capabilities catch up.'
+      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/kilo-code-models-china.png',
+      caption: 'Chinese models are becoming increasingly prominent in the global AI landscape.'
     },
     {
       type: 'markdown',
-      content: `The chart shows a clear convergence: China's open-source approach is bringing performance within striking distance of America's best proprietary models. For cost-conscious startups, this creates compelling alternatives.`
-    },
-    {
-      type: 'markdown',
-      content: `### The Strategy Divide: Open vs. Closed
+      content: `## Key Takeaways from the Meetup
 
-The philosophical split between Chinese and American AI companies has never been clearer. **Chinese labs tend to release models openly**, while **US leaders like OpenAI focus on closed, proprietary systems**.`
+### 1. Models Are Getting Faster, Cheaper, AND Smarter
+Software efficiency improvements mean we can get better results with the same hardware - or dramatically better results with new hardware.
+
+### 2. MOE Is the Future
+The ability to activate only relevant experts (as low as 1-3% of parameters) while maintaining trillion-parameter models is revolutionary.
+
+### 3. Hardware-Software Co-Design Is Critical
+Nvidia's approach of designing hardware and software together delivers 10-15X improvements per generation.
+
+### 4. The Hidden Cost Is Communication
+The bottleneck in MOE isn't the experts themselves - it's ensuring they can communicate without going idle.
+
+### 5. Size Can Scale Efficiently Now
+With MOE, we can have massive trillion-parameter models that are actually efficient to run in production.
+
+### Offbeat Analogy: Teacher Grading Tests
+
+**Question:** "What is the capital of France?"
+
+**Student A:**
+Writes a wordy paragraph and finally answers "London"
+
+**Student B:**
+Simply writes "Paris"
+
+MOE is like Student B - it gets to the right answer efficiently without activating unnecessary "knowledge" (parameters).`
+    },
+    {
+      type: 'markdown',
+      content: `## Looking Forward
+
+The discussion at this meetup highlights how rapidly AI architecture is evolving:
+
+- **Continual learning** will enable human-like adaptability
+- **MOE architectures** are making trillion-parameter models practical
+- **Hardware advances** are driving 10X+ efficiency gains per generation
+- **Open research** (like DeepSeek's) accelerates the entire industry
+
+### GTC Conference
+
+For those interested in diving deeper, Nvidia's **GTC conference** in **San Jose in March** will feature:
+- Free online videos
+- Deep technical talks
+- Latest hardware announcements
+
+The future of AI is being built right now, and the pace of innovation shows no signs of slowing.`
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.49.08 PM.png',
-      caption: 'Chinese labs release models openly while US leaders prefer closed approaches.'
+      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/transformer-explainer-ai-transforming-world.png',
+      caption: 'The transformer architecture continues to transform our world in profound ways.'
     },
     {
       type: 'markdown',
-      content: `**Key Observations:**
-- Top Chinese companies (Alibaba, DeepSeek, Moonshot, Z.ai) release most models as open-source
-- US companies (OpenAI, Anthropic, Google, xAI) keep flagship models proprietary
-- France's Mistral and Codestral buck the US trend with open releases
+      content: `## Thank You for Attending!
 
-This divide has strategic implications: open models accelerate innovation globally but may reduce competitive moats for individual companies.`
-    },
-    {
-      type: 'markdown',
-      content: `### Kilo Code Analysis: Chinese Models Dominate
+Special thanks to everyone who participated in this week's deep dive into MOE and AI efficiency. The discussions and questions from attendees made this exploration even richer.
 
-**About 33% of Kilo Code's most-used models now come from China**, according to NBC News analysis of Epoch AI data. The chart reveals Chinese AI companies, particularly Alibaba, are releasing models at an unprecedented rate.`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.50.24 PM.png',
-      caption: '33% of Kilo Code\'s most-used models now come from China as of Nov 27, 2025.'
-    },
-    {
-      type: 'markdown',
-      content: `**What's happening:**
-- **Alibaba leads** with ~24 model releases in 2025 (mostly open-source)
-- **OpenAI** has released ~18 models (mostly closed)
-- Chinese models are gaining adoption in developer tools and coding assistants
+**Next Meetup:**
+Stay tuned for our next session where we'll continue exploring the cutting edge of AI development.
 
-For developers, this means more choice - but also more fragmentation and geopolitical complexity in the AI supply chain.`
-    },
-    {
-      type: 'markdown',
-      content: `### Google's Gemini Closes the Gap on ChatGPT
+**Resources:**
+- [Nvidia AI Podcast](https://www.nvidia.com/en-us/ai-data-science/ai-podcast/)
+- [Network Topology Visualization](https://claude.ai/chat/e3f3fcb4-429e-4595-93be-8c2f7679e6a4)
+- [Kimi K2 Architecture Deep Dive](https://claude.ai/chat/e3f3fcb4-429e-4595-93be-8c2f7679e6a4)
 
-The AI app market is seeing a major shift. **Google's Gemini app monthly downloads are catching up to ChatGPT's**, with Gemini experiencing explosive growth throughout 2025.`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.46.03 PM.png',
-      caption: 'Google Gemini app downloads surge, closing gap with ChatGPT.'
-    },
-    {
-      type: 'markdown',
-      content: `The trend is clear: OpenAI's early-mover advantage is eroding. Google's deep integration with Android, aggressive marketing, and competitive model performance are paying off. ChatGPT remains ahead, but the race is far from over.`
-    },
-    {
-      type: 'markdown',
-      content: `## AI Infrastructure & Economics: Scale and Capital
-
-Behind every AI breakthrough is massive infrastructure investment. This week's data reveals the scale of capital flowing into AI.`
-    },
-    {
-      type: 'markdown',
-      content: `### LangChain's Meteoric Rise: $200M to $1.25B
-
-**LangChain's valuation has grown 6.3x in just 2.6 years**, soaring from $200M (April 2023) to $1.25B (October 2025). This trajectory exemplifies the explosive growth in AI tooling and infrastructure companies.`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.15.43 PM.png',
-      caption: 'LangChain\'s valuation grew 6.3x to $1.25B in 2.6 years.'
-    },
-    {
-      type: 'markdown',
-      content: `**Why this matters:**
-- Developer tools are capturing significant value in the AI stack
-- Framework companies like LangChain are becoming infrastructure plays
-- The "picks and shovels" of AI are as valuable as the models themselves
-
-For investors and builders, this signals opportunity in the tooling layer - not just foundation models.`
-    },
-    {
-      type: 'markdown',
-      content: `### China's Cloud Infrastructure Boom
-
-China's cloud infrastructure market has grown **+21% YoY to $12.4B in Q2 2025**, driven primarily by AI-related demand. The market is dominated by domestic players.`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-12-03 at 2.50.24 PM.png',
-      caption: 'China\'s cloud infrastructure market reaches $12.4B, up 21% YoY on AI demand.'
-    },
-    {
-      type: 'markdown',
-      content: `**Market Breakdown:**
-- **Alibaba Cloud** holds 34% market share
-- **Huawei Cloud** at 17%, **Tencent Cloud** at 10%
-- **75% of spending is direct** (infrastructure as a service)
-- **25% is indirect** (platform and software services)
-
-Source: Omdia analysis. The AI infrastructure arms race is global, and China is investing heavily to ensure self-sufficiency.`
-    },
-    {
-      type: 'markdown',
-      content: `### The Future of Launch Economics
-
-While not directly AI-related, the economics of space launch have profound implications for distributed computing and AI infrastructure.`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2025-11-26 at 6.20.14 PM.png',
-      caption: 'Cost of launch comparison: Earth vs. Lunar Mass Driver trajectories.'
-    },
-    {
-      type: 'markdown',
-      content: `**Cost Evolution:**
-- **Space Shuttle**: ~$50,000/kg (retired, high cost)
-- **Falcon 9**: ~$2,500/kg (reusable, lower cost)
-- **Starship**: <$100/kg projected goal (in development)
-- **Lunar Mass Driver**: ~$0.10/kg energy only (future concept, requires base)
-
-As launch costs plummet, space-based computing becomes economically viable - offering unlimited solar power, passive cooling, and no land constraints. Companies like Starship are making this future tangible.`
-    },
-    {
-      type: 'markdown',
-      content: `## Emerging AI Tools & Applications
-
-The AI tool ecosystem is exploding with specialized applications launching weekly. Here's what's new and noteworthy.`
-    },
-    {
-      type: 'markdown',
-      content: `### Hot New AI Tools for 2026
-
-A wave of specialized AI applications is hitting the market, each targeting specific use cases:`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2026-01-02 at 6.48.28 PM.png',
-      caption: 'New AI tools launching in early 2026 across multiple categories.'
-    },
-    {
-      type: 'markdown',
-      content: `**Notable Launches:**
-
-- **SimGym**: Creates digital customers that behave like real ones for testing and simulation
-- **Scouts**: AI agents that monitor the web for you and surface what matters
-- **Vybe**: Build real internal apps without writing code - production-ready, not prototypes
-- **Incredible**: Launch Deep Work AI agents powered by Agent MAX engine for multi-step workflows
-- **Oboe**: Tell it what you want to learn and it builds you a complete course
-- **Chrome Split View**: View two web pages side-by-side inside a single tab
-- **Core Devices Index 01**: AI smart ring recorder that captures spoken ideas and turns them into notes, reminders, or calendar entries
-
-Each tool addresses a specific pain point - from learning to productivity to development. The trend toward specialized, narrow AI applications continues.`
-    },
-    {
-      type: 'markdown',
-      content: `### Consumer AI: Product Intelligence
-
-**Pom** represents a new category of consumer AI: product intelligence. The app scans product ingredients to identify harmful substances and provides detailed breakdowns of each ingredient.`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2026-01-02 at 7.01.27 PM.png',
-      caption: 'Pom scans product ingredients to identify harmful substances.'
-    },
-    {
-      type: 'markdown',
-      content: `This is AI meeting consumers at the point of purchase - making health and safety information accessible in real-time. Expect more applications that bring AI into everyday decision-making.`
-    },
-    {
-      type: 'markdown',
-      content: `### Top AI Tools by Adoption
-
-The most-used AI tools by developers and knowledge workers reveal clear winners:`
-    },
-    {
-      type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/Screenshot 2026-01-02 at 6.59.39 PM.png',
-      caption: 'Top AI tools ranked by user adoption and usage patterns.'
-    },
-    {
-      type: 'markdown',
-      content: `**Top Results:**
-1. **@cursor_ai** - AI coding assistant
-2. **@claudeai** - AI assistant (Anthropic)
-3. **@NotebookLM** - AI research tool (Google)
-4. **@WisprFlow** - Voice dictation
-5. **@meetgranola** - Meeting notes
-6. **@comet** - AI browser
-7. **@NanoBanana** - AI images
-8. **@ManusAI** - General AI agent
-9. **@Tesla** - Full self-driving
-
-The dominance of coding tools (Cursor) and productivity tools (Claude, NotebookLM) shows where AI is delivering immediate value today.`
-    },
-    {
-      type: 'markdown',
-      content: `## Looking Ahead
-
-This week's developments paint a clear picture: AI is moving from research labs to real-world applications at breakneck speed. The competition between US and Chinese AI companies is intensifying, infrastructure investments are soaring, and specialized tools are proliferating.
-
-**Key Takeaways:**
-- Hardware is getting personal (AI glasses, smart rings, BCIs)
-- Model performance continues exponential growth (196-day doubling)
-- Geopolitical dynamics are reshaping the AI landscape (open vs. closed)
-- Infrastructure spending is massive and accelerating
-- Specialized AI tools are replacing general-purpose solutions
-
-The next few months will be critical as these trends converge. Stay tuned.`
+See you at the next meetup!`
     }
   ]
 };
