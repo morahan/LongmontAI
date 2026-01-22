@@ -30,7 +30,7 @@ const Feed: React.FC = () => {
                     </span>
                     <h1 className="text-5xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
                         Intelligence <br />
-                        <span className="text-gradient-clean">Unleashed</span>
+                        <span className="text-gradient-vibrant">Unleashed</span>
                     </h1>
                 </motion.div>
 
@@ -44,7 +44,7 @@ const Feed: React.FC = () => {
                 </motion.p>
             </div>
 
-            <div className="flex flex-col gap-10 relative pb-20">
+            <div className="flex flex-col gap-20 relative pb-20">
                 {editions.map((edition, index) => (
                     <EditionCard key={edition.id} edition={edition} index={index} />
                 ))}
