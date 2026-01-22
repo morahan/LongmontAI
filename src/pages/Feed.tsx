@@ -28,9 +28,9 @@ const Feed: React.FC = () => {
                     <span className="inline-block px-3 py-1 mb-6 text-xs font-mono text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 rounded-full border border-[var(--accent-cyan)]/20">
                         BIWEEKLY INTELLIGENCE
                     </span>
-                    <h1 className="text-5xl md:text-8xl font-bold mb-6 tracking-tight leading-tight drop-shadow-lg">
+                    <h1 className="text-5xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
                         Intelligence <br />
-                        <span className="text-gradient-vibrant">Unleashed</span>
+                        <span className="text-gradient-clean">Unleashed</span>
                     </h1>
                 </motion.div>
 
@@ -44,8 +44,7 @@ const Feed: React.FC = () => {
                 </motion.p>
             </div>
 
-            <div className="flex flex-col gap-24 relative pb-20">
-                <div className="absolute left-8 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[var(--glass-border)] to-transparent hidden md:block"></div>
+            <div className="flex flex-col gap-10 relative pb-20">
                 {editions.map((edition, index) => (
                     <EditionCard key={edition.id} edition={edition} index={index} />
                 ))}

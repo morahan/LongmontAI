@@ -53,7 +53,7 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ item }) => {
                 <div className="mb-8 rounded-xl overflow-hidden border border-[var(--glass-border)] aspect-video bg-black flex items-center justify-center relative group cursor-pointer">
                     {/* Placeholder for actual video player implementation */}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors">
-                        <div className="w-16 h-16 rounded-full bg-[var(--accent-cyan)] flex items-center justify-center text-black pl-1 shadow-[0_0_20px_var(--accent-glow)] group-hover:scale-110 transition-transform">
+                        <div className="w-16 h-16 rounded-full bg-[var(--accent-cyan)] flex items-center justify-center text-black pl-1 group-hover:scale-110 transition-transform">
                             <Play fill="currentColor" size={24} />
                         </div>
                     </div>

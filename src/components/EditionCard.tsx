@@ -20,9 +20,9 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
                 ease: [0.16, 1, 0.3, 1]
             }}
             whileHover={{ scale: 1.02 }}
-            className="glass-panel p-10 hover:border-[var(--accent-cyan)] transition-all duration-300 group"
+            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group"
         >
-            <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs mb-3 font-mono">
+            <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm mb-4 font-mono">
                 <Calendar size={14} />
                 <span>{edition.date}</span>
             </div>

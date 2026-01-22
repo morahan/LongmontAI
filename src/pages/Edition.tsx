@@ -42,7 +42,7 @@ const Edition: React.FC = () => {
                         {edition.title}
                     </h1>
 
-                    <div className="h-1 w-20 bg-[var(--accent-cyan)] mb-8 rounded-full shadow-[0_0_10px_var(--accent-glow)]"></div>
+                    <div className="h-1 w-20 bg-[var(--accent-cyan)] mb-8 rounded-full"></div>
                 </motion.div>
             </div>
 
