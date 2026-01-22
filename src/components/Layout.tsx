@@ -14,8 +14,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="min-h-screen flex flex-col relative overflow-hidden">
             {/* Background Elements */}
             <div className="bg-mesh" />
-            <div className="orb orb-1" />
-            <div className="orb orb-2" />
 
             <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 header-glass">
                 <div className="container h-20 flex flex-row items-center justify-between">

@@ -29,7 +29,7 @@ Intelligent note-taking that captures and organizes meeting content automaticall
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/ai-tools-list-simgym-scouts-vybe.png',
+      url: '/weekly-screenshots/2026.01.07/ai-tools-list-simgym-scouts-vybe.png',
       caption: 'Modern AI tools are becoming increasingly specialized for specific workflows.'
     },
     {
@@ -72,7 +72,7 @@ This is where **Mixture of Experts (MOE)** enters the picture as a game-changing
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/ai-model-performance-doubling-time.png',
+      url: '/weekly-screenshots/2026.01.07/ai-model-performance-doubling-time.png',
       caption: 'AI model performance continues to accelerate at an exponential rate.'
     },
     {
@@ -194,7 +194,7 @@ ChatGPT was likely using MOE before DeepSeek, but wasn't publicly discussing it.
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/us-china-ai-models-comparison.png',
+      url: '/weekly-screenshots/2026.01.07/us-china-ai-models-comparison.png',
       caption: 'The competitive landscape between US and Chinese AI models is evolving rapidly.'
     },
     {
@@ -264,7 +264,7 @@ Aiming for general-purpose rather than optimized for a particular model or compa
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/transformer-explainer-spaceship-planet.png',
+      url: '/weekly-screenshots/2026.01.07/transformer-explainer-spaceship-planet.png',
       caption: 'Understanding AI architecture requires visualizing complex interconnections.'
     },
     {
@@ -298,7 +298,7 @@ For detailed architecture visualization:
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/kilo-code-models-china.png',
+      url: '/weekly-screenshots/2026.01.07/kilo-code-models-china.png',
       caption: 'Chinese models are becoming increasingly prominent in the global AI landscape.'
     },
     {
@@ -354,7 +354,7 @@ The future of AI is being built right now, and the pace of innovation shows no s
     },
     {
       type: 'image',
-      url: '/weekly-screenshots/Longmont AI - Jan 7th 2026/transformer-explainer-ai-transforming-world.png',
+      url: '/weekly-screenshots/2026.01.07/transformer-explainer-ai-transforming-world.png',
       caption: 'The transformer architecture continues to transform our world in profound ways.'
     },
     {

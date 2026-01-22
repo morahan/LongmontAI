@@ -1,23 +1,22 @@
 :root {
-  /* Colors - Vibrant Dreamscape Palette */
-  --bg-deep: #0f0518;
-
-  /* The Gradient Palette */
-  --color-sunset: #FF9E64;
-  --color-pink: #FF0080;
-  --color-purple: #7928CA;
-  --color-cyan: #00F0FF;
-  --color-blue: #007CF0;
-
-  /* Glass Interface */
-  --glass-bg: rgba(20, 10, 30, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-highlight: rgba(255, 255, 255, 0.3);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  /* Colors - Clean Modern Palette */
+  --bg-deep: #09090b; /* Zinc 950 */
+  --bg-card: #18181b; /* Zinc 900 */
+  --bg-card-hover: #27272a; /* Zinc 800 */
+  
+  --accent-primary: #ffffff;
+  --accent-secondary: #e4e4e7; /* Zinc 200 */
+  
+  /* Glass Interface - Minimalist */
+  --glass-bg: rgba(24, 24, 27, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.8);
-  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-secondary: #a1a1aa; /* Zinc 400 */
+  --text-muted: #71717a; /* Zinc 500 */
+  --accent-cyan: #3b82f6; /* Keeping variable name for compatibility but mapping to a clean blue */
 
   /* Typography */
   --font-display: 'Outfit', sans-serif;
@@ -44,7 +43,7 @@ body {
   min-height: 100vh;
 }
 
-/* Vibrant Mesh Background */
+/* Subtle Gradient Background */
 .bg-mesh {
   position: fixed;
   top: 0;
@@ -52,76 +51,10 @@ body {
   width: 100vw;
   height: 100vh;
   z-index: -1;
-  background:
-    radial-gradient(at 0% 0%, var(--color-purple) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, var(--color-cyan) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, var(--color-pink) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, var(--color-blue) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, var(--bg-deep) 0px, transparent 50%);
-  background-size: 200% 200%;
-  animation: meshFlow 20s ease infinite alternate;
-  filter: blur(40px);
-}
-
-@keyframes meshFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Floating Orbs */
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  z-index: -1;
-  opacity: 0.5;
-  animation: float 20s ease-in-out infinite;
-}
-
-.orb-1 {
-  top: 10%;
-  left: 20%;
-  width: 400px;
-  height: 400px;
-  background: var(--color-sunset);
-  animation-delay: 0s;
-}
-
-.orb-2 {
-  bottom: 20%;
-  right: 10%;
-  width: 500px;
-  height: 500px;
-  background: var(--color-purple);
-  animation-delay: -10s;
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.5;
-  }
-
-  33% {
-    transform: translate(50px, -60px) scale(1.1);
-    opacity: 0.6;
-  }
-
-  66% {
-    transform: translate(-40px, 40px) scale(0.95);
-    opacity: 0.5;
-  }
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
+  /* Removed animations and heavy blurs */
 }
 
 h1,
@@ -131,8 +64,9 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
 }
 
 a {
@@ -140,40 +74,21 @@ a {
   text-decoration: none;
 }
 
-/* Premium Glass Effect */
+/* Modern Minimal Card */
 .glass-panel {
-  background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-card);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 16px; /* Slightly reduced radius */
+  box-shadow: var(--glass-shadow);
   position: relative;
   overflow: hidden;
-}
-
-.glass-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2) 50%,
-      transparent);
+  transition: all 0.3s ease;
 }
 
 .glass-panel:hover {
-  background: var(--card-hover);
+  background: var(--bg-card-hover);
   border-color: var(--glass-highlight);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
-    0 0 40px rgba(0, 240, 255, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .container {
@@ -184,28 +99,19 @@ a {
 
 /* Utilities */
 .text-gradient {
-  background: linear-gradient(135deg, #fff 0%, #e2e8f0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
 }
 
 .text-gradient-vibrant {
-  background: linear-gradient(to right, var(--color-sunset), var(--color-pink), var(--color-purple));
+  /* Changed from rainbow to clean gradient */
+  background: linear-gradient(to bottom right, #ffffff 30%, #94a3b8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: shine 5s linear infinite;
-}
-
-@keyframes shine {
-  to {
-    background-position: 200% center;
-  }
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -213,8 +119,12 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
 }
 
 /* Global Article Constraints */
@@ -232,13 +142,13 @@ iframe {
   max-width: 100%;
   height: auto;
   display: block;
+  border-radius: 8px; /* Added subtle radius to images */
 }
 
-/* Consistent Header Glass */
+/* Clean Header */
 .header-glass {
-  background: rgba(5, 5, 10, 0.6);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(9, 9, 11, 0.8); /* Zinc 950 with opacity */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--glass-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
