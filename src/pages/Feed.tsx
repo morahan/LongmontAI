@@ -44,7 +44,7 @@ const Feed: React.FC = () => {
                 </motion.p>
             </div>
 
-            <div className="flex flex-col gap-20 relative pb-20">
+            <div className="flex flex-col gap-[150px] relative pb-20">
                 {editions.map((edition, index) => (
                     <EditionCard key={edition.id} edition={edition} index={index} />
                 ))}

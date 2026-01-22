@@ -5,26 +5,70 @@ import ReactMarkdown from 'react-markdown';
 import { ContentItem } from '../articles';
 
 interface ContentBlockProps {
-    item: ContentItem;
+    item?: ContentItem;
+    markdown?: string;
 }
 
-const ContentBlock: React.FC<ContentBlockProps> = ({ item }) => {
+// Shared markdown component configuration
+const markdownComponents = {
+    h1: ({ node, ...props }: any) => <h1 className="text-3xl font-bold text-white mt-16 mb-6" {...props} />,
+    h2: ({ node, ...props }: any) => <h2 className="text-2xl font-bold text-white mt-12 mb-5" {...props} />,
+    h3: ({ node, ...props }: any) => <h3 className="text-xl font-bold text-[var(--accent-cyan)] mt-10 mb-4" {...props} />,
+    p: ({ node, ...props }: any) => <p className="mb-6 leading-relaxed" {...props} />,
+    ul: ({ node, ...props }: any) => <ul className="list-disc ml-6 mb-6 space-y-2" {...props} />,
+    li: ({ node, ...props }: any) => <li className="text-[var(--text-secondary)]" {...props} />,
+    strong: ({ node, ...props }: any) => <strong className="text-white font-semibold" {...props} />,
+    img: ({ node, src, alt, ...props }: any) => (
+        <figure className="my-8">
+            <div className="rounded-xl overflow-hidden border border-[var(--glass-border)] bg-black/20">
+                <img
+                    src={src}
+                    alt={alt}
+                    className="w-full max-h-[600px] object-contain mx-auto hover:scale-[1.02] transition-transform duration-700"
+                    {...props}
+                />
+            </div>
+            {alt && (
+                <figcaption className="mt-3 text-sm text-[var(--text-secondary)] text-center font-mono">
+                    {alt}
+                </figcaption>
+            )}
+        </figure>
+    ),
+    a: ({ node, href, children, ...props }: any) => (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--accent-cyan)] hover:underline"
+            {...props}
+        >
+            {children}
+        </a>
+    ),
+};
+
+const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown }) => {
+    // Handle full markdown content
+    if (markdown) {
+        return (
+            <div className="prose prose-invert prose-lg max-w-none text-[var(--text-secondary)]">
+                <ReactMarkdown components={markdownComponents}>
+                    {markdown}
+                </ReactMarkdown>
+            </div>
+        );
+    }
+
+    // Handle legacy ContentItem
+    if (!item) return null;
+
     switch (item.type) {
         case 'text':
         case 'markdown':
             return (
                 <div className="prose prose-invert prose-lg max-w-none mb-8 text-[var(--text-secondary)]">
-                    <ReactMarkdown
-                        components={{
-                            h1: ({ node, ...props }) => <h1 className="text-3xl font-bold text-white mt-16 mb-6" {...props} />,
-                            h2: ({ node, ...props }) => <h2 className="text-2xl font-bold text-white mt-12 mb-5" {...props} />,
-                            h3: ({ node, ...props }) => <h3 className="text-xl font-bold text-[var(--accent-cyan)] mt-10 mb-4" {...props} />,
-                            p: ({ node, ...props }) => <p className="mb-6 leading-relaxed" {...props} />,
-                            ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-6 space-y-2" {...props} />,
-                            li: ({ node, ...props }) => <li className="text-[var(--text-secondary)]" {...props} />,
-                            strong: ({ node, ...props }) => <strong className="text-white font-semibold" {...props} />,
-                        }}
-                    >
+                    <ReactMarkdown components={markdownComponents}>
                         {item.content}
                     </ReactMarkdown>
                 </div>

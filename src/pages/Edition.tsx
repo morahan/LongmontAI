@@ -47,17 +47,27 @@ const Edition: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-                {edition.items.map((item, index) => (
+                {edition.markdownContent ? (
                     <motion.div
-                        key={index}
                         initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-50px" }}
-                        transition={{ duration: 0.5, delay: index * 0.05 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
                     >
-                        <ContentBlock item={item} />
+                        <ContentBlock markdown={edition.markdownContent} />
                     </motion.div>
-                ))}
+                ) : edition.items ? (
+                    edition.items.map((item, index) => (
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-50px" }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                        >
+                            <ContentBlock item={item} />
+                        </motion.div>
+                    ))
+                ) : null}
             </div>
 
             <div className="mt-16 pt-8 border-t border-[var(--glass-border)] text-center">

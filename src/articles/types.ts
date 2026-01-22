@@ -13,5 +13,6 @@ export interface Edition {
   date: string;
   title: string;
   summary: string;
-  items: ContentItem[];
+  items?: ContentItem[];
+  markdownContent?: string;
 }

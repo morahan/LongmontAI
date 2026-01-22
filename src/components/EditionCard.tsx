@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Edition } from '../articles';
@@ -10,6 +10,8 @@ interface EditionCardProps {
 }
 
 const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
+    const navigate = useNavigate();
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -20,7 +22,8 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
                 ease: [0.16, 1, 0.3, 1]
             }}
             whileHover={{ scale: 1.02 }}
-            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group"
+            onClick={() => navigate(`/edition/${edition.id}`)}
+            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group cursor-pointer"
         >
             <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm mb-4 font-mono">
                 <Calendar size={14} />
