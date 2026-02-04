@@ -26,3 +26,4 @@ A futuristic, minimalistic website for the Longmont AI Meetup, built with React,
 
 This project is configured for automatic deployment on Vercel.
 - Push to `main` triggers a production deployment.
+
