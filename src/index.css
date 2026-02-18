@@ -93,11 +93,19 @@ a {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-panel:hover {
+.glass-panel:hover,
+.glass-panel:focus-within {
   background: var(--bg-card-hover);
   border-color: rgba(121, 40, 202, 0.3); /* Purple tint on border */
   box-shadow: 0 0 30px rgba(121, 40, 202, 0.1); /* Subtle purple glow */
   transform: translateY(-2px);
+}
+
+/* Override focus-visible on glass-panel cards since they have their own visual state */
+.glass-panel:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.3), 0 0 30px rgba(121, 40, 202, 0.1);
 }
 
 .container {
@@ -123,6 +131,20 @@ a {
   to {
     background-position: 200% center;
   }
+}
+
+/* Focus indicators — visible only for keyboard users */
+*:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.3);
+  border-radius: 4px;
+}
+
+/* Remove default outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Scrollbar */

@@ -26,6 +26,8 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
     return (
         <motion.article
             aria-labelledby={headingId}
+            tabIndex={0}
+            role="link"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -35,6 +37,12 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
             }}
             whileHover={{ scale: 1.02 }}
             onClick={() => navigate(`/edition/${edition.id}`)}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/edition/${edition.id}`);
+                }
+            }}
             className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group cursor-pointer"
         >
             <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm mb-4 font-mono">
@@ -42,7 +50,7 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
                 <time dateTime={edition.date}>{formatDate(edition.date)}</time>
             </div>
 
-            <h2 id={headingId} className="text-2xl font-bold mb-3 text-white group-hover:text-[var(--accent-cyan)] transition-colors">
+            <h2 id={headingId} className="text-2xl font-bold mb-3 text-white group-hover:text-[#818cf8] group-focus-within:text-[#818cf8] transition-colors">
                 {edition.title}
             </h2>
 
@@ -53,10 +61,10 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
             <Link
                 to={`/edition/${edition.id}`}
                 aria-label={`Read full edition: ${edition.title}`}
-                className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-[var(--accent-cyan)] transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-[var(--accent-cyan)] hover:underline focus-visible:underline transition-colors"
                 onClick={(e) => e.stopPropagation()}
             >
-                READ EDITION <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                READ EDITION <ArrowRight size={16} className="group-hover:translate-x-1 group-focus-within:translate-x-1 transition-transform" />
             </Link>
         </motion.article>
     );
