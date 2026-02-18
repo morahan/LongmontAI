@@ -12,25 +12,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden">
+            {/* Skip to main content — first focusable element */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:right-0 focus:z-[100] focus:bg-[var(--accent-cyan)] focus:text-black focus:text-center focus:py-3 focus:px-4 focus:font-semibold focus:text-sm"
+            >
+                Skip to main content
+            </a>
+
             {/* Background Elements */}
             <div className="bg-mesh" />
 
             <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 header-glass">
-                <div className="container h-20 flex flex-row items-center justify-between">
+                <nav aria-label="Main navigation" className="container h-20 flex flex-row items-center justify-between">
                     <Link to="/" className="flex items-center gap-3 group">
                         <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
                             <BrainCircuit size={20} className="text-[var(--accent-cyan)]" />
                         </div>
                         <span className="font-bold tracking-tight text-lg">LongmontAI</span>
                     </Link>
-
-
-
-
-                </div>
+                </nav>
             </header>
 
-            <main className="flex-grow pt-32 pb-20">
+            <main id="main-content" className="flex-grow pt-32 pb-20">
                 <motion.div
                     key={location.pathname}
                     initial={{ opacity: 0, y: 20 }}
@@ -42,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </motion.div>
             </main>
 
-            <footer className="border-t border-[var(--glass-border)] py-12 mt-auto">
+            <footer role="contentinfo" className="border-t border-[var(--glass-border)] py-12 mt-auto">
                 <div className="container text-center">
                     <p className="text-[var(--text-muted)] text-sm">© {new Date().getFullYear()} LongmontAI. Curated by Intelligence.</p>
                 </div>

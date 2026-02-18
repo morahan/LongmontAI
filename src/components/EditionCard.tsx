@@ -9,11 +9,23 @@ interface EditionCardProps {
     index: number;
 }
 
+function formatDate(dateStr: string): string {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+}
+
 const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
     const navigate = useNavigate();
+    const headingId = `edition-heading-${edition.id}`;
 
     return (
-        <motion.div
+        <motion.article
+            aria-labelledby={headingId}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -27,10 +39,10 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
         >
             <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm mb-4 font-mono">
                 <Calendar size={14} />
-                <span>{edition.date}</span>
+                <time dateTime={edition.date}>{formatDate(edition.date)}</time>
             </div>
 
-            <h2 className="text-2xl font-bold mb-3 text-white group-hover:text-[var(--accent-cyan)] transition-colors">
+            <h2 id={headingId} className="text-2xl font-bold mb-3 text-white group-hover:text-[var(--accent-cyan)] transition-colors">
                 {edition.title}
             </h2>
 
@@ -40,11 +52,13 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
 
             <Link
                 to={`/edition/${edition.id}`}
+                aria-label={`Read full edition: ${edition.title}`}
                 className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-[var(--accent-cyan)] transition-colors"
+                onClick={(e) => e.stopPropagation()}
             >
                 READ EDITION <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-        </motion.div>
+        </motion.article>
     );
 };
 

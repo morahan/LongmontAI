@@ -31,7 +31,13 @@ const Edition: React.FC = () => {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-[var(--accent-cyan)] font-mono text-sm">
                             <Calendar size={16} />
-                            <span>{edition.date}</span>
+                            <time dateTime={edition.date}>
+                                {new Date(edition.date + 'T00:00:00').toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                })}
+                            </time>
                         </div>
                         <button className="text-[var(--text-secondary)] hover:text-white transition-colors">
                             <Share2 size={20} />
