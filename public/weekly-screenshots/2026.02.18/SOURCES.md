@@ -7,8 +7,7 @@
 4. `gemini-2d-to-3d-ai-render.jpg` — Gemini AI conversation
 5. `metr-llm-task-duration-80-percent.jpg` — METR benchmark chart
 6. `metr-llm-task-duration-50-percent.jpg` — METR benchmark chart
-7. `kimi-k25-benchmark-comparison-stream.jpg` — Kimi/Moonshot AI X post
-8. `kimi-k25-benchmark-scores.jpg` — Kimi K2.5 benchmark details
+7. `kimi-k25-benchmark-scores.jpg` — Kimi K2.5 benchmark details
 9. `kimi-k25-api-pricing.jpg` — Kimi K2.5 API pricing
 
 ## Web Captures (complementary - from Kaia's research topics)
