@@ -2,6 +2,7 @@ import React from 'react';
 
 import { ExternalLink, Code, Play } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
 
 interface ContentBlockProps {
@@ -18,6 +19,26 @@ const markdownComponents = {
     ul: ({ node, ...props }: any) => <ul className="list-disc ml-6 mb-6 space-y-2" {...props} />,
     li: ({ node, ...props }: any) => <li className="text-[var(--text-secondary)]" {...props} />,
     strong: ({ node, ...props }: any) => <strong className="text-white font-semibold" {...props} />,
+    table: ({ node, ...props }: any) => (
+        <div className="overflow-x-auto my-8 rounded-xl border border-white/10">
+            <table role="table" className="w-full text-left text-sm" {...props} />
+        </div>
+    ),
+    thead: ({ node, ...props }: any) => (
+        <thead className="bg-white/10 text-white font-semibold" {...props} />
+    ),
+    tbody: ({ node, ...props }: any) => (
+        <tbody className="divide-y divide-white/5" {...props} />
+    ),
+    tr: ({ node, ...props }: any) => (
+        <tr className="bg-white/5 hover:bg-white/[0.07] transition-colors" {...props} />
+    ),
+    th: ({ node, ...props }: any) => (
+        <th scope="col" className="px-4 py-3 text-left text-white font-semibold text-sm" {...props} />
+    ),
+    td: ({ node, ...props }: any) => (
+        <td className="px-4 py-3 text-[var(--text-secondary)]" {...props} />
+    ),
     img: ({ node, src, alt, ...props }: any) => (
         <figure className="my-8">
             <div className="rounded-xl overflow-hidden border border-[var(--glass-border)] bg-black/20">
@@ -53,7 +74,7 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown }) => {
     if (markdown) {
         return (
             <div className="prose prose-invert prose-lg max-w-none text-[var(--text-secondary)]">
-                <ReactMarkdown components={markdownComponents}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                     {markdown}
                 </ReactMarkdown>
             </div>
@@ -68,7 +89,7 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown }) => {
         case 'markdown':
             return (
                 <div className="prose prose-invert prose-lg max-w-none mb-8 text-[var(--text-secondary)]">
-                    <ReactMarkdown components={markdownComponents}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                         {item.content}
                     </ReactMarkdown>
                 </div>
