@@ -25,10 +25,13 @@
   --text-muted: #71717a; /* Zinc 500 */
   --accent-cyan: #3b82f6; /* Default blue for UI elements */
 
-  /* Typography */
-  --font-display: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  /* Typography - Beleza font with 20% larger default size */
+  --font-display: 'Beleza', serif;
+  --font-body: 'Beleza', serif;
   --font-mono: 'JetBrains Mono', monospace;
+  
+  /* Base font size increased by 20% (16px -> 19.2px) */
+  font-size: 19.2px;
 
   /* Spacing */
   --container-width: 1100px;
