@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BrainCircuit, ExternalLink, Users } from 'lucide-react';
+import { BrainCircuit, ExternalLink, Users, BookOpen } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -31,6 +31,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </div>
                         <span className="font-bold tracking-tight text-lg">LongmontAI</span>
                     </Link>
+                    <div className="flex items-center gap-6">
+                        <Link to="/" className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                            <BookOpen size={16} />
+                            <span>Blog</span>
+                        </Link>
+                    </div>
                 </nav>
             </header>
 
