@@ -43,7 +43,7 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
                     navigate(`/edition/${edition.id}`);
                 }
             }}
-            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group cursor-pointer"
+            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group cursor-pointer my-8"
         >
             {/* Edition number badge */}
             <div className="flex items-center justify-between mb-6">

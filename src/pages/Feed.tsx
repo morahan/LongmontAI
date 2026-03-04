@@ -107,7 +107,7 @@ const Feed: React.FC = () => {
                     </Link>
                 </div>
                 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-3 gap-8">
                     {latestEditions.map((edition, index) => (
                         <motion.div
                             key={edition.id}
@@ -143,7 +143,7 @@ const Feed: React.FC = () => {
             </section>
 
             {/* All Editions */}
-            <section className="flex flex-col gap-[100px] relative pb-20">
+            <section className="flex flex-col gap-[180px] relative pb-20">
                 <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold">All Editions</h2>
                 </div>
