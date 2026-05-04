@@ -4,6 +4,7 @@ import { ExternalLink, Code, Play } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
+import Slideshow from './Slideshow';
 
 interface ContentBlockProps {
     item?: ContentItem;
@@ -69,14 +70,49 @@ const markdownComponents = {
     ),
 };
 
+const slideshowPattern = /\{\{slideshow:([a-z0-9-]+)\}\}/g;
+
+function renderMarkdownBlock(content: string, key: string): React.ReactNode {
+    return (
+        <ReactMarkdown key={key} remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            {content}
+        </ReactMarkdown>
+    );
+}
+
+function renderMarkdownContent(content: string, keyPrefix: string): React.ReactNode {
+    const blocks: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let matchNumber = 0;
+
+    for (const match of content.matchAll(slideshowPattern)) {
+        const matchIndex = match.index ?? 0;
+        const markdownBefore = content.slice(lastIndex, matchIndex);
+
+        if (markdownBefore.trim()) {
+            blocks.push(renderMarkdownBlock(markdownBefore, `${keyPrefix}-markdown-${matchNumber}`));
+        }
+
+        blocks.push(<Slideshow key={`${keyPrefix}-slideshow-${matchNumber}`} deckId={match[1]} />);
+        lastIndex = matchIndex + match[0].length;
+        matchNumber += 1;
+    }
+
+    const markdownAfter = content.slice(lastIndex);
+
+    if (markdownAfter.trim()) {
+        blocks.push(renderMarkdownBlock(markdownAfter, `${keyPrefix}-markdown-${matchNumber}`));
+    }
+
+    return blocks.length > 0 ? blocks : renderMarkdownBlock(content, `${keyPrefix}-markdown`);
+}
+
 const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown }) => {
     // Handle full markdown content
     if (markdown) {
         return (
             <div className="prose prose-invert prose-lg max-w-none text-[var(--text-secondary)]">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                    {markdown}
-                </ReactMarkdown>
+                {renderMarkdownContent(markdown, 'article')}
             </div>
         );
     }
@@ -89,9 +125,7 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown }) => {
         case 'markdown':
             return (
                 <div className="prose prose-invert prose-lg max-w-none mb-8 text-[var(--text-secondary)]">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                        {item.content}
-                    </ReactMarkdown>
+                    {renderMarkdownContent(item.content ?? '', 'item')}
                 </div>
             );
 
