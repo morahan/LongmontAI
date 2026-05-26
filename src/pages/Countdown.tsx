@@ -64,11 +64,11 @@ interface DigitProps {
 }
 const Digit: React.FC<DigitProps> = ({ value, label }) => {
   return (
-    <div className="flex flex-col items-center">
-      <div className="text-6xl sm:text-7xl md:text-8xl font-bold font-mono tracking-tighter leading-none text-white">
+    <div className="flex flex-col items-center min-w-[2.5rem] sm:min-w-0">
+      <div className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold font-mono tracking-tighter leading-none text-white">
         {String(value).padStart(2, '0')}
       </div>
-      <span className="text-xs sm:text-sm font-mono uppercase tracking-widest text-[var(--text-muted)] mt-2">
+      <span className="text-[10px] sm:text-sm font-mono uppercase tracking-widest text-[var(--text-muted)] mt-1 sm:mt-2">
         {label}
       </span>
     </div>
@@ -80,13 +80,13 @@ interface SeparatorProps {
 }
 
 const Separator: React.FC<SeparatorProps> = ({ visible }) => (
-  <div className="flex flex-col gap-2 self-start mt-4 sm:mt-5">
+  <div className="flex flex-col gap-1 sm:gap-1.5 self-center mt-0">
     <div
-      className="w-2 h-2 rounded-full"
+      className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
       style={{ backgroundColor: visible ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.15)' }}
     />
     <div
-      className="w-2 h-2 rounded-full"
+      className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
       style={{ backgroundColor: visible ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.15)' }}
     />
   </div>
@@ -184,27 +184,28 @@ const Countdown: React.FC = () => {
       {isLiveEvent && <Confetti />}
 
       {/* Hero badge */}
-      <div className="mb-8 animate-fade-in">
+      <div className="mb-6 sm:mb-8 animate-fade-in px-4 sm:px-0">
         {isLiveEvent ? (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 text-sm font-mono uppercase tracking-widest">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 text-[11px] sm:text-sm font-mono uppercase tracking-widest">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-live-pulse inline-block" />
             Live Now — Longmont AI Meetup
           </div>
         ) : (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-sm font-mono uppercase tracking-widest">
-            <Calendar size={14} />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
+            <Calendar size={12} className="sm:!hidden" />
+            <Calendar size={14} className="hidden sm:block" />
             Every Other Wednesday · {meetupDateStr}
           </div>
         )}
       </div>
 
       {/* Main heading */}
-      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight animate-fade-in-delay">
+      <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight animate-fade-in-delay px-4 sm:px-0">
         {isLiveEvent ? (
           <>
             <span className="text-gradient-vibrant">Meetup in Progress</span>
             <br />
-            <span className="text-[var(--text-secondary)] text-xl sm:text-2xl font-normal">
+            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
               Join the gathering — you're here!
             </span>
           </>
@@ -213,7 +214,7 @@ const Countdown: React.FC = () => {
             Next{' '}
             <span className="text-gradient-vibrant">Longmont AI</span>
             <br />
-            <span className="text-[var(--text-secondary)] text-xl sm:text-2xl font-normal">
+            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
               Meetup Starts In
             </span>
           </>
@@ -222,7 +223,7 @@ const Countdown: React.FC = () => {
 
       {/* Countdown display */}
       {!isLiveEvent && (
-        <div className="flex items-start gap-3 sm:gap-4 md:gap-5 mb-10 animate-scale-in">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 mb-10 animate-scale-in overflow-x-auto w-full px-4 sm:px-0 py-2">
           <Digit value={timeLeft.days} label="Days" />
           <Separator visible />
           <Digit value={timeLeft.hours} label="Hours" />
