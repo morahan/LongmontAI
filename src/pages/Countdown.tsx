@@ -1,9 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 
-// Longmont, Colorado — America/Denver (MDT/MST)
-const MEETUP_HOUR = 12; // noon MDT
+// ─── LongmontAI Meetup Schedule ─────────────────────────────────────────────
+// Every other Wednesday at noon (America/Denver / MDT)
+// Hardcoded reference: May 27, 2026 is a Wednesday meetup day.
+// Subsequent meetups are every 14 days from that date.
+const MEETUP_YEAR = 2026;
+const MEETUP_MONTH = 5; // 1-indexed
+const MEETUP_DAY = 27;
+const MEETUP_HOUR = 12; // noon local
 const MEETUP_DURATION_HOURS = 1;
+const INTERVAL_DAYS = 14;
+
+// Stable reference: May 27, 2026 noon = upcoming meetup
+const REFERENCE_MEETUP = new Date(MEETUP_YEAR, MEETUP_MONTH - 1, MEETUP_DAY, MEETUP_HOUR, 0, 0, 0);
+
+function getNextMeetup(localNow: Date): Date {
+  // Advance from reference in 14-day steps until we find a future meetup
+  let next = new Date(REFERENCE_MEETUP);
+  while (next.getTime() <= localNow.getTime()) {
+    next = new Date(next.getTime() + INTERVAL_DAYS * 24 * 60 * 60 * 1000);
+  }
+  return next;
+}
 
 interface TimeLeft {
   days: number;
@@ -15,49 +34,17 @@ interface TimeLeft {
   isPastToday: boolean;
 }
 
-function getNextWednesdayNoon(): Date {
-  const now = new Date();
-  const dow = now.getDay();
-  const daysUntilWed = (3 - dow + 7) % 7;
-  const nextWed = new Date(now);
-  nextWed.setDate(now.getDate() + daysUntilWed);
-  nextWed.setHours(MEETUP_HOUR, 0, 0, 0);
-  return nextWed;
-}
-
-function isLive(meetupTime: Date): boolean {
-  const now = new Date();
-  const endTime = new Date(meetupTime);
-  endTime.setHours(MEETUP_HOUR + MEETUP_DURATION_HOURS);
-  return now >= meetupTime && now < endTime;
-}
-
-function isPastTodayMeetup(): boolean {
-  const now = new Date();
-  const endTime = new Date();
-  endTime.setHours(MEETUP_HOUR + MEETUP_DURATION_HOURS, 0, 0, 0);
-  return now >= endTime;
+function getEndTime(meetup: Date): Date {
+  return new Date(meetup.getTime() + MEETUP_DURATION_HOURS * 60 * 60 * 1000);
 }
 
 function computeTimeLeft(): TimeLeft {
   const now = new Date();
-  const nextWed = getNextWednesdayNoon();
-  const todayDow = now.getDay();
-  const isWednesday = todayDow === 3;
-  const pastToday = isPastTodayMeetup();
+  const nextMeetup = getNextMeetup(now);
+  const endTime = getEndTime(nextMeetup);
+  const diff = nextMeetup.getTime() - now.getTime();
 
-  let targetDate: Date;
-  if (isWednesday && !pastToday) {
-    targetDate = nextWed;
-  } else {
-    targetDate = new Date(nextWed);
-    if (pastToday) {
-      targetDate.setDate(targetDate.getDate() + 14);
-    }
-  }
-
-  const diff = targetDate.getTime() - now.getTime();
-  const live = isLive(getNextWednesdayNoon());
+  const live = now >= nextMeetup && now < endTime;
 
   if (diff <= 0 && !live) {
     return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0, isLive: false, isPastToday: true };
@@ -68,7 +55,7 @@ function computeTimeLeft(): TimeLeft {
   const hours = Math.floor((diff / 1000 / 60 / 60) % 24);
   const days = Math.floor(diff / 1000 / 60 / 60 / 24);
 
-  return { days, hours, minutes, seconds, total: diff, isLive: live, isPastToday: pastToday };
+  return { days, hours, minutes, seconds, total: diff, isLive: live, isPastToday: false };
 }
 
 interface DigitProps {
@@ -181,11 +168,11 @@ const Countdown: React.FC = () => {
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
-  const nextWed = getNextWednesdayNoon();
+  const nextMeetup = getNextMeetup(new Date());
   const isLiveEvent = timeLeft.isLive;
   const isWednesday = new Date().getDay() === 3;
 
-  const meetupDateStr = nextWed.toLocaleDateString('en-US', {
+  const meetupDateStr = nextMeetup.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -236,7 +223,6 @@ const Countdown: React.FC = () => {
       {/* Countdown display */}
       {!isLiveEvent && (
         <div className="flex items-start gap-3 sm:gap-4 md:gap-5 mb-10 animate-scale-in">
-          <div className="text-white text-8xl font-bold">42</div>
           <Digit value={timeLeft.days} label="Days" />
           <Separator visible />
           <Digit value={timeLeft.hours} label="Hours" />
