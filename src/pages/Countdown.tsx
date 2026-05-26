@@ -236,6 +236,7 @@ const Countdown: React.FC = () => {
       {/* Countdown display */}
       {!isLiveEvent && (
         <div className="flex items-start gap-3 sm:gap-4 md:gap-5 mb-10 animate-scale-in">
+          <div className="text-white text-8xl font-bold">42</div>
           <Digit value={timeLeft.days} label="Days" />
           <Separator visible />
           <Digit value={timeLeft.hours} label="Hours" />
