@@ -24,20 +24,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="bg-mesh" />
 
             <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 header-glass">
-                <nav aria-label="Main navigation" className="container h-20 flex flex-row items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 group">
-                        <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
-                            <BrainCircuit size={20} className="text-[var(--accent-cyan)]" />
+                <nav aria-label="Main navigation" className="container h-16 sm:h-20 flex flex-row items-center justify-between px-4 sm:px-0">
+                    <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
+                            <BrainCircuit size={18} className="text-[var(--accent-cyan)]" />
                         </div>
-                        <span className="font-bold tracking-tight text-lg">LongmontAI</span>
+                        <span className="font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
                     </Link>
-                    <div className="flex items-center gap-6">
-                        <Link to="/" className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-                            <BookOpen size={16} />
+                    <div className="flex items-center gap-3 sm:gap-6">
+                        <Link to="/" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                            <BookOpen size={14} className="sm:!hidden" />
+                            <BookOpen size={16} className="hidden sm:block" />
                             <span>Blog</span>
                         </Link>
-                        <Link to="/countdown" className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-[var(--accent-cyan)]/40 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/15 transition-colors">
-                            <Clock size={14} />
+                        <Link to="/countdown" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded-lg border border-[var(--accent-cyan)]/40 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/15 transition-colors">
+                            <Clock size={12} className="sm:!hidden" />
+                            <Clock size={14} className="hidden sm:block" />
                             <span>Countdown</span>
                         </Link>
                     </div>
