@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local browser automation artifacts
+.playwright-cli/
+output/
+
 # Yarn
 .yarn/cache
 .yarn/install-state.gz
