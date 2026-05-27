@@ -94,8 +94,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link to="/about" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
-                                            About / Tools Used
+                                        <Link to="/tools" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
+                                            Tools Used
                                         </Link>
                                     </li>
                                     <li>
