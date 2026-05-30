@@ -100,7 +100,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </li>
                                     <li>
                                         <a
-                                            href="https://www.meetup.com/longmont-ai-for-business-owners-and-creators"
+                                            href="https://www.meetup.com/longmontai"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm inline-flex items-center gap-1.5"
@@ -120,7 +120,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <ul className="flex gap-3">
                                     <li>
                                         <a
-                                            href="https://www.meetup.com/longmont-ai-for-business-owners-and-creators"
+                                            href="https://www.meetup.com/longmontai"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Join us on Meetup"

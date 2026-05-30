@@ -285,7 +285,7 @@ const Countdown: React.FC = () => {
       {isLiveEvent && (
         <div className="mt-6 animate-fade-in-late">
           <a
-            href="https://www.meetup.com/longmont-ai-for-business-owners-and-creators"
+            href="https://www.meetup.com/longmontai"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-base font-semibold text-white transition-all"

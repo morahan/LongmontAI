@@ -85,12 +85,12 @@ const Feed: React.FC = () => {
                 <p className="text-[var(--text-primary)]">
                     Welcome to Longmont AI. To join our next meetup in 2026 check out{' '}
                     <a
-                        href="https://www.meetup.com/longmont-ai-for-business-owners-and-creators"
+                        href="https://www.meetup.com/longmontai"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[var(--accent-cyan)] hover:underline"
                     >
-                        meetup.com/longmont-ai-for-business-owners-and-creators
+                        meetup.com/longmontai
                     </a>
                 </p>
             </div>
