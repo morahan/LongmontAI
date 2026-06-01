@@ -19,6 +19,28 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    'the-agent-economy-gets-real': {
+        id: 'the-agent-economy-gets-real',
+        title: 'The Agent Economy Gets Real',
+        description: 'A meetup briefing on agent marketplaces, frontier model routing, token costs, coding agents, specs as product surface, and the shifting human role in an AI-driven economy.',
+        sourceUrl: '/slideshows/2026.05.27/agent-economy/the-agent-economy-gets-real.pptx',
+        slides: createSlides('/slideshows/2026.05.27/agent-economy', [
+            'The Agent Economy Gets Real',
+            'Frontier models are now a routing problem',
+            'Token demand is becoming industrial-scale throughput',
+            'Agents are turning into a labor market',
+            'Coding agents are becoming an operating stack',
+            'Specs are the new product surface',
+            'AI science crosses from headline to verification',
+            'Alignment progress is becoming measurable product work',
+            'Compute is the board the whole game is played on',
+            'Data centers are moving into the space race',
+            'Frontier labs are now macroeconomic actors',
+            'Price-performance becomes a strategy, not a footnote',
+            'The human job moves upstream',
+            'Build with agents. Price the loop. Verify the output.',
+        ]),
+    },
     'ai-avalanche': {
         id: 'ai-avalanche',
         title: 'The 2026 AI Avalanche',
