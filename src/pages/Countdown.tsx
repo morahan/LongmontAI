@@ -16,9 +16,10 @@ const INTERVAL_DAYS = 14;
 const REFERENCE_MEETUP = new Date(MEETUP_YEAR, MEETUP_MONTH - 1, MEETUP_DAY, MEETUP_HOUR, 0, 0, 0);
 
 function getNextMeetup(localNow: Date): Date {
-  // Advance from reference in 14-day steps until we find a future meetup
+  // Advance from reference in 14-day steps until we find a meetup that hasn't ended yet
   let next = new Date(REFERENCE_MEETUP);
-  while (next.getTime() <= localNow.getTime()) {
+  const durationMs = MEETUP_DURATION_HOURS * 60 * 60 * 1000;
+  while (next.getTime() + durationMs <= localNow.getTime()) {
     next = new Date(next.getTime() + INTERVAL_DAYS * 24 * 60 * 60 * 1000);
   }
   return next;
@@ -50,10 +51,12 @@ function computeTimeLeft(): TimeLeft {
     return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0, isLive: false, isPastToday: true };
   }
 
-  const seconds = Math.floor((diff / 1000) % 60);
-  const minutes = Math.floor((diff / 1000 / 60) % 60);
-  const hours = Math.floor((diff / 1000 / 60 / 60) % 24);
-  const days = Math.floor(diff / 1000 / 60 / 60 / 24);
+  // Ensure non-negative countdown values
+  const absDiff = Math.max(0, diff);
+  const seconds = Math.floor((absDiff / 1000) % 60);
+  const minutes = Math.floor((absDiff / 1000 / 60) % 60);
+  const hours = Math.floor((absDiff / 1000 / 60 / 60) % 24);
+  const days = Math.floor(absDiff / 1000 / 60 / 60 / 24);
 
   return { days, hours, minutes, seconds, total: diff, isLive: live, isPastToday: false };
 }
@@ -151,19 +154,19 @@ const playCelebrationSound = () => {
   }
 };
 
-function Confetti() {
+function Confetti({ count = 60 }: { count?: number }) {
   const pieces = React.useMemo<ConfettiPiece[]>(() => {
-    return Array.from({ length: 100 }, (_, i) => ({
+    return Array.from({ length: count }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
       size: Math.random() * 8 + 4,
-      delay: Math.random() * 3,
-      duration: Math.random() * 2 + 3,
+      delay: Math.random() * 5,
+      duration: Math.random() * 3 + 3,
       rotation: Math.random() * 360,
       drift: (Math.random() - 0.5) * 150,
     }));
-  }, []);
+  }, [count]);
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-[60]" aria-hidden="true">
@@ -252,8 +255,9 @@ const Countdown: React.FC = () => {
 
   return (
     <div className="relative min-h-[80vh] flex flex-col items-center justify-center text-center">
-      {/* Live confetti */}
-      {(isLiveEvent || isCelebrationActive) && <Confetti />}
+      {/* Live confetti: High density for initial celebration, sparse for general live state */}
+      {isCelebrationActive && <Confetti count={120} />}
+      {!isCelebrationActive && isLiveEvent && <Confetti count={30} />}
       
       {/* Celebration Overlay */}
       {isCelebrationActive && <CelebrationOverlay />}
