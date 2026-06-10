@@ -1123,6 +1123,46 @@ iframe {
   animation: scale-in 0.5s 0.2s ease both;
 }
 
+@keyframes celebration-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  20% {
+    transform: scale(1.1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  30% {
+    transform: scale(1);
+  }
+  80% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    filter: blur(20px);
+  }
+}
+
+.animate-celebration-pop {
+  animation: celebration-pop 7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes flash-in-out {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-flash-in-out {
+  animation: flash-in-out 2s ease-out forwards;
+}
+
 @keyframes live-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

@@ -112,22 +112,61 @@ const CONFETTI_COLORS = [
   '#ffffff',
 ];
 
+const playCelebrationSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const context = new AudioContext();
+    const masterGain = context.createGain();
+    masterGain.gain.setValueAtTime(0.15, context.currentTime);
+    masterGain.connect(context.destination);
+
+    // Gentle chime
+    const playNote = (freq: number, startTime: number, duration: number) => {
+      const osc = context.createOscillator();
+      const g = context.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      g.gain.setValueAtTime(0, startTime);
+      g.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      
+      osc.connect(g);
+      g.connect(masterGain);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    // Arpeggio: C5, E5, G5, C6
+    const now = context.currentTime;
+    playNote(523.25, now, 0.8);      // C5
+    playNote(659.25, now + 0.1, 0.8); // E5
+    playNote(783.99, now + 0.2, 0.8); // G5
+    playNote(1046.50, now + 0.3, 1.2); // C6
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
+
 function Confetti() {
   const pieces = React.useMemo<ConfettiPiece[]>(() => {
-    return Array.from({ length: 60 }, (_, i) => ({
+    return Array.from({ length: 100 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
       size: Math.random() * 8 + 4,
-      delay: Math.random() * 2,
-      duration: Math.random() * 2 + 2,
+      delay: Math.random() * 3,
+      duration: Math.random() * 2 + 3,
       rotation: Math.random() * 360,
-      drift: (Math.random() - 0.5) * 120,
+      drift: (Math.random() - 0.5) * 150,
     }));
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-[60]" aria-hidden="true">
       {pieces.map((p) => (
         <div
           key={p.id}
@@ -154,14 +193,41 @@ function Confetti() {
   );
 }
 
+const CelebrationOverlay: React.FC = () => {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+      <div className="text-center animate-celebration-pop">
+        <h2 className="text-6xl sm:text-8xl font-black text-white tracking-tighter mb-4 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+          IT'S TIME!
+        </h2>
+        <div className="h-1 w-24 bg-gradient-to-r from-transparent via-[var(--accent-cyan)] to-transparent mx-auto" />
+      </div>
+    </div>
+  );
+};
+
 const Countdown: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(computeTimeLeft);
+  const [isCelebrationActive, setIsCelebrationActive] = useState(false);
+  const [isFlashing, setIsFlashing] = useState(false);
   const rafRef = useRef<number>(0);
+  const prevIsLive = useRef(timeLeft.isLive);
 
   useEffect(() => {
     const tick = () => {
       const t = computeTimeLeft();
       setTimeLeft(t);
+
+      if (t.isLive && !prevIsLive.current) {
+        // Just went live!
+        playCelebrationSound();
+        setIsCelebrationActive(true);
+        setIsFlashing(true);
+        setTimeout(() => setIsCelebrationActive(false), 8000);
+        setTimeout(() => setIsFlashing(false), 2000);
+      }
+      prevIsLive.current = t.isLive;
+      
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -172,6 +238,12 @@ const Countdown: React.FC = () => {
   const isLiveEvent = timeLeft.isLive;
   const isWednesday = new Date().getDay() === 3;
 
+  // Calculate live minutes remaining
+  const endTime = getEndTime(nextMeetup);
+  const liveDiff = Math.max(0, endTime.getTime() - new Date().getTime());
+  const liveMinutes = Math.floor(liveDiff / (1000 * 60));
+  const liveProgress = liveMinutes / (MEETUP_DURATION_HOURS * 60);
+
   const meetupDateStr = nextMeetup.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -181,7 +253,15 @@ const Countdown: React.FC = () => {
   return (
     <div className="relative min-h-[80vh] flex flex-col items-center justify-center text-center">
       {/* Live confetti */}
-      {isLiveEvent && <Confetti />}
+      {(isLiveEvent || isCelebrationActive) && <Confetti />}
+      
+      {/* Celebration Overlay */}
+      {isCelebrationActive && <CelebrationOverlay />}
+
+      {/* Background Flash */}
+      {isFlashing && (
+        <div className="fixed inset-0 bg-white/5 z-[55] pointer-events-none animate-flash-in-out" />
+      )}
 
       {/* Hero badge */}
       <div className="mb-6 sm:mb-8 animate-fade-in px-4 sm:px-0">
@@ -243,7 +323,8 @@ const Countdown: React.FC = () => {
               cx="100" cy="100" r="90" fill="none"
               stroke="url(#liveGradient)" strokeWidth="8" strokeLinecap="round"
               strokeDasharray={2 * Math.PI * 90}
-              className="animate-ring-spin"
+              strokeDashoffset={2 * Math.PI * 90 * (1 - liveProgress)}
+              className="transition-all duration-1000 ease-linear"
             />
             <defs>
               <linearGradient id="liveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -253,7 +334,7 @@ const Countdown: React.FC = () => {
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-bold font-mono text-white">60</span>
+            <span className="text-4xl font-bold font-mono text-white">{liveMinutes}</span>
             <span className="text-sm text-[var(--text-muted)] font-mono">minutes</span>
           </div>
         </div>
