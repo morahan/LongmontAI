@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BrainCircuit, ExternalLink, Users, BookOpen, Clock } from 'lucide-react';
+import { BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -37,6 +37,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <BookOpen size={16} className="hidden sm:block" />
                             <span>Blog</span>
                         </Link>
+                        <a
+                            href="https://github.com/morahan/LongmontAI"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="View LongmontAI on GitHub"
+                            title="GitHub"
+                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                        >
+                            <Github size={14} className="sm:!hidden" />
+                            <Github size={16} className="hidden sm:block" />
+                            <span className="hidden sm:block">GitHub</span>
+                        </a>
                         <Link to="/countdown" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded-lg border border-[var(--accent-cyan)]/40 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/15 transition-colors">
                             <Clock size={12} className="sm:!hidden" />
                             <Clock size={14} className="hidden sm:block" />
