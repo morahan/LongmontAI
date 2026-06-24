@@ -373,10 +373,11 @@ The site is intentionally small:
 /countdown         Countdown   — days/hours/minutes/seconds to next meetup
 /edition/:id       Edition     — single article (Markdown from src/articles)
 /tools             Tools       — stack used to build the site
+/model-watch       Model Watch — source map for AI model updates
 /about             Placeholder — keep the route, fill in later
 ```
 
-Routes are defined in `src/App.tsx`. The footer exposes Home, Latest Edition, Tools Used, Meetup Page.
+Routes are defined in `src/App.tsx`. The footer exposes Home, Latest Edition, Model Watch, Tools Used, Meetup Page.
 
 ---
 
