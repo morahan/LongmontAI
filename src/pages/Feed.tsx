@@ -17,7 +17,7 @@ const Feed: React.FC = () => {
                 <SpaceNeuralBackground />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent pointer-events-none" />
                 
-                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10 pointer-events-none">
+                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
