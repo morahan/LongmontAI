@@ -3,12 +3,18 @@ export interface SlideshowSlide {
     src: string;
 }
 
+export interface SlideshowEmbed {
+    kind: 'pptx';
+    src: string;
+}
+
 export interface SlideshowDeck {
     id: string;
     title: string;
     description: string;
     sourceUrl: string;
-    slides: SlideshowSlide[];
+    slides?: SlideshowSlide[];
+    embed?: SlideshowEmbed;
 }
 
 function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
@@ -104,5 +110,15 @@ export const slideshowDecks: Record<string, SlideshowDeck> = {
             'The trilemma of scaling: the era of brute-force AI is ending',
             'Strategic imperatives for the physical reality of AI',
         ]),
+    },
+    'ai-landscape-june-2026': {
+        id: 'ai-landscape-june-2026',
+        title: 'The AI Landscape — June 2026',
+        description: 'A one-page state-of-play for the June 10 meetup: frontier models, coding harnesses, agent frameworks, and the open-weights frontier — captured one day after Claude Fable 5 landed.',
+        sourceUrl: '/slideshows/2026.06.10/ai-landscape/ai-landscape-june-2026.pptx',
+        embed: {
+            kind: 'pptx',
+            src: '/slideshows/2026.06.10/ai-landscape/ai-landscape-june-2026.pptx',
+        },
     },
 };

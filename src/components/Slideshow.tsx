@@ -22,9 +22,50 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
         );
     }
 
-    const slide = deck.slides[currentSlide];
-    const slideCount = deck.slides.length;
     const titleId = `slideshow-title-${deck.id}`;
+
+    // PPTX-style embed: render an iframe pointing at the source file via Office Online.
+    if (deck.embed) {
+        return (
+            <section className="slideshow-panel" aria-labelledby={titleId}>
+                <div className="slideshow-header">
+                    <div>
+                        <p className="slideshow-eyebrow">Slideshow</p>
+                        <h3 id={titleId}>{deck.title}</h3>
+                        <p>{deck.description}</p>
+                    </div>
+                    <a
+                        href={deck.sourceUrl}
+                        download
+                        className="slideshow-download"
+                        title={`Download ${deck.title}`}
+                    >
+                        <Download size={16} aria-hidden="true" />
+                        <span>Download PPTX</span>
+                    </a>
+                </div>
+                <div className="slideshow-embed-frame">
+                    {deck.embed.kind === 'pptx' ? (
+                        <iframe
+                            src={`https://view.officeapps.live.com/op/embed?src=${encodeURIComponent(
+                                typeof window !== 'undefined'
+                                    ? `${window.location.origin}${deck.embed.src}`
+                                    : deck.embed.src
+                            )}`}
+                            title={`${deck.title} (embedded PowerPoint)`}
+                            loading="lazy"
+                            allowFullScreen
+                        />
+                    ) : null}
+                </div>
+            </section>
+        );
+    }
+
+    // PNG-slide carousel: shared nav/dots over a list of static slide images.
+    const slides = deck.slides ?? [];
+    const slideCount = slides.length;
+    const slide = slides[currentSlide];
 
     function goToPrevious(): void {
         setCurrentSlide((current) => (current - 1 + slideCount) % slideCount);
@@ -84,7 +125,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
                     Slide {currentSlide + 1} of {slideCount}: {slide.title}
                 </p>
                 <div className="slideshow-dots" aria-label={`${deck.title} slide picker`}>
-                    {deck.slides.map((deckSlide, index) => (
+                    {slides.map((deckSlide, index) => (
                         <button
                             key={deckSlide.src}
                             type="button"

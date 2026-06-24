@@ -4,6 +4,8 @@ export * from './types';
 import { Edition } from './types';
 
 // Import markdown files as raw text
+import article_2026_06_24_fable_fallout from './2026.06.24-fable-fallout.md?raw';
+import article_2026_06_10 from './2026.06.10.md?raw';
 import article_2026_05_27 from './2026.05.27.md?raw';
 import article_2026_05_27_custom_apps from './2026.05.27-custom-apps.md?raw';
 import article_2026_04_29 from './2026.04.29.md?raw';
@@ -59,6 +61,8 @@ function parseMarkdownToEdition(raw: string): Edition {
 
 // Combined editions array (newest first)
 export const editions: Edition[] = [
+  parseMarkdownToEdition(article_2026_06_24_fable_fallout),
+  parseMarkdownToEdition(article_2026_06_10),
   parseMarkdownToEdition(article_2026_05_27),
   parseMarkdownToEdition(article_2026_05_27_custom_apps),
   parseMarkdownToEdition(article_2026_04_29),
