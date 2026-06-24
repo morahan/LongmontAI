@@ -1,0 +1,18 @@
+Thesis:
+AI strategy is shifting from choosing the smartest model to building routed, budgeted, verified workflows that survive access and cost shocks.
+
+Audience:
+Longmont AI meetup attendees and local builders reviewing the June 24 content.
+
+One-line arc:
+Fable shows the access shock, token maxxing shows the cost shock, GLM-5.2 shows the open-model hedge, and dynamic workflows show the operating model.
+
+Slides:
+1. Claim: The frontier has become an operating system problem. Proof: four-part rail of access, cost, workflow, verification.
+2. Claim: The big picture is routing, not one-model loyalty. Proof: model/workflow/cost/access operating map.
+3. Claim: The past two weeks compressed model access, token budgets, and open-model hedging into one story. Proof: June 17-22 timeline.
+4. Claim: Fable makes access risk visible even when capability is high. Proof: Fable 5 performance screenshot and access-risk callouts.
+5. Claim: Token maxxing turns cheaper tokens into larger bills when loops expand. Proof: agentic workflow cost diagram.
+6. Claim: Dynamic workflows are the missing harness for complex tasks. Proof: six workflow patterns diagram and use-case notes.
+7. Claim: Deep verification turns AI output into inspectable evidence. Proof: editable verification flow plus local goal-achieved evidence note.
+8. Claim: The operating plan is budget, route, verify, and watch the access layer. Proof: action matrix.

@@ -1,0 +1,20 @@
+task mode: create
+primary deck-profile: engineering-platform
+secondary profile gates: strategy-leadership for executive-level framing
+required proof objects:
+- workflow map from the provided Claude dynamic workflow diagram
+- Fable 5 performance screenshot from the provided June 24 folder
+- token-cost proof from the provided token-maxxing folder
+- verification operating model as editable flow
+source/asset requirements:
+- use only June 10-24 reporting, the LAI-June24th folder, and the Claude workflow link supplied by the user
+- keep selected screenshots in this presentation workspace only unless explicitly needed by the site
+brand authenticity constraints:
+- no fabricated logos or official marks
+- source names can appear as text only
+profile-specific QA gates:
+- claims must point to a concrete workflow/cost/access proof object
+- technical labels must remain specific and legible
+- diagrams must preserve direction and containment
+known missing inputs:
+- no source PPT/template; create a fresh editable deck

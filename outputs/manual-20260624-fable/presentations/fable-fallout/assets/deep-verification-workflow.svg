@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1350" viewBox="0 0 2400 1350">
+  <rect width="2400" height="1350" fill="#07090D"/>
+  <rect y="0" width="2400" height="18" fill="#37D99E"/>
+  <g opacity="0.18">
+    <path d="M160 250 H2240" stroke="#253142" stroke-width="2"/>
+    <path d="M160 520 H2240" stroke="#253142" stroke-width="2"/>
+    <path d="M160 790 H2240" stroke="#253142" stroke-width="2"/>
+    <path d="M160 1060 H2240" stroke="#253142" stroke-width="2"/>
+  </g>
+  <text x="150" y="145" fill="#A9B4C3" font-family="Aptos Mono, Menlo, monospace" font-size="34" font-weight="700" letter-spacing="2">DEEP VERIFICATION</text>
+  <text x="150" y="235" fill="#F8FAFC" font-family="Aptos Display, Aptos, Arial, sans-serif" font-size="88" font-weight="800">Do not ask one model to check itself.</text>
+  <text x="154" y="306" fill="#A9B4C3" font-family="Aptos, Arial, sans-serif" font-size="42">Split the work into claims, sources, and independent verification passes.</text>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#37D99E"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="150" y="430" width="380" height="240" rx="26" fill="#101620" stroke="#253142" stroke-width="3"/>
+    <rect x="150" y="430" width="380" height="10" rx="5" fill="#42D9EA"/>
+    <text x="195" y="505" fill="#42D9EA" font-family="Aptos Mono, Menlo, monospace" font-size="28" font-weight="700">01 CLAIMS</text>
+    <text x="195" y="580" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">Extract factual</text>
+    <text x="195" y="632" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">claims first.</text>
+
+    <rect x="700" y="430" width="380" height="240" rx="26" fill="#101620" stroke="#253142" stroke-width="3"/>
+    <rect x="700" y="430" width="380" height="10" rx="5" fill="#FF7A59"/>
+    <text x="745" y="505" fill="#FF7A59" font-family="Aptos Mono, Menlo, monospace" font-size="28" font-weight="700">02 SUBAGENTS</text>
+    <text x="745" y="580" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">Check each</text>
+    <text x="745" y="632" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">claim separately.</text>
+
+    <rect x="1250" y="430" width="380" height="240" rx="26" fill="#101620" stroke="#253142" stroke-width="3"/>
+    <rect x="1250" y="430" width="380" height="10" rx="5" fill="#F5C86A"/>
+    <text x="1295" y="505" fill="#F5C86A" font-family="Aptos Mono, Menlo, monospace" font-size="28" font-weight="700">03 SOURCES</text>
+    <text x="1295" y="580" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">Verify source</text>
+    <text x="1295" y="632" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">quality too.</text>
+
+    <rect x="1800" y="430" width="380" height="240" rx="26" fill="#101620" stroke="#253142" stroke-width="3"/>
+    <rect x="1800" y="430" width="380" height="10" rx="5" fill="#37D99E"/>
+    <text x="1845" y="505" fill="#37D99E" font-family="Aptos Mono, Menlo, monospace" font-size="28" font-weight="700">04 DECIDE</text>
+    <text x="1845" y="580" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">Publish, revise,</text>
+    <text x="1845" y="632" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="44" font-weight="800">or escalate.</text>
+  </g>
+
+  <path d="M545 550 H670" stroke="#37D99E" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M1095 550 H1220" stroke="#37D99E" stroke-width="8" marker-end="url(#arrow)"/>
+  <path d="M1645 550 H1770" stroke="#37D99E" stroke-width="8" marker-end="url(#arrow)"/>
+
+  <rect x="305" y="840" width="1790" height="260" rx="34" fill="#101620" stroke="#253142" stroke-width="3"/>
+  <text x="380" y="930" fill="#37D99E" font-family="Aptos Display, Aptos, Arial, sans-serif" font-size="58" font-weight="800">Why it matters</text>
+  <text x="380" y="1018" fill="#F8FAFC" font-family="Aptos, Arial, sans-serif" font-size="48" font-weight="700">Verification becomes a workflow, not a vibe.</text>
+  <text x="380" y="1088" fill="#A9B4C3" font-family="Aptos, Arial, sans-serif" font-size="38">The harness spends extra tokens only where the claim is worth proving.</text>
+
+  <text x="150" y="1254" fill="#64748B" font-family="Aptos Mono, Menlo, monospace" font-size="24">Based on Claude Code dynamic workflow article: claim extraction, subagent checks, source verification.</text>
+</svg>

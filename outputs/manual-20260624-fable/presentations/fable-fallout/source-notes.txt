@@ -1,0 +1,19 @@
+Allowed source boundary:
+- June 10-24, 2026 reporting.
+- User-provided folder: /Users/msfm/Desktop/LAI-June24th.
+- User-provided Claude Code blog link: https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code.
+
+Source links used:
+- Claude Code dynamic workflows blog, dated June 2, 2026, explicitly supplied by the user.
+- Economic Times token maxxing article, last updated June 22, 2026.
+- Economic Times GLM-5.2 benchmark article, June 17, 2026.
+- Times of India Fable 5 and Mythos 5 licensing-letter reporting, June 17, 2026.
+
+Assets embedded:
+- assets/fable5-agentic-coding.png from /Users/msfm/Desktop/LAI-June24th/Fable 5/Fable5.png.
+- assets/agentic-workflows-cost-more.png from /Users/msfm/Desktop/LAI-June24th/Token Maxxing/Agentic Workflows Cost More Despite Cheaper Tokens (2026-06-17).png.
+- assets/six-workflow-patterns.png from /Users/msfm/Desktop/LAI-June24th/Big Picture/Anthropic-Workflow-Patterns.png.
+- assets/goal-achieved-verification.png from /Users/msfm/Desktop/LAI-June24th/Goal Achieved Example.png.
+
+Identity assets:
+- None. No logos or app icons are embedded.

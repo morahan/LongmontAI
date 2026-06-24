@@ -1,0 +1,11 @@
+Slide 1: dark cover with right proof rail.
+Slide 2: operating map with four horizontal layers.
+Slide 3: horizontal timeline with four dated events.
+Slide 4: split evidence slide with Fable screenshot and access-risk callouts.
+Slide 5: split proof slide with token diagram and budget rules.
+Slide 6: diagram-first slide using six workflow patterns.
+Slide 7: editable process flow for deep verification.
+Slide 8: action matrix with four operating moves.
+
+Macro-layout count: 8 distinct slide families.
+No consecutive three-slide repeats. No default card-grid cadence.

@@ -1,0 +1,24 @@
+Fable Fallout briefing QA
+
+Created: 2026-06-24
+Deck: output/fable-fallout-briefing.pptx
+Slides: 8
+
+Source boundary:
+- Used June 10-24 reporting, the supplied June 24 reference folder, and the explicitly supplied Claude Code workflow article.
+- Embedded selected reference images only where they clarify the story: Fable 5 chart, six workflow patterns, token cost diagram, and Goal Achieved verification example.
+
+Checks run:
+- artifact deck export: passed
+- preview PNG export: passed
+- manual contact-sheet review: passed
+- layout quality checker: 0 errors, 33 warnings
+
+Known acceptable warnings:
+- Several compact card text boxes are flagged as tight by the automated checker.
+- Manual preview review shows no visible clipping after spacing fixes on slides 1, 4, 7, and 8.
+
+Review notes:
+- The deck reads as a concise blog-outline briefing rather than a screenshot dump.
+- The six workflow diagram and deep verification idea are highlighted in slide 5.
+- Token Maxxing and GLM local/cloud inference are treated as action-step slides.

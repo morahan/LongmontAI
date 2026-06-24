@@ -1,0 +1,19 @@
+slide size: 1280x720
+background system: warm off-white canvas with deep ink title slides and orange/cyan accent rules
+typography: Aptos Display for claims, Aptos for body, Aptos Mono for source/date labels
+palette:
+- deep ink #121417 for cover and high-contrast panels
+- paper #F7F3EA for main canvas
+- charcoal #20242A for primary copy
+- muted #6B6F76 for supporting copy
+- orange #E26D4F for Fable/access and emphasis
+- cyan #39AFC6 for workflow/verification
+- green #2CB67D for local/open model hedge
+chart grammar: direct labels, no legends unless inherited inside screenshots
+diagram grammar: numbered stages, clean connector lines, clear containment
+container grammar: square corners, hairline borders, no decorative nested cards
+source/footer grammar: 10px mono text, lower left source, lower right page marker
+kicker grammar: 12px uppercase mono label with small accent rule
+brand asset policy: no official logos or pseudo-logos
+allowed layouts: cover rail, operating map, timeline, evidence+callout, image-led proof, workflow diagram, process flow, action matrix
+banned motifs: decorative blobs, generic icons as filler, repeated card grids, screenshot gallery dumping
