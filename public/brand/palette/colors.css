@@ -1,0 +1,47 @@
+/* Longmont AI — Brand color tokens
+ * Drop into :root, or scope to a brand wrapper.
+ * Source of truth: src/index.css  — these tokens mirror that file 1:1.
+ * Re-exported here so brand assets (slides, social cards, deck PNGs)
+ * can reference the same palette the site ships.
+ */
+:root {
+  /* Surfaces — Zinc-based dark glass UI */
+  --la-bg-deep:        #09090b;  /* Zinc 950 — page background */
+  --la-bg-card:        #18181b;  /* Zinc 900 — cards, panels */
+  --la-bg-card-hover:  #27272a;  /* Zinc 800 — card hover */
+
+  /* Accents — vibrant editorial palette */
+  --la-sunset:         #FF9E64;  /* warm orange  — sunset highlight */
+  --la-pink:           #FF0080;  /* magenta      — gradient stop */
+  --la-purple:         #7928CA;  /* primary gradient stop + card hover glow */
+  --la-cyan:           #00F0FF;  /* electric cyan — editorial energy */
+  --la-blue:           #007CF0;  /* link blue    — primary CTA / links */
+
+  /* Text */
+  --la-text-primary:   #FFFFFF;
+  --la-text-secondary: #A1A1AA;  /* Zinc 400 */
+  --la-text-muted:     #71717A;  /* Zinc 500 */
+
+  /* Glass surfaces */
+  --la-glass-bg:        rgba(24, 24, 27, 0.7);
+  --la-glass-border:    rgba(255, 255, 255, 0.08);
+  --la-glass-highlight: rgba(255, 255, 255, 0.15);
+  --la-glass-shadow:    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* Gradients — used in editorial type, deck slides, hero overlays */
+  --la-grad-vibrant:   linear-gradient(to right,
+                          var(--la-blue) 0%,
+                          var(--la-purple) 50%,
+                          var(--la-pink) 100%);
+  --la-grad-blue-purple: linear-gradient(to right, var(--la-blue), var(--la-purple));
+  --la-grad-cyan-purple: linear-gradient(135deg, var(--la-cyan), var(--la-purple));
+  --la-grad-sunset-pink: linear-gradient(135deg, var(--la-sunset), var(--la-pink));
+
+  /* Semantic aliases — what components should reach for first */
+  --la-bg:              var(--la-bg-deep);
+  --la-fg:              var(--la-text-primary);
+  --la-fg-muted:        var(--la-text-secondary);
+  --la-accent:          var(--la-cyan);          /* editorial energy */
+  --la-accent-ui:       var(--la-blue);          /* UI chrome (links, buttons) */
+  --la-link:            var(--la-blue);
+}

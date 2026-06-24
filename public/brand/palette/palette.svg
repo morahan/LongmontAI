@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="Beleza, Georgia, serif">
+  <rect width="1600" height="900" fill="#09090b"/>
+
+  <text x="80" y="100" font-size="56" fill="#FFFFFF" font-weight="700">Longmont AI · Color System</text>
+  <text x="80" y="140" font-size="22" fill="#A1A1AA">Source of truth: the running site. Zinc-based dark glass UI with vibrant editorial accents.</text>
+
+  <!-- Accent row -->
+  <text x="80" y="210" font-size="20" fill="#71717A" letter-spacing="3">ACCENTS</text>
+  <g transform="translate(80,230)">
+    <rect width="290" height="200" rx="12" fill="#FF9E64"/>
+    <text x="20" y="160" font-size="22" fill="#14101F" font-weight="700">Sunset</text>
+    <text x="20" y="188" font-size="18" fill="#14101F" opacity="0.85">#FF9E64</text>
+  </g>
+  <g transform="translate(390,230)">
+    <rect width="290" height="200" rx="12" fill="#FF0080"/>
+    <text x="20" y="160" font-size="22" fill="#FFFFFF" font-weight="700">Pink</text>
+    <text x="20" y="188" font-size="18" fill="#FFFFFF" opacity="0.85">#FF0080</text>
+  </g>
+  <g transform="translate(700,230)">
+    <rect width="290" height="200" rx="12" fill="#7928CA"/>
+    <text x="20" y="160" font-size="22" fill="#FFFFFF" font-weight="700">Purple</text>
+    <text x="20" y="188" font-size="18" fill="#FFFFFF" opacity="0.85">#7928CA</text>
+  </g>
+  <g transform="translate(1010,230)">
+    <rect width="290" height="200" rx="12" fill="#00F0FF"/>
+    <text x="20" y="160" font-size="22" fill="#14101F" font-weight="700">Cyan</text>
+    <text x="20" y="188" font-size="18" fill="#14101F" opacity="0.85">#00F0FF</text>
+  </g>
+  <g transform="translate(1320,230)">
+    <rect width="200" height="200" rx="12" fill="#007CF0"/>
+    <text x="14" y="160" font-size="22" fill="#FFFFFF" font-weight="700">Blue</text>
+    <text x="14" y="188" font-size="18" fill="#FFFFFF" opacity="0.85">#007CF0</text>
+  </g>
+
+  <!-- Surface row -->
+  <text x="80" y="490" font-size="20" fill="#71717A" letter-spacing="3">SURFACES · ZINC</text>
+  <g transform="translate(80,510)">
+    <rect width="290" height="160" rx="12" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+    <text x="20" y="100" font-size="22" fill="#FFFFFF" font-weight="700">bg-deep</text>
+    <text x="20" y="128" font-size="18" fill="#A1A1AA" opacity="0.85">#09090b · page bg</text>
+  </g>
+  <g transform="translate(390,510)">
+    <rect width="290" height="160" rx="12" fill="#18181b"/>
+    <text x="20" y="100" font-size="22" fill="#FFFFFF" font-weight="700">bg-card</text>
+    <text x="20" y="128" font-size="18" fill="#A1A1AA" opacity="0.85">#18181b · panels</text>
+  </g>
+  <g transform="translate(700,510)">
+    <rect width="290" height="160" rx="12" fill="#27272a"/>
+    <text x="20" y="100" font-size="22" fill="#FFFFFF" font-weight="700">bg-card-hover</text>
+    <text x="20" y="128" font-size="18" fill="#A1A1AA" opacity="0.85">#27272a · lift</text>
+  </g>
+
+  <!-- Text row -->
+  <text x="80" y="720" font-size="20" fill="#71717A" letter-spacing="3">TEXT</text>
+  <g transform="translate(80,740)">
+    <rect width="200" height="120" rx="10" fill="#18181b"/>
+    <text x="14" y="78" font-size="22" fill="#FFFFFF" font-weight="700">Primary</text>
+    <text x="14" y="100" font-size="14" fill="#71717A" font-family="JetBrains Mono, monospace">#FFFFFF</text>
+  </g>
+  <g transform="translate(300,740)">
+    <rect width="200" height="120" rx="10" fill="#18181b"/>
+    <text x="14" y="78" font-size="22" fill="#A1A1AA" font-weight="700">Secondary</text>
+    <text x="14" y="100" font-size="14" fill="#71717A" font-family="JetBrains Mono, monospace">#A1A1AA</text>
+  </g>
+  <g transform="translate(520,740)">
+    <rect width="200" height="120" rx="10" fill="#18181b"/>
+    <text x="14" y="78" font-size="22" fill="#71717A" font-weight="700">Muted</text>
+    <text x="14" y="100" font-size="14" fill="#71717A" font-family="JetBrains Mono, monospace">#71717A</text>
+  </g>
+
+  <!-- Gradient strip -->
+  <text x="800" y="720" font-size="20" fill="#71717A" letter-spacing="3">SIGNATURE GRADIENT</text>
+  <g transform="translate(800,740)">
+    <defs>
+      <linearGradient id="grad-vibrant" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#007CF0"/>
+        <stop offset="50%" stop-color="#7928CA"/>
+        <stop offset="100%" stop-color="#FF0080"/>
+      </linearGradient>
+    </defs>
+    <rect width="720" height="120" rx="10" fill="url(#grad-vibrant)"/>
+    <text x="20" y="80" font-size="22" fill="#FFFFFF" font-weight="700">text-gradient-vibrant</text>
+    <text x="20" y="102" font-size="14" fill="#FFFFFF" opacity="0.85" font-family="JetBrains Mono, monospace">#007CF0 → #7928CA → #FF0080</text>
+  </g>
+</svg>

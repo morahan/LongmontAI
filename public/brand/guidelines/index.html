@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Longmont AI · Brand Guidelines</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Beleza&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* Longmont AI brand tokens — mirrors src/index.css 1:1 */
+    :root {
+      --la-bg-deep:       #09090b;
+      --la-bg-card:       #18181b;
+      --la-bg-card-hover: #27272a;
+      --la-sunset:        #FF9E64;
+      --la-pink:          #FF0080;
+      --la-purple:        #7928CA;
+      --la-cyan:          #00F0FF;
+      --la-blue:          #007CF0;
+      --la-text-primary:  #FFFFFF;
+      --la-text-secondary:#A1A1AA;
+      --la-text-muted:    #71717A;
+      --la-glass-border:  rgba(255, 255, 255, 0.08);
+      --la-grad-vibrant:  linear-gradient(to right, #007CF0 0%, #7928CA 50%, #FF0080 100%);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Beleza', 'Charter', 'Georgia', serif;
+      background: var(--la-bg-deep);
+      color: var(--la-text-primary);
+      line-height: 1.6;
+      padding: 60px 40px 120px;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Soft mesh atmosphere matching the site */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 15% 50%, rgba(121, 40, 202, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+      filter: blur(60px);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 64px; font-weight: 700; letter-spacing: -1px; margin-bottom: 8px; }
+    h1 .accent {
+      background: var(--la-grad-vibrant);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    h2 {
+      font-size: 28px; font-weight: 700; margin: 64px 0 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--la-glass-border);
+      letter-spacing: 4px; text-transform: uppercase;
+      color: var(--la-text-primary);
+    }
+    h3 { font-size: 22px; margin: 28px 0 14px; color: var(--la-cyan); }
+    p, li { font-size: 18px; color: var(--la-text-secondary); margin-bottom: 12px; }
+    .lede { font-size: 22px; color: var(--la-text-secondary); margin-bottom: 40px; max-width: 720px; }
+    .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .swatch {
+      border-radius: 12px; padding: 24px 18px; min-height: 160px;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      border: 1px solid var(--la-glass-border);
+      position: relative; overflow: hidden;
+    }
+    .swatch .name { font-weight: 700; font-size: 20px; font-family: 'Beleza', serif; }
+    .swatch .hex { font-size: 13px; opacity: 0.9; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; margin-top: 2px; }
+    .swatch .role { font-size: 13px; opacity: 0.85; margin-top: 6px; line-height: 1.4; }
+
+    .swatch.sunset      { background: var(--la-sunset); color: #14101F; }
+    .swatch.pink        { background: var(--la-pink); color: #FFFFFF; }
+    .swatch.purple      { background: var(--la-purple); color: #FFFFFF; }
+    .swatch.cyan        { background: var(--la-cyan); color: #14101F; }
+    .swatch.blue        { background: var(--la-blue); color: #FFFFFF; }
+    .swatch.bg-deep     { background: var(--la-bg-deep); color: var(--la-text-primary); border-color: var(--la-bg-card-hover); }
+    .swatch.bg-card     { background: var(--la-bg-card); color: var(--la-text-primary); }
+    .swatch.bg-card-hover { background: var(--la-bg-card-hover); color: var(--la-text-primary); }
+    .swatch.text-primary   { background: #18181b; color: #FFFFFF; }
+    .swatch.text-secondary { background: #18181b; color: #A1A1AA; }
+    .swatch.text-muted     { background: #18181b; color: #71717A; }
+
+    .gradient-strip {
+      height: 120px; border-radius: 12px; border: 1px solid var(--la-glass-border);
+      background: var(--la-grad-vibrant);
+      display: flex; align-items: flex-end; padding: 18px 22px;
+      color: #FFFFFF;
+    }
+    .gradient-strip .name { font-weight: 700; font-size: 22px; }
+    .gradient-strip .hex { font-size: 13px; opacity: 0.9; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+
+    .logo-card {
+      background: var(--la-bg-card);
+      border: 1px solid var(--la-glass-border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .logo-card .preview {
+      display: flex; align-items: center; justify-content: center;
+      padding: 36px; min-height: 180px;
+    }
+    .logo-card .preview.bg-deep { background: var(--la-bg-deep); }
+    .logo-card .preview.bg-card { background: var(--la-bg-card); }
+    .logo-card .preview img { max-width: 100%; max-height: 140px; }
+    .logo-card .label {
+      padding: 12px 16px; font-size: 13px; color: var(--la-text-secondary);
+      border-top: 1px solid var(--la-glass-border);
+      letter-spacing: 1px; text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .do-dont { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+    .do, .dont {
+      padding: 16px 20px; border-radius: 10px; font-size: 16px;
+      border-left: 4px solid;
+      background: var(--la-bg-card);
+      color: var(--la-text-secondary);
+    }
+    .do { border-color: var(--la-cyan); }
+    .dont { border-color: var(--la-pink); }
+    .do strong, .dont strong { display: block; margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+    .do strong { color: var(--la-cyan); }
+    .dont strong { color: var(--la-pink); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--la-glass-border); font-size: 15px; }
+    th { color: var(--la-text-muted); text-transform: uppercase; letter-spacing: 2px; font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    td.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--la-text-secondary); }
+    .pill {
+      display: inline-block; padding: 5px 12px; border-radius: 999px;
+      background: var(--la-bg-card); color: var(--la-cyan);
+      border: 1px solid var(--la-cyan); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--la-cyan);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .display-sample {
+      font-size: 64px; font-weight: 700; letter-spacing: -1.5px; line-height: 1.05;
+      margin-top: 16px;
+    }
+    .display-sample .accent {
+      background: var(--la-grad-vibrant);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    footer { margin-top: 80px; font-size: 14px; color: var(--la-text-muted); border-top: 1px solid var(--la-glass-border); padding-top: 24px; font-family: 'JetBrains Mono', monospace; }
+    footer a { color: var(--la-blue); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <span class="pill">Brand Guidelines · v2.0</span>
+      <h1 style="margin-top:24px;">Longmont <span class="accent">AI</span></h1>
+      <p class="lede">Community AI meetups in Longmont, Colorado. Curated insights into the rapidly evolving world of Artificial Intelligence.</p>
+    </header>
+
+    <h2>Logo</h2>
+    <p>Our mark is a stylized cubist parrot — a nod to the colorful, geometric source artwork — that doubles as the letter <strong style="color:var(--la-cyan)">I</strong> in our wordmark. It always reads as part of "AI", and prefers room to breathe.</p>
+
+    <div class="grid" style="margin-top:24px;">
+      <div class="logo-card">
+        <div class="preview bg-deep"><img src="../logo/wordmark-horizontal-color.svg" alt="Horizontal color wordmark" /></div>
+        <div class="label">Horizontal · Color · on dark</div>
+      </div>
+      <div class="logo-card">
+        <div class="preview bg-card"><img src="../logo/wordmark-horizontal-on-dark.svg" alt="Horizontal on dark" /></div>
+        <div class="label">Horizontal · Color · on dark</div>
+      </div>
+      <div class="logo-card">
+        <div class="preview bg-deep"><img src="../logo/wordmark-stacked-color.svg" alt="Stacked wordmark" /></div>
+        <div class="label">Stacked · Color · with tagline</div>
+      </div>
+      <div class="logo-card">
+        <div class="preview bg-card"><img src="../logo/wordmark-horizontal-mono-dark.svg" alt="Mono dark" /></div>
+        <div class="label">Horizontal · Mono</div>
+      </div>
+      <div class="logo-card">
+        <div class="preview bg-card"><img src="../logo/parrot-color.svg" alt="Parrot mark only" style="max-height:160px;" /></div>
+        <div class="label">Mark only · for tight spaces</div>
+      </div>
+      <div class="logo-card">
+        <div class="preview bg-card"><img src="../logo/parrot-single-sunset.svg" alt="Single-color sunset parrot" style="max-height:160px;" /></div>
+        <div class="label">Mark · single-color sunset</div>
+      </div>
+    </div>
+
+    <h3>Clear space &amp; minimum size</h3>
+    <ul>
+      <li>Maintain clear space equal to the cap height of "L" on every side of the lockup.</li>
+      <li>Minimum print size: <strong style="color:var(--la-text-primary)">32mm</strong> wide for the horizontal lockup.</li>
+      <li>Minimum digital size: <strong style="color:var(--la-text-primary)">140px</strong> wide. Below that, switch to the parrot mark or favicon.</li>
+    </ul>
+
+    <h3>Do / don't</h3>
+    <div class="do-dont">
+      <div class="do"><strong>DO</strong>Place the wordmark on a solid brand surface with sufficient contrast.</div>
+      <div class="dont"><strong>DON'T</strong>Place the color logo on busy photography or low-contrast backgrounds.</div>
+      <div class="do"><strong>DO</strong>Use the parrot icon alone when the wordmark won't fit (avatars, app icons, watermarks).</div>
+      <div class="dont"><strong>DON'T</strong>Recolor, restretch, rotate, or add effects (drop shadow, stroke, glow) to the mark.</div>
+      <div class="do"><strong>DO</strong>Treat the parrot as the letter "I" — it sits at cap height, baseline-aligned with the text.</div>
+      <div class="dont"><strong>DON'T</strong>Substitute the parrot for any letter other than "I", or float it disconnected from the wordmark.</div>
+    </div>
+
+    <h2>Color</h2>
+    <p>One palette. The running site (<code>src/index.css</code>) is the source of truth — every token here maps 1:1 to a CSS variable shipped in production. Use these in slides, social cards, OG images, deck PNGs, and printed merch. Don't invent new shades.</p>
+
+    <div class="eyebrow" style="margin-top:32px;">Accents</div>
+    <div class="grid">
+      <div class="swatch sunset"><div class="name">Sunset</div><div class="hex">#FF9E64</div><div class="role">Warm highlight, eyebrow type</div></div>
+      <div class="swatch pink"><div class="name">Pink</div><div class="hex">#FF0080</div><div class="role">Gradient stop, callouts</div></div>
+      <div class="swatch purple"><div class="name">Purple</div><div class="hex">#7928CA</div><div class="role">Primary gradient, card hover glow</div></div>
+      <div class="swatch cyan"><div class="name">Cyan</div><div class="hex">#00F0FF</div><div class="role">Editorial energy, sparkles</div></div>
+      <div class="swatch blue"><div class="name">Blue</div><div class="hex">#007CF0</div><div class="role">UI chrome, links, CTAs</div></div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:32px;">Surfaces — Zinc dark glass</div>
+    <div class="grid">
+      <div class="swatch bg-deep"><div class="name">bg-deep</div><div class="hex">#09090b</div><div class="role">Page background</div></div>
+      <div class="swatch bg-card"><div class="name">bg-card</div><div class="hex">#18181b</div><div class="role">Cards, panels, glass</div></div>
+      <div class="swatch bg-card-hover"><div class="name">bg-card-hover</div><div class="hex">#27272a</div><div class="role">Card hover lift</div></div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:32px;">Text</div>
+    <div class="grid">
+      <div class="swatch text-primary"><div class="name">Primary</div><div class="hex">#FFFFFF</div><div class="role">Headlines, body</div></div>
+      <div class="swatch text-secondary"><div class="name">Secondary</div><div class="hex">#A1A1AA</div><div class="role">Muted body, captions</div></div>
+      <div class="swatch text-muted"><div class="name">Muted</div><div class="hex">#71717A</div><div class="role">Metadata, timestamps</div></div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:32px;">Signature gradient</div>
+    <div class="gradient-strip">
+      <div>
+        <div class="name">text-gradient-vibrant</div>
+        <div class="hex">#007CF0 → #7928CA → #FF0080</div>
+      </div>
+    </div>
+
+    <h3>Two cyans — pick deliberately</h3>
+    <ul>
+      <li><strong style="color:var(--la-cyan)">Cyan <code>#00F0FF</code></strong> — for <em>content energy</em>. Hero eyebrow ("AI-GENERATED ART"), sparkles icon, gradient text. Reads as "AI / future."</li>
+      <li><strong style="color:var(--la-blue)">Blue <code>#007CF0</code></strong> — for <em>UI chrome</em>. Nav links, the Countdown pill border, info banners. Reads as "trustworthy link."</li>
+    </ul>
+
+    <h3>Usage rules</h3>
+    <ul>
+      <li><strong style="color:var(--la-text-primary)">Sunset</strong> is the warm highlight — eyebrows, hero accents. Don't use for body type.</li>
+      <li><strong style="color:var(--la-text-primary)">Cyan</strong> signals editorial energy. Reserve for moments you want to feel "AI."</li>
+      <li><strong style="color:var(--la-text-primary)">Blue</strong> is the everyday link color. Use it for any interactive surface.</li>
+      <li><strong style="color:var(--la-text-primary)">Purple</strong> powers the signature gradient and the card hover glow. Don't paint solid blocks of it.</li>
+      <li><strong style="color:var(--la-text-primary)">Pink</strong> is the closing gradient stop and callout color. Don't use for body type.</li>
+      <li><strong style="color:var(--la-text-primary)">Surfaces</strong> are Zinc 950 → 900 → 800. Always test card-on-bg contrast before shipping.</li>
+    </ul>
+
+    <h2>Typography</h2>
+    <p>Display and body type both use <strong style="color:var(--la-text-primary)">Beleza</strong>, a warm contemporary serif that pairs naturally with the cubist mark. When Beleza is unavailable, fall back to <strong style="color:var(--la-text-primary)">Charter</strong> (macOS), <strong style="color:var(--la-text-primary)">Georgia</strong>, or any serif system font. Editorial metadata uses <strong style="color:var(--la-text-primary)">JetBrains Mono</strong>.</p>
+
+    <div class="display-sample">
+      Talks worth <span class="accent">showing up for.</span>
+    </div>
+    <p style="margin-top:16px;">Body copy stays generous — 19.2px base on the site, with tighter tracking on display sizes.</p>
+
+    <h2>Social specs</h2>
+    <table>
+      <thead><tr><th>Asset</th><th>Size (px)</th><th>File</th></tr></thead>
+      <tbody>
+        <tr><td>Open Graph image</td><td>1200 × 630</td><td class="mono">/brand/social/og-image.png</td></tr>
+        <tr><td>X / Twitter header</td><td>1500 × 500</td><td class="mono">/brand/social/twitter-header.png</td></tr>
+        <tr><td>LinkedIn company banner</td><td>1584 × 396</td><td class="mono">/brand/social/linkedin-banner.png</td></tr>
+        <tr><td>YouTube channel banner</td><td>2560 × 1440</td><td class="mono">/brand/social/youtube-banner.png</td></tr>
+        <tr><td>Facebook cover</td><td>820 × 312</td><td class="mono">/brand/social/facebook-cover.png</td></tr>
+        <tr><td>Profile avatar (square / circle-safe)</td><td>1080 × 1080</td><td class="mono">/brand/social/avatar-1080.png</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Animated logo</h2>
+    <p>The hero artwork has a 5-second motion variant. Use it sparingly — once per page, ideally above the fold. Always provide a poster image so the visual loads instantly.</p>
+    <ul>
+      <li><span class="mono">/brand/logo/logo-animated.webm</span> — best for modern web (~640 KB)</li>
+      <li><span class="mono">/brand/logo/logo-animated-512.mp4</span> — fallback (~410 KB)</li>
+      <li><span class="mono">/brand/logo/logo-animated-poster.png</span> — first-paint poster</li>
+    </ul>
+
+    <h2>Voice</h2>
+    <p>Curious, generous, humble. We are a community — never marketers. Lead with what attendees will <em>learn</em> and <em>build</em>, not what they will <em>buy</em>. Keep tone plainspoken and welcoming. Assume a smart audience that ranges from "AI-curious" to "ships models for a living."</p>
+
+    <footer>
+      Generated for the Longmont AI website. Source files live in <a href="#">public/brand/</a>. Tokens mirror <a href="#">src/index.css</a>.
+    </footer>
+  </div>
+</body>
+</html>

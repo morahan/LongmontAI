@@ -1,0 +1,40 @@
+{
+  "brand": "Longmont AI",
+  "description": "Canonical color palette for Longmont AI. Mirrors src/index.css 1:1 — the running site is the source of truth. Use these tokens for slides, social cards, deck PNGs, and any brand artwork.",
+  "surfaces": {
+    "bg-deep":       { "hex": "#09090b", "rgb": [9, 9, 11],      "role": "Page background (Zinc 950). Default canvas." },
+    "bg-card":       { "hex": "#18181b", "rgb": [24, 24, 27],    "role": "Cards, panels, glass surfaces (Zinc 900)." },
+    "bg-card-hover": { "hex": "#27272a", "rgb": [39, 39, 42],    "role": "Card hover state (Zinc 800)." }
+  },
+  "accents": {
+    "sunset": { "hex": "#FF9E64", "rgb": [255, 158, 100], "role": "Warm orange — sunset highlight, accent type." },
+    "pink":   { "hex": "#FF0080", "rgb": [255, 0, 128],   "role": "Magenta — gradient stop, callouts." },
+    "purple": { "hex": "#7928CA", "rgb": [121, 40, 202],  "role": "Primary gradient stop, card hover glow." },
+    "cyan":   { "hex": "#00F0FF", "rgb": [0, 240, 255],   "role": "Editorial energy — eyebrows, sparkles, hero accents." },
+    "blue":   { "hex": "#007CF0", "rgb": [0, 124, 240],   "role": "UI chrome — links, primary CTAs, focus." }
+  },
+  "text": {
+    "primary":   { "hex": "#FFFFFF", "rgb": [255, 255, 255], "role": "Headlines, body." },
+    "secondary": { "hex": "#A1A1AA", "rgb": [161, 161, 170], "role": "Muted body, captions (Zinc 400)." },
+    "muted":     { "hex": "#71717A", "rgb": [113, 113, 122], "role": "Metadata, timestamps, footer copyright (Zinc 500)." }
+  },
+  "glass": {
+    "bg":        { "hex": "rgba(24,24,27,0.7)",     "role": "Translucent panel background." },
+    "border":    { "hex": "rgba(255,255,255,0.08)", "role": "Hairline borders on glass surfaces." },
+    "highlight": { "hex": "rgba(255,255,255,0.15)", "role": "Top-edge highlight on glass." }
+  },
+  "gradients": {
+    "vibrant":      ["#007CF0", "#7928CA", "#FF0080"],
+    "blue_purple":  ["#007CF0", "#7928CA"],
+    "cyan_purple":  ["#00F0FF", "#7928CA"],
+    "sunset_pink":  ["#FF9E64", "#FF0080"]
+  },
+  "aliases": {
+    "bg":       "bg-deep",
+    "fg":       "text.primary",
+    "fg_muted": "text.secondary",
+    "accent":   "accents.cyan",
+    "accent_ui": "accents.blue",
+    "link":     "accents.blue"
+  }
+}
