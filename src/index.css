@@ -1180,3 +1180,40 @@ iframe {
 .animate-ring-spin {
   animation: ring-spin 60s linear infinite;
 }
+
+/* Final countdown — gentle pulse on the eyebrow + huge number */
+@keyframes final-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.03); opacity: 0.85; }
+}
+.animate-final-pulse { animation: final-pulse 1s ease-in-out infinite; }
+
+/* Final countdown — heavier thump in the last 10 seconds */
+@keyframes final-thump {
+  0%   { transform: scale(0.94); }
+  20%  { transform: scale(1.08); }
+  40%  { transform: scale(0.98); }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.animate-final-thump { animation: final-thump 1s ease-out infinite; }
+
+/* Animated logo ambient glow behind the <video> */
+@keyframes logo-glow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.8;  transform: scale(1.12); }
+}
+.animate-logo-glow { animation: logo-glow 4s ease-in-out infinite; }
+
+/* Respect reduced-motion across the countdown page */
+@media (prefers-reduced-motion: reduce) {
+  .animate-final-pulse,
+  .animate-final-thump,
+  .animate-logo-glow,
+  .animate-flash-in-out,
+  .animate-celebration-pop,
+  .animate-live-pulse,
+  .confetti-fall {
+    animation: none !important;
+  }
+}

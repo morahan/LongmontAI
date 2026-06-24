@@ -11,6 +11,8 @@ const MEETUP_DAY = 27;
 const MEETUP_HOUR = 12; // noon local
 const MEETUP_DURATION_HOURS = 1;
 const INTERVAL_DAYS = 14;
+const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
+const JUST_HIT_ZERO_DURATION_MS = 8000;
 
 // Stable reference: May 27, 2026 noon = upcoming meetup
 const REFERENCE_MEETUP = new Date(MEETUP_YEAR, MEETUP_MONTH - 1, MEETUP_DAY, MEETUP_HOUR, 0, 0, 0);
@@ -25,6 +27,10 @@ function getNextMeetup(localNow: Date): Date {
   return next;
 }
 
+function getEndTime(meetup: Date): Date {
+  return new Date(meetup.getTime() + MEETUP_DURATION_HOURS * 60 * 60 * 1000);
+}
+
 interface TimeLeft {
   days: number;
   hours: number;
@@ -33,10 +39,7 @@ interface TimeLeft {
   total: number;
   isLive: boolean;
   isPastToday: boolean;
-}
-
-function getEndTime(meetup: Date): Date {
-  return new Date(meetup.getTime() + MEETUP_DURATION_HOURS * 60 * 60 * 1000);
+  isFinalCountdown: boolean;
 }
 
 function computeTimeLeft(): TimeLeft {
@@ -48,19 +51,117 @@ function computeTimeLeft(): TimeLeft {
   const live = now >= nextMeetup && now < endTime;
 
   if (diff <= 0 && !live) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0, isLive: false, isPastToday: true };
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0, isLive: false, isPastToday: true, isFinalCountdown: false };
   }
 
-  // Ensure non-negative countdown values
   const absDiff = Math.max(0, diff);
   const seconds = Math.floor((absDiff / 1000) % 60);
   const minutes = Math.floor((absDiff / 1000 / 60) % 60);
   const hours = Math.floor((absDiff / 1000 / 60 / 60) % 24);
   const days = Math.floor(absDiff / 1000 / 60 / 60 / 24);
 
-  return { days, hours, minutes, seconds, total: diff, isLive: live, isPastToday: false };
+  const isFinalCountdown = diff > 0 && diff <= FINAL_COUNTDOWN_THRESHOLD_SECONDS * 1000;
+
+  return { days, hours, minutes, seconds, total: diff, isLive: live, isPastToday: false, isFinalCountdown };
 }
 
+// ─── Audio (lazy, gated behind first user gesture) ──────────────────────────
+let audioContext: AudioContext | null = null;
+let reducedMotion = false;
+
+function ensureAudioContext(): AudioContext | null {
+  if (audioContext) return audioContext;
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return null;
+    audioContext = new Ctx();
+    return audioContext;
+  } catch {
+    return null;
+  }
+}
+
+function detectReducedMotion() {
+  try {
+    reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    reducedMotion = false;
+  }
+}
+
+function playFinalTick(remainingSeconds: number) {
+  if (reducedMotion) return;
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  // Base C5 + climb with urgency. Faster envelope in the final 10 seconds.
+  const baseHz = 523.25;
+  const urgency = Math.max(0, FINAL_COUNTDOWN_THRESHOLD_SECONDS - remainingSeconds);
+  const freq = baseHz + urgency * 20;
+  const isFinalTen = remainingSeconds <= 10;
+  const dur = isFinalTen ? 0.15 : 0.3;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, now);
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + dur);
+}
+
+function playCelebrationSound() {
+  if (reducedMotion) return;
+  try {
+    const context = ensureAudioContext();
+    if (!context) return;
+
+    const masterGain = context.createGain();
+    masterGain.gain.setValueAtTime(0.15, context.currentTime);
+    masterGain.connect(context.destination);
+
+    const playNote = (freq: number, startTime: number, duration: number) => {
+      const osc = context.createOscillator();
+      const g = context.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      g.gain.setValueAtTime(0, startTime);
+      g.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+      osc.connect(g);
+      g.connect(masterGain);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = context.currentTime;
+    playNote(523.25, now, 0.8);      // C5
+    playNote(659.25, now + 0.1, 0.8); // E5
+    playNote(783.99, now + 0.2, 0.8); // G5
+    playNote(1046.50, now + 0.3, 1.2); // C6
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+}
+
+// ─── Demo override (dev only) ───────────────────────────────────────────────
+function readDemoOverride(): 'final' | 'zero' | null {
+  // Only honored in dev so production users see real timer behavior.
+  // import.meta.env.DEV is replaced by Vite at build time.
+  // @ts-ignore
+  if (typeof import.meta === 'undefined' || !import.meta.env?.DEV) return null;
+  const p = new URLSearchParams(window.location.search);
+  const v = p.get('demo');
+  if (v === 'final' || v === 'zero') return v;
+  return null;
+}
+
+// ─── Display components ─────────────────────────────────────────────────────
 interface DigitProps {
   value: number;
   label: string;
@@ -95,6 +196,61 @@ const Separator: React.FC<SeparatorProps> = ({ visible }) => (
   </div>
 );
 
+const FinalCountdownDisplay: React.FC<{ seconds: number }> = ({ seconds }) => {
+  const isFinalTen = seconds <= 10;
+  return (
+    <div className="flex flex-col items-center gap-3 my-6">
+      <div className={`text-xs sm:text-base font-mono uppercase tracking-[0.4em] ${isFinalTen ? 'text-[var(--color-pink)]' : 'text-[var(--color-cyan)]'} animate-final-pulse`}>
+        🎵 Final Countdown 🎵
+      </div>
+      <div
+        className={`font-black font-mono text-white tabular-nums leading-none ${
+          isFinalTen ? 'animate-final-thump' : 'animate-final-pulse'
+        }`}
+        style={{
+          fontSize: 'clamp(8rem, 30vw, 18rem)',
+          textShadow: isFinalTen
+            ? '0 0 60px rgba(255, 0, 128, 0.7), 0 0 30px rgba(255, 0, 128, 0.4)'
+            : '0 0 40px rgba(0, 240, 255, 0.6)',
+        }}
+      >
+        {String(seconds).padStart(2, '0')}
+      </div>
+      <div className="text-sm font-mono uppercase tracking-widest text-[var(--text-muted)]">
+        {isFinalTen ? 'almost there…' : 'seconds to showtime'}
+      </div>
+    </div>
+  );
+};
+
+const AnimatedLogo: React.FC = () => (
+  <div className="relative flex items-center justify-center my-6">
+    <div
+      className="absolute inset-0 blur-3xl opacity-60 animate-logo-glow pointer-events-none"
+      style={{
+        background:
+          'radial-gradient(circle, var(--color-purple) 0%, var(--color-cyan) 50%, transparent 70%)',
+      }}
+      aria-hidden="true"
+    />
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      poster="/brand/logo/logo-animated-poster.png"
+      className="relative w-[min(60vw,480px)] h-auto drop-shadow-[0_0_60px_rgba(121,40,202,0.5)] rounded-2xl"
+      aria-label="Longmont AI animated logo"
+    >
+      <source src="/brand/logo/logo-animated.webm" type="video/webm" />
+      <source src="/brand/logo/logo-animated-512.mp4" type="video/mp4" />
+      <img src="/brand/logo/logo-animated-poster.png" alt="Longmont AI" />
+    </video>
+  </div>
+);
+
+// ─── Confetti ───────────────────────────────────────────────────────────────
 interface ConfettiPiece {
   id: number;
   x: number;
@@ -114,45 +270,6 @@ const CONFETTI_COLORS = [
   'var(--color-blue)',
   '#ffffff',
 ];
-
-const playCelebrationSound = () => {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-    
-    const context = new AudioContext();
-    const masterGain = context.createGain();
-    masterGain.gain.setValueAtTime(0.15, context.currentTime);
-    masterGain.connect(context.destination);
-
-    // Gentle chime
-    const playNote = (freq: number, startTime: number, duration: number) => {
-      const osc = context.createOscillator();
-      const g = context.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
-      
-      g.gain.setValueAtTime(0, startTime);
-      g.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      
-      osc.connect(g);
-      g.connect(masterGain);
-      
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-
-    // Arpeggio: C5, E5, G5, C6
-    const now = context.currentTime;
-    playNote(523.25, now, 0.8);      // C5
-    playNote(659.25, now + 0.1, 0.8); // E5
-    playNote(783.99, now + 0.2, 0.8); // G5
-    playNote(1046.50, now + 0.3, 1.2); // C6
-  } catch (e) {
-    console.error('Audio playback failed', e);
-  }
-};
 
 function Confetti({ count = 60 }: { count?: number }) {
   const pieces = React.useMemo<ConfettiPiece[]>(() => {
@@ -209,37 +326,72 @@ const CelebrationOverlay: React.FC = () => {
   );
 };
 
+// ─── Main page ──────────────────────────────────────────────────────────────
 const Countdown: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(computeTimeLeft);
   const [isCelebrationActive, setIsCelebrationActive] = useState(false);
   const [isFlashing, setIsFlashing] = useState(false);
   const rafRef = useRef<number>(0);
   const prevIsLive = useRef(timeLeft.isLive);
+  const prevSeconds = useRef<number>(-1);
 
+  // Arm audio + detect reduced motion on mount
+  useEffect(() => {
+    detectReducedMotion();
+    const arm = () => {
+      ensureAudioContext();
+      window.removeEventListener('click', arm);
+      window.removeEventListener('keydown', arm);
+      window.removeEventListener('touchstart', arm);
+    };
+    window.addEventListener('click', arm, { once: true, passive: true });
+    window.addEventListener('keydown', arm, { once: true });
+    window.addEventListener('touchstart', arm, { once: true, passive: true });
+    return () => {
+      window.removeEventListener('click', arm);
+      window.removeEventListener('keydown', arm);
+      window.removeEventListener('touchstart', arm);
+    };
+  }, []);
+
+  // Main tick loop
   useEffect(() => {
     const tick = () => {
       const t = computeTimeLeft();
       setTimeLeft(t);
 
+      // Detect entering live state (just hit zero)
       if (t.isLive && !prevIsLive.current) {
-        // Just went live!
         playCelebrationSound();
         setIsCelebrationActive(true);
         setIsFlashing(true);
-        setTimeout(() => setIsCelebrationActive(false), 8000);
+        setTimeout(() => setIsCelebrationActive(false), JUST_HIT_ZERO_DURATION_MS);
         setTimeout(() => setIsFlashing(false), 2000);
       }
       prevIsLive.current = t.isLive;
-      
+
+      // Final-countdown musical tick on each whole-second decrease
+      if (
+        t.isFinalCountdown &&
+        t.seconds !== prevSeconds.current &&
+        prevSeconds.current !== -1
+      ) {
+        playFinalTick(t.seconds);
+      }
+      prevSeconds.current = t.seconds;
+
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
+  // Demo override (dev only) — forces visual state for screenshot verification
+  const demo = readDemoOverride();
+  const isFinalCountdownEffective = demo === 'final' ? true : timeLeft.isFinalCountdown;
+  const isLiveEvent = demo === 'zero' ? true : timeLeft.isLive;
+
   const nextMeetup = getNextMeetup(new Date());
-  const isLiveEvent = timeLeft.isLive;
-  const isWednesday = new Date().getDay() === 3;
 
   // Calculate live minutes remaining
   const endTime = getEndTime(nextMeetup);
@@ -258,7 +410,7 @@ const Countdown: React.FC = () => {
       {/* Live confetti: High density for initial celebration, sparse for general live state */}
       {isCelebrationActive && <Confetti count={120} />}
       {!isCelebrationActive && isLiveEvent && <Confetti count={30} />}
-      
+
       {/* Celebration Overlay */}
       {isCelebrationActive && <CelebrationOverlay />}
 
@@ -273,6 +425,10 @@ const Countdown: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 text-[11px] sm:text-sm font-mono uppercase tracking-widest">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-live-pulse inline-block" />
             Live Now — Longmont AI Meetup
+          </div>
+        ) : isFinalCountdownEffective ? (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--color-pink)]/40 bg-[var(--color-pink)]/10 text-[var(--color-pink)] text-[11px] sm:text-sm font-mono uppercase tracking-widest animate-final-pulse">
+            🎵 Final Countdown
           </div>
         ) : (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
@@ -293,6 +449,14 @@ const Countdown: React.FC = () => {
               Join the gathering — you're here!
             </span>
           </>
+        ) : isFinalCountdownEffective ? (
+          <>
+            <span className="text-gradient-vibrant">Showtime</span>
+            <br />
+            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
+              Starting any moment…
+            </span>
+          </>
         ) : (
           <>
             Next{' '}
@@ -305,8 +469,13 @@ const Countdown: React.FC = () => {
         )}
       </h1>
 
-      {/* Countdown display */}
-      {!isLiveEvent && (
+      {/* Countdown display: final countdown takes over the 4-digit row */}
+      {!isLiveEvent && isFinalCountdownEffective && (
+        <FinalCountdownDisplay seconds={timeLeft.seconds} />
+      )}
+
+      {/* Standard 4-digit row */}
+      {!isLiveEvent && !isFinalCountdownEffective && (
         <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 mb-10 animate-scale-in overflow-x-auto w-full px-4 sm:px-0 py-2">
           <Digit value={timeLeft.days} label="Days" />
           <Separator visible />
@@ -318,30 +487,33 @@ const Countdown: React.FC = () => {
         </div>
       )}
 
-      {/* Live countdown ring */}
+      {/* Animated logo + live countdown ring during the live window */}
       {isLiveEvent && (
-        <div className="relative w-48 h-48 mb-10 animate-scale-in">
-          <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
-            <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-            <circle
-              cx="100" cy="100" r="90" fill="none"
-              stroke="url(#liveGradient)" strokeWidth="8" strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 90}
-              strokeDashoffset={2 * Math.PI * 90 * (1 - liveProgress)}
-              className="transition-all duration-1000 ease-linear"
-            />
-            <defs>
-              <linearGradient id="liveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="var(--color-pink)" />
-                <stop offset="100%" stopColor="var(--color-cyan)" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-bold font-mono text-white">{liveMinutes}</span>
-            <span className="text-sm text-[var(--text-muted)] font-mono">minutes</span>
+        <>
+          <AnimatedLogo />
+          <div className="relative w-48 h-48 mb-10 animate-scale-in">
+            <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+              <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+              <circle
+                cx="100" cy="100" r="90" fill="none"
+                stroke="url(#liveGradient)" strokeWidth="8" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 90}
+                strokeDashoffset={2 * Math.PI * 90 * (1 - liveProgress)}
+                className="transition-all duration-1000 ease-linear"
+              />
+              <defs>
+                <linearGradient id="liveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="var(--color-pink)" />
+                  <stop offset="100%" stopColor="var(--color-cyan)" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-bold font-mono text-white">{liveMinutes}</span>
+              <span className="text-sm text-[var(--text-muted)] font-mono">minutes</span>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Meetup details */}
@@ -358,11 +530,9 @@ const Countdown: React.FC = () => {
       </div>
 
       {/* Next meetup date */}
-      {!isLiveEvent && (
+      {!isLiveEvent && !isFinalCountdownEffective && (
         <p className="mt-3 text-sm text-[var(--text-muted)] animate-fade-in-late">
-          {isWednesday && !timeLeft.isPastToday
-            ? "Today's Meetup — Wednesday at Noon MDT"
-            : `Next Meetup — ${meetupDateStr} at Noon MDT`}
+          Next Meetup — {meetupDateStr} at Noon MDT
         </p>
       )}
 
@@ -384,7 +554,7 @@ const Countdown: React.FC = () => {
       )}
 
       {/* Pulsing glow behind the counter */}
-      {!isLiveEvent && (
+      {!isLiveEvent && !isFinalCountdownEffective && (
         <div
           className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none"
           aria-hidden="true"
