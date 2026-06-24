@@ -4,6 +4,7 @@ import { ExternalLink, Code, Play } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
+import DocumentEmbed from './DocumentEmbed';
 import Slideshow from './Slideshow';
 
 interface ContentBlockProps {
@@ -79,7 +80,7 @@ const markdownComponents = {
     ),
 };
 
-const slideshowPattern = /\{\{slideshow:([a-z0-9-]+)\}\}/g;
+const embedPattern = /\{\{(slideshow|pdf):([a-z0-9-]+)\}\}/g;
 
 function renderMarkdownBlock(content: string, key: string): React.ReactNode {
     return (
@@ -94,7 +95,7 @@ function renderMarkdownContent(content: string, keyPrefix: string): React.ReactN
     let lastIndex = 0;
     let matchNumber = 0;
 
-    for (const match of content.matchAll(slideshowPattern)) {
+    for (const match of content.matchAll(embedPattern)) {
         const matchIndex = match.index ?? 0;
         const markdownBefore = content.slice(lastIndex, matchIndex);
 
@@ -102,7 +103,12 @@ function renderMarkdownContent(content: string, keyPrefix: string): React.ReactN
             blocks.push(renderMarkdownBlock(markdownBefore, `${keyPrefix}-markdown-${matchNumber}`));
         }
 
-        blocks.push(<Slideshow key={`${keyPrefix}-slideshow-${matchNumber}`} deckId={match[1]} />);
+        if (match[1] === 'slideshow') {
+            blocks.push(<Slideshow key={`${keyPrefix}-slideshow-${matchNumber}`} deckId={match[2]} />);
+        } else {
+            blocks.push(<DocumentEmbed key={`${keyPrefix}-pdf-${matchNumber}`} documentId={match[2]} />);
+        }
+
         lastIndex = matchIndex + match[0].length;
         matchNumber += 1;
     }
