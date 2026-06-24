@@ -138,11 +138,14 @@ export const slideshowDecks: Record<string, SlideshowDeck> = {
         sourceUrl: '/slideshows/2026.06.24/fable-fallout/fable-fallout-briefing.pptx',
         slides: createSlides('/slideshows/2026.06.24/fable-fallout', [
             'Routing the Fallout',
-            'Cheap intelligence. Expensive loops.',
+            'Inference got cheaper',
+            'Work got hungrier',
             'A top model can become a fragile dependency',
             'The workflow is the product surface',
+            'Verification becomes a workflow',
             'Route the model, not the belief',
             'Proof before publish',
+            'Coding tools are becoming infrastructure bets',
         ]),
     },
 };
