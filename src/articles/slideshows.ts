@@ -121,4 +121,28 @@ export const slideshowDecks: Record<string, SlideshowDeck> = {
             src: '/slideshows/2026.06.10/ai-landscape/ai-landscape-june-2026.pptx',
         },
     },
+    'minimax-m3-frontier': {
+        id: 'minimax-m3-frontier',
+        title: 'MiniMax M3: At the Frontier',
+        description: 'A deep dive on MiniMax M3 — the top-tier agentic coding entrant that dropped just before the June 10 meetup.',
+        sourceUrl: '/slideshows/2026.06.10/minimax-m3/minimax-m3-frontier.pptx',
+        embed: {
+            kind: 'pptx',
+            src: '/slideshows/2026.06.10/minimax-m3/minimax-m3-frontier.pptx',
+        },
+    },
+    'fable-fallout': {
+        id: 'fable-fallout',
+        title: 'Routing, Budgets, and Verification',
+        description: 'A June 24 visual briefing on Fable access risk, token maxxing, Claude Code workflow harnesses, GLM routing, and verification discipline.',
+        sourceUrl: '/slideshows/2026.06.24/fable-fallout/fable-fallout-briefing.pptx',
+        slides: createSlides('/slideshows/2026.06.24/fable-fallout', [
+            'Routing the Fallout',
+            'Cheap intelligence. Expensive loops.',
+            'A top model can become a fragile dependency',
+            'The workflow is the product surface',
+            'Route the model, not the belief',
+            'Proof before publish',
+        ]),
+    },
 };
