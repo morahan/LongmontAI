@@ -47,7 +47,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
                 <div className="slideshow-embed-frame">
                     {deck.embed.kind === 'pptx' ? (
                         <iframe
-                            src={`https://view.officeapps.live.com/op/embed?src=${encodeURIComponent(
+                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
                                 typeof window !== 'undefined'
                                     ? `${window.location.origin}${deck.embed.src}`
                                     : deck.embed.src
