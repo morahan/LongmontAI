@@ -16,7 +16,16 @@ const markdownComponents = {
     h1: ({ node, ...props }: any) => <h1 className="text-3xl font-bold text-white mt-16 mb-6" {...props} />,
     h2: ({ node, ...props }: any) => <h2 className="text-2xl font-bold text-white mt-12 mb-5" {...props} />,
     h3: ({ node, ...props }: any) => <h3 className="text-xl font-bold text-[var(--accent-cyan)] mt-10 mb-4" {...props} />,
-    p: ({ node, ...props }: any) => <p className="mb-6 leading-relaxed" {...props} />,
+    p: ({ node, children, ...props }: any) => {
+        const imageOnlyParagraph =
+            node?.children?.length === 1 && node.children[0]?.type === 'element' && node.children[0]?.tagName === 'img';
+
+        if (imageOnlyParagraph) {
+            return <>{children}</>;
+        }
+
+        return <p className="mb-6 leading-relaxed" {...props}>{children}</p>;
+    },
     ul: ({ node, ...props }: any) => <ul className="list-disc ml-6 mb-6 space-y-2" {...props} />,
     li: ({ node, ...props }: any) => <li className="text-[var(--text-secondary)]" {...props} />,
     strong: ({ node, ...props }: any) => <strong className="text-white font-semibold" {...props} />,

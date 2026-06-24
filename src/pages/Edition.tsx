@@ -39,7 +39,11 @@ const Edition: React.FC = () => {
                                 })}
                             </time>
                         </div>
-                        <button className="text-[var(--text-secondary)] hover:text-white transition-colors">
+                        <button
+                            type="button"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--glass-border)] bg-white/5 text-[var(--text-secondary)] hover:text-white transition-colors"
+                            aria-label="Share this edition"
+                        >
                             <Share2 size={20} />
                         </button>
                     </div>

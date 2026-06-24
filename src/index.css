@@ -823,7 +823,9 @@ iframe {
 
 /* Embedded article slideshows */
 .slideshow-panel {
-  margin: 2.5rem 0;
+  width: min(1120px, calc(100vw - 3rem));
+  margin: 2.5rem 0 3.25rem 50%;
+  transform: translateX(-50%);
   overflow: hidden;
   border: 1px solid var(--glass-border);
   border-radius: 8px;
@@ -1000,6 +1002,12 @@ iframe {
 }
 
 @media (max-width: 640px) {
+  .slideshow-panel {
+    width: 100%;
+    margin-left: 0;
+    transform: none;
+  }
+
   .slideshow-header,
   .slideshow-footer {
     align-items: stretch;
