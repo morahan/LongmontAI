@@ -1,48 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { editions } from '../articles';
 import EditionCard from '../components/EditionCard';
+import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const heroImages = [
-    '/images/hero/hero-1.png',
-    '/images/hero/hero-2.png',
-];
-
 const Feed: React.FC = () => {
-    const [currentHero, setCurrentHero] = useState(0);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentHero((prev) => (prev + 1) % heroImages.length);
-        }, 8000);
-        return () => clearInterval(interval);
-    }, []);
-
     // Get the 3 latest editions
     const latestEditions = editions.slice(0, 3);
 
     return (
         <div className="max-w-5xl mx-auto">
-            {/* Hero Section with AI Art */}
-            <section className="relative h-[60vh] min-h-[500px] rounded-2xl overflow-hidden mb-16">
-                <motion.div
-                    key={currentHero}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                    className="absolute inset-0"
-                >
-                    <img 
-                        src={heroImages[currentHero]} 
-                        alt="Longmont AI Hero"
-                        className="w-full h-full object-cover"
-                    />
-                </motion.div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/50 to-transparent" />
+            {/* Hero Section with Space Neural Network Animation */}
+            <section className="relative h-[60vh] min-h-[500px] rounded-2xl overflow-hidden mb-16 bg-[#050508] border border-white/5 shadow-2xl">
+                <SpaceNeuralBackground />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent pointer-events-none" />
                 
-                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
+                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10 pointer-events-none">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -51,32 +26,16 @@ const Feed: React.FC = () => {
                         <div className="flex items-center gap-2 mb-4">
                             <Sparkles size={16} className="text-[var(--accent-cyan)]" />
                             <span className="text-xs font-mono text-[var(--accent-cyan)] uppercase tracking-wider">
-                                AI-Generated Art
+                                Neural Universe
                             </span>
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight">
+                        <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
                             Intelligence <span className="text-gradient-vibrant">Unleashed</span>
                         </h1>
                         <p className="text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
                             Curated insights into the rapidly evolving world of Artificial Intelligence.
                         </p>
                     </motion.div>
-                </div>
-
-                {/* Hero Navigation Dots */}
-                <div className="absolute bottom-8 right-8 flex gap-2">
-                    {heroImages.map((_, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => setCurrentHero(idx)}
-                            className={`w-2 h-2 rounded-full transition-all ${
-                                idx === currentHero 
-                                    ? 'bg-[var(--accent-cyan)] w-6' 
-                                    : 'bg-white/30 hover:bg-white/50'
-                            }`}
-                            aria-label={`Go to slide ${idx + 1}`}
-                        />
-                    ))}
                 </div>
             </section>
 
