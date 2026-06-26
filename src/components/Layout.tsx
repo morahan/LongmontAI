@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Trophy } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -51,6 +51,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <Activity size={14} className="sm:!hidden" />
                             <Activity size={16} className="hidden sm:block" />
                             <span className="hidden sm:block">Model Watch</span>
+                        </Link>
+                        <Link
+                            to="/leaderboard"
+                            aria-label="Leaderboard"
+                            title="Leaderboard"
+                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                        >
+                            <Trophy size={14} className="sm:!hidden" />
+                            <Trophy size={16} className="hidden sm:block" />
+                            <span className="hidden sm:block">Leaderboard</span>
                         </Link>
                         <a
                             href="https://github.com/morahan/LongmontAI"
@@ -128,6 +138,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <li>
                                         <Link to="/model-watch" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
                                             Model Watch
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/leaderboard" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
+                                            Leaderboard
                                         </Link>
                                     </li>
                                     <li>
