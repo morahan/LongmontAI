@@ -399,6 +399,10 @@ a {
   margin-right: auto;
 }
 
+.home-main {
+  padding-top: 5rem;
+}
+
 .text-zinc-300 { color: #d4d4d8; }
 .text-zinc-400 { color: #a1a1aa; }
 .text-zinc-500 { color: #71717a; }
@@ -505,6 +509,10 @@ main .container > * {
   main {
     padding-top: 5.5rem !important;
     padding-bottom: 3rem !important;
+  }
+
+  main.home-main {
+    padding-top: 4rem !important;
   }
 
   nav.container {

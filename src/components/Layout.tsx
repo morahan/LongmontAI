@@ -90,7 +90,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </nav>
             </header>
 
-            <main id="main-content" className="flex-grow pt-32 pb-20">
+            <main
+                id="main-content"
+                className={`flex-grow pt-32 pb-20${location.pathname === '/' ? ' home-main' : ''}`}
+            >
                 <motion.div
                     key={location.pathname}
                     initial={{ opacity: 0, y: 20 }}
