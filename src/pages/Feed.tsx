@@ -6,6 +6,12 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const heroFadeUp = (delay: number) => ({
+    initial: { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    transition: { delay, duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
+});
+
 const Feed: React.FC = () => {
     // Get the 3 latest editions
     const latestEditions = editions.slice(0, 3);
@@ -18,24 +24,18 @@ const Feed: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent pointer-events-none" />
                 
                 <div className="home-hero-copy absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.8 }}
-                    >
-                        <div className="flex items-center gap-2 mb-4">
-                            <Sparkles size={16} className="text-[var(--accent-cyan)]" />
-                            <span className="text-xs font-mono text-[var(--accent-cyan)] uppercase tracking-wider">
-                                Neural Universe
-                            </span>
-                        </div>
-                        <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
-                            Intelligence <span className="text-gradient-vibrant">Unleashed</span>
-                        </h1>
-                        <p className="text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
-                            Curated insights into the rapidly evolving world of Artificial Intelligence.
-                        </p>
+                    <motion.div {...heroFadeUp(0.25)} className="flex items-center gap-2 mb-4">
+                        <Sparkles size={16} className="text-[var(--accent-cyan)]" />
+                        <span className="text-xs font-mono text-[var(--accent-cyan)] uppercase tracking-wider">
+                            Neural Universe
+                        </span>
                     </motion.div>
+                    <motion.h1 {...heroFadeUp(0.43)} className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
+                        Intelligence <span className="text-gradient-vibrant">Unleashed</span>
+                    </motion.h1>
+                    <motion.p {...heroFadeUp(0.61)} className="text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
+                        Curated insights into the rapidly evolving world of Artificial Intelligence.
+                    </motion.p>
                 </div>
             </section>
 
@@ -102,8 +102,8 @@ const Feed: React.FC = () => {
             </section>
 
             {/* All Editions */}
-            <section className="flex flex-col gap-[180px] relative pb-20">
-                <div className="text-center mb-8">
+            <section className="flex flex-col gap-8 relative pb-20">
+                <div className="text-center">
                     <h2 className="text-2xl font-bold">All Editions</h2>
                 </div>
                 {editions.map((edition, index) => (

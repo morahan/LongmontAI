@@ -26,9 +26,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 header-glass">
                 <nav aria-label="Main navigation" className="container h-16 sm:h-20 flex flex-row items-center justify-between px-4 sm:px-0">
                     <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
-                        <div className="p-1.5 sm:p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
-                            <BrainCircuit size={18} className="text-[var(--accent-cyan)]" />
-                        </div>
+                        <img
+                            src="/brand/logo/logo-128.png"
+                            alt="LongmontAI logo"
+                            className="w-9 h-9 rounded-lg border border-white/10 transition-colors"
+                        />
                         <span className="font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
                     </Link>
                     <div className="flex items-center gap-3 sm:gap-6">

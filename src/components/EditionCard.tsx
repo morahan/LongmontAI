@@ -29,13 +29,14 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
             tabIndex={0}
             role="link"
             initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{
-                delay: index * 0.15,
+                delay: Math.min(index * 0.08, 0.16),
                 duration: 0.6,
                 ease: [0.16, 1, 0.3, 1]
             }}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ y: -4 }}
             onClick={() => navigate(`/edition/${edition.id}`)}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -43,7 +44,7 @@ const EditionCard: React.FC<EditionCardProps> = ({ edition, index }) => {
                     navigate(`/edition/${edition.id}`);
                 }
             }}
-            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group cursor-pointer my-8"
+            className="glass-panel p-8 hover:border-[var(--accent-cyan)] transition-all duration-300 group cursor-pointer"
         >
             {/* Edition number badge */}
             <div className="flex items-center justify-between mb-6">
