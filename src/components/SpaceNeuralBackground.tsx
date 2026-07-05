@@ -28,8 +28,8 @@ const SpaceNeuralBackground: React.FC = () => {
         let height = 0;
 
         // Configuration
-        const STAR_COUNT = 100;
-        const NODE_COUNT = 45;
+        const STAR_COUNT = 65;
+        const NODE_COUNT = 29;
         const BASE_SPEED = 0.6;
         const CONNECTION_DIST = 200; // 3D distance threshold
         const ROTATION_SPEED = 0.0004; // Gentle rotation per frame

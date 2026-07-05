@@ -384,6 +384,21 @@ a {
 .group:focus-within .group-focus-within\:translate-x-1 { transform: translateX(0.25rem); }
 .group:hover .group-hover\:scale-110 { transform: scale(1.1); }
 
+.home-hero {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+}
+
+.home-hero-copy {
+  width: min(var(--container-width), calc(100% - 3rem));
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .text-zinc-300 { color: #d4d4d8; }
 .text-zinc-400 { color: #a1a1aa; }
 .text-zinc-500 { color: #71717a; }
