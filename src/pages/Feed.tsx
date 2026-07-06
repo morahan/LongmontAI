@@ -27,14 +27,14 @@ const Feed: React.FC = () => {
                     <motion.div {...heroFadeUp(0.25)} className="flex items-center gap-2 mb-4">
                         <Sparkles size={16} className="text-[var(--accent-cyan)]" />
                         <span className="text-xs font-mono text-[var(--accent-cyan)] uppercase tracking-wider">
-                            Neural Universe
+                            Deep in the Latent Space
                         </span>
                     </motion.div>
                     <motion.h1 {...heroFadeUp(0.43)} className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
-                        Intelligence <span className="text-gradient-vibrant">Unleashed</span>
+                        Navigating the <span className="text-gradient-vibrant">Intelligence Age</span>
                     </motion.h1>
                     <motion.p {...heroFadeUp(0.61)} className="text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
-                        Curated insights into the rapidly evolving world of Artificial Intelligence.
+                        Charting frontier models, agents, and the ideas reshaping everything — one edition at a time.
                     </motion.p>
                 </div>
             </section>

@@ -32,7 +32,7 @@ const SpaceNeuralBackground: React.FC = () => {
         const NODE_COUNT = 29;
         const BASE_SPEED = 0.6;
         const CONNECTION_DIST = 200; // 3D distance threshold
-        const ROTATION_SPEED = 0.0002; // Gentle rotation per frame
+        const ROTATION_SPEED = 0.000067; // Gentle rotation per frame
 
         const stars: Particle[] = [];
         const nodes: NeuralNode[] = [];

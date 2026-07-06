@@ -748,11 +748,11 @@ main .container > * {
 }
 
 .text-gradient-vibrant {
-  background: linear-gradient(to right, var(--color-blue), var(--color-purple), var(--color-pink));
+  background: linear-gradient(to right, var(--color-blue), var(--color-purple), var(--color-blue));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-size: 200% auto;
-  animation: shine 5s linear infinite;
+  animation: shine 14s linear infinite;
 }
 
 @keyframes shine {
