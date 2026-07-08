@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Commit Review"
+  short_description: "Run local security gates before each commit"
+  default_prompt: "Use $security-commit-review to review staged changes for security vulnerabilities before committing."
