@@ -1,7 +1,7 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Trophy } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Menu, Trophy, X } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -9,6 +9,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+    useEffect(() => {
+        setIsMobileNavOpen(false);
+    }, [location.pathname]);
 
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -33,36 +38,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         />
                         <span className="font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
                     </Link>
-                    <div className="flex items-center gap-3 sm:gap-6">
+                    <div className="desktop-nav">
                         <Link
                             to="/"
                             aria-label="Blog"
                             title="Blog"
-                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                            className={`nav-link${location.pathname === '/' ? ' is-active' : ''}`}
                         >
-                            <BookOpen size={14} className="sm:!hidden" />
-                            <BookOpen size={16} className="hidden sm:block" />
-                            <span className="hidden sm:block">Blog</span>
+                            <BookOpen size={16} />
+                            <span>Blog</span>
                         </Link>
                         <Link
                             to="/model-watch"
                             aria-label="Model Watch"
                             title="Model Watch"
-                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                            className={`nav-link${location.pathname === '/model-watch' ? ' is-active' : ''}`}
                         >
-                            <Activity size={14} className="sm:!hidden" />
-                            <Activity size={16} className="hidden sm:block" />
-                            <span className="hidden sm:block">Model Watch</span>
+                            <Activity size={16} />
+                            <span>Model Watch</span>
                         </Link>
                         <Link
                             to="/leaderboard"
                             aria-label="Leaderboard"
                             title="Leaderboard"
-                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                            className={`nav-link${location.pathname === '/leaderboard' ? ' is-active' : ''}`}
                         >
-                            <Trophy size={14} className="sm:!hidden" />
-                            <Trophy size={16} className="hidden sm:block" />
-                            <span className="hidden sm:block">Leaderboard</span>
+                            <Trophy size={16} />
+                            <span>Leaderboard</span>
                         </Link>
                         <a
                             href="https://github.com/morahan/LongmontAI"
@@ -70,24 +72,72 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             rel="noopener noreferrer"
                             aria-label="View LongmontAI on GitHub"
                             title="GitHub"
-                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                            className="nav-link"
                         >
-                            <Github size={14} className="sm:!hidden" />
-                            <Github size={16} className="hidden sm:block" />
-                            <span className="hidden sm:block">GitHub</span>
+                            <Github size={16} />
+                            <span>GitHub</span>
                         </a>
                         <Link
                             to="/countdown"
                             aria-label="Countdown"
                             title="Countdown"
-                            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded-lg border border-[var(--accent-cyan)]/40 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/15 transition-colors"
+                            className={`nav-link nav-link-button${location.pathname === '/countdown' ? ' is-active' : ''}`}
                         >
-                            <Clock size={12} className="sm:!hidden" />
-                            <Clock size={14} className="hidden sm:block" />
-                            <span className="hidden sm:block">Countdown</span>
+                            <Clock size={14} />
+                            <span>Countdown</span>
                         </Link>
                     </div>
+                    <button
+                        type="button"
+                        className="mobile-menu-trigger"
+                        aria-expanded={isMobileNavOpen}
+                        aria-controls="mobile-main-navigation"
+                        onClick={() => setIsMobileNavOpen((isOpen) => !isOpen)}
+                    >
+                        {isMobileNavOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+                        <span>Menu</span>
+                    </button>
                 </nav>
+                {isMobileNavOpen && (
+                    <div id="mobile-main-navigation" className="mobile-nav-panel">
+                        <div className="container mobile-nav-grid">
+                            <Link to="/" className={`mobile-nav-link${location.pathname === '/' ? ' is-active' : ''}`}>
+                                <BookOpen size={16} aria-hidden="true" />
+                                <span>Blog</span>
+                            </Link>
+                            <Link to="/model-watch" className={`mobile-nav-link${location.pathname === '/model-watch' ? ' is-active' : ''}`}>
+                                <Activity size={16} aria-hidden="true" />
+                                <span>Model Watch</span>
+                            </Link>
+                            <Link to="/leaderboard" className={`mobile-nav-link${location.pathname === '/leaderboard' ? ' is-active' : ''}`}>
+                                <Trophy size={16} aria-hidden="true" />
+                                <span>Leaderboard</span>
+                            </Link>
+                            <Link to="/countdown" className={`mobile-nav-link${location.pathname === '/countdown' ? ' is-active' : ''}`}>
+                                <Clock size={16} aria-hidden="true" />
+                                <span>Countdown</span>
+                            </Link>
+                            <a
+                                href="https://github.com/morahan/LongmontAI"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mobile-nav-link"
+                            >
+                                <Github size={16} aria-hidden="true" />
+                                <span>GitHub</span>
+                            </a>
+                            <a
+                                href="https://www.meetup.com/longmontai"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mobile-nav-link"
+                            >
+                                <Users size={16} aria-hidden="true" />
+                                <span>Meetup</span>
+                            </a>
+                        </div>
+                    </div>
+                )}
             </header>
 
             <main

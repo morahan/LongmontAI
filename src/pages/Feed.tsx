@@ -1,20 +1,46 @@
-import React from 'react';
-import { editions } from '../articles';
-import EditionCard from '../components/EditionCard';
+import React, { useMemo, useState } from 'react';
+import { Edition, editions } from '../articles';
 import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Calendar, Search, Sparkles, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const heroFadeUp = (delay: number) => ({
-    initial: { opacity: 0, y: 24 },
-    animate: { opacity: 1, y: 0 },
-    transition: { delay, duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
-});
+function formatDate(dateStr: string): string {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
+function editionMatchesQuery(edition: Edition, query: string): boolean {
+    if (!query) {
+        return true;
+    }
+
+    const haystack = `${edition.title} ${edition.summary} ${edition.date}`.toLowerCase();
+    return haystack.includes(query.toLowerCase());
+}
 
 const Feed: React.FC = () => {
+    const [archiveQuery, setArchiveQuery] = useState('');
+    const [selectedYear, setSelectedYear] = useState('all');
+
     // Get the 3 latest editions
     const latestEditions = editions.slice(0, 3);
+    const archiveYears = useMemo(
+        () => Array.from(new Set(editions.map((edition) => edition.date.slice(0, 4)))),
+        []
+    );
+    const filteredEditions = useMemo(
+        () => editions.filter((edition) => {
+            const matchesYear = selectedYear === 'all' || edition.date.startsWith(selectedYear);
+            return matchesYear && editionMatchesQuery(edition, archiveQuery.trim());
+        }),
+        [archiveQuery, selectedYear]
+    );
+    const hasActiveArchiveFilter = archiveQuery.trim().length > 0 || selectedYear !== 'all';
 
     return (
         <div className="max-w-5xl mx-auto">
@@ -24,23 +50,23 @@ const Feed: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent pointer-events-none" />
                 
                 <div className="home-hero-copy absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10">
-                    <motion.div {...heroFadeUp(0.25)} className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-2 mb-4">
                         <Sparkles size={16} className="text-[var(--accent-cyan)]" />
                         <span className="text-xs font-mono text-[var(--accent-cyan)] uppercase tracking-wider">
                             Deep in the Latent Space
                         </span>
-                    </motion.div>
-                    <motion.h1 {...heroFadeUp(0.43)} className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
+                    </div>
+                    <h1 className="home-hero-title text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
                         Navigating the <span className="text-gradient-vibrant">Intelligence Age</span>
-                    </motion.h1>
-                    <motion.p {...heroFadeUp(0.61)} className="text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
+                    </h1>
+                    <p className="home-hero-subtitle text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
                         Charting frontier models, agents, and the ideas reshaping everything — one edition at a time.
-                    </motion.p>
+                    </p>
                 </div>
             </section>
 
             {/* Meetup Banner */}
-            <div className="mb-12 p-4 text-center bg-[var(--accent-cyan)]/10 rounded-lg border border-[var(--accent-cyan)]/20">
+            <div className="home-meetup-banner mb-12 p-4 text-center bg-[var(--accent-cyan)]/10 rounded-lg border border-[var(--accent-cyan)]/20">
                 <p className="text-[var(--text-primary)]">
                     Welcome to Longmont AI. To join our next meetup in 2026 check out{' '}
                     <a
@@ -55,15 +81,15 @@ const Feed: React.FC = () => {
             </div>
 
             {/* Featured Blog Posts Section */}
-            <section className="mb-16">
+            <section id="latest" className="mb-16">
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-bold">Latest Editions</h2>
-                    <Link 
-                        to="/" 
+                    <a
+                        href="#archive"
                         className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                     >
                         View all <ArrowRight size={14} />
-                    </Link>
+                    </a>
                 </div>
                 
                 <div className="grid md:grid-cols-3 gap-8">
@@ -91,8 +117,8 @@ const Feed: React.FC = () => {
                                         </p>
                                     </div>
                                     <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between">
-                                        <span className="text-xs text-[var(--text-muted)]">Read more</span>
-                                        <ArrowRight size={14} className="text-[var(--accent-cyan)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <span className="text-xs text-[var(--accent-cyan)]">Read edition</span>
+                                        <ArrowRight size={14} className="text-[var(--accent-cyan)] latest-card-arrow" />
                                     </div>
                                 </article>
                             </Link>
@@ -102,13 +128,103 @@ const Feed: React.FC = () => {
             </section>
 
             {/* All Editions */}
-            <section className="flex flex-col gap-8 relative pb-20">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold">All Editions</h2>
+            <section id="archive" className="home-archive relative pb-20" aria-labelledby="archive-heading">
+                <div className="home-archive-header">
+                    <div>
+                        <span className="home-archive-eyebrow">Archive</span>
+                        <h2 id="archive-heading" className="text-2xl font-bold">All Editions</h2>
+                    </div>
+                    <p>
+                        {filteredEditions.length} of {editions.length} editions
+                    </p>
                 </div>
-                {editions.map((edition, index) => (
-                    <EditionCard key={edition.id} edition={edition} index={index} />
-                ))}
+
+                <div className="home-archive-controls" aria-label="Filter editions">
+                    <label className="home-archive-search">
+                        <Search size={16} aria-hidden="true" />
+                        <span className="sr-only">Search editions</span>
+                        <input
+                            type="search"
+                            value={archiveQuery}
+                            onChange={(event) => setArchiveQuery(event.target.value)}
+                            placeholder="Search editions"
+                        />
+                    </label>
+
+                    <div className="home-archive-years" aria-label="Filter by year">
+                        <button
+                            type="button"
+                            aria-pressed={selectedYear === 'all'}
+                            className={selectedYear === 'all' ? 'is-active' : ''}
+                            onClick={() => setSelectedYear('all')}
+                        >
+                            All years
+                        </button>
+                        {archiveYears.map((year) => (
+                            <button
+                                key={year}
+                                type="button"
+                                aria-pressed={selectedYear === year}
+                                className={selectedYear === year ? 'is-active' : ''}
+                                onClick={() => setSelectedYear(year)}
+                            >
+                                {year}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {filteredEditions.length > 0 ? (
+                    <div className="home-archive-list">
+                        {filteredEditions.map((edition) => (
+                            <Link key={edition.id} to={`/edition/${edition.id}`} className="home-archive-row">
+                                <time dateTime={edition.date}>
+                                    <Calendar size={14} aria-hidden="true" />
+                                    {formatDate(edition.date)}
+                                </time>
+                                <div>
+                                    <h3>{edition.title}</h3>
+                                    <p>{edition.summary}</p>
+                                </div>
+                                <span aria-hidden="true">
+                                    <ArrowRight size={16} />
+                                </span>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="home-archive-empty">
+                        <h3>No editions found</h3>
+                        <p>Try a broader search or clear the current filters.</p>
+                        {hasActiveArchiveFilter && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setArchiveQuery('');
+                                    setSelectedYear('all');
+                                }}
+                            >
+                                <X size={14} aria-hidden="true" />
+                                Clear filters
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {hasActiveArchiveFilter && filteredEditions.length > 0 && (
+                    <div className="home-archive-clear">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setArchiveQuery('');
+                                setSelectedYear('all');
+                            }}
+                        >
+                            <X size={14} aria-hidden="true" />
+                            Clear filters
+                        </button>
+                    </div>
+                )}
             </section>
         </div>
     );
