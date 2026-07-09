@@ -1,0 +1,17 @@
+model = "gpt-5.5"
+sandbox_mode = "danger-full-access"
+model_reasoning_effort = "xhigh"
+[features]
+memories = true
+# BEGIN zenith
+[mcp_servers.zenith]
+command = "uv"
+args = ["run", "--project", "/Users/msfm/Developer/zenith/zenith", "zenith-server", "--mode", "orchestrator"]
+startup_timeout_sec = 10
+tool_timeout_sec = 1000000
+
+[mcp_servers.zenith.env]
+ZENITH_ORCHESTRATOR_PROVIDER = "codex"
+ZENITH_WORKER_PROVIDER = "codex"
+ZENITH_WORKER_ACP_COMMAND = "codex-acp"
+# END zenith
