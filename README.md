@@ -15,7 +15,7 @@ A futuristic, minimalistic website for the Longmont AI Meetup, built with React,
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   npm install
+   npm ci
    ```
 3. Run the development server:
    ```bash
@@ -26,4 +26,3 @@ A futuristic, minimalistic website for the Longmont AI Meetup, built with React,
 
 This project is configured for automatic deployment on Vercel.
 - Push to `main` triggers a production deployment.
-

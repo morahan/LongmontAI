@@ -167,6 +167,7 @@ secret_scan() {
   local files_scanned=0
   local file
   while IFS= read -r -d '' file; do
+    [[ -f "$file" ]] || continue
     files_scanned=$((files_scanned + 1))
     if ! gitleaks dir --redact --no-banner --log-level warn "$file"; then
       found=1
@@ -283,6 +284,7 @@ risky_pattern_scan() {
   local file
   while IFS= read -r file; do
     [[ -n "$file" ]] || continue
+    [[ -f "$file" ]] || continue
 
     local output
     if [[ "$MODE" == "staged" ]]; then
