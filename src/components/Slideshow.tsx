@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Download, Maximize2 } from 'lucide-react';
 import { slideshowDecks } from '../articles/slideshows';
 
 interface SlideshowProps {
@@ -9,6 +9,7 @@ interface SlideshowProps {
 const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
     const deck = slideshowDecks[deckId];
     const [currentSlide, setCurrentSlide] = useState(0);
+    const frameRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setCurrentSlide(0);
@@ -94,12 +95,24 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
                 </a>
             </div>
 
-            <div className="slideshow-frame">
+            <div
+                ref={frameRef}
+                className="slideshow-frame"
+            >
                 <img
                     src={slide.src}
                     alt={`${deck.title}: ${slide.title}`}
                     loading="lazy"
                 />
+                <button
+                    type="button"
+                    className="slideshow-expand"
+                    onClick={() => void frameRef.current?.requestFullscreen()}
+                    aria-label={`View ${slide.title} full screen`}
+                    title="View full screen"
+                >
+                    <Maximize2 size={19} aria-hidden="true" />
+                </button>
                 <button
                     type="button"
                     className="slideshow-nav slideshow-nav-left"

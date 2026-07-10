@@ -151,21 +151,33 @@ export const slideshowDecks: Record<string, SlideshowDeck> = {
     'models-as-munitions': {
         id: 'models-as-munitions',
         title: 'Models as Munitions',
-        description: 'A July 8 visual briefing on frontier model controls, autonomous ransomware, China access risk, harness leverage, local fallbacks, and the builder playbook for Longmont.',
+        description: 'A curated July 8 briefing on autonomous ransomware, frontier-model release gates, and the orchestration evidence that matters to local builders.',
         sourceUrl: '/slideshows/2026.07.08/models-as-munitions/models-as-munitions-briefing.pptx',
-        slides: createSlides('/slideshows/2026.07.08/models-as-munitions', [
-            'Models as Munitions',
-            'Best model and deployable model are now different questions',
-            'The same self-correction loop now works offensively',
-            'Frontier launches are becoming national-security events',
-            'Even the open-model hedge can become policy exposed',
-            'Harnesses became the performance lever',
-            'Fugu turns routing into an API',
-            'Local proof matters when access moves',
-            'Agentic workloads are a different cost curve',
-            'Five moves for builders this week',
-            'The folder becomes the evidence layer',
-            'Route the model. Patch the doors. Keep a local copy.',
-        ]),
+        slides: [
+            {
+                title: 'Models as Munitions',
+                src: '/slideshows/2026.07.08/models-as-munitions/slide-01.png',
+            },
+            {
+                title: 'JADEPUFFER made autonomous ransomware real',
+                src: '/slideshows/2026.07.08/models-as-munitions/assets/jadepuffer-agentic-ransomware.png',
+            },
+            {
+                title: 'Safety margins now shape frontier-model release gates',
+                src: '/slideshows/2026.07.08/models-as-munitions/assets/gpt-5.6-safety-margins.png',
+            },
+            {
+                title: 'Zenith: 2.06 average rank and 92% dominance',
+                src: '/slideshows/2026.07.08/models-as-munitions/assets/zenith-frontier-swe.png',
+            },
+            {
+                title: 'Fugu Ultra: 86.6 on CharXiv and 73.7 on SWE-Bench Pro',
+                src: '/slideshows/2026.07.08/models-as-munitions/assets/fugu-key-benchmarks.png',
+            },
+            {
+                title: 'Route the model. Patch the doors. Keep a local copy.',
+                src: '/slideshows/2026.07.08/models-as-munitions/slide-12.png',
+            },
+        ],
     },
 };

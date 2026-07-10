@@ -51,20 +51,18 @@ const markdownComponents = {
         <td className="px-4 py-3 text-[var(--text-secondary)]" {...props} />
     ),
     img: ({ node, src, alt, ...props }: any) => (
-        <figure className="my-8">
-            <div className="rounded-xl overflow-hidden border border-[var(--glass-border)] bg-black/20">
-                <img
-                    src={src}
-                    alt={alt}
-                    className="w-full max-h-[600px] object-contain mx-auto hover:scale-[1.02] transition-transform duration-700"
-                    {...props}
-                />
-            </div>
-            {alt && (
-                <figcaption className="mt-3 text-sm text-[var(--text-secondary)] text-center font-mono">
-                    {alt}
-                </figcaption>
-            )}
+        <figure className="article-media">
+            <a
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="article-media-link"
+                aria-label={`Open full-size image: ${alt ?? 'article image'}`}
+                title="Open image at full size"
+            >
+                <img src={src} alt={alt} {...props} />
+            </a>
+            {alt && <figcaption>{alt}</figcaption>}
         </figure>
     ),
     a: ({ node, href, children, ...props }: any) => (
