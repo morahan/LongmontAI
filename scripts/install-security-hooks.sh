@@ -8,3 +8,4 @@ git config core.hooksPath .githooks
 echo "Installed local Git hooks: core.hooksPath=.githooks"
 echo "Pre-commit now runs scripts/security-commit-review.sh staged."
 echo "Pre-push now runs scripts/security-commit-review.sh push."
+echo "Both hooks launch independent review gates in parallel; remediation stays sequential after failures."

@@ -5,7 +5,7 @@ description: Run and interpret the LongmontAI local security commit review. Use 
 
 # Security Commit Review
 
-This skill keeps security review tied to the exact commit surface. The local hook runs deterministic scanners on every commit after `npm run hooks:install`; agents can run the same gates manually and escalate to a Codex review when a change touches security-sensitive frontend behavior.
+This skill keeps security review tied to the exact commit and push surface. After `npm run hooks:install`, the local pre-commit and pre-push hooks run the shared review chain automatically. Independent review gates run in parallel whenever possible; remediation is intentionally sequential and starts only after every gate has reported its result.
 
 ## Commands
 
@@ -20,9 +20,9 @@ npm run security:agent-review
 ```
 
 - `npm run hooks:install` sets `core.hooksPath=.githooks` for this local checkout.
-- `npm run security:commit` checks staged changes with visible progress, matching the pre-commit hook.
-- `npm run security:push` checks the full tracked source tree with visible progress, matching the pre-push hook.
-- `npm run security:review` checks the full tracked source tree.
+- `npm run security:commit` checks staged changes through the parallel review chain, matching the pre-commit hook.
+- `npm run security:push` checks the full tracked source tree through the parallel review chain, matching the pre-push hook.
+- `npm run security:review` checks the full tracked source tree through the parallel review chain.
 - `npm run security:agent-review` runs a local Codex security review over local changes.
 - Set `SECURITY_COMMIT_AGENT_REVIEW=1` before committing or pushing when the hook should also run the Codex review gate; it is off by default to avoid surprise long model runs.
 - Set `SECURITY_COMMIT_FIX_MODEL=<model>` to choose the Codex model that fixes discovered vulnerabilities. The default is `CODEX_MODEL`, then `gpt-5.5`.
@@ -30,14 +30,16 @@ npm run security:agent-review
 
 ## Review Workflow
 
-1. Run `npm run security:commit` before committing or when a pre-commit hook fails.
-2. Run `npm run security:push` before pushing or when a pre-push hook fails.
-3. Watch the terminal dashboard: it prints scope, scan flow, numbered gates, progress bars, scanner details, vulnerability counts, and a final pass/fail table.
-4. Treat `gitleaks` findings as blocking until the staged secret is removed, rotated, or proven to be a false positive with a narrow ignore.
-5. Treat `npm audit --audit-level=high` failures as blocking dependency vulnerabilities. Prefer upgrading the vulnerable package or removing the vulnerable path.
-6. Treat frontend risky-pattern failures as a request for manual security review. Refactor away from the sink when possible; otherwise run `npm run security:agent-review` and document why the sink is safe.
-7. When any gate fails, let the configured Codex fix model attempt remediation. The hook still exits non-zero afterward so the fix can be reviewed, staged, and rerun.
-8. Do not bypass the hook silently. If a commit must proceed during an external outage, use `SECURITY_COMMIT_SKIP=1` only as an explicit emergency choice and report it.
+1. Run `npm run hooks:install` once per checkout so every Git commit and push enters this review chain.
+2. Run `npm run security:commit` before committing or when a pre-commit hook fails.
+3. Run `npm run security:push` before pushing or when a pre-push hook fails.
+4. Watch the terminal dashboard: it prints scope, parallel lane launches, numbered gates, progress bars, scanner details, vulnerability counts, and a final pass/fail table.
+5. Keep deterministic scanners and optional agent review parallel; keep only auto-remediation sequential, because it needs the complete set of failed gates.
+6. Treat `gitleaks` findings as blocking until the staged secret is removed, rotated, or proven to be a false positive with a narrow ignore.
+7. Treat `npm audit --audit-level=high` failures as blocking dependency vulnerabilities. Prefer upgrading the vulnerable package or removing the vulnerable path.
+8. Treat frontend risky-pattern failures as a request for manual security review. Refactor away from the sink when possible; otherwise run `npm run security:agent-review` and document why the sink is safe.
+9. When any gate fails, let the configured Codex fix model attempt remediation. The hook still exits non-zero afterward so the fix can be reviewed, staged, and rerun.
+10. Do not bypass the hook silently. If a commit must proceed during an external outage, use `SECURITY_COMMIT_SKIP=1` only as an explicit emergency choice and report it.
 
 ## What The Hook Checks
 

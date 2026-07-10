@@ -41,10 +41,16 @@ else
 fi
 
 failures=0
-gate_index=0
 gate_total=4
 gate_results=""
 failed_gates=""
+gate_count=0
+gate_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/security-review.XXXXXXXXXX")"
+
+cleanup() {
+  rm -rf "$gate_temp_dir"
+}
+trap cleanup EXIT
 
 scope_label() {
   case "$MODE" in
@@ -101,7 +107,8 @@ banner() {
   printf ' Files: %s staged, %s tracked\n' "$(staged_count)" "$(tracked_count)"
   printf '%b------------------------------------------------------------%b\n' "$cyan" "$reset"
   echo "Flow:"
-  echo "  git action -> secrets -> dependency advisories -> frontend sinks -> optional agent"
+  echo "  git action -> parallel review gates -> sequential remediation only on failure"
+  echo "  Parallel gates: secrets, dependency advisories, frontend sinks, optional agent"
   printf '%b============================================================%b\n' "$cyan" "$reset"
 }
 
@@ -120,27 +127,72 @@ mark_failure() {
   failures=$((failures + 1))
 }
 
-run_gate() {
+run_gate_worker() {
+  local index="$1"
+  local label="$2"
+  local details="$3"
+  shift 3
+
+  echo
+  printf '%b[%s/%s] %s%b\n' "$bold" "$index" "$gate_total" "$label" "$reset"
+  printf '  %bWhat:%b %s\n' "$dim" "$reset" "$details"
+  echo "  Execution: parallel review lane"
+
+  if "$@"; then
+    printf '  %bPASS%b %s\n' "$green" "$reset" "$label"
+    return 0
+  else
+    printf '  %bFAIL%b %s\n' "$red" "$reset" "$label" >&2
+    return 1
+  fi
+}
+
+launch_gate() {
   local label="$1"
   local details="$2"
   shift 2
 
-  gate_index=$((gate_index + 1))
+  gate_count=$((gate_count + 1))
+
+  local log_file="$gate_temp_dir/gate-$gate_count.log"
+  gate_labels[$gate_count]="$label"
+  gate_logs[$gate_count]="$log_file"
+
+  printf '  Launching [%s/%s] %s\n' "$gate_count" "$gate_total" "$label"
+  run_gate_worker "$gate_count" "$label" "$details" "$@" >"$log_file" 2>&1 &
+  gate_pids[$gate_count]=$!
+}
+
+run_parallel_gates() {
   echo
-  printf '%b[%s/%s] %s%b\n' "$bold" "$gate_index" "$gate_total" "$label" "$reset"
-  printf '  %bWhat:%b %s\n' "$dim" "$reset" "$details"
-  draw_progress "$((gate_index - 1))" "$gate_total"
+  printf '%bParallel review chain%b\n' "$bold" "$reset"
+  printf '%b------------------------------------------------------------%b\n' "$cyan" "$reset"
 
-  if "$@"; then
-    printf '  %bPASS%b %s\n' "$green" "$reset" "$label"
-    record_gate "$label" "PASS"
-  else
-    printf '  %bFAIL%b %s\n' "$red" "$reset" "$label" >&2
-    record_gate "$label" "FAIL"
-    mark_failure
-  fi
+  launch_gate "Secrets scan" "Look for staged or tracked secrets before they enter Git history." secret_scan
+  launch_gate "Dependency vulnerability audit" "Check npm/OSV advisories and block configured severity levels." dependency_audit
+  launch_gate "Frontend risky pattern scan" "Illustrate risky React/browser sinks that need human security review." risky_pattern_scan
+  launch_gate "Optional Codex agent security review" "Run an agent vulnerability review only when SECURITY_COMMIT_AGENT_REVIEW=1." agent_review_hint
 
-  draw_progress "$gate_index" "$gate_total"
+  echo
+  echo "Waiting for review lanes to finish..."
+  draw_progress 0 "$gate_total"
+
+  local index
+  for ((index = 1; index <= gate_count; index++)); do
+    local status
+    if wait "${gate_pids[$index]}"; then
+      status="PASS"
+    else
+      status="FAIL"
+    fi
+
+    cat "${gate_logs[$index]}"
+    record_gate "${gate_labels[$index]}" "$status"
+    if [[ "$status" == "FAIL" ]]; then
+      mark_failure
+    fi
+    draw_progress "$index" "$gate_total"
+  done
 }
 
 secret_scan() {
@@ -382,10 +434,7 @@ run_remediation_agent() {
 }
 
 banner
-run_gate "Secrets scan" "Look for staged or tracked secrets before they enter Git history." secret_scan
-run_gate "Dependency vulnerability audit" "Check npm/OSV advisories and block configured severity levels." dependency_audit
-run_gate "Frontend risky pattern scan" "Illustrate risky React/browser sinks that need human security review." risky_pattern_scan
-run_gate "Optional Codex agent security review" "Run an agent vulnerability review only when SECURITY_COMMIT_AGENT_REVIEW=1." agent_review_hint
+run_parallel_gates
 summary
 
 if [[ "$failures" -ne 0 ]]; then
