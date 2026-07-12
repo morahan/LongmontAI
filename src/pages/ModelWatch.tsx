@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Activity, ArrowRight, CheckCircle2, Clock3, Radar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import modelWatchStatus from '../data/modelWatch.generated.json';
@@ -8,15 +8,33 @@ import {
 } from '../data/modelWatch';
 
 const ModelWatch: React.FC = () => {
+  const [liveStatus, setLiveStatus] = useState(modelWatchStatus);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch('/api/model-watch', { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+          throw new Error('Live Model Watch status is unavailable.');
+        }
+        return response.json();
+      })
+      .then((status: typeof modelWatchStatus) => setLiveStatus(status))
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, []);
+
   const latestModels = [...modelWatchModels]
     .filter((model) => model.releaseDateSort)
     .sort((a, b) => (b.releaseDateSort ?? '').localeCompare(a.releaseDateSort ?? ''))
     .slice(0, 8);
   const detectedModelCount = new Set([
-    ...modelWatchStatus.detectedModels,
+    ...liveStatus.detectedModels,
     ...modelWatchModels.map((model) => model.name),
   ]).size;
-  const checkedAt = new Date(modelWatchStatus.checkedAt);
+  const checkedAt = new Date(liveStatus.checkedAt);
   const checkedLabel = Number.isNaN(checkedAt.getTime())
     ? 'Awaiting first check'
     : checkedAt.toLocaleString('en-US', {
@@ -55,7 +73,7 @@ const ModelWatch: React.FC = () => {
           <p>models detected</p>
         </div>
         <div>
-          <span>{modelWatchStatus.successfulSources}/{modelWatchStatus.totalSources}</span>
+          <span>{liveStatus.successfulSources}/{liveStatus.totalSources}</span>
           <p>sources healthy</p>
         </div>
         <div>

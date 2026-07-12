@@ -2,6 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "crons": [
+    {
+      "path": "/api/model-watch",
+      "schedule": "17 13 * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/weekly-screenshots/2025/ai-tools-header.png",
