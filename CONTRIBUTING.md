@@ -13,6 +13,28 @@ public/weekly-screenshots/
     another-topic.png
     ...
 
+public/slideshows/
+  YYYY.MM.DD/
+    post-slug/           ← Slide images, source decks, and deck-only assets
+      slide-01.png
+      deck-name.pptx
+      assets/
+
+public/documents/
+  YYYY.MM.DD/            ← PDFs and previews embedded in that edition
+
+outputs/
+  YYYY.MM.DD/
+    post-slug/           ← Tracked source/archive material for one post
+
+output/
+  playwright/
+    YYYY.MM.DD/
+      post-slug/         ← Ignored local validation screenshots
+  ocr/
+    YYYY.MM.DD/
+      post-slug/         ← Ignored local source/OCR captures
+
 src/articles/
   YYYY.MM.DD.md         ← Article markdown with frontmatter
   index.ts              ← Must be updated to include new article
@@ -37,6 +59,11 @@ src/articles/
 ### Organization
 - All screenshots for one edition go in ONE folder: `public/weekly-screenshots/YYYY.MM.DD/`
 - Reference them in markdown as: `/weekly-screenshots/YYYY.MM.DD/filename.png`
+- Slideshows for one edition go in `public/slideshows/YYYY.MM.DD/post-slug/`
+- Documents for one edition go in `public/documents/YYYY.MM.DD/`
+- Tracked source material and generated archives go in `outputs/YYYY.MM.DD/post-slug/`
+- Local validation screenshots and OCR captures stay ignored under `output/<tool>/YYYY.MM.DD/post-slug/`
+- Do not add article assets directly under `outputs/`, `public/weekly-screenshots/`, or an undated public folder.
 
 ## Article Format
 
@@ -79,7 +106,10 @@ and why it's significant for the AI community.
 4. Update `src/articles/index.ts`:
    - Add import: `import article_YYYY_MM_DD from './YYYY.MM.DD.md?raw';`
    - Add to editions array (newest first): `parseMarkdownToEdition(article_YYYY_MM_DD),`
-5. Commit and push to `main` — Vercel auto-deploys
+5. If you add a slideshow, add its deck metadata to `src/articles/slideshows.ts` and keep every `sourceUrl`, slide, and asset path under `/slideshows/YYYY.MM.DD/post-slug/`
+6. If you add an embedded PDF, add its metadata to `src/articles/documents.ts` and keep the PDF plus preview under `/documents/YYYY.MM.DD/`
+7. Run `npm run content:check-assets` and `npm run build`
+8. Commit and push to `main` — Vercel auto-deploys
 
 ## Quality Standards
 - Every screenshot must have a written explanation

@@ -69,8 +69,8 @@ export const slideshowDecks: Record<string, SlideshowDeck> = {
         id: 'ai-avalanche',
         title: 'The 2026 AI Avalanche',
         description: 'A frontier-model briefing on routing, orchestration, agent safety, infrastructure, IP pressure, and national AI policy.',
-        sourceUrl: '/slideshows/2026.04.29/ai-avalanche/the-2026-ai-avalanche.pptx',
-        slides: createSlides('/slideshows/2026.04.29/ai-avalanche', [
+        sourceUrl: '/slideshows/2026.04.15/ai-avalanche/the-2026-ai-avalanche.pptx',
+        slides: createSlides('/slideshows/2026.04.15/ai-avalanche', [
             'Benchmark Comparison: Minimax, Claude, Codex, GLM, Kimi',
             'The Frontier Tier Matrix',
             'The Efficiency Routing Tier',

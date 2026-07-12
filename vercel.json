@@ -2,6 +2,43 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/weekly-screenshots/2025/ai-tools-header.png",
+      "destination": "/weekly-screenshots/2025.11.20/ai-tools-header.png",
+      "permanent": true
+    },
+    {
+      "source": "/weekly-screenshots/2025/gemini-benchmarks.png",
+      "destination": "/weekly-screenshots/2025.11.26/gemini-benchmarks.png",
+      "permanent": true
+    },
+    {
+      "source": "/weekly-screenshots/2025/gemini-vs-others.png",
+      "destination": "/weekly-screenshots/2025.11.26/gemini-vs-others.png",
+      "permanent": true
+    },
+    {
+      "source": "/weekly-screenshots/2025/grok-release.png",
+      "destination": "/weekly-screenshots/2025.11.26/grok-release.png",
+      "permanent": true
+    },
+    {
+      "source": "/weekly-screenshots/2025/bezos-prometheus.png",
+      "destination": "/weekly-screenshots/2025.11.26/bezos-prometheus.png",
+      "permanent": true
+    },
+    {
+      "source": "/weekly-screenshots/2025/gemini-economy.png",
+      "destination": "/weekly-screenshots/2025.11.26/gemini-economy.png",
+      "permanent": true
+    },
+    {
+      "source": "/slideshows/2026.04.29/ai-avalanche/:path*",
+      "destination": "/slideshows/2026.04.15/ai-avalanche/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

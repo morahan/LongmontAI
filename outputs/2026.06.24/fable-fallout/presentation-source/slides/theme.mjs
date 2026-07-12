@@ -13,12 +13,12 @@ export const C = {
 };
 
 export const assets = {
-  intelligence: "outputs/manual-20260624-fable/presentations/fable-fallout/assets/intelligence-cost-collapse.jpg",
-  fable: "outputs/manual-20260624-fable/presentations/fable-fallout/assets/fable5-agentic-coding.png",
-  tokens: "outputs/manual-20260624-fable/presentations/fable-fallout/assets/agentic-workflows-cost-more.png",
-  workflows: "outputs/manual-20260624-fable/presentations/fable-fallout/assets/six-workflow-patterns.png",
-  deepVerification: "outputs/manual-20260624-fable/presentations/fable-fallout/assets/deep-verification-workflow.png",
-  goal: "outputs/manual-20260624-fable/presentations/fable-fallout/assets/goal-achieved-verification.png",
+  intelligence: "assets/intelligence-cost-collapse.jpg",
+  fable: "assets/fable5-agentic-coding.png",
+  tokens: "assets/agentic-workflows-cost-more.png",
+  workflows: "assets/six-workflow-patterns.png",
+  deepVerification: "assets/deep-verification-workflow.png",
+  goal: "assets/goal-achieved-verification.png",
 };
 
 export function bg(slide, ctx, color = C.cyan) {
