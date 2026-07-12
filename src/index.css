@@ -1606,6 +1606,47 @@ iframe {
   border-bottom: 0;
 }
 
+.model-watch-release-list {
+  border-top: 1px solid var(--glass-border);
+}
+
+.model-watch-release-list article {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(14rem, 1fr) minmax(8rem, 0.45fr) 7rem;
+  gap: 0.8rem;
+  align-items: center;
+  min-height: 4.75rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.model-watch-release-list svg {
+  color: #34d399;
+}
+
+.model-watch-release-list h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.model-watch-release-list p,
+.model-watch-release-list span,
+.model-watch-release-list time {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+.model-watch-release-list span,
+.model-watch-release-list time {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.model-watch-release-list time {
+  text-align: right;
+}
+
 @media (max-width: 900px) {
   .model-watch-hero {
     align-items: flex-start;
@@ -1643,6 +1684,15 @@ iframe {
 
   .model-watch-table {
     min-width: 760px;
+  }
+
+  .model-watch-release-list article {
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    padding: 0.8rem 0;
+  }
+
+  .model-watch-release-list span {
+    display: none;
   }
 }
 

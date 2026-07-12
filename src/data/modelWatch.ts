@@ -52,6 +52,12 @@ export type ModelBenchmarkKey =
   | 'inputCost'
   | 'outputCost';
 
+export interface ModelWatchStatus {
+  checkedAt: string;
+  successfulSources: number;
+  totalSources: number;
+}
+
 export interface ModelBenchmarkDefinition {
   key: ModelBenchmarkKey;
   label: string;
@@ -360,6 +366,27 @@ export const modelWatchPipeline: ModelWatchPipelineStep[] = [
 export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   {
     company: 'OpenAI',
+    update: 'GPT-5.6 is generally available as Sol, Terra, and Luna across ChatGPT, Codex, and the API.',
+    date: 'Jul 9, 2026',
+    lane: 'Frontier',
+    url: 'https://openai.com/index/gpt-5-6/',
+  },
+  {
+    company: 'xAI',
+    update: 'Grok 4.5 is the latest general Grok model, focused on coding, research, and knowledge work.',
+    date: 'Jul 8, 2026',
+    lane: 'Frontier',
+    url: 'https://x.ai/news/grok-4-5',
+  },
+  {
+    company: 'Anthropic',
+    update: 'Claude Fable 5 returned to general availability after its temporary June suspension.',
+    date: 'Jul 1, 2026',
+    lane: 'Frontier',
+    url: 'https://www.anthropic.com/news/claude-fable-5-mythos-5',
+  },
+  {
+    company: 'OpenAI',
     update: 'GPT-5.5 release page lists product availability, API follow-up, and agentic coding capabilities.',
     date: 'Apr 23, 2026',
     lane: 'Frontier',
@@ -497,6 +524,78 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
 ];
 
 export const modelWatchModels: ModelWatchModel[] = [
+  {
+    id: 'gpt-5-6-sol',
+    name: 'GPT-5.6 Sol',
+    provider: 'OpenAI',
+    lane: 'Flagship coding and agentic work',
+    releaseDate: 'Jul 9, 2026',
+    releaseDateSort: '2026-07-09',
+    sourceLabel: 'OpenAI launch',
+    sourceUrl: 'https://openai.com/index/gpt-5-6/',
+    benchmarks: {
+      sweBenchPro: { value: 64.6 },
+      terminalBench: { value: 88.8, note: 'Terminal-Bench 2.1.' },
+      frontierCode: { value: 80, note: 'Artificial Analysis Coding Agent Index v1.1.' },
+      browseComp: { value: 90.4 },
+      gpqaDiamond: { value: 94.6 },
+      inputCost: { value: 5 },
+      outputCost: { value: 30 },
+    },
+  },
+  {
+    id: 'gpt-5-6-terra',
+    name: 'GPT-5.6 Terra',
+    provider: 'OpenAI',
+    lane: 'Balanced everyday work',
+    releaseDate: 'Jul 9, 2026',
+    releaseDateSort: '2026-07-09',
+    sourceLabel: 'OpenAI launch',
+    sourceUrl: 'https://openai.com/index/gpt-5-6/',
+    benchmarks: {
+      sweBenchPro: { value: 63.4 },
+      terminalBench: { value: 87.4, note: 'Terminal-Bench 2.1.' },
+      frontierCode: { value: 77.4, note: 'Artificial Analysis Coding Agent Index v1.1.' },
+      browseComp: { value: 87.5 },
+      gpqaDiamond: { value: 92.9 },
+      inputCost: { value: 2.5 },
+      outputCost: { value: 15 },
+    },
+  },
+  {
+    id: 'gpt-5-6-luna',
+    name: 'GPT-5.6 Luna',
+    provider: 'OpenAI',
+    lane: 'Fast, cost-efficient work',
+    releaseDate: 'Jul 9, 2026',
+    releaseDateSort: '2026-07-09',
+    sourceLabel: 'OpenAI launch',
+    sourceUrl: 'https://openai.com/index/gpt-5-6/',
+    benchmarks: {
+      sweBenchPro: { value: 62.7 },
+      terminalBench: { value: 84.7, note: 'Terminal-Bench 2.1.' },
+      frontierCode: { value: 74.6, note: 'Artificial Analysis Coding Agent Index v1.1.' },
+      browseComp: { value: 83.3 },
+      gpqaDiamond: { value: 92.3 },
+      inputCost: { value: 1 },
+      outputCost: { value: 6 },
+    },
+  },
+  {
+    id: 'grok-4-5',
+    name: 'Grok 4.5',
+    provider: 'xAI',
+    lane: 'Agentic knowledge work',
+    releaseDate: 'Jul 8, 2026',
+    releaseDateSort: '2026-07-08',
+    sourceLabel: 'xAI launch',
+    sourceUrl: 'https://x.ai/news/grok-4-5',
+    benchmarks: {
+      frontierCode: { value: 75.8, note: 'Artificial Analysis Coding Agent Index.' },
+      inputCost: { value: 2 },
+      outputCost: { value: 6 },
+    },
+  },
   {
     id: 'claude-fable-5',
     name: 'Claude Fable 5',

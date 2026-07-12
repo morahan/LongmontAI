@@ -1,16 +1,32 @@
 import React from 'react';
-import { Activity, Database, ExternalLink, Filter, Globe2, Rss, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowRight, CheckCircle2, Clock3, Radar } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import modelWatchStatus from '../data/modelWatch.generated.json';
 import {
-  coreSourceCount,
-  modelWatchPipeline,
+  modelWatchModels,
   modelWatchSnapshots,
-  modelWatchSources,
-  modelWatchUpdateTypes,
-  openWeightSourceCount,
-  regionCount,
 } from '../data/modelWatch';
 
 const ModelWatch: React.FC = () => {
+  const latestModels = [...modelWatchModels]
+    .filter((model) => model.releaseDateSort)
+    .sort((a, b) => (b.releaseDateSort ?? '').localeCompare(a.releaseDateSort ?? ''))
+    .slice(0, 8);
+  const detectedModelCount = new Set([
+    ...modelWatchStatus.detectedModels,
+    ...modelWatchModels.map((model) => model.name),
+  ]).size;
+  const checkedAt = new Date(modelWatchStatus.checkedAt);
+  const checkedLabel = Number.isNaN(checkedAt.getTime())
+    ? 'Awaiting first check'
+    : checkedAt.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    });
+
   return (
     <div className="model-watch">
       <section className="model-watch-hero" aria-labelledby="model-watch-title">
@@ -21,38 +37,34 @@ const ModelWatch: React.FC = () => {
           </div>
           <h1 id="model-watch-title">Model Watch</h1>
           <p>
-            A minimal tracker for the model releases, open-weight drops, API availability changes, and retirements
-            that matter across frontier labs and global open model builders.
+            The latest consequential model releases, availability changes, and comparable benchmark results in one
+            quiet view.
           </p>
         </div>
-        <div className="model-watch-hero-actions" aria-label="Primary source links">
-          <a href="https://openai.com/news/rss.xml" target="_blank" rel="noopener noreferrer">
-            <Rss size={16} />
-            OpenAI RSS
-          </a>
-          <a href="https://huggingface.co/models" target="_blank" rel="noopener noreferrer">
-            <Database size={16} />
-            Model Hub
-          </a>
+        <div className="model-watch-hero-actions">
+          <Link to="/leaderboard">
+            Leaderboard
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 
       <section className="model-watch-stats" aria-label="Model Watch coverage summary">
         <div>
-          <span>{modelWatchSources.length}</span>
-          <p>source families</p>
+          <span>{detectedModelCount}</span>
+          <p>models detected</p>
         </div>
         <div>
-          <span>{coreSourceCount}</span>
-          <p>frontier labs</p>
+          <span>{modelWatchStatus.successfulSources}/{modelWatchStatus.totalSources}</span>
+          <p>sources healthy</p>
         </div>
         <div>
-          <span>{openWeightSourceCount}</span>
-          <p>open-weight lanes</p>
+          <span>Daily</span>
+          <p>autonomous check</p>
         </div>
         <div>
-          <span>{regionCount}</span>
-          <p>regions</p>
+          <span>0</span>
+          <p>AI credits used</p>
         </div>
       </section>
 
@@ -60,14 +72,14 @@ const ModelWatch: React.FC = () => {
         <div className="model-watch-section-header">
           <div>
             <div className="model-watch-eyebrow">
-              <ShieldCheck size={16} />
-              Seeded signals
+              <Clock3 size={16} />
+              Last checked {checkedLabel}
             </div>
-            <h2 id="snapshot-heading">Current Source Examples</h2>
+            <h2 id="snapshot-heading">Latest Signals</h2>
           </div>
         </div>
         <div className="model-watch-snapshot-grid">
-          {modelWatchSnapshots.map((item) => (
+          {modelWatchSnapshots.slice(0, 6).map((item) => (
             <a
               key={`${item.company}-${item.update}`}
               className="model-watch-snapshot"
@@ -86,97 +98,28 @@ const ModelWatch: React.FC = () => {
         </div>
       </section>
 
-      <section className="model-watch-grid" aria-label="Model Watch collection plan">
-        <div className="model-watch-panel">
-          <div className="model-watch-panel-title">
-            <Filter size={18} />
-            <h2>Update Filters</h2>
-          </div>
-          <div className="model-watch-filter-list">
-            {modelWatchUpdateTypes.map((type) => (
-              <article key={type.label}>
-                <h3>{type.label}</h3>
-                <p>{type.description}</p>
-                <div>
-                  {type.keywords.map((keyword) => (
-                    <span key={keyword}>{keyword}</span>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="model-watch-panel">
-          <div className="model-watch-panel-title">
-            <Globe2 size={18} />
-            <h2>Collector Pipeline</h2>
-          </div>
-          <ol className="model-watch-pipeline">
-            {modelWatchPipeline.map((step) => (
-              <li key={step.label}>
-                <span>{step.label}</span>
-                <p>{step.detail}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="model-watch-section" aria-labelledby="sources-heading">
+      <section className="model-watch-section" aria-labelledby="models-heading">
         <div className="model-watch-section-header">
           <div>
             <div className="model-watch-eyebrow">
-              <Database size={16} />
-              Source directory
+              <Radar size={16} />
+              Active watchlist
             </div>
-            <h2 id="sources-heading">Labs To Monitor</h2>
+            <h2 id="models-heading">Recently Released</h2>
           </div>
         </div>
-        <div className="model-watch-table-wrap">
-          <table className="model-watch-table">
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Region</th>
-                <th>Lane</th>
-                <th>Method</th>
-                <th>Signals</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modelWatchSources.map((source) => (
-                <tr key={source.company}>
-                  <td>
-                    <strong>{source.company}</strong>
-                    <span>{source.priority}</span>
-                  </td>
-                  <td>{source.region}</td>
-                  <td>{source.lane}</td>
-                  <td>{source.method}</td>
-                  <td>{source.signals.join(' / ')}</td>
-                  <td>
-                    <a href={source.url} target="_blank" rel="noopener noreferrer" aria-label={`${source.company} source`}>
-                      Open
-                      <ExternalLink size={13} />
-                    </a>
-                    {source.backupUrl && (
-                      <a
-                        href={source.backupUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${source.company} backup source`}
-                      >
-                        Backup
-                        <ExternalLink size={13} />
-                      </a>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="model-watch-release-list">
+          {latestModels.map((model) => (
+            <article key={model.id}>
+              <CheckCircle2 size={17} aria-hidden="true" />
+              <div>
+                <h3>{model.name}</h3>
+                <p>{model.lane}</p>
+              </div>
+              <span>{model.provider}</span>
+              <time dateTime={model.releaseDateSort}>{model.releaseDate}</time>
+            </article>
+          ))}
         </div>
       </section>
     </div>
