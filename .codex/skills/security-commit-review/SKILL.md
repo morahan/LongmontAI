@@ -17,16 +17,22 @@ npm run security:commit
 npm run security:push
 npm run security:review
 npm run security:agent-review
+npm run security:remediate
+npm run security:test-chain
+npm run security:test-runtime
 ```
 
 - `npm run hooks:install` sets `core.hooksPath=.githooks` for this local checkout.
 - `npm run security:commit` checks staged changes through the parallel review chain, matching the pre-commit hook.
 - `npm run security:push` checks the full tracked source tree through the parallel review chain, matching the pre-push hook.
 - `npm run security:review` checks the full tracked source tree through the parallel review chain.
-- `npm run security:agent-review` runs a local Codex security review over local changes.
+- `npm run security:agent-review` runs a read-only, ephemeral Codex security review over local changes.
+- `npm run security:remediate` runs all deterministic gates and, only after a failure, explicitly starts a workspace-write orchestrator. It delegates read-only validation to `security-triage`, then delegates each validated packet to a bounded `security-fixer` subagent.
+- `npm run security:test-chain` verifies the safety contract without launching an agent.
+- `npm run security:test-runtime` verifies the production response-header contract.
 - Set `SECURITY_COMMIT_AGENT_REVIEW=1` before committing or pushing when the hook should also run the Codex review gate; it is off by default to avoid surprise long model runs.
 - Set `SECURITY_COMMIT_FIX_MODEL=<model>` to choose the Codex model that fixes discovered vulnerabilities. The default is `CODEX_MODEL`, then `gpt-5.5`.
-- Set `SECURITY_COMMIT_AUTO_FIX=0` only when you want the hook to report vulnerabilities without attempting model remediation.
+- Automatic fixing is off by default. `SECURITY_COMMIT_AUTO_FIX=1` is an explicit grant for one invocation; `SECURITY_COMMIT_FIX_ATTEMPTS` accepts only `1` or `2` and defaults to `1`.
 
 ## Review Workflow
 
@@ -38,21 +44,24 @@ npm run security:agent-review
 6. Treat `gitleaks` findings as blocking until the staged secret is removed, rotated, or proven to be a false positive with a narrow ignore.
 7. Treat `npm audit --audit-level=high` failures as blocking dependency vulnerabilities. Prefer upgrading the vulnerable package or removing the vulnerable path.
 8. Treat frontend risky-pattern failures as a request for manual security review. Refactor away from the sink when possible; otherwise run `npm run security:agent-review` and document why the sink is safe.
-9. When any gate fails, let the configured Codex fix model attempt remediation. The hook still exits non-zero afterward so the fix can be reviewed, staged, and rerun.
-10. Do not bypass the hook silently. If a commit must proceed during an external outage, use `SECURITY_COMMIT_SKIP=1` only as an explicit emergency choice and report it.
+9. A normal hook failure only reports and writes a redacted evidence packet under `.git/security-review/`. Run `npm run security:remediate` when you explicitly want an agent to edit the workspace.
+10. Review remediation edits, stage them intentionally, and rerun the original gate. The scanner remains fail-closed and the fixer cannot commit, push, deploy, bypass hooks, access credentials, or weaken scanners.
+11. Do not bypass a failing scanner. A genuine local incident may use `SECURITY_COMMIT_BREAK_GLASS=1 SECURITY_COMMIT_BREAK_GLASS_TICKET=<ticket>`; it is refused in CI and recorded under `.git/security-review/`.
 
 ## What The Hook Checks
 
 - Staged secrets with `gitleaks git --staged`.
-- Full tracked-file secrets with `gitleaks dir` on push/manual review.
+- Full tracked-file secrets with `gitleaks dir` on push/manual review, plus every outgoing commit in `upstream..HEAD` on push.
 - High or critical npm dependency advisories with `npm audit --audit-level=high`.
 - Newly staged frontend sink patterns in `src/`, `public/`, `index.html`, and Vite/ESLint config:
   `dangerouslySetInnerHTML`, raw HTML insertion, string code execution, `window.open`, and token-like browser storage.
+- Agent control-plane files under `.github/`, `.codex/`, `.agents/`, `.githooks/`, `api/`, and `scripts/`, plus `package.json` and `vercel.json`, for prohibited full-access sandboxes, broad workflow writes, and persisted checkout credentials.
 
 ## Interpreting Results
 
 - A scanner error is a failed gate, not a pass.
 - A blocked commit should be fixed at the smallest safe surface, then rerun with `npm run security:commit`.
-- Auto-remediation must not commit, push, or bypass hooks; it only edits the working tree and asks for a rerun.
+- Triage/review agents run read-only. Explicit remediation runs ephemeral and workspace-write with network disabled by the sandbox; it must not commit, push, deploy, change Git configuration, access credentials, bypass hooks, or weaken scanners.
+- Evidence packets contain only mode, commit, failed gate names, and filenames. Never add scanner output or secret values to them.
 - If the dependency audit is blocked by registry/network issues, report that the vulnerability gate is unproven instead of calling the commit clean.
 - If the staged code intentionally introduces a risky frontend pattern, run the agent review and keep the justification near the code or in the commit message.

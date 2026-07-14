@@ -17,8 +17,24 @@ fi
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-if [[ "${SECURITY_COMMIT_SKIP:-0}" == "1" ]]; then
-  echo "security-commit-review: skipped because SECURITY_COMMIT_SKIP=1"
+if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
+  if [[ -n "${CI:-}" ]]; then
+    echo "security-commit-review: break-glass is forbidden in CI." >&2
+    exit 1
+  fi
+  break_glass_ticket="${SECURITY_COMMIT_BREAK_GLASS_TICKET:-}"
+  if ! [[ "$break_glass_ticket" =~ ^[A-Za-z0-9._:/#-]{6,160}$ ]]; then
+    echo "security-commit-review: SECURITY_COMMIT_BREAK_GLASS_TICKET must contain a ticket or incident reference." >&2
+    exit 1
+  fi
+  break_glass_log="$ROOT/.git/security-review/break-glass.log"
+  mkdir -p "$(dirname "$break_glass_log")"
+  chmod 700 "$(dirname "$break_glass_log")" 2>/dev/null || true
+  printf '%s mode=%s commit=%s ticket=%s\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$MODE" \
+    "$(git rev-parse HEAD 2>/dev/null || echo no-head)" "$break_glass_ticket" >>"$break_glass_log"
+  chmod 600 "$break_glass_log" 2>/dev/null || true
+  echo "security-commit-review: local break-glass recorded for $break_glass_ticket." >&2
   exit 0
 fi
 
@@ -41,11 +57,13 @@ else
 fi
 
 failures=0
-gate_total=4
+gate_total=6
 gate_results=""
 failed_gates=""
 gate_count=0
 gate_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/security-review.XXXXXXXXXX")"
+evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$ROOT/.git/security-review}"
+evidence_file=""
 
 cleanup() {
   rm -rf "$gate_temp_dir"
@@ -63,7 +81,8 @@ scope_label() {
 scan_target_label() {
   case "$MODE" in
     staged) echo "staged files only" ;;
-    push|all) echo "tracked repository files" ;;
+    push) echo "tracked repository files and outgoing Git history" ;;
+    all) echo "tracked repository files" ;;
   esac
 }
 
@@ -108,7 +127,7 @@ banner() {
   printf '%b------------------------------------------------------------%b\n' "$cyan" "$reset"
   echo "Flow:"
   echo "  git action -> parallel review gates -> sequential remediation only on failure"
-  echo "  Parallel gates: secrets, dependency advisories, frontend sinks, optional agent"
+  echo "  Parallel gates: secrets, dependencies, frontend sinks, agent controls, optional review"
   printf '%b============================================================%b\n' "$cyan" "$reset"
 }
 
@@ -171,6 +190,8 @@ run_parallel_gates() {
   launch_gate "Secrets scan" "Look for staged or tracked secrets before they enter Git history." secret_scan
   launch_gate "Dependency vulnerability audit" "Check npm/OSV advisories and block configured severity levels." dependency_audit
   launch_gate "Frontend risky pattern scan" "Illustrate risky React/browser sinks that need human security review." risky_pattern_scan
+  launch_gate "Agent control-plane policy scan" "Inspect agent, workflow, hook, script, API, and deployment configuration." control_plane_scan
+  launch_gate "Security policy contract" "Verify the agent containment and production header contracts cannot drift." security_policy_contract
   launch_gate "Optional Codex agent security review" "Run an agent vulnerability review only when SECURITY_COMMIT_AGENT_REVIEW=1." agent_review_hint
 
   echo
@@ -198,7 +219,7 @@ run_parallel_gates() {
 secret_scan() {
   if ! command -v gitleaks >/dev/null 2>&1; then
     echo "  gitleaks is required for secret scanning." >&2
-    echo "  Install it or set SECURITY_COMMIT_SKIP=1 for an intentional emergency bypass." >&2
+    echo "  Install it before retrying this fail-closed gate." >&2
     return 1
   fi
 
@@ -226,6 +247,30 @@ secret_scan() {
     fi
   done < <(git ls-files -z)
 
+  if [[ "$MODE" == "push" ]]; then
+    local upstream
+    local range
+    upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+    if [[ -z "$upstream" ]] && git show-ref --verify --quiet refs/remotes/origin/main; then
+      upstream="origin/main"
+    fi
+
+    if [[ -n "$upstream" ]]; then
+      range="${upstream}..HEAD"
+      echo "  History range: $range"
+      if [[ -n "$(git rev-list "$range" 2>/dev/null)" ]]; then
+        if ! gitleaks git --redact --no-banner --log-level warn --log-opts="$range" .; then
+          found=1
+        fi
+      else
+        echo "  Finding summary: no outgoing commits to scan."
+      fi
+    else
+      echo "  Cannot determine an upstream branch for outgoing-history scanning." >&2
+      found=1
+    fi
+  fi
+
   echo "  Files scanned: $files_scanned"
   if [[ "$found" -eq 0 ]]; then
     echo "  Finding summary: no tracked-file secrets detected."
@@ -235,11 +280,6 @@ secret_scan() {
 }
 
 dependency_audit() {
-  if [[ "${SECURITY_COMMIT_SKIP_DEP_AUDIT:-0}" == "1" ]]; then
-    echo "  Dependency audit skipped because SECURITY_COMMIT_SKIP_DEP_AUDIT=1."
-    return 0
-  fi
-
   echo "  Scanner: npm audit"
   echo "  Blocking level: ${SECURITY_COMMIT_AUDIT_LEVEL:-high}"
 
@@ -308,6 +348,73 @@ review_targets() {
     git ls-files
   fi | grep -E '^(src/|public/|index\.html$|vite\.config\.(js|ts)$|eslint\.config\.js$)' \
      | grep -E '(\.(js|jsx|ts|tsx|mjs|cjs|html)$|^index\.html$)' || true
+}
+
+control_plane_targets() {
+  if [[ "$MODE" == "staged" ]]; then
+    git diff --cached --name-only --diff-filter=ACMR
+  else
+    git ls-files
+  fi | grep -E '^(\.github/|\.codex/|\.agents/|\.githooks/|api/|scripts/|vercel\.json$|package\.json$)' \
+     | grep -E '(\.(ya?ml|json|toml|sh|js|jsx|ts|tsx|mjs|cjs|md)$|^vercel\.json$)' || true
+}
+
+control_plane_scan() {
+  if ! command -v rg >/dev/null 2>&1; then
+    echo "  ripgrep is required for agent control-plane scanning." >&2
+    return 1
+  fi
+
+  local targets
+  targets="$(control_plane_targets)"
+  if [[ -z "$targets" ]]; then
+    echo "  Finding summary: no agent control-plane files in scope."
+    return 0
+  fi
+
+  local target_count
+  target_count="$(printf '%s\n' "$targets" | sed '/^$/d' | wc -l | tr -d ' ')"
+  echo "  Files in scope: $target_count"
+  echo "  Policy family: privileged agents, broad workflow writes, credential persistence"
+
+  local pattern
+  pattern=$'sandbox(_mode)?[[:space:]]*=[[:space:]]*["\x27]danger-full-access|--sandbox[[:space:]]+danger-full-access|permissions:[[:space:]]*write-all|persist-credentials:[[:space:]]*true'
+  local found=0
+  local finding_count=0
+  local file
+  while IFS= read -r file; do
+    [[ -f "$file" ]] || continue
+    # This scanner must describe forbidden values without reporting its own pattern table.
+    [[ "$file" == "scripts/security-commit-review.sh" ]] && continue
+    local output
+    if [[ "$MODE" == "staged" ]]; then
+      output="$(git diff --cached --unified=0 -- "$file" | rg -n -i "^\\+[^+].*(${pattern})" || true)"
+    else
+      output="$(rg -n -i "$pattern" "$file" || true)"
+    fi
+    if [[ -n "$output" ]]; then
+      found=1
+      finding_count=$((finding_count + $(printf '%s\n' "$output" | sed '/^$/d' | wc -l | tr -d ' ')))
+      echo "  Policy violation in $file"
+      printf '%s\n' "$output" | sed -E 's/([A-Za-z0-9_+\/=.-]{12})[A-Za-z0-9_+\/=.-]+/[REDACTED]/g' | sed 's/^/    /'
+    fi
+  done <<< "$targets"
+
+  if [[ "$found" -eq 1 ]]; then
+    echo "  Finding summary: $finding_count privileged control-plane setting(s) must be removed or narrowly justified."
+    return 1
+  fi
+  echo "  Finding summary: no prohibited agent or workflow privilege settings found."
+}
+
+security_policy_contract() {
+  if ! command -v node >/dev/null 2>&1; then
+    echo "  Node.js is required for security policy contract tests." >&2
+    return 1
+  fi
+
+  node scripts/tests/security-review-chain.test.mjs
+  node scripts/tests/runtime-security-headers.mjs
 }
 
 risky_pattern_scan() {
@@ -382,7 +489,31 @@ agent_review_hint() {
   fi
 
   echo "  Agent review: running Codex security review over local changes."
-  codex exec review --uncommitted 'Use $security-commit-review to review local changes for security vulnerabilities only. Prioritize exploitable findings with exact file references and minimal fixes.'
+  codex exec --sandbox read-only review --uncommitted 'Use $security-commit-review to review local changes for security vulnerabilities only. Do not edit files or run commands that mutate the repository. Prioritize exploitable findings with exact file references and minimal fixes.'
+}
+
+write_evidence_packet() {
+  mkdir -p "$evidence_dir"
+  chmod 700 "$evidence_dir" 2>/dev/null || true
+  evidence_file="$evidence_dir/evidence-$(date -u +%Y%m%dT%H%M%SZ)-$$.txt"
+  {
+    echo "security-review-evidence-v1"
+    echo "mode=$MODE"
+    echo "commit=$(git rev-parse HEAD 2>/dev/null || echo no-head)"
+    echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "failed_gates_begin"
+    printf '%s' "$failed_gates" | sed '/^$/d'
+    echo "failed_gates_end"
+    echo "files_in_scope_begin"
+    if [[ "$MODE" == "staged" ]]; then
+      git diff --cached --name-only --diff-filter=ACMR
+    else
+      git ls-files
+    fi
+    echo "files_in_scope_end"
+  } >"$evidence_file"
+  chmod 600 "$evidence_file" 2>/dev/null || true
+  echo "  Redacted evidence packet: $evidence_file"
 }
 
 summary() {
@@ -401,7 +532,7 @@ summary() {
 }
 
 run_remediation_agent() {
-  if [[ "${SECURITY_COMMIT_AUTO_FIX:-1}" != "1" ]]; then
+  if [[ "${SECURITY_COMMIT_AUTO_FIX:-0}" != "1" ]]; then
     echo
     printf '%bAuto-remediation skipped%b because SECURITY_COMMIT_AUTO_FIX is not 1.\n' "$yellow" "$reset"
     return 0
@@ -414,6 +545,11 @@ run_remediation_agent() {
   fi
 
   local model="${SECURITY_COMMIT_FIX_MODEL:-${CODEX_MODEL:-gpt-5.5}}"
+  local attempts="${SECURITY_COMMIT_FIX_ATTEMPTS:-1}"
+  if ! [[ "$attempts" =~ ^[12]$ ]]; then
+    echo "  SECURITY_COMMIT_FIX_ATTEMPTS must be 1 or 2." >&2
+    return 1
+  fi
   local failed_summary
   failed_summary="$(printf '%s' "$failed_gates" | sed '/^$/d' | paste -sd ', ' -)"
 
@@ -426,11 +562,17 @@ run_remediation_agent() {
   echo "  Safety: this hook will still fail after remediation; review, stage, and rerun."
   printf '%b------------------------------------------------------------%b\n' "$cyan" "$reset"
 
-  codex exec \
-    --model "$model" \
-    --cd "$ROOT" \
-    --sandbox danger-full-access \
-    "Use \$security-commit-review to fix the security vulnerabilities discovered by the local ${MODE} security gate. Failed gates: ${failed_summary:-unknown}. Work only on security remediation. Preserve existing behavior, do not commit, do not push, do not bypass hooks, do not print or commit secrets. After editing, run the narrow security checks needed to verify the fix and summarize exactly what changed."
+  local attempt
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    echo "  Remediation attempt: $attempt/$attempts"
+    codex exec \
+      --ephemeral \
+      --model "$model" \
+      --cd "$ROOT" \
+      --sandbox workspace-write \
+      -c 'sandbox_workspace_write.network_access=false' \
+      "Use \$security-commit-review to remediate only the vulnerabilities named in the redacted evidence packet at ${evidence_file}. Do not edit directly. First spawn the project security-triage subagent to validate findings read-only and return bounded remediation packets. For each independent validated packet, spawn a project security-fixer subagent; serialize overlapping file edits. Re-run failing deterministic gates only as needed and never expose secret values. Every subagent must remain inside this workspace and inherit these restrictions. Do not commit, push, deploy, change Git configuration, bypass hooks, access credentials, or weaken a scanner. Preserve behavior, make the smallest safe edits, then review the combined diff, run narrow verification, and summarize files changed and checks run."
+  done
 }
 
 banner
@@ -440,9 +582,11 @@ summary
 if [[ "$failures" -ne 0 ]]; then
   echo
   printf '%bSecurity review blocked this %s with %s failing gate(s).%b\n' "$red" "$MODE" "$failures" "$reset" >&2
+  write_evidence_packet
   run_remediation_agent || true
   echo
   echo "Review any remediation edits, stage them if appropriate, then rerun this gate." >&2
+  echo "Run 'npm run security:remediate' to explicitly allow a workspace-only fixer." >&2
   echo "You can choose a model with SECURITY_COMMIT_FIX_MODEL=<model>." >&2
   exit 1
 fi

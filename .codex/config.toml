@@ -1,8 +1,26 @@
 model = "gpt-5.5"
-sandbox_mode = "danger-full-access"
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
 model_reasoning_effort = "xhigh"
 [features]
 memories = true
+
+[sandbox_workspace_write]
+network_access = false
+
+[agents]
+max_threads = 4
+max_depth = 1
+job_max_runtime_seconds = 900
+
+[agents.security_triage]
+description = "Read-only security finding triage and remediation planning."
+config_file = "./agents/security-triage.toml"
+
+[agents.security_fixer]
+description = "Workspace-only implementation of one bounded security remediation packet."
+config_file = "./agents/security-fixer.toml"
 # BEGIN zenith
 [mcp_servers.zenith]
 command = "uv"
