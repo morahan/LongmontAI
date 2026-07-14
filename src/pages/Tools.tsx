@@ -8,147 +8,141 @@ import { Link } from 'react-router-dom';
 type InputType = string;
 type OutputType = string;
 
-interface Tool { name: string; url?: string; }
+interface Tool { name: string; url?: string; openWeight?: boolean; }
 type Matrix = Record<string, Record<string, Tool[]>>;
 
 const INPUTS: InputType[] = [
-  'Text', 'Image', 'Video', '3D Printable', 'Laser Cutting',
-  'Code', 'Mobile Apps', 'IDE', 'Websites', 'Edge Computing Devices'
+  'Text', 'Image', 'Video', '3D Models', '3D Printable', 'Laser Cutting',
+  'Code', 'Mobile Apps', 'Websites', 'Edge Computing Devices'
 ];
 
 const OUTPUTS: OutputType[] = [
-  'Text', 'Image', 'Video', '3D Printable', 'Laser Cutting',
-  'Code', 'Mobile Apps', 'IDE', 'Websites', 'Edge Computing Devices'
+  'Text', 'Image', 'Video', '3D Models', '3D Printable', 'Laser Cutting',
+  'Code', 'Mobile Apps', 'Websites', 'Edge Computing Devices'
 ];
 
 // ─── MATRIX ─────────────────────────────────────────────────────────────────
 
 const MATRIX: Matrix = {
   Text: {
-    Text: [{ name: 'Grok', url: 'https://x.ai/grok' }, { name: 'Claude 4', url: 'https://anthropic.com/claude' }, { name: 'GPT-4o', url: 'https://openai.com/gpt-4o' }, { name: 'Gemini', url: 'https://deepmind.google/gemini' }],
-    'Image': [{ name: 'Grok Imagine (Flux)', url: 'https://x.ai/grok-imagine' }, { name: 'Midjourney v7', url: 'https://midjourney.com' }, { name: 'Nano Banana (Gemini)', url: 'https://deepmind.google/gemini' }, { name: 'DALL-E', url: 'https://openai.com/dall-e' }, { name: 'Ideogram', url: 'https://ideogram.ai' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Adobe Firefly', url: 'https://adobe.com/firefly' }],
-    Video: [{ name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora (OpenAI)', url: 'https://openai.com/sora' }],
-    '3D Printable': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Luma Genie', url: 'https://lumalabs.ai/genie' }, { name: 'Sloyd.ai', url: 'https://sloyd.ai' }],
+    Text: [{ name: 'Grok 4.5', url: 'https://x.ai/grok' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'GPT-5.6 Sol', url: 'https://openai.com/gpt-5-6' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }],
+    'Image': [{ name: 'Grok Imagine', url: 'https://x.ai/grok-imagine' }, { name: 'Midjourney v7', url: 'https://midjourney.com' }, { name: 'Nano Banana Pro (Gemini 3 Pro Image)', url: 'https://deepmind.google/gemini' }, { name: 'GPT Image 1', url: 'https://openai.com/index/gpt-image-1/' }, { name: 'Ideogram', url: 'https://ideogram.ai' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Adobe Firefly', url: 'https://adobe.com/firefly' }],
+    Video: [{ name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3.1', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora 2', url: 'https://openai.com/sora' }],
+    '3D Models': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Luma Genie', url: 'https://lumalabs.ai/genie' }, { name: 'Sloyd.ai', url: 'https://sloyd.ai' }],
+    '3D Printable': [{ name: 'Meshy.ai (print export)', url: 'https://meshy.ai' }, { name: 'Tripo3D (print export)', url: 'https://tripo3d.ai' }],
     'Laser Cutting': [{ name: 'Recraft.ai', url: 'https://recraft.ai' }, { name: 'SVGMaker', url: 'https://svgmaker.ai' }, { name: 'Vector Witch', url: 'https://vectorwitch.com' }, { name: 'Cuttle.xyz', url: 'https://cuttle.xyz' }],
-    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'GitHub Copilot', url: 'https://github.com/features/copilot' }, { name: 'Claude Code', url: 'https://anthropic.com/claude-code' }, { name: 'Aider', url: 'https://aider.chat' }, { name: 'Grok', url: 'https://x.ai/grok' }],
+    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'GitHub Copilot', url: 'https://github.com/features/copilot' }, { name: 'Claude Code', url: 'https://anthropic.com/claude-code' }, { name: 'Aider', url: 'https://aider.chat' }, { name: 'Grok 4.5', url: 'https://x.ai/grok' }],
     'Mobile Apps': [{ name: 'FlutterFlow AI', url: 'https://flutterflow.io' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Bubble + AI', url: 'https://bubble.io' }],
-    IDE: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }],
     Websites: [{ name: 'Framer AI', url: 'https://framer.com/ai' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Hostinger AI Builder', url: 'https://hostinger.com/ai-builder' }, { name: 'v0.dev', url: 'https://v0.dev' }],
-    'Edge Computing Devices': [{ name: 'Grok / Claude → Python/GPIO scripts', url: 'https://x.ai/grok' }, { name: 'Edge Impulse', url: 'https://edgeimpulse.com' }, { name: 'Balena.io', url: 'https://balena.io' }],
+    'Edge Computing Devices': [{ name: 'Grok 4.5 / Claude Fable 5 → Python/GPIO scripts', url: 'https://x.ai/grok' }, { name: 'Edge Impulse', url: 'https://edgeimpulse.com' }, { name: 'Balena.io', url: 'https://balena.io' }],
   },
   Image: {
-    Text: [{ name: 'GPT-4o vision', url: 'https://openai.com/gpt-4o' }, { name: 'Claude 4', url: 'https://anthropic.com/claude' }, { name: 'Grok vision', url: 'https://x.ai/grok' }, { name: 'Gemini', url: 'https://deepmind.google/gemini' }],
-    'Image': [{ name: 'Stable Diffusion (ComfyUI)', url: 'https://comfy.org' }, { name: 'Midjourney Remix', url: 'https://midjourney.com' }, { name: 'Firefly inpainting', url: 'https://adobe.com/firefly' }, { name: 'Grok Imagine (img2img)', url: 'https://x.ai/grok-imagine' }],
+    Text: [{ name: 'GPT-5.6 Sol vision', url: 'https://openai.com/gpt-5-6' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'Grok 4.5 vision', url: 'https://x.ai/grok' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }],
+    'Image': [{ name: 'Stable Diffusion (ComfyUI)', url: 'https://comfy.org', openWeight: true }, { name: 'Midjourney Remix', url: 'https://midjourney.com' }, { name: 'Firefly inpainting', url: 'https://adobe.com/firefly' }, { name: 'Grok Imagine (img2img)', url: 'https://x.ai/grok-imagine' }],
     Video: [{ name: 'Runway Gen-5 (img→vid)', url: 'https://runwayml.com' }, { name: 'Kling', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }],
-    '3D Printable': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Rodin AI', url: 'https://hyper3d.ai' }],
+    '3D Models': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Rodin AI', url: 'https://hyper3d.ai' }, { name: 'Hunyuan3D-Swift', url: 'https://github.com/ZimengXiong/Hunyuan3D-Swift', openWeight: true }],
+    '3D Printable': [{ name: 'Meshy.ai (print export)', url: 'https://meshy.ai' }, { name: 'Tripo3D (print export)', url: 'https://tripo3d.ai' }, { name: '3D AI Studio (print export)', url: 'https://3daistudio.ai' }],
     'Laser Cutting': [{ name: 'Recraft.ai', url: 'https://recraft.ai' }, { name: 'Vector Witch', url: 'https://vectorwitch.com' }, { name: 'Vectorizer AI', url: 'https://vectorizer.ai' }, { name: 'SVGMaker', url: 'https://svgmaker.ai' }],
-    Code: [{ name: 'GPT-4o / Claude vision → code', url: 'https://openai.com/gpt-4o' }, { name: 'UI → React Native', url: 'https://reactnative.dev' }],
+    Code: [{ name: 'GPT-5.6 Sol / Claude Fable 5 vision → code', url: 'https://openai.com/gpt-5-6' }, { name: 'UI → React Native', url: 'https://reactnative.dev' }],
     'Mobile Apps': [{ name: 'FlutterFlow AI (img→app)', url: 'https://flutterflow.io' }, { name: 'v0.dev + Expo', url: 'https://v0.dev' }],
-    IDE: [{ name: 'Cursor + vision (img → full project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Framer AI', url: 'https://framer.com/ai' }, { name: 'v0.dev', url: 'https://v0.dev' }, { name: 'Dora AI (img→site)', url: 'https://dora.ai' }],
-    'Edge Computing Devices': [{ name: 'Edge Impulse (image datasets → TinyML)', url: 'https://edgeimpulse.com' }, { name: 'Grok → Pi camera scripts', url: 'https://x.ai/grok' }],
+    'Edge Computing Devices': [{ name: 'Edge Impulse (image datasets → TinyML)', url: 'https://edgeimpulse.com' }, { name: 'Grok 4.5 → Pi camera scripts', url: 'https://x.ai/grok' }],
   },
   Video: {
-    Text: [{ name: 'GPT-4o video', url: 'https://openai.com/sora' }, { name: 'Claude 4', url: 'https://anthropic.com/claude' }, { name: 'Grok vision', url: 'https://x.ai/grok' }, { name: 'Whisper + LLM summary', url: 'https://openai.com/whisper' }],
+    Text: [{ name: 'GPT-5.6 Sol video', url: 'https://openai.com/gpt-5-6' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'Grok 4.5 vision', url: 'https://x.ai/grok' }, { name: 'Whisper + LLM summary', url: 'https://openai.com/whisper' }],
     'Image': [{ name: 'Runway (video→image)', url: 'https://runwayml.com' }, { name: 'Luma', url: 'https://lumalabs.ai' }, { name: 'Kling frame extractor', url: 'https://klingai.com' }],
     Video: [{ name: 'Runway Gen-5 (video-to-video)', url: 'https://runwayml.com' }, { name: 'Kling', url: 'https://klingai.com' }, { name: 'Descript Overdub', url: 'https://descript.com' }],
-    '3D Printable': [{ name: 'Luma (video→3D)', url: 'https://lumalabs.ai' }, { name: 'Meshy video upload', url: 'https://meshy.ai' }, { name: 'Polycam AI', url: 'https://poly.cam' }],
+    '3D Models': [{ name: 'Luma (video→3D)', url: 'https://lumalabs.ai' }, { name: 'Meshy video upload', url: 'https://meshy.ai' }, { name: 'Polycam AI', url: 'https://poly.cam' }],
     'Laser Cutting': [{ name: 'Recraft.ai video→vector', url: 'https://recraft.ai' }],
-    Code: [{ name: 'GPT-4o / Claude (video analysis → code)', url: 'https://openai.com/gpt-4o' }],
+    Code: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (video analysis → code)', url: 'https://openai.com/gpt-5-6' }],
     'Mobile Apps': [{ name: 'FlutterFlow / Lovable (video demo → app)', url: 'https://flutterflow.io' }, { name: 'Cursor (video demo → project)', url: 'https://cursor.com' }],
-    IDE: [{ name: 'Cursor (video demo → full project)', url: 'https://cursor.com' }, { name: 'Lovable (video → full stack)', url: 'https://lovable.dev' }],
     Websites: [{ name: 'Framer AI / Lovable (video landing page)', url: 'https://framer.com/ai' }],
     'Edge Computing Devices': [{ name: 'Edge Impulse (video datasets → edge ML)', url: 'https://edgeimpulse.com' }, { name: 'Balena', url: 'https://balena.io' }],
   },
-  '3D Printable': {
-    Text: [{ name: 'GPT-4o / Claude (describe model)', url: 'https://openai.com/gpt-4o' }],
+  '3D Models': {
+    Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (describe model)', url: 'https://openai.com/gpt-5-6' }],
     'Image': [{ name: 'Meshy.ai / Tripo3D renderers', url: 'https://meshy.ai' }, { name: 'Luma / Meshy (3D animation export)', url: 'https://lumalabs.ai' }],
     Video: [{ name: 'Luma / Meshy (3D animation export)', url: 'https://lumalabs.ai' }],
-    '3D Printable': [{ name: 'Meshy.ai editor', url: 'https://meshy.ai' }, { name: 'Blender + AI plugins', url: 'https://blender.org' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }],
+    '3D Models': [{ name: 'Meshy.ai editor', url: 'https://meshy.ai' }, { name: 'Blender + AI plugins', url: 'https://blender.org' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }],
+    '3D Printable': [{ name: 'Blender (mesh cleanup / STL export)', url: 'https://blender.org' }, { name: 'Meshy.ai (print export)', url: 'https://meshy.ai' }, { name: 'Tripo3D (print export)', url: 'https://tripo3d.ai' }],
     'Laser Cutting': [{ name: 'Meshy / Blender → SVG slices', url: 'https://blender.org' }, { name: 'Cuttle.xyz (import)', url: 'https://cuttle.xyz' }],
     Code: [{ name: 'Blender Python API + LLM', url: 'https://blender.org' }],
     'Mobile Apps': [{ name: 'FlutterFlow / Unity (3D model viewer apps)', url: 'https://unity.com' }],
-    IDE: [{ name: 'Cursor (Blender project files)', url: 'https://cursor.com' }, { name: 'Spline.ai (3D web export)', url: 'https://spline.ai' }, { name: 'Framer 3D', url: 'https://framer.com' }],
+    Websites: [{ name: 'Spline.ai (3D web export)', url: 'https://spline.ai' }, { name: 'Framer 3D', url: 'https://framer.com' }],
+    'Edge Computing Devices': [{ name: 'Balena + OctoPrint / Klipper (RPi 3D printer host)', url: 'https://balena.io' }],
+  },
+  '3D Printable': {
+    Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (describe printable model)', url: 'https://openai.com/gpt-5-6' }],
+    'Image': [{ name: 'Meshy.ai / Tripo3D renderers', url: 'https://meshy.ai' }, { name: 'Luma / Meshy (3D animation export)', url: 'https://lumalabs.ai' }],
+    Video: [{ name: 'Luma / Meshy (3D animation export)', url: 'https://lumalabs.ai' }],
+    '3D Models': [{ name: 'Blender (STL / 3MF import)', url: 'https://blender.org' }, { name: 'Meshy.ai editor', url: 'https://meshy.ai' }],
+    '3D Printable': [{ name: 'Blender (print preparation)', url: 'https://blender.org' }, { name: 'Meshy.ai editor', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }],
+    'Laser Cutting': [{ name: 'Meshy / Blender to SVG slices', url: 'https://blender.org' }, { name: 'Cuttle.xyz (import)', url: 'https://cuttle.xyz' }],
+    Code: [{ name: 'Blender Python API + LLM', url: 'https://blender.org' }],
+    'Mobile Apps': [{ name: 'FlutterFlow / Unity (3D model viewer apps)', url: 'https://unity.com' }],
     Websites: [{ name: 'Spline.ai (3D web export)', url: 'https://spline.ai' }, { name: 'Framer 3D', url: 'https://framer.com' }],
     'Edge Computing Devices': [{ name: 'Balena + OctoPrint / Klipper (RPi 3D printer host)', url: 'https://balena.io' }],
   },
   'Laser Cutting': {
-    Text: [{ name: 'GPT-4o / Claude (describe vector)', url: 'https://openai.com/gpt-4o' }],
+    Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (describe vector)', url: 'https://openai.com/gpt-5-6' }],
     'Image': [{ name: 'Recraft.ai / Vector Witch (SVG→raster)', url: 'https://recraft.ai' }, { name: 'Runway / Kling (SVG animation)', url: 'https://runwayml.com' }, { name: 'Meshy / Blender (vector → 3D extrusion)', url: 'https://blender.org' }],
     Video: [{ name: 'Runway / Kling (SVG animation)', url: 'https://runwayml.com' }],
-    '3D Printable': [{ name: 'Meshy / Blender (vector → 3D extrusion)', url: 'https://blender.org' }],
+    '3D Models': [{ name: 'Meshy / Blender (vector → 3D extrusion)', url: 'https://blender.org' }],
+    '3D Printable': [{ name: 'Blender (vector to printable extrusion)', url: 'https://blender.org' }],
     'Laser Cutting': [{ name: 'LightBurn', url: 'https://lightburnsoftware.com' }, { name: 'LaserGRBL', url: 'https://lasergrbl.com' }, { name: 'Cuttle.xyz (native)', url: 'https://cuttle.xyz' }],
     Code: [{ name: 'LLM → G-code / SVG generators', url: 'https://github.com' }],
     'Mobile Apps': [{ name: 'Mobile app builders that import SVG', url: 'https://bubbles.io' }],
-    IDE: [{ name: 'Cursor (SVG → web/embedded project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Framer / Webflow (SVG import)', url: 'https://framer.com' }],
     'Edge Computing Devices': [{ name: 'Balena + LaserGRBL on RPi', url: 'https://balena.io' }, { name: 'Edge Impulse', url: 'https://edgeimpulse.com' }],
   },
   Code: {
-    Text: [{ name: 'Grok / Claude / GPT-4o (code → docs)', url: 'https://x.ai/grok' }],
+    Text: [{ name: 'Grok 4.5 / Claude Fable 5 / GPT-5.6 Sol (code → docs)', url: 'https://x.ai/grok' }],
     'Image': [{ name: 'v0.dev, Lovable (code → UI images)', url: 'https://v0.dev' }, { name: 'Midjourney (prompt from code)', url: 'https://midjourney.com' }],
     Video: [{ name: 'Runway / Luma (code-generated video)', url: 'https://runwayml.com' }],
-    '3D Printable': [{ name: 'Meshy / Sloyd (code → 3D via Three.js/Blender scripts)', url: 'https://sloyd.ai' }],
+    '3D Models': [{ name: 'Meshy / Sloyd (code → 3D via Three.js/Blender scripts)', url: 'https://sloyd.ai' }],
+    '3D Printable': [{ name: 'Blender Python (printable mesh generation)', url: 'https://blender.org' }],
     'Laser Cutting': [{ name: 'Recraft / SVGMaker (code → SVG)', url: 'https://recraft.ai' }],
     Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Copilot', url: 'https://github.com/features/copilot' }, { name: 'Aider (refactoring)', url: 'https://aider.chat' }],
     'Mobile Apps': [{ name: 'FlutterFlow / Expo + LLM code', url: 'https://flutterflow.io' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }],
-    IDE: [{ name: 'Cursor (best AI IDE)', url: 'https://cursor.com' }, { name: 'VS Code + Copilot', url: 'https://code.visualstudio.com' }],
     Websites: [{ name: 'v0.dev, Lovable.dev, Bolt.new', url: 'https://v0.dev' }],
     'Edge Computing Devices': [{ name: 'Balena CLI + LLM', url: 'https://balena.io' }, { name: 'Edge Impulse (code export to RPi)', url: 'https://edgeimpulse.com' }],
   },
   'Mobile Apps': {
-    Text: [{ name: 'GPT-4o / Claude (app → spec/docs)', url: 'https://openai.com/gpt-4o' }],
+    Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (app → spec/docs)', url: 'https://openai.com/gpt-5-6' }],
     'Image': [{ name: 'App screenshots → Midjourney / Grok Imagine', url: 'https://midjourney.com' }],
     Video: [{ name: 'App demo video → Runway / Luma', url: 'https://runwayml.com' }],
-    '3D Printable': [{ name: '3D model viewer apps (Meshy export)', url: 'https://meshy.ai' }],
+    '3D Models': [{ name: '3D model viewer apps (Meshy export)', url: 'https://meshy.ai' }],
+    '3D Printable': [{ name: '3D model viewer apps (printable-model import)', url: 'https://unity.com' }],
     'Laser Cutting': [{ name: 'SVG export from app UI', url: 'https://figma.com' }],
     Code: [{ name: 'Cursor / Claude (app → backend code)', url: 'https://cursor.com' }],
     'Mobile Apps': [{ name: 'FlutterFlow', url: 'https://flutterflow.io' }, { name: 'Adalo', url: 'https://adalo.com' }, { name: 'Bubble', url: 'https://bubble.io' }, { name: 'Lovable', url: 'https://lovable.dev' }],
-    IDE: [{ name: 'Cursor (full mobile project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Capacitor / Ionic (mobile → web)', url: 'https://capacitorjs.com' }],
     'Edge Computing Devices': [{ name: 'Balena (mobile → edge deployment scripts)', url: 'https://balena.io' }],
   },
-  IDE: {
-    Text: [{ name: 'GPT-4o / Claude (project brief → code)', url: 'https://openai.com/gpt-4o' }],
-    'Image': [{ name: 'v0 / Midjourney (UI mocks)', url: 'https://v0.dev' }],
-    Video: [{ name: 'Runway (project demo video)', url: 'https://runwayml.com' }],
-    '3D Printable': [{ name: 'Blender project files via LLM', url: 'https://blender.org' }],
-    'Laser Cutting': [{ name: 'Cuttle / LightBurn project files', url: 'https://cuttle.xyz' }],
-    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Aider', url: 'https://aider.chat' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }],
-    'Mobile Apps': [{ name: 'FlutterFlow / Lovable (project export)', url: 'https://flutterflow.io' }],
-    IDE: [{ name: 'Cursor (full projects)', url: 'https://cursor.com' }, { name: 'VS Code + GitHub Copilot', url: 'https://code.visualstudio.com' }],
-    Websites: [{ name: 'v0.dev / Lovable (project → hosted site)', url: 'https://v0.dev' }],
-    'Edge Computing Devices': [{ name: 'Balena (project → RPi image)', url: 'https://balena.io' }, { name: 'Edge Impulse', url: 'https://edgeimpulse.com' }],
-  },
   Websites: {
-    Text: [{ name: 'GPT-4o / Claude (site → content)', url: 'https://openai.com/gpt-4o' }],
+    Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (site → content)', url: 'https://openai.com/gpt-5-6' }],
     'Image': [{ name: 'Screenshot → Grok Imagine / Midjourney', url: 'https://midjourney.com' }],
     Video: [{ name: 'Runway / Luma (site demo video)', url: 'https://runwayml.com' }],
-    '3D Printable': [{ name: 'Spline / Meshy (3D web export)', url: 'https://spline.ai' }],
+    '3D Models': [{ name: 'Spline / Meshy (3D web export)', url: 'https://spline.ai' }],
+    '3D Printable': [{ name: 'Meshy (printable-model export)', url: 'https://meshy.ai' }],
     'Laser Cutting': [{ name: 'SVG export from Figma/Framer', url: 'https://figma.com' }],
     Code: [{ name: 'Cursor / Claude (site → full-stack code)', url: 'https://cursor.com' }],
     'Mobile Apps': [{ name: 'Capacitor / Ionic (PWA → mobile)', url: 'https://capacitorjs.com' }],
-    IDE: [{ name: 'Cursor (website project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Framer AI', url: 'https://framer.com/ai' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Webflow AI', url: 'https://webflow.com' }],
     'Edge Computing Devices': [{ name: 'Balena (web → RPi-hosted dashboard)', url: 'https://balena.io' }],
   },
   'Edge Computing Devices': {
-    Text: [{ name: 'Grok / Claude (RPi project brief)', url: 'https://x.ai/grok' }],
+    Text: [{ name: 'Grok 4.5 / Claude Fable 5 (RPi project brief)', url: 'https://x.ai/grok' }],
     'Image': [{ name: 'Edge Impulse (camera images)', url: 'https://edgeimpulse.com' }],
     Video: [{ name: 'Edge Impulse video datasets', url: 'https://edgeimpulse.com' }],
     '3D Printable': [{ name: 'OctoPrint / Klipper (3D printer control)', url: 'https://octoprint.org' }],
     'Laser Cutting': [{ name: 'LaserGRBL on RPi', url: 'https://lasergrbl.com' }],
-    Code: [{ name: 'Cursor / Grok → Python/Rust for GPIO', url: 'https://cursor.com' }],
+    Code: [{ name: 'Cursor / Grok 4.5 → Python/Rust for GPIO', url: 'https://cursor.com' }],
     'Mobile Apps': [{ name: 'Flutter / React Native → RPi kiosk mode', url: 'https://reactnative.dev' }],
-    IDE: [{ name: 'Cursor (RPi project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Balena-hosted web dashboard', url: 'https://balena.io' }],
     'Edge Computing Devices': [{ name: 'Balena.io', url: 'https://balena.io' }, { name: 'Edge Impulse', url: 'https://edgeimpulse.com' }, { name: 'OctoPrint', url: 'https://octoprint.org' }, { name: 'Home Assistant on RPi', url: 'https://home-assistant.io' }],
   },
 };
-
-const totalTools = Object.values(MATRIX).reduce(
-  (sum, row) => sum + Object.values(row).reduce((s, tools) => s + tools.length, 0), 0
-);
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
