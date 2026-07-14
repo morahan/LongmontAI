@@ -2046,6 +2046,13 @@ iframe {
   object-fit: contain;
 }
 
+.article-video video {
+  display: block;
+  width: 100%;
+  max-height: 82vh;
+  background: #000000;
+}
+
 .article-media figcaption {
   max-width: 54rem;
   margin: 0.85rem auto 0;

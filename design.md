@@ -401,6 +401,44 @@ Routes are defined in `src/App.tsx`. The footer exposes Home, Latest Edition, Mo
 - No exclamation points in headlines. One per page max in body copy.
 - Don't apologize for being a meetup. The site is the publication, not the meetup — meetup logistics belong on the banner and the `Countdown` page.
 
+### 10.5 Edition asset and release standard
+
+Every meetup edition is a dated, auditable package. These rules are required for
+new articles, visual briefings, screenshots, and media:
+
+- **Date ownership.** Store every article-specific asset under the meeting date,
+  using `YYYY.MM.DD` folders (for example,
+  `public/weekly-screenshots/2026.07.22/`). The edition frontmatter date uses
+  the same meeting date, even though the planned release is ten minutes earlier.
+- **Descriptive names.** Rename incoming files before using them. Filenames must
+  say what the asset shows, use lowercase kebab case, and never retain device
+  timestamps, generic names, or person-specific phone identifiers.
+- **Phone screenshots.** Crop out status bars, notification areas, mail or social
+  controls, reply fields, timestamps, and other device chrome. When a source spans
+  multiple captures, keep each crop only for its unique information; do not show
+  duplicate chart fragments. Preserve source pixels and strip metadata rather
+  than regenerating text or charts.
+- **Privacy pass.** Inspect every supplied image and video frame for personal
+  information before adding it. Remove non-editorial personal UI, identifiers,
+  locations, notifications, and metadata. Do not turn a social-media claim into a
+  verified fact without a primary source.
+- **Readable media.** Keep source assets at their original resolution when
+  possible. Article images must be readable at desktop width, have meaningful alt
+  text, open at full size, and never be compressed until chart labels or source
+  details become illegible. Slide images are exported at least 1920 by 1080.
+- **Slideshow.** Every edition begins with a concise slideshow that has a clear
+  narrative, one primary claim per slide, visible source attribution, and a
+  downloadable deck. It should use the site palette and the same restrained,
+  editorial hierarchy as the article.
+- **Video.** Use native, user-initiated playback with controls, `playsInline`,
+  and metadata preload. Never autoplay audio.
+- **Release hold.** Keep a new edition as an unlisted draft until exactly ten
+  minutes before the meetup starts. For the standing noon Mountain Time cadence,
+  schedule release at 11:50 AM America/Denver on the meeting date. The final
+  release step is to promote the draft into `src/articles/`, add it to the
+  registry, run the content and build gates, then publish through the normal
+  reviewed path. Do not publish a draft early merely because its assets are ready.
+
 ---
 
 ## 11. Accessibility
