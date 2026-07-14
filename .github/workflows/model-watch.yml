@@ -2,35 +2,86 @@ name: Update Model Watch
 
 on:
   schedule:
-    - cron: '17 13 * * *'
+    - cron: "17 13 * * *"
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: model-watch-update
   cancel-in-progress: false
 
 jobs:
-  update:
+  generate:
+    name: Generate and verify snapshot
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository without persisted credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          package-manager-cache: false
+
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+
       - name: Check official model sources
         run: npm run model-watch:update
+
       - name: Verify generated data and site build
-        run: npm run build
-      - name: Commit refreshed snapshot
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/modelWatch.generated.json
-          git diff --cached --quiet || git commit -m "chore: refresh model watch"
-          git push
+          npm run lint
+          npm run build
+
+      - name: Upload verified snapshot
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-watch-snapshot
+          path: src/data/modelWatch.generated.json
+          if-no-files-found: error
+          retention-days: 1
+
+  propose:
+    name: Open update pull request
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository without persisted credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Download verified snapshot
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: model-watch-snapshot
+          path: src/data
+
+      - name: Create or update model-watch pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.MODEL_WATCH_PR_TOKEN || github.token }}
+          branch: automation/model-watch
+          delete-branch: true
+          commit-message: "chore: refresh model watch"
+          title: "chore: refresh model watch"
+          body: |
+            Automated refresh from the fixed official model sources.
+
+            The snapshot was generated, linted, and built in a separate read-only job.
+          labels: automation
+          add-paths: src/data/modelWatch.generated.json
