@@ -169,14 +169,14 @@ const Cell: React.FC<{
   onHover: (input: InputType | null, output: string | null) => void;
   isHighlighted: boolean;
   onClick: () => void;
-}> = ({ count, onHover, isHighlighted, onClick }) => (
+}> = ({ input, output, count, onHover, isHighlighted, onClick }) => (
   <div
     className={`
       relative p-1 cursor-pointer transition-all duration-150
       ${count > 0 ? cellIntensity(count) : 'bg-transparent hover:bg-white/[0.02]'}
       ${isHighlighted ? 'ring-1 ring-cyan-400/50 z-10' : ''}
     `}
-    onMouseEnter={() => count > 0 && onHover(MATRIX[Object.keys(MATRIX)[0]] ? (Object.keys(MATRIX)[0]) : null, '')}
+    onMouseEnter={() => count > 0 && onHover(input, output)}
     onMouseLeave={() => onHover(null, null)}
     onClick={onClick}
     title={count > 0 ? `${count} tool${count !== 1 ? 's' : ''}` : '—'}
@@ -289,10 +289,16 @@ const DetailPanel: React.FC<{
 const ToolsPage: React.FC = () => {
   const [hovered, setHovered] = useState<{ input: InputType; output: OutputType } | null>(null);
   const [selected, setSelected] = useState<{ input: InputType; output: OutputType } | null>(null);
-  const hoveredTools = hovered ? (MATRIX[hovered.input]?.[hovered.output] ?? []) : [];
-  const selectedTools = selected ? (MATRIX[selected.input]?.[selected.output] ?? []) : [];
+  const [openWeightOnly, setOpenWeightOnly] = useState(false);
+  const getVisibleTools = (input: InputType, output: OutputType) =>
+    (MATRIX[input]?.[output] ?? []).filter(tool => !openWeightOnly || tool.openWeight);
+  const hoveredTools = hovered ? getVisibleTools(hovered.input, hovered.output) : [];
+  const selectedTools = selected ? getVisibleTools(selected.input, selected.output) : [];
   const filledCells = INPUTS.reduce((sum, inp) =>
-    sum + OUTPUTS.filter(out => (MATRIX[inp]?.[out]?.length ?? 0) > 0).length, 0
+    sum + OUTPUTS.filter(out => getVisibleTools(inp, out).length > 0).length, 0
+  );
+  const totalTools = INPUTS.reduce((sum, input) =>
+    sum + OUTPUTS.reduce((rowSum, output) => rowSum + getVisibleTools(input, output).length, 0), 0
   );
 
   return (
@@ -316,21 +322,28 @@ const ToolsPage: React.FC = () => {
           Every AI tool for every input × output combination. Hover any cell to explore. Click to pin details.
           Built from the Longmont AI February 2026 meetup research.
         </p>
-        <div className="flex gap-8 mt-6">
+        <div className="flex flex-wrap items-center gap-8 mt-6">
           <div>
             <div className="text-3xl font-bold text-white">{totalTools}</div>
-            <div className="text-xs text-zinc-500 uppercase tracking-wider">Total Tools</div>
+            <div className="text-xs text-zinc-500 uppercase tracking-wider">Visible Tools</div>
           </div>
           <div className="w-px bg-white/10" />
           <div>
             <div className="text-3xl font-bold text-cyan-400">{filledCells}</div>
             <div className="text-xs text-zinc-500 uppercase tracking-wider">Connections</div>
           </div>
-          <div className="w-px bg-white/10" />
-          <div>
-            <div className="text-3xl font-bold text-purple-400">195</div>
-            <div className="text-xs text-zinc-500 uppercase tracking-wider">Tool Entries</div>
-          </div>
+          <label className="ml-auto inline-flex items-center gap-3 cursor-pointer select-none">
+            <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">Open-weight models</span>
+            <input
+              type="checkbox"
+              checked={openWeightOnly}
+              onChange={(event) => setOpenWeightOnly(event.target.checked)}
+              className="peer sr-only"
+            />
+            <span className="relative h-5 w-9 rounded-full bg-zinc-700 transition-colors peer-checked:bg-cyan-500">
+              <span className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4" />
+            </span>
+          </label>
         </div>
       </div>
 
@@ -360,7 +373,7 @@ const ToolsPage: React.FC = () => {
                 </div>
                 {/* Cells */}
                 {OUTPUTS.map((output) => {
-                  const count = MATRIX[input]?.[output]?.length ?? 0;
+                  const count = getVisibleTools(input, output).length;
                   const isHov = hovered?.input === input && hovered?.output === output;
                   return (
                     <div key={output} className="relative">
