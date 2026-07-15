@@ -17,7 +17,7 @@ assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 codex exec/);
 assert.match(loopScript, /approval_policy="never"/);
 assert.match(loopScript, /return only after creating that one reviewed commit/);
 assert.match(loopScript, /outer loop immediately repeats until the working tree is clean and the branch is synced/);
-assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 npm run security:push/);
+assert.match(loopScript, /bash scripts\/local-ci\.sh/);
 assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 git push/);
 assert.match(loopScript, /git push -u origin/);
 
@@ -25,7 +25,7 @@ const dryRun = execFileSync('bash', [script, '10', '--merge-prune', '--dry-run']
   cwd: root,
   encoding: 'utf8',
 });
-assert.match(dryRun, /delay=10m merge-prune=1 empty-stop=3/);
+assert.match(dryRun, /delay=10m local-verify=0 merge-prune=1 empty-stop=3/);
 
 assert.throws(
   () => execFileSync('bash', [script, 'nope', '--dry-run'], { cwd: root, stdio: 'pipe' }),

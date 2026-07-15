@@ -26,3 +26,13 @@ A futuristic, minimalistic website for the Longmont AI Meetup, built with React,
 
 This project is configured for automatic deployment on Vercel.
 - Push to `main` triggers a production deployment.
+
+## Local Verification
+
+All repository verification runs locally. Before committing or publishing, run:
+
+```bash
+just verify
+```
+
+This runs offline dependency and secret scans, the local read-only Codex security review, linting, asset checks, contract tests, and a production build. The repository hooks run the security review for every commit and push after `npm run hooks:install`.

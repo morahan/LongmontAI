@@ -2,16 +2,18 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: scripts/loop-push.sh <minutes> [--merge-prune] [--dry-run]" >&2
+  echo "Usage: scripts/loop-push.sh <minutes> [--local-verify] [--merge-prune] [--dry-run]" >&2
 }
 
 MINUTES="${1:-}"
 shift || true
 MERGE_PRUNE=0
+LOCAL_VERIFY=0
 DRY_RUN=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --local-verify) LOCAL_VERIFY=1 ;;
     --merge-prune) MERGE_PRUNE=1 ;;
     --dry-run) DRY_RUN=1 ;;
     *) usage; exit 2 ;;
@@ -37,7 +39,7 @@ if ! [[ "$EMPTY_STOP_COUNT" =~ ^[1-9][0-9]*$ ]]; then
 fi
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
-  echo "loop-push dry run: delay=${MINUTES}m merge-prune=${MERGE_PRUNE} empty-stop=${EMPTY_STOP_COUNT}"
+  echo "loop-push dry run: delay=${MINUTES}m local-verify=${LOCAL_VERIFY} merge-prune=${MERGE_PRUNE} empty-stop=${EMPTY_STOP_COUNT}"
   exit 0
 fi
 
@@ -83,7 +85,10 @@ ahead_count() {
 push_current_branch() {
   local branch
   branch="$(git branch --show-current)"
-  SECURITY_COMMIT_AGENT_REVIEW=1 npm run security:push
+  if [[ "$LOCAL_VERIFY" -eq 1 ]]; then
+    bash scripts/local-ci.sh
+  fi
+  npm run security:push
   if git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1; then
     SECURITY_COMMIT_AGENT_REVIEW=1 git push
   else
@@ -91,31 +96,12 @@ push_current_branch() {
   fi
 }
 
-enable_current_pr_auto_merge() {
-  local branch pr_number
-  branch="$(git branch --show-current)"
-  if [[ "$branch" == "main" ]]; then
-    return 0
-  fi
-
-  command -v gh >/dev/null 2>&1 || {
-    echo "loop-merge-push requires the GitHub CLI to manage the current branch PR." >&2
-    return 1
-  }
-  pr_number="$(gh pr view --json number --jq .number 2>/dev/null || true)"
-  [[ -n "$pr_number" ]] || {
-    echo "loop-merge-push requires an open PR for branch $branch." >&2
-    return 1
-  }
-  gh pr merge "$pr_number" --auto --squash --delete-branch
-}
-
 prune_repository() {
   git fetch --prune origin
   git worktree prune
 }
 
-echo "loop-push: commits one reviewed batch at a time, pushes immediately, and waits ${MINUTES}m only after clean and synced checks; stops after ${EMPTY_STOP_COUNT} empty checks."
+echo "loop-push: commits one reviewed batch at a time, runs local verification when requested, pushes immediately, and waits ${MINUTES}m only after clean and synced checks; stops after ${EMPTY_STOP_COUNT} empty checks."
 empty_checks=0
 merge_requested=0
 
@@ -133,10 +119,6 @@ while [[ "$empty_checks" -lt "$EMPTY_STOP_COUNT" ]]; do
   fi
 
   if [[ "$MERGE_PRUNE" -eq 1 ]]; then
-    if [[ "$merge_requested" -eq 0 ]]; then
-      enable_current_pr_auto_merge
-      merge_requested=1
-    fi
     prune_repository
   fi
 

@@ -16,6 +16,7 @@
     "security:test-runtime": "node scripts/tests/runtime-security-headers.mjs",
     "test:loop-push": "node scripts/tests/loop-push-contract.test.mjs",
     "security:test": "npm run security:test-chain && npm run security:test-runtime",
+    "verify:local": "bash scripts/local-ci.sh",
     "hooks:install": "scripts/install-security-hooks.sh",
     "content:check-assets": "node scripts/check-content-assets.js",
     "model-watch:update": "node scripts/update-model-watch.mjs",
