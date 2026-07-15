@@ -489,7 +489,7 @@ agent_review_hint() {
   fi
 
   echo "  Agent review: running Codex security review over local changes."
-  codex exec --sandbox read-only review --uncommitted 'Use $security-commit-review to review local changes for security vulnerabilities only. Do not edit files or run commands that mutate the repository. Prioritize exploitable findings with exact file references and minimal fixes.'
+  codex exec --ephemeral -c 'approval_policy="never"' --sandbox read-only 'Use $security-commit-review to review local changes for security vulnerabilities only. Do not edit files or run commands that mutate the repository. Prioritize exploitable findings with exact file references and minimal fixes.'
 }
 
 write_evidence_packet() {
