@@ -12,12 +12,12 @@ interface Tool { name: string; url?: string; openWeight?: boolean; }
 type Matrix = Record<string, Record<string, Tool[]>>;
 
 const INPUTS: InputType[] = [
-  'Text', 'Image', 'Video', '3D Models', '3D Printable', 'Laser Cutting',
+  'Text', 'Image', 'Video', 'Audio', 'Music', '3D Models', '3D Printable', 'Laser Cutting',
   'Code', 'Mobile Apps', 'Websites', 'Edge Computing Devices'
 ];
 
 const OUTPUTS: OutputType[] = [
-  'Text', 'Image', 'Video', '3D Models', '3D Printable', 'Laser Cutting',
+  'Text', 'Image', 'Video', 'Audio', 'Music', '3D Models', '3D Printable', 'Laser Cutting',
   'Code', 'Mobile Apps', 'Websites', 'Edge Computing Devices'
 ];
 
@@ -28,6 +28,8 @@ const MATRIX: Matrix = {
     Text: [{ name: 'Grok 4.5', url: 'https://x.ai/grok' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'GPT-5.6 Sol', url: 'https://openai.com/gpt-5-6' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }],
     'Image': [{ name: 'Grok Imagine', url: 'https://x.ai/grok-imagine' }, { name: 'Midjourney v7', url: 'https://midjourney.com' }, { name: 'Nano Banana Pro (Gemini 3 Pro Image)', url: 'https://deepmind.google/gemini' }, { name: 'GPT Image 1', url: 'https://openai.com/index/gpt-image-1/' }, { name: 'Ideogram', url: 'https://ideogram.ai' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Adobe Firefly', url: 'https://adobe.com/firefly' }],
     Video: [{ name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3.1', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora 2', url: 'https://openai.com/sora' }],
+    Audio: [{ name: 'ElevenLabs (text-to-speech)', url: 'https://elevenlabs.io' }, { name: 'OpenAI Audio', url: 'https://openai.com/index/introducing-our-next-generation-audio-models/' }, { name: 'Gemini Audio', url: 'https://deepmind.google/gemini' }],
+    Music: [{ name: 'Suno', url: 'https://suno.com' }, { name: 'Udio', url: 'https://www.udio.com' }, { name: 'MiniMax Music 2.5', url: 'https://www.minimax.io/news/minimax-music-25' }, { name: 'Gemini Lyria 3', url: 'https://gemini.google/gp/overview/music-generation/' }, { name: 'Alibaba Fun-Music', url: 'https://www.alibabacloud.com/help/en/model-studio/fun-music/' }],
     '3D Models': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Luma Genie', url: 'https://lumalabs.ai/genie' }, { name: 'Sloyd.ai', url: 'https://sloyd.ai' }],
     '3D Printable': [{ name: 'Meshy.ai (print export)', url: 'https://meshy.ai' }, { name: 'Tripo3D (print export)', url: 'https://tripo3d.ai' }],
     'Laser Cutting': [{ name: 'Recraft.ai', url: 'https://recraft.ai' }, { name: 'SVGMaker', url: 'https://svgmaker.ai' }, { name: 'Vector Witch', url: 'https://vectorwitch.com' }, { name: 'Cuttle.xyz', url: 'https://cuttle.xyz' }],
@@ -58,6 +60,9 @@ const MATRIX: Matrix = {
     'Mobile Apps': [{ name: 'FlutterFlow / Lovable (video demo → app)', url: 'https://flutterflow.io' }, { name: 'Cursor (video demo → project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Framer AI / Lovable (video landing page)', url: 'https://framer.com/ai' }],
     'Edge Computing Devices': [{ name: 'Edge Impulse (video datasets → edge ML)', url: 'https://edgeimpulse.com' }, { name: 'Balena', url: 'https://balena.io' }],
+  },
+  Music: {
+    Video: [{ name: 'Neural Frames (music-to-video)', url: 'https://www.neuralframes.com/' }],
   },
   '3D Models': {
     Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (describe model)', url: 'https://openai.com/gpt-5-6' }],
@@ -159,6 +164,8 @@ const cellDot = (count: number): string => {
   if (count <= 4) return 'text-cyan-400';
   return 'text-purple-400';
 };
+
+const isAudioSubset = (axis: string): boolean => axis === 'Music';
 
 // ─── CELL ────────────────────────────────────────────────────────────────────
 
@@ -359,7 +366,10 @@ const ToolsPage: React.FC = () => {
               <div className="p-3 text-xs font-mono text-zinc-600 uppercase tracking-wider">From → To</div>
               {OUTPUTS.map((out) => (
                 <div key={out} className="p-3 text-center">
-                  <div className="text-xs font-mono text-cyan-400/80 font-semibold leading-tight">{out}</div>
+                  <div className={`text-xs font-mono font-semibold leading-tight ${isAudioSubset(out) ? 'text-fuchsia-300/80' : 'text-cyan-400/80'}`}>
+                    {isAudioSubset(out) && <span className="mr-1 text-zinc-600">Audio /</span>}
+                    {out}
+                  </div>
                 </div>
               ))}
             </div>
@@ -369,7 +379,10 @@ const ToolsPage: React.FC = () => {
               <div key={input} className="grid gap-0 mb-0.5" style={{ gridTemplateColumns: `180px repeat(${OUTPUTS.length}, 1fr)` }}>
                 {/* Row label */}
                 <div className="p-3 flex items-center">
-                  <span className="text-xs font-mono text-zinc-300 leading-tight">{input}</span>
+                  <span className={`text-xs font-mono leading-tight ${isAudioSubset(input) ? 'pl-4 text-fuchsia-200' : 'text-zinc-300'}`}>
+                    {isAudioSubset(input) && <span className="mr-1 text-zinc-600">Audio /</span>}
+                    {input}
+                  </span>
                 </div>
                 {/* Cells */}
                 {OUTPUTS.map((output) => {
