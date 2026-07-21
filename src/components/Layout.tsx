@@ -232,7 +232,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     <div className="site-footer-bottom">
                         <p>© {new Date().getFullYear()} LongmontAI</p>
-                        <p>Curated by Intelligence.</p>
+                        <a
+                            href="https://morahan.dev"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="site-footer-credit"
+                        >
+                            Designed by Michael Morahan.
+                        </a>
                     </div>
                 </div>
             </footer>
