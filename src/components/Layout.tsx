@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Menu, Trophy, X } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Menu, Trophy, X, Network } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -66,6 +66,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <Trophy size={16} />
                             <span>Leaderboard</span>
                         </Link>
+                        <Link
+                            to="/timeline"
+                            aria-label="AI Timeline"
+                            title="AI Timeline"
+                            className={`nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}
+                        >
+                            <Network size={16} />
+                            <span>Timeline</span>
+                        </Link>
                         <a
                             href="https://github.com/morahan/LongmontAI"
                             target="_blank"
@@ -112,6 +121,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <Link to="/leaderboard" className={`mobile-nav-link${location.pathname === '/leaderboard' ? ' is-active' : ''}`}>
                                 <Trophy size={16} aria-hidden="true" />
                                 <span>Leaderboard</span>
+                            </Link>
+                            <Link to="/timeline" className={`mobile-nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}>
+                                <Network size={16} aria-hidden="true" />
+                                <span>Timeline</span>
                             </Link>
                             <Link to="/countdown" className={`mobile-nav-link${location.pathname === '/countdown' ? ' is-active' : ''}`}>
                                 <Clock size={16} aria-hidden="true" />
@@ -198,6 +211,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <li>
                                         <Link to="/leaderboard" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
                                             Leaderboard
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/timeline" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
+                                            AI Timeline
                                         </Link>
                                     </li>
                                     <li>
