@@ -354,6 +354,47 @@ const ToolsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Mixture of Agents ──────────────────────────────────────────── */}
+      <section className="mb-12" aria-labelledby="moa-heading">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-xs font-mono uppercase tracking-widest text-fuchsia-300">
+            New pattern · MoA
+          </span>
+          <div className="flex-1 h-px bg-gradient-to-r from-fuchsia-300/40 to-transparent" />
+        </div>
+        <div className="glass-panel p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+            <div className="max-w-3xl">
+              <h2 id="moa-heading" className="text-3xl md:text-4xl font-bold mb-3">
+                Mixture of Agents
+              </h2>
+              <p className="text-zinc-300 leading-relaxed mb-4">
+                Ask several AI models the same question, let them compare perspectives,
+                and use their agreements, disagreements, and unique points to build a
+                more trustworthy answer. theMultiplicity.ai is a practical example of
+                this collective-intelligence pattern, with shared conversations and
+                structured <code className="text-fuchsia-200">/rank</code> and{' '}
+                <code className="text-fuchsia-200">/estimate</code> workflows.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs font-mono uppercase tracking-wider text-zinc-400">
+                <span className="px-3 py-1.5 rounded-full bg-fuchsia-400/10 border border-fuchsia-300/20">Multiple models</span>
+                <span className="px-3 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-300/20">Cross-checking</span>
+                <span className="px-3 py-1.5 rounded-full bg-emerald-400/10 border border-emerald-300/20">Consensus signals</span>
+              </div>
+            </div>
+            <a
+              href="https://themultiplicity.ai/about"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-fuchsia-200 hover:text-white transition-colors"
+            >
+              Explore theMultiplicity.ai
+              <ExternalLink size={15} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── Matrix + Detail ─────────────────────────────────────────────── */}
       <div className="flex gap-6 items-start">
 
