@@ -2,15 +2,19 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
   ArrowUpRight,
-  BrainCircuit,
+  Bot,
   CalendarDays,
   ChevronRight,
   Cpu,
+  FileText,
   FlaskConical,
   Layers3,
+  Microscope,
   Network,
-  Scale,
+  Telescope,
+  UnlockKeyhole,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   timelineCategories,
   timelineEvents,
@@ -22,6 +26,16 @@ import {
 type RangeId = 'all' | 'foundations' | 'deep-learning' | 'transformer' | 'frontier';
 type View = 'timeline' | 'matrix';
 
+const categoryLegend: Record<TimelineCategory, { icon: LucideIcon; description: string }> = {
+  'Model release': { icon: Bot, description: 'A notable model became available.' },
+  'Open weight': { icon: UnlockKeyhole, description: 'Weights were released for public use.' },
+  'Research breakthrough': { icon: Microscope, description: 'A technique or result changed the field.' },
+  Paper: { icon: FileText, description: 'A foundational or influential publication.' },
+  Compute: { icon: Cpu, description: 'A hardware or training-scale step forward.' },
+  'Scientific insight': { icon: FlaskConical, description: 'AI helped produce a meaningful new finding.' },
+  Forecast: { icon: Telescope, description: 'A prediction or milestone-setting outlook.' },
+};
+
 const ranges: Array<{ id: RangeId; label: string; start: string; end: string; caption: string }> = [
   { id: 'all', label: 'All history', start: '1950-01-01', end: '2027-01-01', caption: '1950 to present' },
   { id: 'foundations', label: '1950-2005', start: '1950-01-01', end: '2006-01-01', caption: 'Foundations' },
@@ -31,11 +45,7 @@ const ranges: Array<{ id: RangeId; label: string; start: string; end: string; ca
 ];
 
 function iconForCategory(category: TimelineCategory) {
-  if (category === 'Compute') return Cpu;
-  if (category === 'Scientific insight') return FlaskConical;
-  if (category === 'Forecast') return Scale;
-  if (category === 'Model release' || category === 'Open weight') return BrainCircuit;
-  return Network;
+  return categoryLegend[category].icon;
 }
 
 function formatDate(date: string) {
@@ -127,7 +137,10 @@ export default function Timeline() {
         <div className="timeline-control-group">
           <span>Focus</span>
           <div className="timeline-filter-row">
-            {timelineCategories.map((category) => <button key={category} type="button" onClick={() => toggleCategory(category)} className={activeCategories.includes(category) ? 'is-active' : ''}>{category}</button>)}
+            {timelineCategories.map((category) => {
+              const Icon = iconForCategory(category);
+              return <button key={category} type="button" onClick={() => toggleCategory(category)} className={activeCategories.includes(category) ? 'is-active' : ''}><Icon size={13} aria-hidden="true" />{category}</button>;
+            })}
           </div>
         </div>
         <label className="timeline-select-label">
@@ -141,6 +154,24 @@ export default function Timeline() {
           <button type="button" className={view === 'timeline' ? 'is-active' : ''} onClick={() => setView('timeline')}><Network size={15} /> Timeline</button>
           <button type="button" className={view === 'matrix' ? 'is-active' : ''} onClick={() => setView('matrix')}><Layers3 size={15} /> Matrix</button>
         </div>
+      </section>
+
+      <section className="timeline-legend" aria-labelledby="timeline-legend-title">
+        <div className="timeline-legend-heading">
+          <div className="timeline-eyebrow">Event key</div>
+          <h2 id="timeline-legend-title">What each timeline icon means</h2>
+        </div>
+        <ul>
+          {timelineCategories.map((category) => {
+            const { description } = categoryLegend[category];
+            const Icon = iconForCategory(category);
+            const categoryClass = `category-${category.toLowerCase().replace(/[^a-z]+/g, '-')}`;
+            return <li key={category}>
+              <span className={`timeline-legend-symbol ${categoryClass}`}><Icon size={16} aria-hidden="true" /></span>
+              <div><strong>{category}</strong><span>{description}</span></div>
+            </li>;
+          })}
+        </ul>
       </section>
 
       <section className="timeline-workspace" aria-labelledby="timeline-workspace-title">
