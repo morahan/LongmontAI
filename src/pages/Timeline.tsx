@@ -243,7 +243,7 @@ export default function Timeline() {
       <aside className="timeline-detail" aria-label="Selected event">
         <div className="timeline-detail-icon">{(() => { const Icon = iconForCategory(selectedEvent.category); return <Icon size={20} />; })()}</div>
         <div className="timeline-detail-copy"><div><span>{selectedEvent.category}</span><time dateTime={selectedEvent.date}>{formatDate(selectedEvent.date)}</time></div><h2>{selectedEvent.title}</h2><p>{selectedEvent.summary}</p><strong>{selectedEvent.organization}</strong></div>
-        {selectedEvent.sourceUrl ? <a href={selectedEvent.sourceUrl} target="_blank" rel="noopener noreferrer">Source: {selectedEvent.source}<ArrowUpRight size={15} /></a> : <span className="timeline-source-note">Source: {selectedEvent.source}</span>}
+        <div className="timeline-source"><span>Source: {selectedEvent.source}</span><a href={selectedEvent.sourceUrl} target="_blank" rel="noopener noreferrer">Link to Source<ArrowUpRight size={15} /></a></div>
       </aside>
     </div>
   );

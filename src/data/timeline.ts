@@ -1,5 +1,6 @@
 import {
   chineseModelReleases,
+  type ChineseModelProvider,
   type ChineseModelRelease,
 } from '../articles/drafts/2026.07.22/chinese-model-releases';
 import { modelWatchModels } from './modelWatch';
@@ -24,7 +25,7 @@ export interface TimelineEvent {
   category: TimelineCategory;
   summary: string;
   source: string;
-  sourceUrl?: string;
+  sourceUrl: string;
   openWeight?: boolean;
   notable?: boolean;
 }
@@ -272,6 +273,15 @@ const additional2026ReleaseEvents: TimelineEvent[] = [
   },
 ];
 
+const chineseProviderSourceUrls: Record<ChineseModelProvider, string> = {
+  MiniMax: 'https://www.minimax.io/news',
+  DeepSeek: 'https://github.com/deepseek-ai',
+  'Moonshot / Kimi': 'https://huggingface.co/moonshotai',
+  'Alibaba / Qwen': 'https://qwenlm.github.io/blog/',
+  'Zhipu / GLM': 'https://github.com/zai-org',
+  '01.AI / Yi': 'https://huggingface.co/01-ai',
+};
+
 function chineseReleaseToTimelineEvent(release: ChineseModelRelease): TimelineEvent {
   return {
     id: `chinese-${release.date}-${release.provider}-${release.release}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
@@ -281,6 +291,7 @@ function chineseReleaseToTimelineEvent(release: ChineseModelRelease): TimelineEv
     category: 'Open weight',
     summary: 'Tracked in LongmontAI\'s Chinese model release dataset. This release-series entry preserves the current editorial timeline data for continued weekly expansion.',
     source: release.source,
+    sourceUrl: chineseProviderSourceUrls[release.provider],
     openWeight: true,
     notable: true,
   };
