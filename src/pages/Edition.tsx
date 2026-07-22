@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
 import { editions } from '../articles';
 import ContentBlock from '../components/ContentBlock';
+import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
 
 const Edition: React.FC = () => {
     const { id } = useParams();
@@ -55,6 +56,8 @@ const Edition: React.FC = () => {
                     <div className="h-1 w-20 bg-[var(--accent-cyan)] mb-8 rounded-full"></div>
                 </motion.div>
             </div>
+
+            <SponsorAcknowledgement placement="edition" />
 
             <div className="space-y-4">
                 {edition.markdownContent ? (

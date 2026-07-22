@@ -830,6 +830,70 @@ table,
   word-break: break-word;
 }
 
+/* Editorial sponsor acknowledgement shared by every edition and the home feed. */
+.sponsor-acknowledgement {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  color: var(--text-secondary);
+}
+
+.sponsor-acknowledgement-label {
+  color: var(--text-muted);
+  font: 600 0.64rem/1.35 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sponsor-acknowledgement-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  color: #bfdbfe;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.sponsor-acknowledgement-link:hover,
+.sponsor-acknowledgement-link:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.sponsor-acknowledgement-edition {
+  margin: -0.25rem 0 2.5rem;
+  padding: 0.9rem 0 0.95rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sponsor-acknowledgement-edition p {
+  flex-basis: 100%;
+  max-width: 40rem;
+  margin: 0.1rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.sponsor-acknowledgement-home {
+  justify-content: center;
+  margin: -2.35rem 0 2.75rem;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .sponsor-acknowledgement-home {
+    justify-content: flex-start;
+    margin: -2.35rem 0 2.25rem;
+  }
+}
+
 .release-widgets {
   --release-bg: #f7f6f2;
   --release-surface: #fbfbf9;

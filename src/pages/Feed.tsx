@@ -4,6 +4,7 @@ import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Mail, Search, Sparkles, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
 
 function formatDate(dateStr: string): string {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -82,6 +83,8 @@ const Feed: React.FC = () => {
                     </div>
                 </div>
             </section>
+
+            <SponsorAcknowledgement placement="home" />
 
             {/* Meetup Banner */}
             <div className="home-meetup-banner mb-12 p-4 text-center bg-[var(--accent-cyan)]/10 rounded-lg border border-[var(--accent-cyan)]/20">
