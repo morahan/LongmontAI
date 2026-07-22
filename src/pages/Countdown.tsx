@@ -13,6 +13,13 @@ const MEETUP_DURATION_HOURS = 1;
 const INTERVAL_DAYS = 14;
 const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
 const JUST_HIT_ZERO_DURATION_MS = 8000;
+// Update these together roughly every third meetup (28 days) when rotating Discord invites.
+// The QR code and its click-through link both derive from this one URL.
+const DISCORD_INVITE_URL = 'https://discord.gg/Av8tU3GFW';
+const DISCORD_INVITE_FIRST_MEETUP = new Date(2026, 6, 22, 12, 0, 0, 0);
+const DISCORD_INVITE_VALID_FOR_MEETUPS = 3;
+const DISCORD_QR_OPENING_WINDOW_MINUTES = 10;
+const DISCORD_QR_POST_MEETUP_WINDOW_MINUTES = 30;
 
 // Stable reference: May 27, 2026 noon = upcoming meetup
 const REFERENCE_MEETUP = new Date(MEETUP_YEAR, MEETUP_MONTH - 1, MEETUP_DAY, MEETUP_HOUR, 0, 0, 0);
@@ -29,6 +36,33 @@ function getNextMeetup(localNow: Date): Date {
 
 function getEndTime(meetup: Date): Date {
   return new Date(meetup.getTime() + MEETUP_DURATION_HOURS * 60 * 60 * 1000);
+}
+
+function shouldShowDiscordInvite(now: Date, meetup: Date): boolean {
+  const openingWindowEnds = new Date(meetup.getTime() + DISCORD_QR_OPENING_WINDOW_MINUTES * 60 * 1000);
+  const postMeetupWindowEnds = new Date(
+    getEndTime(meetup).getTime() + DISCORD_QR_POST_MEETUP_WINDOW_MINUTES * 60 * 1000,
+  );
+
+  return (now >= meetup && now < openingWindowEnds) || (now >= getEndTime(meetup) && now < postMeetupWindowEnds);
+}
+
+function getMeetupWithActiveInviteWindow(localNow: Date): Date {
+  let meetup = new Date(REFERENCE_MEETUP);
+  const inviteWindowMs = (MEETUP_DURATION_HOURS * 60 + DISCORD_QR_POST_MEETUP_WINDOW_MINUTES) * 60 * 1000;
+
+  while (meetup.getTime() + inviteWindowMs <= localNow.getTime()) {
+    meetup = new Date(meetup.getTime() + INTERVAL_DAYS * 24 * 60 * 60 * 1000);
+  }
+  return meetup;
+}
+
+function isDiscordInviteCurrent(meetup: Date): boolean {
+  const intervalMs = INTERVAL_DAYS * 24 * 60 * 60 * 1000;
+  const firstInviteMeetupIndex = Math.round((DISCORD_INVITE_FIRST_MEETUP.getTime() - REFERENCE_MEETUP.getTime()) / intervalMs);
+  const meetupIndex = Math.round((meetup.getTime() - REFERENCE_MEETUP.getTime()) / intervalMs);
+
+  return meetupIndex >= firstInviteMeetupIndex && meetupIndex < firstInviteMeetupIndex + DISCORD_INVITE_VALID_FOR_MEETUPS;
 }
 
 interface TimeLeft {
@@ -150,14 +184,14 @@ function playCelebrationSound() {
 }
 
 // ─── Demo override (dev only) ───────────────────────────────────────────────
-function readDemoOverride(): 'final' | 'zero' | null {
+function readDemoOverride(): 'final' | 'zero' | 'invite' | 'invite-expired' | 'post-invite' | null {
   // Only honored in dev so production users see real timer behavior.
   // import.meta.env.DEV is replaced by Vite at build time.
   // @ts-ignore
   if (typeof import.meta === 'undefined' || !import.meta.env?.DEV) return null;
   const p = new URLSearchParams(window.location.search);
   const v = p.get('demo');
-  if (v === 'final' || v === 'zero') return v;
+  if (v === 'final' || v === 'zero' || v === 'invite' || v === 'invite-expired' || v === 'post-invite') return v;
   return null;
 }
 
@@ -223,8 +257,8 @@ const FinalCountdownDisplay: React.FC<{ seconds: number }> = ({ seconds }) => {
   );
 };
 
-const AnimatedLogo: React.FC = () => (
-  <div className="relative flex items-center justify-center my-6">
+const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => (
+  <div className={`relative flex items-center justify-center my-6 ${compact ? 'countdown-logo-compact' : ''}`}>
     <div
       className="absolute inset-0 blur-3xl opacity-60 animate-logo-glow pointer-events-none"
       style={{
@@ -249,6 +283,45 @@ const AnimatedLogo: React.FC = () => (
     </video>
   </div>
 );
+
+const DiscordInvite: React.FC<{ needsUpdate?: boolean }> = ({ needsUpdate = false }) => {
+  const qrCodeUrl = `https://quickchart.io/qr?text=${encodeURIComponent(DISCORD_INVITE_URL)}&size=900&margin=2`;
+
+  if (needsUpdate) {
+    return (
+      <div className="countdown-discord-invite countdown-discord-invite--update animate-scale-in" role="status">
+        <span className="countdown-discord-invite__eyebrow">Fresh Invitation</span>
+        <img
+          src="/images/countdown/discord-invite-refresh.png"
+          alt=""
+          className="countdown-discord-invite__update-art"
+        />
+        <strong className="countdown-discord-invite__update-title">Update Discord Invite</strong>
+        <span className="countdown-discord-invite__update-copy">A fresh invite will appear here after it is updated.</span>
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={DISCORD_INVITE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="countdown-discord-invite animate-scale-in"
+      aria-label="Join the Longmont AI Discord server"
+    >
+      <span className="countdown-discord-invite__eyebrow">Stay Connected</span>
+      <img
+        src={qrCodeUrl}
+        alt="QR code to join the Longmont AI Discord server"
+        width="900"
+        height="900"
+        className="countdown-discord-invite__qr"
+      />
+      <span className="countdown-discord-invite__label">Join our Discord</span>
+    </a>
+  );
+};
 
 // ─── Confetti ───────────────────────────────────────────────────────────────
 interface ConfettiPiece {
@@ -389,15 +462,14 @@ const Countdown: React.FC = () => {
   // Demo override (dev only) — forces visual state for screenshot verification
   const demo = readDemoOverride();
   const isFinalCountdownEffective = demo === 'final' ? true : timeLeft.isFinalCountdown;
-  const isLiveEvent = demo === 'zero' ? true : timeLeft.isLive;
+  const isLiveEvent = demo === 'zero' || demo === 'invite' || demo === 'invite-expired' ? true : timeLeft.isLive;
 
-  const nextMeetup = getNextMeetup(new Date());
-
-  // Calculate live minutes remaining
-  const endTime = getEndTime(nextMeetup);
-  const liveDiff = Math.max(0, endTime.getTime() - new Date().getTime());
-  const liveMinutes = Math.floor(liveDiff / (1000 * 60));
-  const liveProgress = liveMinutes / (MEETUP_DURATION_HOURS * 60);
+  const now = new Date();
+  const nextMeetup = getNextMeetup(now);
+  const inviteMeetup = getMeetupWithActiveInviteWindow(now);
+  const isDiscordInviteVisible = demo === 'invite' || demo === 'invite-expired' || demo === 'post-invite' || shouldShowDiscordInvite(now, inviteMeetup);
+  const needsDiscordInviteUpdate = demo === 'invite-expired' || (isDiscordInviteVisible && !isDiscordInviteCurrent(inviteMeetup));
+  const isPostMeetupInvite = !isLiveEvent && isDiscordInviteVisible;
 
   const meetupDateStr = nextMeetup.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -426,6 +498,10 @@ const Countdown: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-red-500 animate-live-pulse inline-block" />
             Live Now — Longmont AI Meetup
           </div>
+        ) : isPostMeetupInvite ? (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
+            Keep the conversation going
+          </div>
         ) : isFinalCountdownEffective ? (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--color-pink)]/40 bg-[var(--color-pink)]/10 text-[var(--color-pink)] text-[11px] sm:text-sm font-mono uppercase tracking-widest animate-final-pulse">
             🎵 Final Countdown
@@ -447,6 +523,14 @@ const Countdown: React.FC = () => {
             <br />
             <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
               Join the gathering — you're here!
+            </span>
+          </>
+        ) : isPostMeetupInvite ? (
+          <>
+            <span className="text-gradient-vibrant">Thanks for Joining</span>
+            <br />
+            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
+              Continue the conversation with Longmont AI
             </span>
           </>
         ) : isFinalCountdownEffective ? (
@@ -487,33 +571,23 @@ const Countdown: React.FC = () => {
         </div>
       )}
 
-      {/* Animated logo + live countdown ring during the live window */}
+      {/* The meetup itself is animation-only, with the invite alongside it when scheduled. */}
       {isLiveEvent && (
-        <>
-          <AnimatedLogo />
-          <div className="relative w-48 h-48 mb-10 animate-scale-in">
-            <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
-              <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-              <circle
-                cx="100" cy="100" r="90" fill="none"
-                stroke="url(#liveGradient)" strokeWidth="8" strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 90}
-                strokeDashoffset={2 * Math.PI * 90 * (1 - liveProgress)}
-                className="transition-all duration-1000 ease-linear"
-              />
-              <defs>
-                <linearGradient id="liveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="var(--color-pink)" />
-                  <stop offset="100%" stopColor="var(--color-cyan)" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-bold font-mono text-white">{liveMinutes}</span>
-              <span className="text-sm text-[var(--text-muted)] font-mono">minutes</span>
-            </div>
+        <div className={`countdown-live-experience ${isDiscordInviteVisible ? 'countdown-live-experience--with-invite' : ''}`}>
+          <div className="countdown-live-animation">
+            <AnimatedLogo compact={isDiscordInviteVisible} />
           </div>
-        </>
+          {isDiscordInviteVisible && <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />}
+        </div>
+      )}
+
+      {isPostMeetupInvite && (
+        <div className="countdown-live-experience countdown-live-experience--with-invite">
+          <div className="countdown-live-animation">
+            <AnimatedLogo compact />
+          </div>
+          <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />
+        </div>
       )}
 
       {/* Meetup details */}

@@ -3863,6 +3863,120 @@ iframe {
 }
 .animate-logo-glow { animation: logo-glow 4s ease-in-out infinite; }
 
+/* Live meetup display: the invite shares the stage only during its scheduled window. */
+.countdown-live-experience {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.countdown-live-experience--with-invite {
+  align-items: flex-start;
+  gap: clamp(2rem, 6vw, 5rem);
+  max-width: 72rem;
+  padding: 0 1.5rem;
+}
+
+.countdown-live-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.countdown-logo-compact video {
+  width: min(28vw, 17rem);
+}
+
+.countdown-discord-invite {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  width: clamp(15rem, 22vw, 18rem);
+  padding: 1rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--accent-cyan) 45%, transparent);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 2.5rem rgba(0, 240, 255, 0.13);
+}
+
+.countdown-discord-invite:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 4px;
+}
+
+.countdown-discord-invite__eyebrow {
+  margin-bottom: 0.625rem;
+  color: var(--accent-cyan);
+  font-family: monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.countdown-discord-invite__qr {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0.5rem;
+  background: #fff;
+}
+
+.countdown-discord-invite__label {
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.countdown-discord-invite--update {
+  justify-content: center;
+  gap: 0.75rem;
+  border-color: color-mix(in srgb, var(--color-pink) 55%, transparent);
+}
+
+.countdown-discord-invite__update-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.25rem;
+}
+
+.countdown-discord-invite__update-title {
+  max-width: 12rem;
+  color: var(--text-primary);
+  font-size: clamp(1.5rem, 2.3vw, 2rem);
+  line-height: 1.1;
+}
+
+.countdown-discord-invite__update-copy {
+  max-width: 15rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .countdown-live-experience--with-invite {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 1rem;
+  }
+
+  .countdown-logo-compact video {
+    width: min(80vw, 24rem);
+  }
+
+  .countdown-discord-invite {
+    width: min(78vw, 20rem);
+  }
+}
+
 /* Respect reduced-motion across the countdown page */
 @media (prefers-reduced-motion: reduce) {
   .animate-final-pulse,

@@ -43,6 +43,7 @@ assert(!csp.includes('*'), 'CSP sources must be explicitly allowlisted');
 assert(csp.includes('https://fonts.googleapis.com'), 'Google Fonts styles must remain available');
 assert(csp.includes('https://fonts.gstatic.com'), 'Google Fonts files must remain available');
 assert(csp.includes('https://images.unsplash.com'), 'published article images must remain available');
+assert(csp.includes('https://quickchart.io'), 'countdown Discord QR images must remain available');
 assert(csp.includes('https://view.officeapps.live.com'), 'PowerPoint embeds must remain available');
 assert.equal(headers.get('cross-origin-opener-policy'), 'same-origin');
 assert.equal(headers.get('x-content-type-options'), 'nosniff');
