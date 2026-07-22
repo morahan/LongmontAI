@@ -65,12 +65,12 @@ const MOA_TOOLS: MoaTool[] = [
 
 const INPUTS: InputType[] = [
   'Text', 'Image', 'Video', 'Audio', 'Music', '3D Models', '3D Printable', 'Laser Cutting',
-  'Code', 'Mobile Apps', 'Websites', 'Robotics & Mechanical'
+  'Code', 'Mobile Apps', 'Websites', 'Interactive Interface', 'Robotics & Mechanical'
 ];
 
 const OUTPUTS: OutputType[] = [
   'Text', 'Image', 'Video', 'Audio', 'Music', '3D Models', '3D Printable', 'Laser Cutting',
-  'Code', 'Mobile Apps', 'Websites', 'Robotics & Mechanical'
+  'Code', 'Mobile Apps', 'Websites', 'Interactive Interface', 'Robotics & Mechanical'
 ];
 
 // ─── MATRIX ─────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ const MATRIX: Matrix = {
   Text: {
     Text: [{ name: 'Grok 4.5', url: 'https://x.ai/grok' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'GPT-5.6 Sol', url: 'https://openai.com/gpt-5-6' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }],
     'Image': [{ name: 'Grok Imagine', url: 'https://x.ai/grok-imagine' }, { name: 'Midjourney v7', url: 'https://midjourney.com' }, { name: 'Nano Banana Pro (Gemini 3 Pro Image)', url: 'https://deepmind.google/gemini' }, { name: 'GPT Image 1', url: 'https://openai.com/index/gpt-image-1/' }, { name: 'Ideogram', url: 'https://ideogram.ai' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Adobe Firefly', url: 'https://adobe.com/firefly' }],
-    Video: [{ name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3.1', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora 2', url: 'https://openai.com/sora' }],
+    Video: [{ name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3.1', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora 2', url: 'https://openai.com/sora' }, { name: 'Tap8 (video generation)', url: 'https://sigmaz.io/' }],
     Audio: [{ name: 'ElevenLabs (text-to-speech)', url: 'https://elevenlabs.io' }, { name: 'OpenAI Audio', url: 'https://openai.com/index/introducing-our-next-generation-audio-models/' }, { name: 'Gemini Audio', url: 'https://deepmind.google/gemini' }],
     Music: [{ name: 'Suno v5.5', url: 'https://suno.com' }, { name: 'Udio v1.5', url: 'https://help.udio.com/en/articles/12874375-udio-warner-music-group-wmg-partnership' }, { name: 'Eleven Music v2', url: 'https://elevenlabs.io/docs/eleven-creative/products/music' }, { name: 'MiniMax Music 2.6', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Google Lyria 3', url: 'https://ai.google.dev/gemini-api/docs/music-generation' }, { name: 'Stable Audio 2.5', url: 'https://stability.ai/news-updates/stability-ai-introduces-stable-audio-25-the-first-audio-model-built-for-enterprise-sound-production-at-scale' }, { name: 'Mureka V9', url: 'https://platform.mureka.ai/' }, { name: 'Alibaba Fun-Music', url: 'https://www.alibabacloud.com/help/en/model-studio/fun-music/' }, { name: 'Tencent SongGeneration 2', url: 'https://github.com/tencent-ailab/SongGeneration', openWeight: true }, { name: 'ACE-Step 1.5', url: 'https://github.com/ace-step/ACE-Step', openWeight: true }, { name: 'Baidu ERNIE-Music (research)', url: 'https://aclanthology.org/2023.ijcnlp-demo.9.pdf' }],
     '3D Models': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Luma Genie', url: 'https://lumalabs.ai/genie' }, { name: 'Sloyd.ai', url: 'https://sloyd.ai' }],
@@ -105,18 +105,19 @@ const MATRIX: Matrix = {
   Video: {
     Text: [{ name: 'GPT-5.6 Sol video', url: 'https://openai.com/gpt-5-6' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'Grok 4.5 vision', url: 'https://x.ai/grok' }, { name: 'Whisper + LLM summary', url: 'https://openai.com/whisper' }],
     'Image': [{ name: 'Runway (video→image)', url: 'https://runwayml.com' }, { name: 'Luma', url: 'https://lumalabs.ai' }, { name: 'Kling frame extractor', url: 'https://klingai.com' }],
-    Video: [{ name: 'Runway Gen-5 (video-to-video)', url: 'https://runwayml.com' }, { name: 'Kling', url: 'https://klingai.com' }, { name: 'Wan 2.7 Video Edit', url: 'https://www.alibabacloud.com/help/en/model-studio/use-video-generation' }, { name: 'Descript Overdub', url: 'https://descript.com' }],
+    Video: [{ name: 'Runway Gen-5 (video-to-video)', url: 'https://runwayml.com' }, { name: 'Kling', url: 'https://klingai.com' }, { name: 'Wan 2.7 Video Edit', url: 'https://www.alibabacloud.com/help/en/model-studio/use-video-generation' }, { name: 'Descript Overdub', url: 'https://descript.com' }, { name: 'Tap8 (video-to-video)', url: 'https://sigmaz.io/' }],
     '3D Models': [{ name: 'Luma (video→3D)', url: 'https://lumalabs.ai' }, { name: 'Meshy video upload', url: 'https://meshy.ai' }, { name: 'Polycam AI', url: 'https://poly.cam' }],
     'Laser Cutting': [{ name: 'Recraft.ai video→vector', url: 'https://recraft.ai' }],
     Code: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (video analysis → code)', url: 'https://openai.com/gpt-5-6' }],
     'Mobile Apps': [{ name: 'FlutterFlow / Lovable (video demo → app)', url: 'https://flutterflow.io' }, { name: 'Cursor (video demo → project)', url: 'https://cursor.com' }],
     Websites: [{ name: 'Framer AI / Lovable (video landing page)', url: 'https://framer.com/ai' }],
+    'Interactive Interface': [{ name: 'Tap8 (video-to-interactive interface)', url: 'https://sigmaz.io/' }],
     'Robotics & Mechanical': [{ name: 'Edge Impulse (video datasets → edge ML)', url: 'https://edgeimpulse.com' }, { name: 'Balena', url: 'https://balena.io' }],
   },
   Audio: {
     Text: [{ name: 'Grok Voice', url: 'https://x.ai/grok' }, { name: 'GPT-5.6 Audio', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Audio', url: 'https://ai.google.dev/gemini-api/docs/audio' }, { name: 'Baidu Speech Recognition', url: 'https://cloud.baidu.com/product/speech' }, { name: 'MiniMax Speech', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Alibaba Qwen Audio', url: 'https://modelstudio.alibabacloud.com/' }],
     Image: [{ name: 'Grok Voice + Imagine', url: 'https://x.ai/grok-imagine' }, { name: 'GPT-5.6 Audio + GPT Image', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Audio + Imagen', url: 'https://ai.google.dev/gemini-api/docs/audio' }, { name: 'Alibaba Qwen Audio + Wan', url: 'https://modelstudio.alibabacloud.com/' }],
-    Video: [{ name: 'Wan 2.7 (audio-guided video)', url: 'https://help.aliyun.com/en/model-studio/text-to-video-api-reference' }, { name: 'MiniMax Hailuo', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Google Veo', url: 'https://deepmind.google/veo' }],
+    Video: [{ name: 'Wan 2.7 (audio-guided video)', url: 'https://help.aliyun.com/en/model-studio/text-to-video-api-reference' }, { name: 'MiniMax Hailuo', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Google Veo', url: 'https://deepmind.google/veo' }, { name: 'Tap8 (audio-to-video)', url: 'https://sigmaz.io/' }],
     Audio: [{ name: 'ElevenLabs Voice Changer', url: 'https://elevenlabs.io/docs/overview/capabilities/voice-changer' }, { name: 'Grok Voice', url: 'https://x.ai/grok' }, { name: 'GPT-5.6 Audio', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Live', url: 'https://ai.google.dev/gemini-api/docs/live' }, { name: 'MiniMax Speech', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Alibaba Qwen Audio', url: 'https://modelstudio.alibabacloud.com/' }],
     Music: [{ name: 'Suno (audio upload and reimagine)', url: 'https://help.suno.com/en/articles/3197313' }, { name: 'Eleven Music (finetunes)', url: 'https://elevenlabs.io/docs/eleven-creative/products/music' }, { name: 'MiniMax Music (reference audio)', url: 'https://platform.minimaxi.com/docs/guides/music-generation' }, { name: 'Stable Audio 2.5 (audio-to-audio)', url: 'https://kb.stability.ai/knowledge-base/tips-for-using-the-audio-to-audio-api' }, { name: 'Mureka (reference and melody)', url: 'https://platform.mureka.ai/' }, { name: 'ACE-Step 1.5 (covers and remix)', url: 'https://github.com/ace-step/ACE-Step', openWeight: true }],
     'Robotics & Mechanical': [{ name: 'Grok Voice → vehicle and device controls', url: 'https://x.ai/grok' }, { name: 'Gemini Live → device agents', url: 'https://ai.google.dev/gemini-api/docs/live' }, { name: 'Baidu DuerOS', url: 'https://dueros.baidu.com/' }],
@@ -171,6 +172,7 @@ const MATRIX: Matrix = {
     Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Copilot', url: 'https://github.com/features/copilot' }, { name: 'Aider (refactoring)', url: 'https://aider.chat' }],
     'Mobile Apps': [{ name: 'FlutterFlow / Expo + LLM code', url: 'https://flutterflow.io' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }],
     Websites: [{ name: 'v0.dev, Lovable.dev, Bolt.new', url: 'https://v0.dev' }],
+    'Interactive Interface': [{ name: 'Gemini (code → interactive interface)', url: 'https://gemini.google.com/' }, { name: 'Codex / GPT (code → interactive interface)', url: 'https://openai.com/codex/' }, { name: 'Claude (code → interactive interface)', url: 'https://claude.ai/' }],
     'Robotics & Mechanical': [{ name: 'Balena CLI + LLM', url: 'https://balena.io' }, { name: 'Edge Impulse (code export to RPi)', url: 'https://edgeimpulse.com' }],
   },
   'Mobile Apps': {
@@ -196,6 +198,9 @@ const MATRIX: Matrix = {
     'Mobile Apps': [{ name: 'Capacitor / Ionic (PWA → mobile)', url: 'https://capacitorjs.com' }],
     Websites: [{ name: 'Framer AI', url: 'https://framer.com/ai' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Webflow AI', url: 'https://webflow.com' }],
     'Robotics & Mechanical': [{ name: 'Balena (web → RPi-hosted dashboard)', url: 'https://balena.io' }],
+  },
+  'Interactive Interface': {
+    Text: [{ name: 'Tap8 (interactive video feedback)', url: 'https://sigmaz.io/' }],
   },
   'Robotics & Mechanical': {
     Text: [{ name: 'Grok 4.5 / Claude Fable 5 (RPi project brief)', url: 'https://x.ai/grok' }],
