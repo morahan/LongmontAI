@@ -25,6 +25,34 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    'efficiency-frontier': {
+        id: 'efficiency-frontier',
+        title: 'The Efficiency Frontier',
+        description: 'A July 22 visual briefing on capability, cost, model routing, and the memory constraints reshaping the AI supply chain.',
+        sourceUrl: '/slideshows/2026.07.22/efficiency-frontier/efficiency-frontier-briefing.pptx',
+        slides: createSlides('/slideshows/2026.07.22/efficiency-frontier', [
+            'The Efficiency Frontier',
+            'A leaderboard is a signal, not a selection',
+            'The same benchmark, stripped of the glow',
+            'Output tokens make the price ladder concrete',
+            'The frontier is moving beyond code',
+            'Long runs turn model choice into an operating decision',
+            'Smaller can mean dramatically cheaper without being less useful',
+            'The workflow can dominate the model bill',
+            'A working demo is not the same thing as a working system',
+            'The rate card changes the routing conversation',
+            'Reasoning level changes the complete cost matrix',
+            'The baseline tiers are a usable routing menu',
+            'A simple multiplier makes tradeoffs memorable',
+            'AI demand is showing up in the physical economy',
+            'Higher component costs can reach the price tag',
+            'Micron mobile and client margins have surged',
+            'The revenue flow shows where the upside lands',
+            'Memory revenue is climbing at a new scale',
+            'Each generation asks for more memory',
+            'Measure the whole system. Then route the work.',
+        ]),
+    },
     'agent-economy': {
         id: 'agent-economy',
         title: 'The Agent Economy Gets Real',
