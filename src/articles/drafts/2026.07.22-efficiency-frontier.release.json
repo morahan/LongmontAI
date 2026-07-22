@@ -4,12 +4,11 @@
   "timezone": "America/Denver",
   "meetupStartsAt": "2026-07-22T12:00:00-06:00",
   "publishAt": "2026-07-22T11:50:00-06:00",
-  "status": "draft-not-published",
+  "status": "published",
+  "publishedAt": "2026-07-22T12:20:53-06:00",
   "releaseChecklist": [
-    "Promote the Markdown draft at or after publishAt.",
-    "Copy approved assets into public folders and register the article and slideshow.",
-    "Run npm run content:check-assets and npm run build.",
-    "Review the desktop and mobile edition route.",
-    "Publish only through the normal reviewed commit and deployment path."
+    "Markdown promoted and the article and slideshow registered.",
+    "Approved editorial assets copied into public folders.",
+    "Validation and reviewed publication completed through the normal path."
   ]
 }

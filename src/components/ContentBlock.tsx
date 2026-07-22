@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
 import DocumentEmbed from './DocumentEmbed';
 import Slideshow from './Slideshow';
-import ChineseModelReleaseWidgets from '../articles/drafts/2026.07.22/chinese-model-release-widgets';
+import ChineseModelReleaseWidgets from '../articles/chinese-model-release-widgets';
 
 interface ContentBlockProps {
     item?: ContentItem;

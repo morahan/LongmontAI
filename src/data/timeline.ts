@@ -2,7 +2,7 @@ import {
   chineseModelReleases,
   type ChineseModelProvider,
   type ChineseModelRelease,
-} from '../articles/drafts/2026.07.22/chinese-model-releases';
+} from '../articles/chinese-model-releases';
 import { modelWatchModels } from './modelWatch';
 
 export const timelineCategories = [

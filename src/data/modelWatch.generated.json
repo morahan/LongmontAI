@@ -1,7 +1,7 @@
 {
-  "checkedAt": "2026-07-12T20:25:59.057Z",
-  "successfulSources": 5,
-  "totalSources": 5,
+  "checkedAt": "2026-07-22T18:22:06.349Z",
+  "successfulSources": 7,
+  "totalSources": 7,
   "detectedModels": [
     "Claude Fable 5",
     "Claude Haiku 4.5",
@@ -16,6 +16,7 @@
     "Claude Sonnet 5",
     "Gemini 3.5",
     "Gemini 3.5 Flash",
+    "Gemini 3.6 Flash",
     "Gemma 4",
     "GLM-5.2",
     "gpt-2",
@@ -40,6 +41,7 @@
     "GPT-5.6 Sol",
     "GPT-5.6 Terra",
     "Grok 4.5",
+    "Kimi K2.6",
     "Kimi K3",
     "Muse Spark 1.1",
     "qwen 2.5"
