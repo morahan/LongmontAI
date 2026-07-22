@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Mail, Menu, Trophy, X, Network } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -83,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             title="GitHub"
                             className="nav-link"
                         >
-                            <Github size={16} />
+                            <GitBranch size={16} />
                             <span>GitHub</span>
                         </a>
                         <Link
@@ -136,7 +136,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 rel="noopener noreferrer"
                                 className="mobile-nav-link"
                             >
-                                <Github size={16} aria-hidden="true" />
+                                <GitBranch size={16} aria-hidden="true" />
                                 <span>GitHub</span>
                             </a>
                             <a
