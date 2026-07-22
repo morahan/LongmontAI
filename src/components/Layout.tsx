@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, Github, Menu, Trophy, X } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -66,6 +66,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <Trophy size={16} />
                             <span>Leaderboard</span>
                         </Link>
+                        <Link
+                            to="/timeline"
+                            aria-label="AI Timeline"
+                            title="AI Timeline"
+                            className={`nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}
+                        >
+                            <Network size={16} />
+                            <span>Timeline</span>
+                        </Link>
                         <a
                             href="https://github.com/morahan/LongmontAI"
                             target="_blank"
@@ -74,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             title="GitHub"
                             className="nav-link"
                         >
-                            <Github size={16} />
+                            <GitBranch size={16} />
                             <span>GitHub</span>
                         </a>
                         <Link
@@ -113,6 +122,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <Trophy size={16} aria-hidden="true" />
                                 <span>Leaderboard</span>
                             </Link>
+                            <Link to="/timeline" className={`mobile-nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}>
+                                <Network size={16} aria-hidden="true" />
+                                <span>Timeline</span>
+                            </Link>
                             <Link to="/countdown" className={`mobile-nav-link${location.pathname === '/countdown' ? ' is-active' : ''}`}>
                                 <Clock size={16} aria-hidden="true" />
                                 <span>Countdown</span>
@@ -123,7 +136,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 rel="noopener noreferrer"
                                 className="mobile-nav-link"
                             >
-                                <Github size={16} aria-hidden="true" />
+                                <GitBranch size={16} aria-hidden="true" />
                                 <span>GitHub</span>
                             </a>
                             <a
@@ -155,97 +168,78 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </motion.div>
             </main>
 
-            <footer role="contentinfo" className="border-t border-[var(--glass-border)] bg-[#09090b] py-12 mt-auto">
-                <div className="container">
-                    {/* Top section: Brand + Tagline */}
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 mb-10">
-                        {/* Brand */}
-                        <div className="md:max-w-xs">
-                            <Link to="/" className="flex items-center gap-3 group mb-3">
-                                <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors border border-white/5">
-                                    <BrainCircuit size={20} className="text-[var(--accent-cyan)]" />
-                                </div>
-                                <span className="font-bold tracking-tight text-lg">LongmontAI</span>
+            <footer role="contentinfo" className="site-footer">
+                <div className="container site-footer-inner">
+                    <div className="site-footer-grid">
+                        <div className="site-footer-brand">
+                            <Link to="/" className="site-footer-brand-link">
+                                <span className="site-footer-mark" aria-hidden="true">
+                                    <BrainCircuit size={21} />
+                                </span>
+                                <span>LongmontAI</span>
                             </Link>
-                            <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
-                                Curated insights into the rapidly evolving world of AI.
-                            </p>
+                            <p>Curated insights into the rapidly evolving world of AI.</p>
                         </div>
 
-                        {/* Footer Navigation */}
-                        <nav aria-label="Footer navigation" className="flex flex-col sm:flex-row gap-10 sm:gap-16">
-                            {/* Quick Links */}
-                            <div>
-                                <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-4">
-                                    Quick Links
-                                </h3>
-                                <ul className="space-y-2.5">
-                                    <li>
-                                        <Link to="/" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
-                                            Home
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
-                                            Latest Edition
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/model-watch" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
-                                            Model Watch
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/leaderboard" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
-                                            Leaderboard
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/tools" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm">
-                                            Tools Used
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <a
-                                            href="https://www.meetup.com/longmontai"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm inline-flex items-center gap-1.5"
-                                        >
-                                            Meetup Page
-                                            <ExternalLink size={12} className="opacity-60" />
-                                        </a>
-                                    </li>
+                        <nav aria-label="Footer navigation" className="site-footer-nav">
+                            <div className="site-footer-column">
+                                <h3>Explore</h3>
+                                <ul>
+                                    <li><Link to="/" className="site-footer-link">Home</Link></li>
+                                    <li><Link to="/" className="site-footer-link">Latest Edition</Link></li>
+                                    <li><Link to="/model-watch" className="site-footer-link">Model Watch</Link></li>
+                                    <li><Link to="/leaderboard" className="site-footer-link">Leaderboard</Link></li>
+                                    <li><Link to="/timeline" className="site-footer-link">AI Timeline</Link></li>
+                                    <li><Link to="/tools" className="site-footer-link">Tools</Link></li>
                                 </ul>
                             </div>
 
-                            {/* Connect */}
-                            <div>
-                                <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-4">
-                                    Connect
-                                </h3>
-                                <ul className="flex gap-3">
-                                    <li>
-                                        <a
-                                            href="https://www.meetup.com/longmontai"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            aria-label="Join us on Meetup"
-                                            className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                                        >
-                                            <Users size={16} />
-                                        </a>
-                                    </li>
-                                </ul>
+                            <div className="site-footer-column site-footer-connect">
+                                <h3>Connect</h3>
+                                <a
+                                    href="https://www.meetup.com/longmontai"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="site-footer-meetup-link"
+                                >
+                                    <Users size={17} aria-hidden="true" />
+                                    <span>Meetup</span>
+                                    <ExternalLink size={13} aria-hidden="true" />
+                                </a>
+                                <p className="site-footer-invitation">
+                                    Put your brand in front of local builders, leaders, and AI enthusiasts.{' '}
+                                    <a href="mailto:sponsors@longmontai.com?subject=LongmontAI%20event%20sponsorship">
+                                        Sponsors@LongmontAI.com
+                                    </a>
+                                </p>
+                            </div>
+
+                            <div className="site-footer-column site-footer-present">
+                                <h3>Present</h3>
+                                <p className="site-footer-invitation">
+                                    Share a practical idea, new tool, or live demo with the Longmont AI community.
+                                </p>
+                                <a
+                                    href="mailto:hello@longmontai.com?subject=LongmontAI%20presentation%20or%20demo"
+                                    className="site-footer-email-link"
+                                >
+                                    <Mail size={15} aria-hidden="true" />
+                                    <span>Hello@LongmontAI.com</span>
+                                </a>
                             </div>
                         </nav>
                     </div>
 
-                    {/* Bottom copyright */}
-                    <div className="border-t border-[var(--glass-border)] pt-6">
-                        <p className="text-[var(--text-muted)] text-sm text-center">
-                            © {new Date().getFullYear()} LongmontAI. Curated by Intelligence.
-                        </p>
+                    <div className="site-footer-bottom">
+                        <p>© {new Date().getFullYear()} LongmontAI</p>
+                        <a
+                            href="https://morahan.dev"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="site-footer-credit"
+                        >
+                            Designed by Michael Morahan.
+                        </a>
                     </div>
                 </div>
             </footer>

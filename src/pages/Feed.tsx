@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Edition, editions } from '../articles';
 import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
-import { ArrowRight, Calendar, Search, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Calendar, Mail, Search, Sparkles, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function formatDate(dateStr: string): string {
@@ -62,6 +62,24 @@ const Feed: React.FC = () => {
                     <p className="home-hero-subtitle text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
                         Charting frontier models, agents, and the ideas reshaping everything — one edition at a time.
                     </p>
+                    <div className="home-hero-actions">
+                        <a
+                            href="https://www.meetup.com/longmontai"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="home-hero-action home-hero-action-primary"
+                        >
+                            <Users size={17} aria-hidden="true" />
+                            <span>Join the Meetup</span>
+                        </a>
+                        <a
+                            href="mailto:sponsors@longmontai.com?subject=LongmontAI%20event%20sponsorship"
+                            className="home-hero-action home-hero-action-secondary"
+                        >
+                            <Mail size={17} aria-hidden="true" />
+                            <span>Sponsors</span>
+                        </a>
+                    </div>
                 </div>
             </section>
 

@@ -280,65 +280,14 @@ secret_scan() {
 }
 
 dependency_audit() {
-  echo "  Scanner: npm audit"
-  echo "  Blocking level: ${SECURITY_COMMIT_AUDIT_LEVEL:-high}"
-
-  if [[ -f package-lock.json ]]; then
-    local audit_json
-    local audit_status
-    audit_json="$(mktemp "${TMPDIR:-/tmp}/security-audit.XXXXXXXXXX")"
-
-    if npm audit --audit-level="${SECURITY_COMMIT_AUDIT_LEVEL:-high}" --ignore-scripts --json >"$audit_json"; then
-      audit_status=0
-    else
-      audit_status=$?
-    fi
-
-    node - "$audit_json" "${SECURITY_COMMIT_AUDIT_LEVEL:-high}" <<'NODE'
-const fs = require('fs');
-const [path, threshold] = process.argv.slice(2);
-const report = JSON.parse(fs.readFileSync(path, 'utf8'));
-const counts = report.metadata?.vulnerabilities || {};
-const total = counts.total || 0;
-const severities = ['critical', 'high', 'moderate', 'low', 'info'];
-const blocking = new Set(
-  threshold === 'critical' ? ['critical'] :
-  threshold === 'high' ? ['critical', 'high'] :
-  threshold === 'moderate' ? ['critical', 'high', 'moderate'] :
-  threshold === 'low' ? ['critical', 'high', 'moderate', 'low'] :
-  threshold === 'info' ? ['critical', 'high', 'moderate', 'low', 'info'] : []
-);
-console.log(`  Vulnerability summary: total=${total} critical=${counts.critical || 0} high=${counts.high || 0} moderate=${counts.moderate || 0} low=${counts.low || 0}`);
-const vulns = Object.values(report.vulnerabilities || {})
-  .filter(v => blocking.has(v.severity))
-  .sort((a, b) => severities.indexOf(a.severity) - severities.indexOf(b.severity));
-if (vulns.length) {
-  console.log('  Blocking advisories:');
-  for (const vuln of vulns.slice(0, 12)) {
-    const via = Array.isArray(vuln.via)
-      ? vuln.via.find(item => item && typeof item === 'object')
-      : null;
-    const title = via?.title || vuln.name;
-    const range = vuln.range ? ` (${vuln.range})` : '';
-    console.log(`    - ${vuln.severity.toUpperCase()} ${vuln.name}${range}: ${title}`);
+  command -v osv-scanner >/dev/null 2>&1 || {
+    echo "  osv-scanner is required for offline dependency scanning." >&2
+    return 1
   }
-  if (vulns.length > 12) {
-    console.log(`    - ...and ${vulns.length - 12} more blocking advisory entries.`);
-  }
-}
-NODE
-    rm -f "$audit_json"
-    return "$audit_status"
-  fi
 
-  if command -v osv-scanner >/dev/null 2>&1; then
-    echo "  package-lock.json not found; falling back to osv-scanner."
-    osv-scanner scan source --recursive --verbosity error .
-    return
-  fi
-
-  echo "  No supported dependency scanner found for this repository." >&2
-  return 1
+  echo "  Scanner: osv-scanner"
+  echo "  Database: local offline cache"
+  osv-scanner scan source --offline-vulnerabilities --recursive --verbosity error .
 }
 
 review_targets() {
@@ -355,7 +304,7 @@ control_plane_targets() {
     git diff --cached --name-only --diff-filter=ACMR
   else
     git ls-files
-  fi | grep -E '^(\.github/|\.codex/|\.agents/|\.githooks/|api/|scripts/|vercel\.json$|package\.json$)' \
+  fi | grep -E '^(\.github/|\.codex/|\.agents/|\.githooks/|api/|scripts/|vercel\.json$|package\.json$|justfile$)' \
      | grep -E '(\.(ya?ml|json|toml|sh|js|jsx|ts|tsx|mjs|cjs|md)$|^vercel\.json$)' || true
 }
 
@@ -375,7 +324,7 @@ control_plane_scan() {
   local target_count
   target_count="$(printf '%s\n' "$targets" | sed '/^$/d' | wc -l | tr -d ' ')"
   echo "  Files in scope: $target_count"
-  echo "  Policy family: privileged agents, broad workflow writes, credential persistence"
+  echo "  Policy family: privileged agents, broad local writes, credential persistence"
 
   local pattern
   pattern=$'sandbox(_mode)?[[:space:]]*=[[:space:]]*["\x27]danger-full-access|--sandbox[[:space:]]+danger-full-access|permissions:[[:space:]]*write-all|persist-credentials:[[:space:]]*true'
@@ -489,7 +438,7 @@ agent_review_hint() {
   fi
 
   echo "  Agent review: running Codex security review over local changes."
-  codex exec --sandbox read-only review --uncommitted 'Use $security-commit-review to review local changes for security vulnerabilities only. Do not edit files or run commands that mutate the repository. Prioritize exploitable findings with exact file references and minimal fixes.'
+  codex exec --ephemeral -c 'approval_policy="never"' --sandbox read-only 'Use $security-commit-review to review local changes for security vulnerabilities only. Do not edit files or run commands that mutate the repository. Prioritize exploitable findings with exact file references and minimal fixes.'
 }
 
 write_evidence_packet() {

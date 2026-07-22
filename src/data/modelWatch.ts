@@ -130,13 +130,13 @@ export const modelWatchSources: ModelWatchSource[] = [
   {
     company: 'Meta AI',
     region: 'United States',
-    lane: 'Llama and open research models',
-    source: 'AI at Meta Blog',
+    lane: 'Muse, Llama, and research models',
+    source: 'AI at Meta Blog and Model API',
     method: 'HTML',
     url: 'https://ai.meta.com/blog/',
-    backupUrl: 'https://www.llama.com/',
-    signals: ['Llama releases', 'SAM releases', 'open-source model drops'],
-    priority: 'Open-weight',
+    backupUrl: 'https://ai.meta.com/blog/introducing-muse-spark-meta-model-api/',
+    signals: ['Muse releases', 'Meta Model API availability', 'Llama releases', 'SAM releases', 'open-source model drops'],
+    priority: 'Core',
   },
   {
     company: 'Mistral AI',
@@ -208,12 +208,12 @@ export const modelWatchSources: ModelWatchSource[] = [
     company: 'Moonshot AI / Kimi',
     region: 'China',
     lane: 'Kimi long-context and reasoning models',
-    source: 'Kimi official site and Hugging Face',
+    source: 'Moonshot release index and Kimi release notes',
     method: 'HTML',
-    url: 'https://www.moonshot.cn/',
-    backupUrl: 'https://huggingface.co/moonshotai',
-    signals: ['Kimi model launches', 'open-weight drops', 'long-context updates'],
-    priority: 'Regional',
+    url: 'https://www.moonshot.cn/en',
+    backupUrl: 'https://www.kimi.com/code/docs/en/kimi-code/whats-new.html',
+    signals: ['Kimi model launches', 'Kimi API model IDs', 'open-weight drops', 'long-context updates'],
+    priority: 'Open-weight',
   },
   {
     company: 'Tencent Hunyuan',
@@ -364,6 +364,20 @@ export const modelWatchPipeline: ModelWatchPipelineStep[] = [
 ];
 
 export const modelWatchSnapshots: ModelWatchSnapshot[] = [
+  {
+    company: 'Moonshot AI',
+    update: 'Kimi K3 launched with a 1M-token context window, native vision, API access, and open weights scheduled for July 27.',
+    date: 'Jul 16, 2026',
+    lane: 'Open-weight',
+    url: 'https://www.kimi.com/blog/kimi-k3',
+  },
+  {
+    company: 'Meta AI',
+    update: 'Muse Spark 1.1 is Meta Superintelligence Labs\' latest multimodal reasoning model and is available in Meta AI and the Meta Model API preview.',
+    date: 'Jul 9, 2026',
+    lane: 'Frontier',
+    url: 'https://ai.meta.com/blog/introducing-muse-spark-meta-model-api/',
+  },
   {
     company: 'OpenAI',
     update: 'GPT-5.6 is generally available as Sol, Terra, and Luna across ChatGPT, Codex, and the API.',
@@ -524,6 +538,32 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
 ];
 
 export const modelWatchModels: ModelWatchModel[] = [
+  {
+    id: 'kimi-k3',
+    name: 'Kimi K3',
+    provider: 'Moonshot AI',
+    lane: 'Open-weight multimodal reasoning and coding',
+    releaseDate: 'Jul 16, 2026',
+    releaseDateSort: '2026-07-16',
+    sourceLabel: 'Moonshot official release',
+    sourceUrl: 'https://www.kimi.com/blog/kimi-k3',
+    benchmarks: {
+      terminalBench: { value: 88.3, note: 'Vendor-reported with the KimiCode harness.' },
+      browseComp: { value: 91.2, note: 'Vendor-reported.' },
+      deepSearchQa: { value: 95, note: 'Vendor-reported.' },
+    },
+  },
+  {
+    id: 'muse-spark-1-1',
+    name: 'Muse Spark 1.1',
+    provider: 'Meta AI',
+    lane: 'Multimodal reasoning, tool use, and computer use',
+    releaseDate: 'Jul 9, 2026',
+    releaseDateSort: '2026-07-09',
+    sourceLabel: 'Meta official release',
+    sourceUrl: 'https://ai.meta.com/blog/introducing-muse-spark-meta-model-api/',
+    benchmarks: {},
+  },
   {
     id: 'gpt-5-6-sol',
     name: 'GPT-5.6 Sol',

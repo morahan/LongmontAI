@@ -9,7 +9,7 @@ async (page) => {
     { name: 'iphone-12', width: 390, height: 844 },
     { name: 'large-phone', width: 430, height: 932 },
   ];
-  const seededRoutes = ['/', '/countdown', '/about', '/tools', '/model-watch'];
+  const seededRoutes = ['/', '/countdown', '/about', '/tools', '/model-watch', '/timeline'];
 
   async function sameOriginRoutesFromCurrentPage() {
     return page.evaluate(() => {

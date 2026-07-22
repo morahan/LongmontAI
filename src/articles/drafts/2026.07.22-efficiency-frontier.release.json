@@ -1,0 +1,15 @@
+{
+  "editionId": "edition-2026-07-22-efficiency-frontier",
+  "meetingDate": "2026-07-22",
+  "timezone": "America/Denver",
+  "meetupStartsAt": "2026-07-22T12:00:00-06:00",
+  "publishAt": "2026-07-22T11:50:00-06:00",
+  "status": "draft-not-published",
+  "releaseChecklist": [
+    "Promote the Markdown draft at or after publishAt.",
+    "Copy approved assets into public folders and register the article and slideshow.",
+    "Run npm run content:check-assets and npm run build.",
+    "Review the desktop and mobile edition route.",
+    "Publish only through the normal reviewed commit and deployment path."
+  ]
+}

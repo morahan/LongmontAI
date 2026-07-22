@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
 import DocumentEmbed from './DocumentEmbed';
 import Slideshow from './Slideshow';
+import ChineseModelReleaseWidgets from '../articles/drafts/2026.07.22/chinese-model-release-widgets';
 
 interface ContentBlockProps {
     item?: ContentItem;
@@ -78,7 +79,19 @@ const markdownComponents = {
     ),
 };
 
-const embedPattern = /\{\{(slideshow|pdf):([a-z0-9-]+)\}\}/g;
+const embedPattern = /\{\{(slideshow|pdf|video):([a-z0-9./-]+)\}\}|\{\{(chinese-model-release-widgets)\}\}/g;
+
+function VideoEmbed({ src }: { src: string }): React.ReactNode {
+    return (
+        <figure className="article-media article-video">
+            <video controls preload="metadata" playsInline>
+                <source src={src} type="video/mp4" />
+                Your browser does not support embedded video.
+            </video>
+            <figcaption>Demo video. Playback is user initiated.</figcaption>
+        </figure>
+    );
+}
 
 function renderMarkdownBlock(content: string, key: string): React.ReactNode {
     return (
@@ -101,10 +114,14 @@ function renderMarkdownContent(content: string, keyPrefix: string): React.ReactN
             blocks.push(renderMarkdownBlock(markdownBefore, `${keyPrefix}-markdown-${matchNumber}`));
         }
 
-        if (match[1] === 'slideshow') {
+        if (match[3] === 'chinese-model-release-widgets') {
+            blocks.push(<ChineseModelReleaseWidgets key={`${keyPrefix}-release-widgets-${matchNumber}`} />);
+        } else if (match[1] === 'slideshow') {
             blocks.push(<Slideshow key={`${keyPrefix}-slideshow-${matchNumber}`} deckId={match[2]} />);
-        } else {
+        } else if (match[1] === 'pdf') {
             blocks.push(<DocumentEmbed key={`${keyPrefix}-pdf-${matchNumber}`} documentId={match[2]} />);
+        } else {
+            blocks.push(<VideoEmbed key={`${keyPrefix}-video-${matchNumber}`} src={match[2]} />);
         }
 
         lastIndex = matchIndex + match[0].length;
