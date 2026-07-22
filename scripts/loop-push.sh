@@ -59,6 +59,7 @@ commit_dirty_work() {
     --ephemeral \
     -c 'approval_policy="never"' \
     --sandbox workspace-write \
+    --add-dir "$ROOT/.git" \
     --cd "$ROOT" \
     "Inspect the current LongmontAI working tree and commit exactly one small, coherent batch. This is one drain iteration: return only after creating that one reviewed commit, or after reporting a concrete blocker. Stage only files belonging to that batch and preserve unrelated work for the next iteration; the outer loop immediately repeats until the working tree is clean and the branch is synced. Run focused validation when it helps. Do not push, deploy, change Git configuration, use bypass flags, rewrite history, or weaken any gate. Commit normally so the repository pre-commit hook performs deterministic and agent security review. Stop and explain if the changes cannot be safely separated into a coherent commit."
 

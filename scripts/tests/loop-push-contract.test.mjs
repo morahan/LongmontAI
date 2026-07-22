@@ -15,6 +15,7 @@ const loopScript = readFileSync(script, 'utf8');
 assert.match(loopScript, /commit_dirty_work\(\)/);
 assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 codex exec/);
 assert.match(loopScript, /approval_policy="never"/);
+assert.match(loopScript, /--sandbox workspace-write[\s\S]+--add-dir "\$ROOT\/\.git"/);
 assert.match(loopScript, /return only after creating that one reviewed commit/);
 assert.match(loopScript, /outer loop immediately repeats until the working tree is clean and the branch is synced/);
 assert.match(loopScript, /bash scripts\/local-ci\.sh/);
