@@ -2193,7 +2193,7 @@ iframe {
 
 .timeline-controls {
   display: grid;
-  grid-template-columns: minmax(17rem, 1fr) minmax(20rem, 1.55fr) minmax(12rem, 0.75fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr) minmax(0, 0.75fr) auto;
   gap: 0.85rem;
   align-items: end;
   margin-bottom: 1rem;
@@ -2206,6 +2206,7 @@ iframe {
 .timeline-control-group,
 .timeline-select-label {
   display: grid;
+  min-width: 0;
   gap: 0.45rem;
 }
 
@@ -2269,7 +2270,8 @@ iframe {
 
 .timeline-view-switch {
   align-self: end;
-  flex-wrap: nowrap;
+  justify-content: flex-start;
+  max-width: 100%;
 }
 
 .timeline-legend {
