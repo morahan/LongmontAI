@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BrainCircuit, ExternalLink, Users, BookOpen, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -39,15 +39,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <span className="font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
                     </Link>
                     <div className="desktop-nav">
-                        <Link
-                            to="/"
-                            aria-label="Blog"
-                            title="Blog"
-                            className={`nav-link${location.pathname === '/' ? ' is-active' : ''}`}
-                        >
-                            <BookOpen size={16} />
-                            <span>Blog</span>
-                        </Link>
                         <Link
                             to="/model-watch"
                             aria-label="Model Watch"
@@ -110,10 +101,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {isMobileNavOpen && (
                     <div id="mobile-main-navigation" className="mobile-nav-panel">
                         <div className="container mobile-nav-grid">
-                            <Link to="/" className={`mobile-nav-link${location.pathname === '/' ? ' is-active' : ''}`}>
-                                <BookOpen size={16} aria-hidden="true" />
-                                <span>Blog</span>
-                            </Link>
                             <Link to="/model-watch" className={`mobile-nav-link${location.pathname === '/model-watch' ? ' is-active' : ''}`}>
                                 <Activity size={16} aria-hidden="true" />
                                 <span>Model Watch</span>
