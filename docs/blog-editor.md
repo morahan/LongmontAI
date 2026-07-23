@@ -31,10 +31,12 @@ Use this guide for every Longmont AI meetup edition.
   clearly labeled presentation link when the embedded viewer is not usable on a
   phone.
 - Run `npm run test:mobile` before every push that changes articles, editorial
-  components, shared styles, or embedded content. It captures all public routes
-  at phone sizes and fails on overflow, broken images, squeezed release tables,
-  and editorial media that is off-screen or too small to read. The same audit
-  runs in the local pre-commit, pre-push, and full local-CI paths.
+  components, shared styles, or embedded content. It checks the home, shared
+  data surfaces, newest edition, and a PowerPoint-backed edition at 360 px,
+  390 px, and 430 px, retaining 390 px screenshots for review. It fails on
+  overflow, broken images, squeezed release tables, and editorial media that is
+  off-screen or too small to read. The same audit runs in the local pre-commit,
+  pre-push, and full local-CI paths.
 
 ## Model Watch cadence
 

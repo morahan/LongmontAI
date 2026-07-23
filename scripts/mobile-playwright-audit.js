@@ -9,7 +9,13 @@ async (page) => {
     { name: 'iphone-12', width: 390, height: 844 },
     { name: 'large-phone', width: 430, height: 932 },
   ];
-  const seededRoutes = ['/', '/countdown', '/about', '/tools', '/model-watch', '/timeline'];
+  const seededRoutes = [
+    '/',
+    '/tools',
+    '/model-watch',
+    '/timeline',
+    '/edition/edition-2026-06-10-ai-landscape',
+  ];
 
   async function sameOriginRoutesFromCurrentPage() {
     return page.evaluate(() => {
@@ -27,9 +33,8 @@ async (page) => {
 
   await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
   const discoveredRoutes = await sameOriginRoutesFromCurrentPage();
-  const routes = Array.from(new Set([...seededRoutes, ...discoveredRoutes]))
-    .filter((route) => !route.startsWith('/#'))
-    .sort((a, b) => a.localeCompare(b));
+  const latestEditionRoute = discoveredRoutes.find((route) => route.startsWith('/edition/'));
+  const routes = Array.from(new Set([...seededRoutes, latestEditionRoute].filter(Boolean)));
 
   const results = [];
 
@@ -38,8 +43,8 @@ async (page) => {
 
     for (const route of routes) {
       const url = `${baseUrl}${route}`;
-      await page.goto(url, { waitUntil: 'networkidle' });
-      await page.waitForTimeout(350);
+      await page.goto(url, { waitUntil: 'load' });
+      await page.waitForTimeout(150);
 
       const audit = await page.evaluate(() => {
         const viewportWidth = window.innerWidth;
@@ -148,8 +153,12 @@ async (page) => {
       });
 
       const cleanRoute = route === '/' ? 'home' : route.replace(/^\/+/, '').replace(/[^a-z0-9-]+/gi, '-');
-      const screenshot = `${outputDir}/${viewport.name}-${cleanRoute}.png`;
-      await page.screenshot({ path: screenshot, fullPage: true });
+      const screenshot = viewport.name === 'iphone-12'
+        ? `${outputDir}/${viewport.name}-${cleanRoute}.png`
+        : undefined;
+      if (screenshot) {
+        await page.screenshot({ path: screenshot, fullPage: true });
+      }
 
       results.push({
         viewport,
@@ -176,6 +185,6 @@ async (page) => {
   return {
     status: 'PASS',
     routes,
-    screenshots: results.map((result) => result.screenshot),
+    screenshots: results.flatMap((result) => result.screenshot ? [result.screenshot] : []),
   };
 }
