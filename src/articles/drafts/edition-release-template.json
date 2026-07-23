@@ -1,0 +1,9 @@
+{
+  "editionId": "edition-yyyy-mm-dd-topic",
+  "releaseChecklist": [
+    "Markdown promoted and article registered.",
+    "Assets copied into the matching public date folder.",
+    "content:check-assets, build, and test:mobile passed.",
+    "Phone screenshots reviewed at 360 px, 390 px, and 430 px."
+  ]
+}

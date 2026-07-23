@@ -4,4 +4,5 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-exec scripts/security-commit-review.sh push
+scripts/security-commit-review.sh push
+npm run test:mobile

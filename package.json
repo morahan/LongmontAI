@@ -22,6 +22,7 @@
     "model-watch:update": "node scripts/update-model-watch.mjs",
     "test:model-watch": "node scripts/tests/model-watch-contract.test.mjs",
     "audit:mobile": "sh -c 'BASE=${MOBILE_AUDIT_BASE_URL:-http://localhost:5173}; mkdir -p output/playwright/mobile-audit && MOBILE_AUDIT_BASE_URL=$BASE ~/.codex/skills/playwright/scripts/playwright_cli.sh open \"$BASE\" --headed && MOBILE_AUDIT_BASE_URL=$BASE ~/.codex/skills/playwright/scripts/playwright_cli.sh run-code --filename scripts/mobile-playwright-audit.js'",
+    "test:mobile": "bash scripts/run-mobile-audit.sh",
     "preview": "vite preview"
   },
   "dependencies": {

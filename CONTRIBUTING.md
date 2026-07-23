@@ -108,7 +108,9 @@ and why it's significant for the AI community.
    - Add to editions array (newest first): `parseMarkdownToEdition(article_YYYY_MM_DD),`
 5. If you add a slideshow, add its deck metadata to `src/articles/slideshows.ts` and keep every `sourceUrl`, slide, and asset path under `/slideshows/YYYY.MM.DD/post-slug/`
 6. If you add an embedded PDF, add its metadata to `src/articles/documents.ts` and keep the PDF plus preview under `/documents/YYYY.MM.DD/`
-7. Run `npm run content:check-assets` and `npm run build`
+7. Run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`
+   before pushing editorial, layout, or shared-style changes. Review the phone
+   screenshots for the changed edition.
 8. Commit and push to `main` — Vercel auto-deploys
 
 ## Quality Standards

@@ -96,6 +96,20 @@ async (page) => {
           .map((image) => image.currentSrc || image.src)
           .slice(0, 10);
 
+        const unreadableReleaseTables = Array.from(document.querySelectorAll('.release-table-wrap'))
+          .map((wrapper) => {
+            const table = wrapper.querySelector('table');
+            if (!table) return null;
+
+            return {
+              wrapperWidth: Math.round(wrapper.getBoundingClientRect().width),
+              tableWidth: Math.round(table.getBoundingClientRect().width),
+              scrollWidth: Math.round(wrapper.scrollWidth),
+              clientWidth: Math.round(wrapper.clientWidth),
+            };
+          })
+          .filter((table) => table && table.scrollWidth <= table.clientWidth + 1);
+
         return {
           title: document.title,
           viewportWidth,
@@ -103,6 +117,7 @@ async (page) => {
           bodyScrollWidth: document.body.scrollWidth,
           overflowingElements,
           brokenImages,
+          unreadableReleaseTables,
         };
       });
 
@@ -123,7 +138,8 @@ async (page) => {
     result.scrollWidth > result.viewportWidth + 1 ||
     result.bodyScrollWidth > result.viewportWidth + 1 ||
     result.overflowingElements.length > 0 ||
-    result.brokenImages.length > 0
+    result.brokenImages.length > 0 ||
+    result.unreadableReleaseTables.length > 0
   );
 
   if (failures.length > 0) {

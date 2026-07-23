@@ -1110,6 +1110,12 @@ main .container > * {
     word-break: break-word;
   }
 
+  /* Data-dense release tables stay legible through their own horizontal scroller. */
+  .article-layout .release-table-wrap table {
+    min-width: 38rem;
+    table-layout: auto;
+  }
+
   footer .container > div:first-child,
   footer nav {
     gap: 1.5rem;

@@ -5,7 +5,7 @@ Use this guide for every Longmont AI meetup edition.
 ## Draft and release
 
 1. Read `design.md`, the current countdown, and the most recent published edition.
-2. Set the article date to the meeting date and create it in `src/articles/drafts/`.
+2. Start from `src/articles/drafts/edition-template.md` and create the edition in `src/articles/drafts/`.
 3. Record `publishAt` at exactly ten minutes before the meetup, in
    `America/Denver`. For the standing noon schedule, this is 11:50 AM.
 4. Keep a draft out of `src/articles/index.ts`, out of the live slideshow
@@ -14,8 +14,21 @@ Use this guide for every Longmont AI meetup edition.
    matching `public/.../YYYY.MM.DD/` folder, register the article and slideshow,
    run `npm run model-watch:update`, review the resulting official-source
    signals, update `src/data/modelWatch.ts` for any consequential release, then
-   run `npm run content:check-assets` and `npm run build`, verify desktop and
-   mobile, then use the normal reviewed publication path.
+   run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`,
+   then verify the generated phone screenshots for the new edition before using
+   the normal reviewed publication path.
+
+## Mobile acceptance standard
+
+- Every published edition must be readable at 360 px, 390 px, and 430 px wide.
+- Never compress dense tables until their labels or source notes become unreadable.
+  Keep them inside a clearly bounded horizontal scroller or redesign them as
+  cards for small screens.
+- Images, video, slideshows, documents, code blocks, charts, and embeds must
+  fit the viewport without creating page-level horizontal overflow.
+- Run `npm run test:mobile` before every push that changes articles, editorial
+  components, shared styles, or embedded content. It captures all public routes
+  at phone sizes and fails on overflow, broken images, or a squeezed release table.
 
 ## Model Watch cadence
 
