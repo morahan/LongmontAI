@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Download, Maximize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, ExternalLink, Maximize2 } from 'lucide-react';
 import { slideshowDecks } from '../articles/slideshows';
 
 interface SlideshowProps {
@@ -58,6 +58,18 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
                             allowFullScreen
                         />
                     ) : null}
+                </div>
+                <div className="slideshow-embed-mobile">
+                    <p>Open the presentation in a dedicated viewer for a readable mobile experience.</p>
+                    <a
+                        href={deck.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="slideshow-download"
+                    >
+                        <ExternalLink size={16} aria-hidden="true" />
+                        <span>Open presentation</span>
+                    </a>
                 </div>
             </section>
         );

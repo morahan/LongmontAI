@@ -26,9 +26,15 @@ Use this guide for every Longmont AI meetup edition.
   cards for small screens.
 - Images, video, slideshows, documents, code blocks, charts, and embeds must
   fit the viewport without creating page-level horizontal overflow.
+- Mobile article media should use the available reading width without exceeding
+  it. Do not rely on a desktop iframe for a PowerPoint: provide a direct,
+  clearly labeled presentation link when the embedded viewer is not usable on a
+  phone.
 - Run `npm run test:mobile` before every push that changes articles, editorial
   components, shared styles, or embedded content. It captures all public routes
-  at phone sizes and fails on overflow, broken images, or a squeezed release table.
+  at phone sizes and fails on overflow, broken images, squeezed release tables,
+  and editorial media that is off-screen or too small to read. The same audit
+  runs in the local pre-commit, pre-push, and full local-CI paths.
 
 ## Model Watch cadence
 

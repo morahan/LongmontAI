@@ -8,7 +8,7 @@ cd "$ROOT"
 HOST="127.0.0.1"
 PORT="4173"
 BASE_URL="http://${HOST}:${PORT}"
-LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmontai-mobile-audit-${PORT}.XXXXXXXX.log")"
+LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmontai-mobile-audit-${PORT}.XXXXXXXX")"
 
 cleanup() {
   if [[ -n "${SERVER_PID:-}" ]]; then

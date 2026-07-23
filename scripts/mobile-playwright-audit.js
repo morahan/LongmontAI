@@ -96,6 +96,31 @@ async (page) => {
           .map((image) => image.currentSrc || image.src)
           .slice(0, 10);
 
+        const mediaLayoutFailures = Array.from(document.querySelectorAll(
+          '.article-media, .slideshow-frame, .slideshow-embed-frame, .slideshow-embed-mobile'
+        ))
+          .filter((element) => {
+            const style = window.getComputedStyle(element);
+            return style.display !== 'none' && style.visibility !== 'hidden';
+          })
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              selector: element.className,
+              left: Math.round(rect.left),
+              right: Math.round(rect.right),
+              width: Math.round(rect.width),
+              height: Math.round(rect.height),
+            };
+          })
+          .filter((media) =>
+            media.left < -2 ||
+            media.right > viewportWidth + 2 ||
+            media.width < Math.min(260, viewportWidth * 0.72) ||
+            media.height < 80
+          )
+          .slice(0, 10);
+
         const unreadableReleaseTables = Array.from(document.querySelectorAll('.release-table-wrap'))
           .map((wrapper) => {
             const table = wrapper.querySelector('table');
@@ -117,6 +142,7 @@ async (page) => {
           bodyScrollWidth: document.body.scrollWidth,
           overflowingElements,
           brokenImages,
+          mediaLayoutFailures,
           unreadableReleaseTables,
         };
       });
@@ -139,6 +165,7 @@ async (page) => {
     result.bodyScrollWidth > result.viewportWidth + 1 ||
     result.overflowingElements.length > 0 ||
     result.brokenImages.length > 0 ||
+    result.mediaLayoutFailures.length > 0 ||
     result.unreadableReleaseTables.length > 0
   );
 

@@ -110,7 +110,9 @@ and why it's significant for the AI community.
 6. If you add an embedded PDF, add its metadata to `src/articles/documents.ts` and keep the PDF plus preview under `/documents/YYYY.MM.DD/`
 7. Run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`
    before pushing editorial, layout, or shared-style changes. Review the phone
-   screenshots for the changed edition.
+   screenshots for the changed edition. The mobile audit also runs in the local
+   pre-commit and pre-push hooks; it rejects page overflow, broken assets, and
+   editorial media that is too small or positioned outside the phone viewport.
 8. Commit and push to `main` — Vercel auto-deploys
 
 ## Quality Standards

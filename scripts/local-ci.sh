@@ -10,6 +10,7 @@ npm run lint
 npm run content:check-assets
 npm run security:test
 npm run test:loop-push
+npm run test:mobile-contract
 npm run build
 npm run test:mobile
 echo "Local verification passed."
