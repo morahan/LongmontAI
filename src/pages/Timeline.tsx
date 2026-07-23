@@ -58,6 +58,18 @@ function yearFor(date: string) {
   return Number(date.slice(0, 4));
 }
 
+function rangeEndLabel(date: string) {
+  const [, month, day] = date.split('-').map(Number);
+  if (month === 1 && day === 1) return `Through ${yearFor(date) - 1}`;
+  return formatDate(date);
+}
+
+function yearLabelsForRange(start: string, end: string) {
+  const startYear = yearFor(start);
+  const endYear = yearFor(end);
+  return Array.from({ length: Math.max(1, endYear - startYear) }, (_, index) => startYear + index);
+}
+
 function groupEvents(events: TimelineEvent[], range: RangeId) {
   const keyFor = (event: TimelineEvent) => {
     if (range === 'frontier') return event.date.slice(0, 7);
@@ -95,7 +107,7 @@ export default function Timeline() {
   )), [activeCategories, organization, range]);
   const eventGroups = useMemo(() => groupEvents(filteredEvents, activeRange), [activeRange, filteredEvents]);
   const expandedEvents = eventGroups.find((group) => group.key === selectedGroup)?.events ?? [];
-  const visibleYears = Math.max(1, yearFor(range.end) - yearFor(range.start));
+  const yearLabels = useMemo(() => yearLabelsForRange(range.start, range.end), [range.start, range.end]);
 
   const toggleCategory = (category: TimelineCategory) => {
     setActiveCategories((current) => current.includes(category)
@@ -185,9 +197,9 @@ export default function Timeline() {
 
         {view === 'timeline' ? (
           <div className="timeline-canvas-wrap" tabIndex={0} aria-label="Scrollable historical AI timeline">
-            <div className="timeline-canvas" style={{ '--timeline-years': visibleYears + 1 } as CSSProperties}>
+            <div className="timeline-canvas" style={{ '--timeline-years': yearLabels.length } as CSSProperties}>
               <div className="timeline-year-ruler" aria-hidden="true">
-                {Array.from({ length: visibleYears + 1 }, (_, index) => yearFor(range.start) + index).map((year) => <span key={year}>{year}</span>)}
+                {yearLabels.map((year) => <span key={year}>{year}</span>)}
               </div>
               <div className="timeline-axis" aria-hidden="true" />
               <div className="timeline-nodes">
@@ -211,7 +223,7 @@ export default function Timeline() {
                   );
                 })}
               </div>
-              <div className="timeline-range-labels" aria-hidden="true"><span>{formatDate(range.start)}</span><span>{formatDate(range.end)}</span></div>
+              <div className="timeline-range-labels" aria-hidden="true"><span>{formatDate(range.start)}</span><span>{rangeEndLabel(range.end)}</span></div>
             </div>
           </div>
         ) : (
