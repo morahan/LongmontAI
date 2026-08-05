@@ -20,7 +20,8 @@ const CONTENT_TYPES = new Map([
 
 function notFound(response) {
   response.setHeader('Cache-Control', 'no-store');
-  response.status(404).type('text/plain').send('Not Found');
+  response.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  response.status(404).send('Not Found');
 }
 
 function requestedPath(request) {
