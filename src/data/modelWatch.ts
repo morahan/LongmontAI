@@ -365,6 +365,20 @@ export const modelWatchPipeline: ModelWatchPipelineStep[] = [
 
 export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   {
+    company: 'Meta AI',
+    update: 'Muse Spark 1.1 now powers Meta AI features for planning, connected email and calendar work, slide creation, and recurring tasks.',
+    date: 'Jul 24, 2026',
+    lane: 'Frontier',
+    url: 'https://about.fb.com/news/2026/07/meta-ai-muse-spark-doesnt-just-think-it-acts/',
+  },
+  {
+    company: 'xAI',
+    update: 'Grok Build can now write and run background workflows that fan work across parallel agents and report verified results.',
+    date: 'Jul 23, 2026',
+    lane: 'Agent tooling',
+    url: 'https://x.ai/news/workflows',
+  },
+  {
     company: 'Moonshot AI',
     update: 'Kimi K3 launched with a 1M-token context window, native vision, API access, and open weights scheduled for July 27.',
     date: 'Jul 16, 2026',
