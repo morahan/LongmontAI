@@ -59,12 +59,15 @@ const options = parseArguments(process.argv.slice(2));
 const asOf = options.asOf ?? denverDate();
 assertIsoDate(asOf);
 
-const [modelWatchModule, timeline] = await Promise.all([
+const [modelWatchModule, scheduledEditionSource, timeline] = await Promise.all([
   import(new URL('src/data/modelWatch.ts', root)),
+  readFile(new URL('src/articles/scheduledEdition.ts', root), 'utf8'),
   readFile(new URL('src/data/timeline.ts', root), 'utf8'),
 ]);
 
 const { modelWatchModels, modelWatchSnapshots, modelWatchSources } = modelWatchModule;
+const scheduledEditionSlug = scheduledEditionSource.match(/scheduledEditionSlug\s*=\s*'([^']+)'/)?.[1];
+if (!scheduledEditionSlug) throw new Error('Could not resolve scheduledEditionSlug');
 const editorialSources = modelWatchSources.map(({ company, url: primary, backupUrl: backup }) => ({
   company,
   primary,
@@ -94,8 +97,9 @@ const report = {
     { route: '/model-watch', owners: ['src/data/modelWatch.ts', 'src/data/modelWatch.generated.json'] },
     { route: '/leaderboard', owners: ['src/data/modelWatch.ts'] },
     { route: '/timeline', owners: ['src/data/timeline.ts', 'src/data/modelWatch.ts', 'src/articles/chinese-model-releases.ts'] },
+    { route: `/edition/${scheduledEditionSlug}`, owners: ['src/articles/scheduledEdition.ts', 'src/articles/drafts/2026.08.05-signal-routing.md'] },
   ],
-  excluded: ['blog posts', 'edition markdown', 'drafts', 'slideshows', 'editorial assets'],
+  excluded: ['new blog posts', 'published edition markdown', 'older drafts', 'slideshows', 'editorial assets'],
   sources: {
     editorial: editorialSources,
     detector: detectorSources.map(({ company, url, required = false }) => ({ company, url, required })),

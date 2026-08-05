@@ -23,8 +23,9 @@ assert.deepEqual(report.surfaces.map(({ route }) => route), [
   '/model-watch',
   '/leaderboard',
   '/timeline',
+  '/edition/edition-2026-08-05-signal-routing',
 ]);
-assert.ok(report.excluded.includes('blog posts'));
+assert.ok(report.excluded.includes('new blog posts'));
 assert.ok(report.sources.editorial.length >= 20);
 assert.ok(report.sources.detector.some(({ company, required }) => company === 'Meta AI' && required));
 assert.deepEqual(report.integrity.duplicateModelIds, []);
