@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Edition, editions } from '../articles';
+import { Edition, editions, isEditionPublished } from '../articles';
+import { fetchScheduledEdition } from '../articles/scheduledEdition';
+import { ScheduledEditionResponse } from '../articles/types';
 import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Mail, Search, Sparkles, Users, X } from 'lucide-react';
@@ -27,19 +29,54 @@ function editionMatchesQuery(edition: Edition, query: string): boolean {
 const Feed: React.FC = () => {
     const [archiveQuery, setArchiveQuery] = useState('');
     const [selectedYear, setSelectedYear] = useState('all');
+    const [scheduledEdition, setScheduledEdition] = useState<ScheduledEditionResponse | null>(null);
 
-    // Get the 3 latest editions
-    const latestEditions = editions.slice(0, 3);
+    const [publicationNow, setPublicationNow] = useState(() => Date.now());
+    const publishedEditions = useMemo(() => {
+        const availableEditions = scheduledEdition
+            ? [scheduledEdition.edition, ...editions]
+            : editions;
+        return availableEditions.filter((edition) => isEditionPublished(edition, publicationNow));
+    }, [publicationNow, scheduledEdition]);
+
+    React.useEffect(() => {
+        const controller = new AbortController();
+        void fetchScheduledEdition(controller.signal)
+            .then((response) => setScheduledEdition(response))
+            .catch((error: unknown) => {
+                if (!(error instanceof DOMException && error.name === 'AbortError')) {
+                    setScheduledEdition(null);
+                }
+            });
+        return () => controller.abort();
+    }, []);
+
+    React.useEffect(() => {
+        const nextPublishTime = editions
+            .map((edition) => edition.publishAt ? Date.parse(edition.publishAt) : Number.POSITIVE_INFINITY)
+            .filter((publishTime) => Number.isFinite(publishTime) && publishTime > publicationNow)
+            .sort((left, right) => left - right)[0];
+
+        if (!nextPublishTime) {
+            return undefined;
+        }
+
+        const timeout = window.setTimeout(() => setPublicationNow(Date.now()), nextPublishTime - publicationNow);
+        return () => window.clearTimeout(timeout);
+    }, [publicationNow]);
+
+    // Get the 3 latest editions that have reached their scheduled publication time.
+    const latestEditions = publishedEditions.slice(0, 3);
     const archiveYears = useMemo(
-        () => Array.from(new Set(editions.map((edition) => edition.date.slice(0, 4)))),
-        []
+        () => Array.from(new Set(publishedEditions.map((edition) => edition.date.slice(0, 4)))),
+        [publishedEditions]
     );
     const filteredEditions = useMemo(
-        () => editions.filter((edition) => {
+        () => publishedEditions.filter((edition) => {
             const matchesYear = selectedYear === 'all' || edition.date.startsWith(selectedYear);
             return matchesYear && editionMatchesQuery(edition, archiveQuery.trim());
         }),
-        [archiveQuery, selectedYear]
+        [archiveQuery, selectedYear, publishedEditions]
     );
     const hasActiveArchiveFilter = archiveQuery.trim().length > 0 || selectedYear !== 'all';
 
@@ -156,7 +193,7 @@ const Feed: React.FC = () => {
                         <h2 id="archive-heading" className="text-2xl font-bold">All Editions</h2>
                     </div>
                     <p>
-                        {filteredEditions.length} of {editions.length} editions
+                        {filteredEditions.length} of {publishedEditions.length} editions
                     </p>
                 </div>
 

@@ -2,6 +2,20 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/scheduled-edition.mjs": {
+      "includeFiles": [
+        "src/articles/drafts/2026.08.05-signal-routing.md",
+        "src/articles/drafts/assets/2026.08.05/**"
+      ]
+    },
+    "api/scheduled-media.mjs": {
+      "includeFiles": [
+        "src/articles/drafts/2026.08.05-signal-routing.md",
+        "src/articles/drafts/assets/2026.08.05/**"
+      ]
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",

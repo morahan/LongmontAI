@@ -12,7 +12,7 @@ export interface SlideshowDeck {
     id: string;
     title: string;
     description: string;
-    sourceUrl: string;
+    sourceUrl?: string;
     slides?: SlideshowSlide[];
     embed?: SlideshowEmbed;
 }

@@ -2,15 +2,22 @@ import React from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
-import { editions } from '../articles';
+import { editions, isEditionPublished } from '../articles';
+import { scheduledEditionSlug } from '../articles/scheduledEdition';
 import ContentBlock from '../components/ContentBlock';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
+import ScheduledEdition from './ScheduledEdition';
 
 const Edition: React.FC = () => {
     const { id } = useParams();
+
+    if (id === scheduledEditionSlug) {
+        return <ScheduledEdition />;
+    }
+
     const edition = editions.find(e => e.id === id);
 
-    if (!edition) {
+    if (!edition || !isEditionPublished(edition)) {
         return <Navigate to="/" replace />;
     }
 

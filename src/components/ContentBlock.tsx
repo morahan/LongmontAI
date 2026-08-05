@@ -6,11 +6,13 @@ import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
 import DocumentEmbed from './DocumentEmbed';
 import Slideshow from './Slideshow';
+import { SlideshowDeck } from '../articles/slideshows';
 import ChineseModelReleaseWidgets from '../articles/chinese-model-release-widgets';
 
 interface ContentBlockProps {
     item?: ContentItem;
     markdown?: string;
+    slideshows?: Record<string, SlideshowDeck>;
 }
 
 // Shared markdown component configuration
@@ -101,7 +103,11 @@ function renderMarkdownBlock(content: string, key: string): React.ReactNode {
     );
 }
 
-function renderMarkdownContent(content: string, keyPrefix: string): React.ReactNode {
+function renderMarkdownContent(
+    content: string,
+    keyPrefix: string,
+    slideshows?: Record<string, SlideshowDeck>
+): React.ReactNode {
     const blocks: React.ReactNode[] = [];
     let lastIndex = 0;
     let matchNumber = 0;
@@ -117,7 +123,13 @@ function renderMarkdownContent(content: string, keyPrefix: string): React.ReactN
         if (match[3] === 'chinese-model-release-widgets') {
             blocks.push(<ChineseModelReleaseWidgets key={`${keyPrefix}-release-widgets-${matchNumber}`} />);
         } else if (match[1] === 'slideshow') {
-            blocks.push(<Slideshow key={`${keyPrefix}-slideshow-${matchNumber}`} deckId={match[2]} />);
+            blocks.push(
+                <Slideshow
+                    key={`${keyPrefix}-slideshow-${matchNumber}`}
+                    deckId={match[2]}
+                    deck={slideshows?.[match[2]]}
+                />
+            );
         } else if (match[1] === 'pdf') {
             blocks.push(<DocumentEmbed key={`${keyPrefix}-pdf-${matchNumber}`} documentId={match[2]} />);
         } else {
@@ -137,12 +149,12 @@ function renderMarkdownContent(content: string, keyPrefix: string): React.ReactN
     return blocks.length > 0 ? blocks : renderMarkdownBlock(content, `${keyPrefix}-markdown`);
 }
 
-const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown }) => {
+const ContentBlock: React.FC<ContentBlockProps> = ({ item, markdown, slideshows }) => {
     // Handle full markdown content
     if (markdown) {
         return (
             <div className="prose prose-invert prose-lg max-w-none text-[var(--text-secondary)]">
-                {renderMarkdownContent(markdown, 'article')}
+                {renderMarkdownContent(markdown, 'article', slideshows)}
             </div>
         );
     }

@@ -55,6 +55,7 @@ function parseMarkdownToEdition(raw: string): Edition {
   return {
     id: data.id,
     date: data.date,
+    publishAt: data.publishAt,
     title: data.title,
     summary: data.summary,
     markdownContent: content,

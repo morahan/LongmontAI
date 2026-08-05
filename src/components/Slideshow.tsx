@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, ExternalLink, Maximize2 } from 'lucide-react';
-import { slideshowDecks } from '../articles/slideshows';
+import { SlideshowDeck, slideshowDecks } from '../articles/slideshows';
 
 interface SlideshowProps {
     deckId: string;
+    deck?: SlideshowDeck;
 }
 
-const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
-    const deck = slideshowDecks[deckId];
+const Slideshow: React.FC<SlideshowProps> = ({ deckId, deck: providedDeck }) => {
+    const deck = providedDeck ?? slideshowDecks[deckId];
     const [currentSlide, setCurrentSlide] = useState(0);
     const frameRef = useRef<HTMLDivElement>(null);
 
@@ -35,15 +36,17 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
                         <h3 id={titleId}>{deck.title}</h3>
                         <p>{deck.description}</p>
                     </div>
-                    <a
-                        href={deck.sourceUrl}
-                        download
-                        className="slideshow-download"
-                        title={`Download ${deck.title}`}
-                    >
-                        <Download size={16} aria-hidden="true" />
-                        <span>Download PPTX</span>
-                    </a>
+                    {deck.sourceUrl && (
+                        <a
+                            href={deck.sourceUrl}
+                            download
+                            className="slideshow-download"
+                            title={`Download ${deck.title}`}
+                        >
+                            <Download size={16} aria-hidden="true" />
+                            <span>Download PPTX</span>
+                        </a>
+                    )}
                 </div>
                 <div className="slideshow-embed-frame">
                     {deck.embed.kind === 'pptx' ? (
@@ -96,15 +99,17 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId }) => {
                     <h3 id={titleId}>{deck.title}</h3>
                     <p>{deck.description}</p>
                 </div>
-                <a
-                    href={deck.sourceUrl}
-                    download
-                    className="slideshow-download"
-                    title={`Download ${deck.title}`}
-                >
-                    <Download size={16} aria-hidden="true" />
-                    <span>Download PPTX</span>
-                </a>
+                    {deck.sourceUrl && (
+                        <a
+                            href={deck.sourceUrl}
+                            download
+                            className="slideshow-download"
+                            title={`Download ${deck.title}`}
+                        >
+                            <Download size={16} aria-hidden="true" />
+                            <span>Download PPTX</span>
+                        </a>
+                    )}
             </div>
 
             <div

@@ -109,6 +109,11 @@ function parseRegistrySources(filePath, propertyName) {
   return registry;
 }
 
+function parseRegistryIds(filePath) {
+  const source = fs.readFileSync(filePath, 'utf8');
+  return new Set([...source.matchAll(/\n\s{4}['"]([^'"]+)['"]:\s*\{/g)].map((match) => match[1]));
+}
+
 function validatePublicUrlStrings(filePath) {
   const source = fs.readFileSync(filePath, 'utf8');
   const matches = source.matchAll(localPublicAssetPattern);
@@ -174,6 +179,7 @@ function validateRedirectDestinations() {
 }
 
 const slideshowSources = parseRegistrySources(path.join(articleDir, 'slideshows.ts'), 'sourceUrl');
+const slideshowIds = parseRegistryIds(path.join(articleDir, 'slideshows.ts'));
 const documentSources = parseRegistrySources(path.join(articleDir, 'documents.ts'), 'src');
 
 for (const fileName of fs.readdirSync(articleDir).filter((name) => name.endsWith('.md')).sort()) {
@@ -193,13 +199,13 @@ for (const fileName of fs.readdirSync(articleDir).filter((name) => name.endsWith
     const deckId = match[1];
     const sourceUrl = slideshowSources.get(deckId);
 
-    if (!sourceUrl) {
+    if (!slideshowIds.has(deckId)) {
       errors.push(`${sourceLabel}: unknown slideshow embed ${deckId}`);
       continue;
     }
 
-    const deckDate = dateFromUrl(sourceUrl, 'slideshows');
-    if (articleDate && deckDate !== articleDate) {
+    const deckDate = sourceUrl && dateFromUrl(sourceUrl, 'slideshows');
+    if (articleDate && deckDate && deckDate !== articleDate) {
       errors.push(`${sourceLabel}: slideshow ${deckId} should live under /slideshows/${articleDate}/`);
     }
   }
