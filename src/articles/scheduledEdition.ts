@@ -3,6 +3,37 @@ import { SlideshowDeck } from './slideshows';
 
 export const scheduledEditionSlug = 'edition-2026-08-05-signal-routing';
 
+function scheduledMediaUrl(path: string): string {
+    if (!path.startsWith('/') || path.startsWith('/api/')) {
+        return path;
+    }
+
+    return `/api/scheduled-media?path=${encodeURIComponent(path)}`;
+}
+
+function rewriteMarkdownMedia(markdown: string | undefined): string | undefined {
+    if (!markdown) {
+        return markdown;
+    }
+
+    return markdown
+        .replace(/(]\()([^\s)]+)(\))/g, (match, prefix: string, path: string, suffix: string) => (
+            path.startsWith('/') ? `${prefix}${scheduledMediaUrl(path)}${suffix}` : match
+        ))
+        .replace(/(\{\{(?:video|pdf):)(\/[^}]+)(\}\})/g, (_match, prefix: string, path: string, suffix: string) => (
+            `${prefix}${scheduledMediaUrl(path)}${suffix}`
+        ));
+}
+
+function rewriteDeckMedia(deck: SlideshowDeck): SlideshowDeck {
+    return {
+        ...deck,
+        sourceUrl: deck.sourceUrl ? scheduledMediaUrl(deck.sourceUrl) : undefined,
+        slides: deck.slides?.map((slide) => ({ ...slide, src: scheduledMediaUrl(slide.src) })),
+        embed: deck.embed ? { ...deck.embed, src: scheduledMediaUrl(deck.embed.src) } : undefined,
+    };
+}
+
 function isEdition(value: unknown): value is Edition {
     if (!value || typeof value !== 'object') {
         return false;
@@ -27,9 +58,12 @@ function normalizeResponse(value: unknown): ScheduledEditionResponse | null {
         return null;
     }
 
+    const slideshows = response.slideshows as Record<string, SlideshowDeck> | undefined;
     return {
-        edition,
-        slideshows: response.slideshows as Record<string, SlideshowDeck> | undefined,
+        edition: { ...edition, markdownContent: rewriteMarkdownMedia(edition.markdownContent) },
+        slideshows: slideshows && Object.fromEntries(
+            Object.entries(slideshows).map(([id, deck]) => [id, rewriteDeckMedia(deck)])
+        ),
     };
 }
 

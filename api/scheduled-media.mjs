@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { isPublished } from './scheduled-edition.mjs';
 
 const ARTICLE_URL = new URL('../src/articles/drafts/2026.08.05-signal-routing.md', import.meta.url);
-const ASSET_ROOT = fileURLToPath(new URL('../src/articles/drafts/assets/2026.08.05/', import.meta.url));
+const ASSET_ROOT = resolve(fileURLToPath(new URL('../src/articles/drafts/assets/2026.08.05/', import.meta.url)));
 const ARTICLE_MEDIA_PATTERN = /\/weekly-screenshots\/2026\.08\.05\/([A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)*)/g;
 const SLIDESHOW_MEDIA = new Set(Array.from({ length: 8 }, (_, index) => `slideshow/slide-${String(index + 1).padStart(2, '0')}.png`));
 const CONTENT_TYPES = new Map([

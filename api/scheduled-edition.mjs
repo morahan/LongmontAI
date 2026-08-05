@@ -3,6 +3,16 @@ import { readFile } from 'node:fs/promises';
 const EDITION_ID = 'edition-2026-08-05-signal-routing';
 const PUBLISH_AT = Date.parse('2026-08-05T11:15:00-06:00');
 const ARTICLE_URL = new URL('../src/articles/drafts/2026.08.05-signal-routing.md', import.meta.url);
+const SLIDE_TITLES = [
+  'Signal Routing',
+  'The release board',
+  'Evidence before deployment',
+  'The physical stack',
+  'Open weights and on-device models',
+  'Market incentives',
+  'Governance and verification',
+  'Route the work, measure the claim',
+];
 
 function isPublished(now = Date.now()) {
   return now >= PUBLISH_AT;
@@ -50,7 +60,21 @@ function parseArticle(raw) {
   };
 }
 
-export { EDITION_ID, PUBLISH_AT, isPublished, parseArticle };
+function scheduledSlideshows() {
+  return {
+    'signal-routing': {
+      id: 'signal-routing',
+      title: 'Signal Routing',
+      description: 'A visual briefing on model selection, evidence, embodied AI, open weights, and verification.',
+      slides: SLIDE_TITLES.map((title, index) => ({
+        title,
+        src: `/api/scheduled-media?path=${encodeURIComponent(`slideshow/slide-${String(index + 1).padStart(2, '0')}.png`)}`,
+      })),
+    },
+  };
+}
+
+export { EDITION_ID, PUBLISH_AT, isPublished, parseArticle, scheduledSlideshows };
 
 export default async function handler(_request, response) {
   if (!isPublished()) {
@@ -58,9 +82,9 @@ export default async function handler(_request, response) {
   }
 
   try {
-    const article = parseArticle(await readFile(ARTICLE_URL, 'utf8'));
+    const edition = parseArticle(await readFile(ARTICLE_URL, 'utf8'));
     response.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
-    return response.status(200).json(article);
+    return response.status(200).json({ edition, slideshows: scheduledSlideshows() });
   } catch (error) {
     // Do not disclose draft paths or malformed draft contents through this endpoint.
     console.error(`Unable to serve ${EDITION_ID}:`, error instanceof Error ? error.message : 'unknown error');
