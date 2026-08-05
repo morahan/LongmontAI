@@ -19,6 +19,8 @@
     "verify:local": "bash scripts/local-ci.sh",
     "hooks:install": "scripts/install-security-hooks.sh",
     "content:check-assets": "node scripts/check-content-assets.js",
+    "site:update:preflight": "node scripts/update-site-preflight.mjs",
+    "test:update-site": "node scripts/tests/update-site-preflight.test.mjs",
     "model-watch:update": "node scripts/update-model-watch.mjs",
     "test:model-watch": "node scripts/tests/model-watch-contract.test.mjs",
     "test:mobile-contract": "node scripts/tests/mobile-audit-contract.test.mjs",

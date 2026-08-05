@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Blog Post"
+  short_description: "Research and build a visual AI briefing"
+  default_prompt: "Use $create-blog-post to research the past week of AI news and build a sourced visual blog-post draft from my image folder."
