@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Edition, editions, isEditionPublished } from '../articles';
-import { fetchScheduledEdition } from '../articles/scheduledEdition';
+import { fetchScheduledEdition, scheduledEditionPublishAt } from '../articles/scheduledEdition';
 import { ScheduledEditionResponse } from '../articles/types';
 import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
@@ -41,14 +41,26 @@ const Feed: React.FC = () => {
 
     React.useEffect(() => {
         const controller = new AbortController();
-        void fetchScheduledEdition(controller.signal)
+        const loadScheduledEdition = () => void fetchScheduledEdition(controller.signal)
             .then((response) => setScheduledEdition(response))
             .catch((error: unknown) => {
                 if (!(error instanceof DOMException && error.name === 'AbortError')) {
                     setScheduledEdition(null);
                 }
             });
-        return () => controller.abort();
+
+        loadScheduledEdition();
+        const delay = scheduledEditionPublishAt - Date.now();
+        const timer = delay > 0
+            ? window.setTimeout(loadScheduledEdition, delay)
+            : undefined;
+
+        return () => {
+            controller.abort();
+            if (timer !== undefined) {
+                window.clearTimeout(timer);
+            }
+        };
     }, []);
 
     React.useEffect(() => {
