@@ -223,6 +223,8 @@ const westernModelWatchProviders = new Set([
   'Anthropic',
   'Google DeepMind',
   'Mistral AI',
+  'Microsoft',
+  'Black Forest Labs',
   'xAI',
 ]);
 
@@ -246,6 +248,11 @@ const westernModelWatch2026Events: TimelineEvent[] = modelWatchModels
   }));
 
 const additional2026ReleaseEvents: TimelineEvent[] = [
+  {
+    id: 'openai-astra-ten-math-advances', date: '2026-08-01', title: 'Astra reports ten advances in mathematics and theoretical computer science', organization: 'OpenAI', category: 'Research breakthrough',
+    summary: 'OpenAI reported that an internal Astra model resolved or materially advanced ten open problems, with humans preparing manuscripts and the model formalizing the arguments as Lean certificates. The claims remain subject to mathematical-community review and context.',
+    source: 'OpenAI publication', sourceUrl: 'https://openai.com/index/ten-advances-in-mathematics/', notable: true,
+  },
   {
     id: 'cursor-composer-2', date: '2026-03-19', title: 'Composer 2', organization: 'Cursor', category: 'Model release',
     summary: 'Cursor released Composer 2, an in-product coding model aimed at long-horizon software-engineering tasks, with standard and fast variants.',
@@ -291,7 +298,7 @@ function chineseReleaseToTimelineEvent(release: ChineseModelRelease): TimelineEv
     category: 'Open weight',
     summary: 'Tracked in LongmontAI\'s Chinese model release dataset. This release-series entry preserves the current editorial timeline data for continued weekly expansion.',
     source: release.source,
-    sourceUrl: chineseProviderSourceUrls[release.provider],
+    sourceUrl: release.sourceUrl ?? chineseProviderSourceUrls[release.provider],
     openWeight: true,
     notable: true,
   };
