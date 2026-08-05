@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-05T15:27:34.774Z",
+  "checkedAt": "2026-08-05T16:55:53.292Z",
   "successfulSources": 7,
   "totalSources": 7,
   "detectedModels": [
@@ -46,6 +46,8 @@
     "Kimi K3",
     "Muse Spark",
     "Muse Spark 1.1",
-    "qwen 2.5"
+    "qwen 2.5",
+    "qwen-1.5",
+    "Qwen-4"
   ]
 }
