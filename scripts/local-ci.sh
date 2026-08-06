@@ -12,6 +12,7 @@ npm run security:test
 npm run test:loop-push
 npm run test:update-site
 npm run test:mobile-contract
+npm run test:flows-contract
 npm run build
 npm run test:mobile
 echo "Local verification passed."
