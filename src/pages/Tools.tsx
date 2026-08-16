@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ExternalLink, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { BROWSER_CAPTURE_TOOLS, CODE_PRESENTATION_TOOLS } from '../data/browserCaptureTools.js';
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,7 @@ const MATRIX: Matrix = {
   },
   Code: {
     Text: [{ name: 'Grok 4.5 / Claude Fable 5 / GPT-5.6 Sol (code → docs)', url: 'https://x.ai/grok' }],
-    'Image': [{ name: 'v0.dev, Lovable (code → UI images)', url: 'https://v0.dev' }, { name: 'Midjourney (prompt from code)', url: 'https://midjourney.com' }],
+    'Image': [...CODE_PRESENTATION_TOOLS, ...BROWSER_CAPTURE_TOOLS],
     Video: [{ name: 'Runway / Luma (code-generated video)', url: 'https://runwayml.com' }],
     '3D Models': [{ name: 'Meshy / Sloyd (code → 3D via Three.js/Blender scripts)', url: 'https://sloyd.ai' }],
     '3D Printable': [{ name: 'Blender Python (printable mesh generation)', url: 'https://blender.org' }],
@@ -189,7 +190,7 @@ const MATRIX: Matrix = {
   },
   Websites: {
     Text: [{ name: 'GPT-5.6 Sol / Claude Fable 5 (site → content)', url: 'https://openai.com/gpt-5-6' }],
-    'Image': [{ name: 'Screenshot → Grok Imagine / Midjourney', url: 'https://midjourney.com' }],
+    'Image': [...BROWSER_CAPTURE_TOOLS],
     Video: [{ name: 'Runway / Luma (site demo video)', url: 'https://runwayml.com' }],
     '3D Models': [{ name: 'Spline / Meshy (3D web export)', url: 'https://spline.ai' }],
     '3D Printable': [{ name: 'Meshy (printable-model export)', url: 'https://meshy.ai' }],
@@ -391,7 +392,9 @@ const ToolsPage: React.FC = () => {
     return inputAxes.flatMap(source => outputAxes.flatMap(target =>
       (MATRIX[source]?.[target] ?? []).map(tool => ({
         ...tool,
-        category: isMergedAudioCell ? `${source} → ${target}` : undefined,
+        category: isMergedAudioCell
+          ? `${source} → ${target}${tool.category ? ` · ${tool.category}` : ''}`
+          : tool.category,
       }))
     )).filter(tool => !openWeightOnly || tool.openWeight);
   };
@@ -422,8 +425,8 @@ const ToolsPage: React.FC = () => {
           </span>
         </h1>
         <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
-          A living map of the tools that connect one medium to another. Hover a cell for a quick scan,
-          click it to pin the full list, and open Audio to reveal its music pathways.
+          A living map of direct converters and composable agents that connect one medium to another.
+          Hover a cell for a quick scan, click it to pin the full list, and open Audio to reveal its music pathways.
         </p>
         <div className="flex flex-wrap items-center gap-8 mt-6">
           <div>

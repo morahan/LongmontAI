@@ -25,6 +25,7 @@
     "test:model-watch": "node scripts/tests/model-watch-contract.test.mjs",
     "test:mobile-contract": "node scripts/tests/mobile-audit-contract.test.mjs",
     "test:flows-contract": "node scripts/tests/flow-lanes-contract.test.mjs",
+    "test:tools-matrix": "node scripts/tests/tools-matrix-contract.test.mjs",
     "audit:mobile": "bash scripts/run-mobile-browser-audit.sh",
     "test:mobile": "bash scripts/run-mobile-audit.sh",
     "preview": "vite preview"
