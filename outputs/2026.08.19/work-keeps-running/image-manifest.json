@@ -1,0 +1,16 @@
+{
+  "sourceDirectory": "generated-editorial-slides",
+  "createdAt": "2026-08-18T03:04:00.000Z",
+  "images": [
+    "slide-01.png",
+    "slide-02.png",
+    "slide-03.png",
+    "slide-04.png",
+    "slide-05.png",
+    "slide-06.png",
+    "slide-07.png",
+    "slide-08.png",
+    "slide-09.png"
+  ],
+  "notes": "No user-supplied screenshots. Slides are original Longmont AI editorial layouts rendered at 1920x1080. Copy from src/articles/drafts/assets/2026.08.19/ into public/slideshows/2026.08.19/work-keeps-running/ at promotion time."
+}

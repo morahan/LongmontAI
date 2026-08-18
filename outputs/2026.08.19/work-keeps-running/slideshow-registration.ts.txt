@@ -1,0 +1,18 @@
+// Paste into src/articles/slideshows.ts at promotion time. Do not register before 11:50 AM America/Denver on 2026-08-19.
+
+    'work-keeps-running': {
+        id: 'work-keeps-running',
+        title: 'The work keeps running',
+        description: 'An August 19 visual briefing on Grok Bot, local open-weight agents, checked math and cyclone forecasts, and the fabs still gating the stack.',
+        slides: createSlides('/slideshows/2026.08.19/work-keeps-running', [
+            'The work keeps running',
+            'Five moves in a fortnight',
+            'Grok Bot is a computer',
+            'Agent runtimes you can host',
+            'Cheap tokens, then fast tokens',
+            'A tighter bound, not a solved hypothesis',
+            'An extra day of cyclone lead time',
+            'Arizona turns a profit. Memory does not get cheaper.',
+            'Hand it off. Then verify.',
+        ]),
+    },

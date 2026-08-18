@@ -1,0 +1,18 @@
+{
+  "editionId": "edition-2026-08-19-work-keeps-running",
+  "meetingDate": "2026-08-19",
+  "timezone": "America/Denver",
+  "meetupStartsAt": "2026-08-19T12:00:00-06:00",
+  "publishAt": "2026-08-19T11:50:00-06:00",
+  "status": "draft",
+  "slideshowId": "work-keeps-running",
+  "assetFolder": "2026.08.19",
+  "releaseChecklist": [
+    "Confirm official sources and time-sensitive price, availability, and license claims.",
+    "Keep the draft out of src/articles/index.ts and the live slideshow registry until 11:50 AM America/Denver.",
+    "Copy approved slides from src/articles/drafts/assets/2026.08.19/ into public/slideshows/2026.08.19/work-keeps-running/.",
+    "Promote markdown, register the article and slideshow, then run model-watch:update.",
+    "Run content:check-assets, build, and test:mobile. Review 360/390/430 screenshots.",
+    "Do not replace the isolated August 5 scheduled-edition implementation as a shortcut."
+  ]
+}
