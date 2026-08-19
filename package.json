@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run release:check && tsc -b && vite build",
+    "build": "npm run release:check && tsc -b && vite build && npm run release:check",
     "lint": "eslint .",
     "security:commit": "scripts/security-commit-review.sh staged",
     "security:push": "scripts/security-commit-review.sh push",
@@ -21,6 +21,8 @@
     "content:check-assets": "node scripts/check-content-assets.js",
     "release:stage": "node scripts/stage-scheduled-release.mjs --manifest",
     "release:check": "node scripts/stage-scheduled-release.mjs --check",
+    "release:inventory": "node scripts/stage-scheduled-release.mjs --inventory",
+    "release:self-test": "node scripts/lib/scheduled-release-self-test.mjs",
     "site:update:preflight": "node scripts/update-site-preflight.mjs",
     "test:update-site": "node scripts/tests/update-site-preflight.test.mjs",
     "model-watch:update": "node scripts/update-model-watch.mjs",

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "scheduled",
+  "editionId": "edition-2026-08-05-signal-routing",
+  "publishAt": "2026-08-05T11:15:00-06:00",
+  "article": "src/articles/drafts/2026.08.05-signal-routing.md",
+  "assetFolder": "2026.08.05",
+  "assetRoot": "src/articles/drafts/assets/2026.08.05",
+  "slideshow": {
+    "id": "signal-routing",
+    "title": "Signal Routing",
+    "description": "A visual briefing on model selection, evidence, embodied AI, open weights, and verification.",
+    "slides": [
+      { "title": "Signal Routing", "path": "slideshow/slide-01.png" },
+      { "title": "The release board", "path": "slideshow/slide-02.png" },
+      { "title": "Evidence before deployment", "path": "slideshow/slide-03.png" },
+      { "title": "The physical stack", "path": "slideshow/slide-04.png" },
+      { "title": "Open weights and on-device models", "path": "slideshow/slide-05.png" },
+      { "title": "Market incentives", "path": "slideshow/slide-06.png" },
+      { "title": "Governance and verification", "path": "slideshow/slide-07.png" },
+      { "title": "Route the work, measure the claim", "path": "slideshow/slide-08.png" }
+    ]
+  }
+}

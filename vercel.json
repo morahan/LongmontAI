@@ -4,10 +4,10 @@
   "framework": "vite",
   "functions": {
     "api/scheduled-edition.mjs": {
-      "includeFiles": "src/generated/scheduled-release/**"
+      "includeFiles": "{src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/article.md}"
     },
     "api/scheduled-media.mjs": {
-      "includeFiles": "src/generated/scheduled-release/**"
+      "includeFiles": "{src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/media/**}"
     }
   },
   "headers": [

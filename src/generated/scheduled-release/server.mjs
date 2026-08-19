@@ -6,7 +6,7 @@ const release = Object.freeze({
   "publishAtMs": 1785950100000,
   "releaseRevision": "e54ab9d8b9a16004db16636e",
   "source": {
-    "manifest": null,
+    "manifest": "scripts/lib/scheduled-release-bootstrap.json",
     "article": "src/articles/drafts/2026.08.05-signal-routing.md",
     "assetRoot": "src/articles/drafts/assets/2026.08.05"
   },
