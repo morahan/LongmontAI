@@ -24,6 +24,12 @@ export async function makeWorkspace() {
   return root;
 }
 
+export async function cloneWorkspace(source) {
+  const root = await mkdtemp(join(tmpdir(), 'longmontai-scheduled-deployment-'));
+  await cp(source, root, { recursive: true });
+  return root;
+}
+
 export function manifestPath(root, which = 'first') {
   const file = which === 'first'
     ? '2026.09.02-first.release.json'

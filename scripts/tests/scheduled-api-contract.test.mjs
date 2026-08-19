@@ -9,6 +9,7 @@ import {
   TEST_NOW,
   assertGenericNotFound,
   cacheDirectives,
+  cloneWorkspace,
   collectUrls,
   correctQuery,
   findGeneratedPackages,
@@ -214,21 +215,32 @@ test('a media correction changes revision, URL, and bytes without extending JSON
     const afterRelease = await importGeneratedServer(correctedPackages.server.path);
     assert.notEqual(revisionOf(afterRelease), revisionOf(beforeRelease));
 
-    const afterResponse = await requestHandler(api.edition, 'edition', {
-      root, release: afterRelease, now: FIRST_PUBLISH_AT, query: correctQuery(afterRelease),
-    });
-    assertReleasedJsonCache(afterResponse);
-    const afterMediaUrl = collectUrls(afterResponse.json).find((url) => url.includes('private-hero.png'));
-    assert.ok(afterMediaUrl, 'approved article media URL missing after correction');
-    assert.notEqual(afterMediaUrl, beforeMediaUrl, 'corrected media reused an immutable URL');
+    // A correction is a reviewed redeployment: load handlers from a fresh module
+    // graph so their immutable generated-package import cannot reuse the old release.
+    const redeployedRoot = await cloneWorkspace(root);
+    try {
+      const correctedApi = await loadApiModules(redeployedRoot);
+      const afterResponse = await requestHandler(correctedApi.edition, 'edition', {
+        root: redeployedRoot,
+        release: afterRelease,
+        now: FIRST_PUBLISH_AT,
+        query: correctQuery(afterRelease),
+      });
+      assertReleasedJsonCache(afterResponse);
+      const afterMediaUrl = collectUrls(afterResponse.json).find((url) => url.includes('private-hero.png'));
+      assert.ok(afterMediaUrl, 'approved article media URL missing after correction');
+      assert.notEqual(afterMediaUrl, beforeMediaUrl, 'corrected media reused an immutable URL');
 
-    const afterMedia = await requestHandler(api.media, 'media', {
-      root,
-      release: afterRelease,
-      now: FIRST_PUBLISH_AT,
-      query: correctQuery(afterRelease, { path: 'private-hero.png' }),
-    });
-    assert.notDeepEqual(afterMedia.body, beforeMedia.body);
-    assert.deepEqual(afterMedia.body, await readFile(assetPath));
+      const afterMedia = await requestHandler(correctedApi.media, 'media', {
+        root: redeployedRoot,
+        release: afterRelease,
+        now: FIRST_PUBLISH_AT,
+        query: correctQuery(afterRelease, { path: 'private-hero.png' }),
+      });
+      assert.notDeepEqual(afterMedia.body, beforeMedia.body);
+      assert.deepEqual(afterMedia.body, await readFile(assetPath));
+    } finally {
+      await rm(redeployedRoot, { recursive: true, force: true });
+    }
   });
 });
