@@ -27,3 +27,28 @@
 - Commit coherent batches and run the configured pre-commit and pre-push
   hooks. Never use `--no-verify`.
 - Do not let an automated fixer commit or push its own changes.
+
+## Multi-agent orchestration
+
+- Default every non-trivial chat with an independent lane to delegation. The
+  parent agent orchestrates, reviews, integrates, and interfaces with the human;
+  subagents perform bounded investigation, implementation, test, review, and
+  validation work.
+- Run subagents in repeatable parallel Herdr batches with a separate tab and
+  pane for each lane. Concurrent writers require separate worktrees;
+  independent read-only review lanes may share the source checkout.
+- Give complex coherent lanes multi-step plans. After independently reviewing
+  each checkpoint, delegate the next dependent step to the same subagent and
+  pane so it retains useful domain and code context.
+- Keep at least one useful subagent active while actionable delegated work
+  remains, except when blocked on the human or an external dependency.
+- After collecting and independently verifying a completed lane, prune its
+  agent, pane, tab, empty workspace, and temporary worktree. Then dispatch the
+  next independent batch and repeat until complete or genuinely blocked.
+- Never prune uncommitted changes, unresolved blockers, or uncaptured evidence.
+- Prune only after the subagent's full lane plan is complete, rejected,
+  superseded, or genuinely blocked, not after an intermediate checkpoint.
+- Keep all publication mutation and final reconciliation serialized in the
+  parent agent.
+- Do not manufacture delegation for a one-line answer, one atomic command, or
+  work with no independent lane.
