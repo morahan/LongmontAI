@@ -1,0 +1,21 @@
+{
+  "editionId": "edition-2026-09-02-first",
+  "meetingDate": "2026-09-02",
+  "timezone": "America/Denver",
+  "meetupStartsAt": "2026-09-02T12:00:00-06:00",
+  "publishAt": "2026-09-02T11:50:00-06:00",
+  "status": "scheduled",
+  "articlePath": "src/articles/drafts/2026.09.02-first.md",
+  "article": "src/articles/drafts/2026.09.02-first.md",
+  "slideshowId": "first-deck",
+  "assetFolder": "2026.09.02",
+  "slideshow": {
+    "id": "first-deck",
+    "title": "First fixture deck",
+    "description": "Ordered approved fixture slides",
+    "slides": [
+      { "title": "First slide", "path": "slideshow/slide-01.png" },
+      { "title": "Second slide", "path": "slideshow/slide-02.png" }
+    ]
+  }
+}

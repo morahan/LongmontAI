@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/model-watch.mjs": {},
+    "api/scheduled-edition.mjs": {
+      "includeFiles": "src/generated/scheduled-release/**"
+    },
+    "api/scheduled-media.mjs": {
+      "includeFiles": "src/generated/scheduled-release/**"
+    }
+  }
+}
