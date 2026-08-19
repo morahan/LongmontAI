@@ -114,26 +114,21 @@ test('local Vercel inventory selects only the active Markdown and dated asset tr
       }
     }
 
-    for (const [name, definition] of Object.entries({
-      'api/scheduled-edition.mjs': edition,
-      'api/scheduled-media.mjs': media,
-    })) {
-      const include = String(definition.includeFiles ?? '');
-      assert.equal(
-        include,
-        'src/generated/scheduled-release/**',
-        `${name} must package only the generated active-release directory`,
-      );
-    }
+    assert.equal(
+      String(edition.includeFiles ?? ''),
+      '{src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/article.md}',
+      'edition function must contain only server configuration and approved article',
+    );
+    assert.equal(
+      String(media.includeFiles ?? ''),
+      '{src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/media/**}',
+      'media function must contain only server configuration and approved media',
+    );
 
     const serverRelative = relative(root, packages.server.path).replaceAll('\\', '/');
-    const serverIsIncluded = Object.values(functions).some((value) => {
-      const include = String(value.includeFiles ?? '');
-      return include.endsWith('/**') && serverRelative.startsWith(include.slice(0, -3));
-    });
     assert.ok(
-      packages.server.path.includes('/api/') || serverIsIncluded,
-      'generated server configuration is neither function-local nor declared in package inventory',
+      Object.values(functions).some((value) => String(value.includeFiles ?? '').includes(serverRelative)),
+      'generated server configuration is not declared in package inventory',
     );
   });
 });

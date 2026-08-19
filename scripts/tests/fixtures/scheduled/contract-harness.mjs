@@ -55,9 +55,16 @@ export async function loadStager() {
     join(repositoryRoot, 'scripts/stage-edition.mjs'),
     join(repositoryRoot, 'scripts/lib/stage-scheduled-edition.mjs'),
   ], 'staging core');
+  if (typeof module.createScheduledReleaseTools === 'function') {
+    return async ({ root, manifest, now = TEST_NOW }) => {
+      const tools = module.createScheduledReleaseTools({ root, now: () => now });
+      return tools.stageRelease(relative(root, manifest).replaceAll('\\', '/'));
+    };
+  }
+
   const stage = module.stageScheduledEdition ?? module.stageEdition ?? module.stageRelease ?? module.default;
   if (typeof stage !== 'function') {
-    throw new HarnessIntegrationError(`staging core ${relative(repositoryRoot, path)} must export stageScheduledEdition(options)`);
+    throw new HarnessIntegrationError(`staging core ${relative(repositoryRoot, path)} must export an injected-root staging factory or function`);
   }
   return async ({ root, manifest, now = TEST_NOW }) => {
     const options = { root, now: () => now, clock: () => now };
@@ -222,9 +229,13 @@ export function correctQuery(release, overrides = {}) {
 }
 
 export function collectUrls(value, found = []) {
-  if (typeof value === 'string' && value.startsWith('/api/')) found.push(value);
-  else if (Array.isArray(value)) value.forEach((item) => collectUrls(item, found));
-  else if (value && typeof value === 'object') Object.values(value).forEach((item) => collectUrls(item, found));
+  if (typeof value === 'string') {
+    found.push(...(value.match(/\/api\/[^\s)"']+/g) ?? []));
+  } else if (Array.isArray(value)) {
+    value.forEach((item) => collectUrls(item, found));
+  } else if (value && typeof value === 'object') {
+    Object.values(value).forEach((item) => collectUrls(item, found));
+  }
   return found;
 }
 
