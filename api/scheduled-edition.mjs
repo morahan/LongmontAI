@@ -74,7 +74,11 @@ export function createScheduledEditionHandler({ now = Date.now } = {}) {
       const edition = parseArticle(await readFile(ARTICLE_URL, 'utf8'));
       response.setHeader('Cache-Control', RELEASE_CACHE);
       response.setHeader('Content-Type', 'application/json; charset=utf-8');
-      return response.status(200).json({ edition, slideshows: slideshows() });
+      return response.status(200).json({
+        releaseRevision: release.releaseRevision,
+        edition,
+        slideshows: slideshows(),
+      });
     } catch (error) {
       console.error(`Unable to serve scheduled edition: ${error instanceof Error ? error.message : 'unknown error'}`);
       return notFound(response);
