@@ -2167,6 +2167,18 @@ iframe {
   letter-spacing: 0;
 }
 
+.model-watch-release-list h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.model-watch-release-list h3 a:hover,
+.model-watch-release-list h3 a:focus-visible {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 .model-watch-release-list p,
 .model-watch-release-list span,
 .model-watch-release-list time {

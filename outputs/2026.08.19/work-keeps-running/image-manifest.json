@@ -1,5 +1,5 @@
 {
-  "sourceDirectory": "generated-editorial-slides",
+  "sourceDirectory": "presentation-source/source-assets",
   "createdAt": "2026-08-18T03:04:00.000Z",
   "images": [
     "slide-01.png",
@@ -12,5 +12,12 @@
     "slide-08.png",
     "slide-09.png"
   ],
-  "notes": "No user-supplied screenshots. Slides are original Longmont AI editorial layouts rendered at 1920x1080. Copy from src/articles/drafts/assets/2026.08.19/ into public/slideshows/2026.08.19/work-keeps-running/ at promotion time."
+  "blogImages": [
+    "source-media/physical-ai-flywheel.png",
+    "source-media/humanoid-sensor-halo.png",
+    "source-media/robot-autonomy-closed-loop.png",
+    "source-media/gaussian-splat-sim-pipeline.png",
+    "source-media/onboard-model-tradeoff.png"
+  ],
+  "notes": "No user-supplied screenshots. Slides use the canonical Longmont AI parrot, wordmark bar, palette, and typography from public/brand and render at 1920x1080. First-party source media is attributed; the hardware slide uses a source-labeled numeric comparison with no illustrative substitute. The five physical-AI blog figures were generated with OpenAI ImageGen at 1672x941 and reviewed for label accuracy. Sanitized derivatives are in presentation-source/assets. Secondary-source TrendForce photographs were rejected. Copy only approved files from src/articles/drafts/assets/2026.08.19/ at promotion time."
 }

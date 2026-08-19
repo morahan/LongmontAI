@@ -35,7 +35,7 @@ const markdownComponents = {
     strong: ({ node, ...props }: any) => <strong className="text-white font-semibold" {...props} />,
     table: ({ node, ...props }: any) => (
         <div className="overflow-x-auto my-8 rounded-xl border border-white/10">
-            <table role="table" className="w-full text-left text-sm" {...props} />
+            <table role="table" className="w-full min-w-[760px] text-left text-sm" {...props} />
         </div>
     ),
     thead: ({ node, ...props }: any) => (

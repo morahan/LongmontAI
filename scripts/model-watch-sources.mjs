@@ -32,6 +32,31 @@ export const modelWatchSources = [
     required: true,
   },
   {
+    company: 'Z.ai',
+    url: 'https://docs.z.ai/llms.txt',
+    patterns: [/GLM[-\s]\d+(?:\.\d+)?(?:[-\s]Turbo)?/gi],
+  },
+  {
+    company: 'NVIDIA Nemotron',
+    url: 'https://developer.nvidia.com/topics/ai/nemotron',
+    patterns: [/Nemotron\s+\d+(?:\.\d+)?(?:\s+(?:Lightning|Nano|Super|Ultra))?/gi],
+  },
+  {
+    company: 'Meta AI Research',
+    url: 'https://research.meta.ai/blog/',
+    patterns: [/Muse\s+(?:Spark|Glimmer)(?:\s+\d+(?:\.\d+)?)?/gi],
+  },
+  {
+    company: 'Alibaba Qwen',
+    url: 'https://qwen.ai/api/v2/article/retrieval?type=qwen_ai&language=en-US',
+    patterns: [/Qwen(?:3\.8[-\s]27B|[-\s]Image[-\s]3\.0)/gi],
+  },
+  {
+    company: 'Google AI Models',
+    url: 'https://blog.google/innovation-and-ai/models-and-research/',
+    patterns: [/(?:Gemini\s+\d+(?:\.\d+)?\s+Flash|WeatherNext\s+Cyclones)/gi],
+  },
+  {
     company: 'Hugging Face',
     url: 'https://huggingface.co/api/models?sort=lastModified&direction=-1&limit=100',
     patterns: [/(?:GLM|Kimi|Mistral|Qwen)[-_\s]\d+(?:\.\d+)?/gi],
@@ -44,7 +69,16 @@ export const seedModels = [
   'GPT-5.6 Luna',
   'Claude Fable 5',
   'Grok 4.5',
+  'GLM-5.3',
+  'Grok 4.6',
+  'Gemini 3.7 Flash',
+  'Nemotron 3.5 Lightning',
   'Muse Spark 1.1',
+  'Muse Spark 1.2',
+  'Muse Glimmer',
+  'Qwen3.8-27B',
+  'Qwen-Image 3.0',
+  'WeatherNext Cyclones',
   'Kimi K3',
 ];
 

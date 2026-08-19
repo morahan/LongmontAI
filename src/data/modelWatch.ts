@@ -76,6 +76,7 @@ export interface ModelWatchModel {
   name: string;
   provider: string;
   lane: string;
+  description?: string;
   releaseDate: string;
   releaseDateSort?: string;
   sourceLabel: string;
@@ -376,6 +377,62 @@ export const modelWatchPipeline: ModelWatchPipelineStep[] = [
 
 export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   {
+    company: 'Z.ai',
+    update: 'GLM-5.3 launched through the API and Coding Plan with 1M context, stronger long-horizon coding, and sharply higher vendor-reported cyber scores.',
+    date: 'Aug 14, 2026',
+    lane: 'Coding and cybersecurity',
+    url: 'https://z.ai/blog/glm-5.3',
+  },
+  {
+    company: 'Alibaba Qwen',
+    update: 'Qwen3.8-27B shipped as an Apache-2.0 dense vision-language model with 262K native context for local multimodal agents.',
+    date: 'Aug 14, 2026',
+    lane: 'Open-weight multimodal agents',
+    url: 'https://huggingface.co/Qwen/Qwen3.8-27B',
+  },
+  {
+    company: 'Google',
+    update: 'Gemini 3.7 Flash became Google\'s lower-cost coding and agent workhorse, with introductory API pricing through year-end.',
+    date: 'Aug 13, 2026',
+    lane: 'Coding and agentic work',
+    url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/',
+  },
+  {
+    company: 'xAI',
+    update: 'Grok 4.6 arrived for long-running research, codebase work, and visual artifacts across Cursor, Grok Build, and the API.',
+    date: 'Aug 12, 2026',
+    lane: 'Frontier agents',
+    url: 'https://x.ai/news/grok-4-6',
+  },
+  {
+    company: 'NVIDIA',
+    update: 'Nemotron 3.5 Lightning paired a fast open execution model with NeMo Switchyard, an open model-routing library for agent workflows.',
+    date: 'Aug 11, 2026',
+    lane: 'Open model and routing',
+    url: 'https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/',
+  },
+  {
+    company: 'Meta AI',
+    update: 'Muse Glimmer released as a 30B Apache-2.0 local agent model whose 4-bit build targets a 24–32 GB GPU envelope.',
+    date: 'Aug 10, 2026',
+    lane: 'Open-weight local agents',
+    url: 'https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model',
+  },
+  {
+    company: 'Google DeepMind',
+    update: 'WeatherNext Cyclones published open weights and a Nature evaluation reporting roughly an extra day of average forecast lead-time advantage.',
+    date: 'Aug 6, 2026',
+    lane: 'Weather research',
+    url: 'https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/',
+  },
+  {
+    company: 'Meta AI',
+    update: 'Muse Spark 1.2 and Muse Code beta paired a coding-focused hosted model with a restart-safe terminal agent and persistent background subagents.',
+    date: 'Aug 5, 2026',
+    lane: 'Agentic coding',
+    url: 'https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2',
+  },
+  {
     company: 'Mistral AI',
     update: 'Shieldstral shipped as a 3B Apache-2.0 open-weight multimodal safety classifier with natural-language policy controls.',
     date: 'Aug 4, 2026',
@@ -641,6 +698,130 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
 
 export const modelWatchModels: ModelWatchModel[] = [
   {
+    id: 'glm-5-3',
+    name: 'GLM-5.3',
+    provider: 'Z.ai',
+    lane: 'Long-horizon coding and authorized cyber research',
+    description: 'API-first coding flagship with 1M context, mandatory thinking, and a large provider-reported jump on coding and exploitation benchmarks.',
+    releaseDate: 'Aug 14, 2026',
+    releaseDateSort: '2026-08-14',
+    sourceLabel: 'Z.ai official release',
+    sourceUrl: 'https://z.ai/blog/glm-5.3',
+    benchmarks: {
+      terminalBench: { value: 28.3, note: 'Vendor-reported on Terminal-Bench 3.0 under Claude Code 2.1.207.' },
+      inputCost: { value: 1.4, note: 'Official API price at launch.' },
+      outputCost: { value: 4.4, note: 'Official API price at launch.' },
+    },
+  },
+  {
+    id: 'qwen-3-8-27b',
+    name: 'Qwen3.8-27B',
+    provider: 'Alibaba Qwen',
+    lane: 'Open-weight local multimodal agents',
+    description: 'Apache-2.0 dense vision-language model with 262K native context, image and video understanding, and controllable reasoning effort.',
+    releaseDate: 'Aug 14, 2026',
+    releaseDateSort: '2026-08-14',
+    sourceLabel: 'Qwen official model card',
+    sourceUrl: 'https://huggingface.co/Qwen/Qwen3.8-27B',
+    benchmarks: {
+      sweBenchPro: { value: 61.7, note: 'Vendor-reported under a Claude Code harness.' },
+    },
+  },
+  {
+    id: 'gemini-3-7-flash',
+    name: 'Gemini 3.7 Flash',
+    provider: 'Google',
+    lane: 'Cost-efficient coding and agentic work',
+    description: 'Hosted multimodal workhorse for coding, web apps, knowledge work, and always-on agent products at introductory pricing through 2026.',
+    releaseDate: 'Aug 13, 2026',
+    releaseDateSort: '2026-08-13',
+    sourceLabel: 'Google official release',
+    sourceUrl: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/',
+    benchmarks: {
+      frontierCode: { value: 43.6, note: 'Vendor-reported on FrontierCode 1.1 Main.' },
+      inputCost: { value: 0.75, note: 'Introductory price through December 31, 2026.' },
+      outputCost: { value: 3.75, note: 'Introductory price through December 31, 2026.' },
+    },
+  },
+  {
+    id: 'grok-4-6',
+    name: 'Grok 4.6',
+    provider: 'xAI',
+    lane: 'Long-running coding, research, and visual work',
+    description: 'Hosted frontier model for codebase-scale jobs, multi-step research, and turning product ideas into working visual artifacts.',
+    releaseDate: 'Aug 12, 2026',
+    releaseDateSort: '2026-08-12',
+    sourceLabel: 'xAI official release',
+    sourceUrl: 'https://x.ai/news/grok-4-6',
+    benchmarks: {
+      aaIndex: { value: 61, note: 'Provider-compiled Artificial Analysis Intelligence Index comparison.' },
+      inputCost: { value: 2, note: 'Official standard API price at launch.' },
+      outputCost: { value: 6, note: 'Official standard API price at launch.' },
+    },
+  },
+  {
+    id: 'nemotron-3-5-lightning',
+    name: 'Nemotron 3.5 Lightning',
+    provider: 'NVIDIA',
+    lane: 'Open high-volume agent execution',
+    description: 'Open 30B mixture-of-experts model with 3B active parameters, optimized for fast routine tool calls, validation, and code review.',
+    releaseDate: 'Aug 11, 2026',
+    releaseDateSort: '2026-08-11',
+    sourceLabel: 'NVIDIA official release',
+    sourceUrl: 'https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/',
+    benchmarks: {},
+  },
+  {
+    id: 'muse-glimmer',
+    name: 'Muse Glimmer',
+    provider: 'Meta AI',
+    lane: 'Open-weight local computer-use agents',
+    description: 'Apache-2.0 30B local agent model whose 4-bit configuration is designed to share a 24–32 GB GPU with its runtime components.',
+    releaseDate: 'Aug 10, 2026',
+    releaseDateSort: '2026-08-10',
+    sourceLabel: 'Meta official release',
+    sourceUrl: 'https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model',
+    benchmarks: {
+      aaIndex: { value: 35, note: 'Artificial Analysis Intelligence Index at high effort.' },
+    },
+  },
+  {
+    id: 'weather-next-cyclones',
+    name: 'WeatherNext Cyclones',
+    provider: 'Google DeepMind',
+    lane: 'Open tropical-cyclone forecasting research',
+    description: 'Open model for cyclone track, intensity, and wind-structure forecasts, evaluated on 2023–2025 storms and not a replacement for official warnings.',
+    releaseDate: 'Aug 6, 2026',
+    releaseDateSort: '2026-08-06',
+    sourceLabel: 'Google DeepMind release and Nature paper',
+    sourceUrl: 'https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/',
+    benchmarks: {},
+  },
+  {
+    id: 'muse-spark-1-2',
+    name: 'Muse Spark 1.2',
+    provider: 'Meta AI',
+    lane: 'Hosted long-horizon coding',
+    description: 'Coding-focused model co-trained with Muse Code for repository generation, debugging, compaction, subagents, and sustained agent loops.',
+    releaseDate: 'Aug 5, 2026',
+    releaseDateSort: '2026-08-05',
+    sourceLabel: 'Meta official release',
+    sourceUrl: 'https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2',
+    benchmarks: {},
+  },
+  {
+    id: 'qwen-image-3-0',
+    name: 'Qwen-Image 3.0',
+    provider: 'Alibaba Qwen',
+    lane: 'Information-dense image generation and editing',
+    description: 'Hosted image model for complex multilingual layouts, small text, storyboards, infographics, editing, and nested interface mockups.',
+    releaseDate: 'Jul 16, 2026',
+    releaseDateSort: '2026-07-16',
+    sourceLabel: 'Qwen official release',
+    sourceUrl: 'https://qwen.ai/blog?id=56cf5a94-052c-4e8f-8d9c-e05ff75a1133',
+    benchmarks: {},
+  },
+  {
     id: 'shieldstral-1-0-3b',
     name: 'Shieldstral 1.0 3B',
     provider: 'Mistral AI',
@@ -797,6 +978,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     name: 'GPT-5.6 Sol',
     provider: 'OpenAI',
     lane: 'Flagship coding and agentic work',
+    description: 'OpenAI\'s high-effort model for coding and agents; the August ChatGPT retune and Ultrafast preview change product behavior and serving, not API model identity.',
     releaseDate: 'Jul 9, 2026',
     releaseDateSort: '2026-07-09',
     sourceLabel: 'OpenAI launch',
@@ -835,6 +1017,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     name: 'GPT-5.6 Luna',
     provider: 'OpenAI',
     lane: 'Fast, cost-efficient work',
+    description: 'OpenAI\'s lower-cost GPT-5.6 tier and the rolling Free/Go ChatGPT default, with an August retune focused on everyday factual reliability.',
     releaseDate: 'Jul 9, 2026',
     releaseDateSort: '2026-07-09',
     sourceLabel: 'OpenAI launch',
@@ -1234,6 +1417,20 @@ export const modelWatchModels: ModelWatchModel[] = [
     },
   },
 ];
+
+export const latestBriefingModelIds = [
+  'glm-5-3',
+  'nemotron-3-5-lightning',
+  'gemini-3-7-flash',
+  'muse-spark-1-2',
+  'grok-4-6',
+  'qwen-3-8-27b',
+  'muse-glimmer',
+  'gpt-5-6-sol',
+  'gpt-5-6-luna',
+  'qwen-image-3-0',
+  'weather-next-cyclones',
+] as const;
 
 export const coreSourceCount = modelWatchSources.filter((source) => source.priority === 'Core').length;
 export const openWeightSourceCount = modelWatchSources.filter((source) => source.priority === 'Open-weight').length;

@@ -43,8 +43,13 @@ async (page) => {
 
     for (const route of routes) {
       const url = `${baseUrl}${route}`;
-      await page.goto(url, { waitUntil: 'load' });
-      await page.waitForTimeout(150);
+      await page.goto(url, { waitUntil: 'networkidle' });
+      await page.waitForFunction(
+        () => Array.from(document.images).every((image) => image.complete),
+        undefined,
+        { timeout: 10_000 }
+      );
+      await page.waitForTimeout(100);
 
       const audit = await page.evaluate(() => {
         const viewportWidth = window.innerWidth;

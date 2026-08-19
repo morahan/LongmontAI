@@ -12,8 +12,18 @@ const [models, workflow, editorGuide, updater] = await Promise.all([
 assert.ok(modelWatchSources.some((source) => source.company === 'Meta AI' && source.url === 'https://ai.meta.com/blog/' && source.required));
 assert.ok(modelWatchSources.some((source) => source.company === 'Moonshot AI / Kimi' && source.url === 'https://www.moonshot.cn/en' && source.required));
 assert.ok(seedModels.includes('Muse Spark 1.1'));
+assert.ok(seedModels.includes('Muse Spark 1.2'));
+assert.ok(seedModels.includes('GLM-5.3'));
+assert.ok(seedModels.includes('Nemotron 3.5 Lightning'));
+assert.ok(seedModels.includes('Qwen-Image 3.0'));
 assert.ok(seedModels.includes('Kimi K3'));
 assert.match(models, /id: 'muse-spark-1-1'/);
+assert.match(models, /id: 'muse-spark-1-2'/);
+assert.match(models, /id: 'glm-5-3'/);
+assert.match(models, /id: 'nemotron-3-5-lightning'/);
+assert.match(models, /id: 'qwen-image-3-0'/);
+assert.match(models, /id: 'weather-next-cyclones'/);
+assert.match(models, /latestBriefingModelIds/);
 assert.match(models, /id: 'kimi-k3'/);
 assert.match(workflow, /cron: "17 13 \* \* 1"/);
 assert.match(editorGuide, /npm run model-watch:update/);

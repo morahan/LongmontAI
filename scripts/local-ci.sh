@@ -9,6 +9,7 @@ SECURITY_COMMIT_AGENT_REVIEW=1 npm run security:review
 npm run lint
 npm run release:check
 npm run release:self-test
+npm run test:scheduled-release
 npm run content:check-assets
 npm run security:test
 npm run test:loop-push

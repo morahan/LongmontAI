@@ -4,7 +4,8 @@ Use this guide for every Longmont AI meetup edition.
 
 ## Draft and release
 
-1. Read `design.md`, the current countdown, and the most recent published edition.
+1. Read `design.md`, `public/brand/README.md`, the current countdown, and the
+   most recent published edition.
 2. Start from `src/articles/drafts/edition-template.md` and create the edition in `src/articles/drafts/`.
 3. Record `publishAt` at exactly ten minutes before the meetup, in
    `America/Denver`. For the standing noon schedule, this is 11:50 AM.
@@ -65,6 +66,14 @@ Use this guide for every Longmont AI meetup edition.
   locations, notifications, and metadata before use.
 - Every edition gets a top slideshow with a coherent story, high-resolution
   slides, a downloadable deck, source links, and meaningful alt text.
+- Build every deck from the canonical assets in `public/brand/`. The cover and
+  closing slides use the cubist parrot; content slides use the approved
+  Longmont AI wordmark bar. Use only the palette exported in
+  `public/brand/palette/colors.json`. Do not invent an edition-only brand system.
+- Keep slide language presentation-tight: one claim per slide, a short headline,
+  at most one short supporting sentence, and labels instead of explanatory
+  paragraphs. Put nuance and caveats in the article unless they are essential
+  to interpreting a number on the slide.
 - Video embeds use native controls, `playsInline`, and metadata preload. Audio
   never starts automatically.
 

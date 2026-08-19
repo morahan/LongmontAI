@@ -3,210 +3,54 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
-const cssHref = 'slides.css';
+const brand = '../../../../public/brand';
 
 const slides = [
   {
-    file: 'slide-01.html',
-    n: '01',
-    body: `
-      <p class="kicker">August 19 briefing</p>
-      <h1>The work keeps <span class="grad">running</span></h1>
-      <p class="dek">Agents left the chat window. Local weights started looking like runtimes. Science returned artifacts you can check. The fabs still set the price.</p>
-      <div class="rule"></div>
-      <p class="claim">Models, tools, proofs, and chips — one stack, four layers.</p>
-    `,
+    file: 'slide-01.html', n: '01', kind: 'cover', body: `
+      <div class="cover-grid"><div><p class="kicker">Longmont AI / August 19 briefing</p><h1 class="cover-title">The work keeps running</h1><p class="dek">Agents leave chat. Science gets checkable. Hardware sets the floor.</p><p class="brand-meta">Models / tools / science / chips</p></div><img class="cover-logo" src="${brand}/source/logo-master-2048.png" alt="Longmont AI cubist parrot"></div>`,
   },
   {
-    file: 'slide-02.html',
-    n: '02',
-    body: `
-      <p class="kicker">Release board</p>
-      <h1>Five moves in a fortnight</h1>
-      <p class="dek">Practical impact for builders, not parameter count. Scores and prices are vendor-reported.</p>
-      <div class="grid cols-5">
-        <article class="card"><p class="label">Aug 11</p><h2>Grok Bot</h2><p>Always-on agents on a shared cloud computer. Beta, gated plans.</p></article>
-        <article class="card"><p class="label">Aug 12</p><h2>Grok 4.6</h2><p>Long-running agents. $2 / $6 per million tokens.</p></article>
-        <article class="card"><p class="label">Aug 13</p><h2>3.7 Flash</h2><p>Workhorse coding model. Intro $0.75 / $3.75 through year-end.</p></article>
-        <article class="card"><p class="label">Aug 14</p><h2>Qwen 27B</h2><p>Apache 2.0 dense VLM. 262K native context.</p></article>
-        <article class="card"><p class="label">Aug 10</p><h2>Glimmer</h2><p>30B local agent. Fits a 24–32 GB GPU envelope.</p></article>
-      </div>
-    `,
+    file: 'slide-02.html', n: '02', kind: 'content', body: `
+      <p class="kicker">Release board</p><h1>Five moves</h1><p class="dek">What changed for builders.</p>
+      <div class="release-grid"><article class="release"><img src="assets/grok-bot.png" alt="Grok Bot"><p class="date">AUG 11</p><h2>Grok Bot</h2><p>Persistent cloud agents.</p></article><article class="release"><img src="assets/grok-4-6.png" alt="Grok 4.6"><p class="date">AUG 12</p><h2>Grok 4.6</h2><p>Long jobs. $2 / $6.</p></article><article class="release"><img src="assets/gemini-3-7-flash.png" alt="Gemini 3.7 Flash"><p class="date">AUG 13</p><h2>3.7 Flash</h2><p>Workhorse price cut.</p></article><article class="release"><img src="assets/qwen3-8-27b.png" alt="Qwen3.8-27B"><p class="date">AUG 14</p><h2>Qwen 27B</h2><p>262K local VLM.</p></article><article class="release"><img src="assets/muse-glimmer.png" alt="Muse Glimmer"><p class="date">AUG 10</p><h2>Glimmer</h2><p>30B local agent.</p></article></div><p class="source">Provider-reported. Images: official announcements and model pages.</p>`,
   },
   {
-    file: 'slide-03.html',
-    n: '03',
-    body: `
-      <p class="kicker">Best new tool</p>
-      <h1>Grok Bot is a computer</h1>
-      <p class="dek">Named agents share one persistent cloud VM — browser, filesystem, terminal — and keep working after you close the laptop.</p>
-      <div class="grid cols-2">
-        <article class="card">
-          <p class="label">What it is</p>
-          <ul>
-            <li>Work lands in the real app, not a chat draft</li>
-            <li>Show a workflow once; save it as a routine</li>
-            <li>Bots can message each other in a group thread</li>
-          </ul>
-        </article>
-        <article class="card">
-          <p class="label">What it is not</p>
-          <ul>
-            <li>Not a per-Bot security boundary — logins are shared</li>
-            <li>Approvals do not undo work already done</li>
-            <li>Beta: SuperGrok Heavy, Cursor Ultra, Teams Premium</li>
-          </ul>
-        </article>
-      </div>
-    `,
+    file: 'slide-03.html', n: '03', kind: 'content', body: `
+      <div class="split equal"><div><p class="kicker">Agent tools</p><h1>Grok Bot is a computer</h1><p class="dek">Persistent VM. Shared sessions. Work continues.</p><div class="callout"><strong>Boundary:</strong> one account, not one per Bot.</div><p class="note" style="margin-top:20px">Gate send, spend, publish, and production.</p></div><div class="media-wrap"><img class="media" src="assets/grok-bot.png" alt="Official Grok Bot launch graphic"><span class="source source-overlay">xAI / Aug. 11</span></div></div>`,
   },
   {
-    file: 'slide-04.html',
-    n: '04',
-    body: `
-      <p class="kicker">Local open weights</p>
-      <h1>Agent runtimes you can host</h1>
-      <p class="dek">The interesting local story is no longer a 7B chatbot. It is an agent loop that never leaves the machine.</p>
-      <div class="grid cols-2">
-        <article class="card">
-          <p class="label">Muse Glimmer · Aug 10</p>
-          <p class="stat">30B<small>Apache 2.0 · ~4-bit under 20 GB</small></p>
-          <p>Meta distilled a local agent from a larger Muse teacher. Artificial Analysis independently scored Glimmer (high) at 35 on its Intelligence Index.</p>
-        </article>
-        <article class="card">
-          <p class="label">Qwen3.8-27B · Aug 14</p>
-          <p class="stat">262K<small>native context · image and video</small></p>
-          <p>Alibaba reports 61.7 on SWE-bench Pro under a named Claude Code harness. Treat that as a vendor card, then run it on your GPU.</p>
-        </article>
-      </div>
-    `,
+    file: 'slide-04.html', n: '04', kind: 'content', body: `
+      <p class="kicker">Open weights</p><h1>Local agents get serious</h1><p class="dek">Multimodal runtimes now fit one workstation.</p><div class="split equal" style="height:580px;margin-top:18px"><div><div class="media-wrap short"><img class="media contain" src="assets/muse-glimmer.png" alt="Muse Glimmer model card"><span class="source source-overlay">Meta / Hugging Face</span></div><div class="stat-row"><div class="stat-block"><p class="stat">30B<small>Apache 2.0</small></p></div><div class="stat-block purple"><p class="stat">&lt;20 GB<small>4-bit, per Meta</small></p></div></div></div><div><div class="media-wrap short"><img class="media contain" src="assets/qwen3-8-27b.png" alt="Qwen3.8-27B model card"><span class="source source-overlay">Qwen / Hugging Face</span></div><div class="stat-row"><div class="stat-block pink"><p class="stat">27B<small>dense VLM</small></p></div><div class="stat-block sunset"><p class="stat">262K<small>native context</small></p></div></div></div></div>`,
   },
   {
-    file: 'slide-05.html',
-    n: '05',
-    body: `
-      <p class="kicker">Serving</p>
-      <h1>Cheap tokens, then fast tokens</h1>
-      <p class="dek">Routing now includes effort sliders, intro pricing, and a wafer-scale preview. None of those numbers transfer without a local acceptance test.</p>
-      <div class="grid cols-3">
-        <article class="card">
-          <p class="label">Gemini 3.7 Flash</p>
-          <p class="stat">$0.75<small>per million input, intro through Dec 31</small></p>
-          <p>Vendor-reported DeepSWE v1.1: 65.3% vs 49.0% for 3.6 Flash. Spark now runs on 3.7.</p>
-        </article>
-        <article class="card">
-          <p class="label">ChatGPT access</p>
-          <p class="stat">Slider<small>Sol for Plus/Pro · Luna for Free/Go</small></p>
-          <p>Unlimited text chats are rolling out. Codex and Work keep the July builds.</p>
-        </article>
-        <article class="card">
-          <p class="label">Ultrafast preview</p>
-          <p class="stat">750<small>output tok/s, Cerebras, vendor ceiling</small></p>
-          <p>OpenAI says up to 14× Standard. No public price. No GA date. Waitlist only.</p>
-        </article>
-      </div>
-    `,
+    file: 'slide-05.html', n: '05', kind: 'content', body: `
+      <div class="split equal"><div class="media-wrap"><img class="media contain" src="assets/gemini-3-7-flash.png" alt="Official Gemini 3.7 Flash release graphic"><span class="source source-overlay">Google / Aug. 13</span></div><div><p class="kicker">Model routing</p><h1>Route for cost. Then speed.</h1><p class="dek">Price and latency are separate choices.</p><div class="stat-row"><div class="stat-block"><p class="stat">$0.75<small>Flash input / 1M</small></p></div><div class="stat-block purple"><p class="stat">750<small>Sol tok/s ceiling</small></p></div><div class="stat-block pink"><p class="stat">14x<small>vendor-reported</small></p></div></div><p class="note" style="margin-top:28px">Ultrafast: limited preview. No public price.</p></div></div>`,
   },
   {
-    file: 'slide-06.html',
-    n: '06',
-    body: `
-      <p class="kicker">Mathematics</p>
-      <h1>A tighter bound, not a solved hypothesis</h1>
-      <p class="dek">An unreleased Claude raised the proven share of zeta zeros on the critical line. Lean can check the encoding. Humans still decide what it means.</p>
-      <div class="grid cols-2">
-        <article class="card">
-          <p class="label">Prior bound</p>
-          <p class="stat">41.6%</p>
-          <p>Longstanding lower bound on zeros of the Riemann zeta function that lie on the critical line.</p>
-        </article>
-        <article class="card">
-          <p class="label">Claude research result · Aug 10</p>
-          <p class="stat">67.2%</p>
-          <p>~60 subagents, 31M output tokens, Lean formalization. Conrey and Goldston examined the paper. The Riemann hypothesis remains open.</p>
-        </article>
-      </div>
-    `,
+    file: 'slide-06.html', n: '06', kind: 'content', body: `
+      <p class="kicker">Mathematics</p><h1>A bound moved. The hypothesis did not.</h1><p class="dek">Lean checks the proof. People judge the contribution.</p><div class="split equal" style="height:540px;margin-top:20px"><div><p class="formula">zeta(1/2 + it) = 0</p><div class="callout"><strong>Process:</strong> 60 agents. 31M tokens. 54 papers.</div><p class="note" style="margin-top:18px">The Riemann hypothesis remains open.</p></div><div class="comparison"><div class="bar-row"><span class="bar-label">PRIOR</span><div class="bar-track"><div class="bar prior">41.6%</div></div><span class="bar-value">41.6%</span></div><div class="bar-row"><span class="bar-label">CLAUDE</span><div class="bar-track"><div class="bar claude">67.2%</div></div><span class="bar-value">67.2%</span></div><p class="source">Anthropic research post and linked paper / Aug. 10-13.</p></div></div>`,
   },
   {
-    file: 'slide-07.html',
-    n: '07',
-    body: `
-      <p class="kicker">Earth science</p>
-      <h1>An extra day of cyclone lead time</h1>
-      <p class="dek">WeatherNext Cyclones, in Nature on August 6, reports a day or more of average advantage on track, intensity, and wind structure versus leading operational models.</p>
-      <div class="grid cols-3">
-        <article class="card"><p class="label">Paper</p><h2>2023–2025 storms</h2><p>Average extra-day lead time. Three-day skill matching prior two-day skill, per DeepMind.</p></article>
-        <article class="card"><p class="label">Operations</p><h2>NHC, 2025</h2><p>Used alongside official guidance, including Hurricane Melissa. Not a replacement for warnings.</p></article>
-        <article class="card"><p class="label">Release</p><h2>Open weights</h2><p>Cyclones, WeatherNext 2, and a Colab-runnable mini variant are public.</p></article>
-      </div>
-    `,
+    file: 'slide-07.html', n: '07', kind: 'content', body: `
+      <div class="split equal"><div><p class="kicker">Earth science</p><h1>One more day</h1><p class="dek">Average cyclone forecast lead-time advantage.</p><div class="stat-row"><div class="stat-block"><p class="stat">2023-25<small>evaluation storms</small></p></div><div class="stat-block purple"><p class="stat">+24h<small>average advantage</small></p></div><div class="stat-block pink"><p class="stat">1,000<small>scenarios</small></p></div></div><div class="callout"><strong>Keep:</strong> official weather warnings in front.</div></div><div class="media-wrap"><img class="media contain" src="assets/weathernext-cyclones.png" alt="WeatherNext cyclone forecast graphic"><span class="source source-overlay">Google DeepMind / Nature</span></div></div>`,
   },
   {
-    file: 'slide-08.html',
-    n: '08',
-    body: `
-      <p class="kicker">Markets and chips</p>
-      <h1>Arizona turns a profit. Memory does not get cheaper.</h1>
-      <p class="dek">This is a supply-chain briefing, not an investment thesis.</p>
-      <div class="grid cols-2">
-        <article class="card">
-          <p class="label">TSMC Arizona · 1H26</p>
-          <p class="stat">+663%<small>YoY profit, per TrendForce citing the interim report</small></p>
-          <p>NT$36.1B first-half profit; most profitable overseas subsidiary. Q2 still slipped 8.2% QoQ as depreciation rose.</p>
-        </article>
-        <article class="card">
-          <p class="label">DDR5 retail · August</p>
-          <p class="stat">~4.9×<small>Germany index vs a year ago, 3D Center via TrendForce</small></p>
-          <p>Server DRAM contracts still seen up 13–18% QoQ in 3Q26. Local GPUs and API bills share this floor.</p>
-        </article>
-      </div>
-    `,
+    file: 'slide-08.html', n: '08', kind: 'content', body: `
+      <p class="kicker">Markets and chips</p><h1>Hardware sets the floor</h1><p class="dek">AI demand is reaching fabs. Memory scarcity reaches everyone.</p><div class="hardware-story"><section class="hardware-fact fab"><p class="fact-label">TSMC Arizona / 1H26</p><p class="fact-number">NT$36.1B</p><h2>Profit</h2><p class="fact-secondary"><strong>+663%</strong> year over year</p><p class="source">TrendForce citing TSMC interim figures.</p></section><section class="hardware-fact memory"><p class="fact-label">German DDR5 / August</p><p class="fact-number">~4.9×</p><h2>Year-ago price index</h2><p class="fact-secondary">Server DRAM outlook: <strong>+13–18%</strong> quarter over quarter</p><p class="source">TrendForce / 3D Center retail index.</p></section></div><div class="hardware-takeaway"><span>LOCAL MODEL</span><strong>Same hardware bill</strong><span>CLOUD API</span></div>`,
   },
   {
-    file: 'slide-09.html',
-    n: '09',
-    body: `
-      <p class="kicker">This week</p>
-      <h1>Hand it off. Then verify.</h1>
-      <div class="rule"></div>
-      <ul>
-        <li>Compare Grok 4.6 and Gemini 3.7 Flash on five real tasks, scored per accepted result.</li>
-        <li>If you have Grok Bot, give it one multi-app job with an approval gate on send, pay, or publish.</li>
-        <li>If you have 24 GB+, run Glimmer or Qwen3.8-27B on one private loop.</li>
-        <li>Read the Lean artifact before repeating a math headline. Keep NHC in front of any weather demo.</li>
-        <li>Price RAM and GPUs as part of the model decision.</li>
-      </ul>
-    `,
+    file: 'slide-09.html', n: '09', kind: 'closing', body: `
+      <div class="closing-content"><div><img src="${brand}/source/logo-master-2048.png" alt="Longmont AI cubist parrot"><p class="kicker">This week</p><h1>Hand it off. Verify it.</h1><div class="closing-actions"><span>Test real work</span><span>Gate risky actions</span><span>Price the hardware</span></div></div></div>`,
   },
 ];
 
 function html(slide) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Slide ${slide.n}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Beleza&family=JetBrains+Mono:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="${cssHref}">
-</head>
-<body>
-  <div class="slide">
-    <div class="accent"></div>
-    ${slide.body}
-    <div class="footer">
-      <span>Longmont AI · The work keeps running</span>
-      <span>${slide.n}</span>
-    </div>
-  </div>
-</body>
-</html>
-`;
+  const header = slide.kind === 'content' ? `<div class="brand-header"><img src="${brand}/logo/wordmark-horizontal-on-dark.png" alt="Longmont AI"><span>${slide.n} / 09</span></div>` : '';
+  const footer = slide.kind === 'content' ? '<span>longmontai.com</span><span>COMMUNITY / LEARN / BUILD / SHARE</span>' : '<span>longmontai.com</span><span>Curated by Intelligence.</span>';
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Slide ${slide.n}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Beleza&family=JetBrains+Mono:wght@400;500;700&display=swap"><link rel="stylesheet" href="slides.css"></head><body><div class="slide ${slide.kind}-slide">${header}${slide.body}<div class="footer">${footer}</div></div></body></html>`;
 }
 
 await mkdir(root, { recursive: true });
-for (const slide of slides) {
-  await writeFile(join(root, slide.file), html(slide));
-}
-console.log(`Wrote ${slides.length} slide HTML files.`);
+for (const slide of slides) await writeFile(join(root, slide.file), html(slide));
+console.log(`Wrote ${slides.length} branded slide HTML files.`);

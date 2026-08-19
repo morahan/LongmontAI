@@ -428,8 +428,11 @@ new articles, visual briefings, screenshots, and media:
   details become illegible. Slide images are exported at least 1920 by 1080.
 - **Slideshow.** Every edition begins with a concise slideshow that has a clear
   narrative, one primary claim per slide, visible source attribution, and a
-  downloadable deck. It should use the site palette and the same restrained,
-  editorial hierarchy as the article.
+  downloadable deck. Start from the canonical masters in `public/brand/deck/`:
+  the parrot anchors covers and closing slides, and the Longmont AI wordmark bar
+  anchors content slides. Use only the exported brand palette. Slide copy stays
+  terse: one short headline, no more than one supporting sentence, and compact
+  labels. The article carries the detail.
 - **Video.** Use native, user-initiated playback with controls, `playsInline`,
   and metadata preload. Never autoplay audio.
 - **Release hold.** Keep a new edition as an unlisted draft until exactly ten
@@ -488,6 +491,11 @@ Four 1920×1080 masters in `public/brand/deck/`:
 - `slide-closing.png` (thank-you / CTA)
 
 Layer editable text on top of the `{{ placeholder }}` regions.
+
+These masters are mandatory for meetup edition decks. Recreate their geometry
+when generating slides in HTML, but keep the same parrot lockup, wordmark bar,
+palette, type hierarchy, and footer treatment. Do not substitute an unrelated
+light or dark theme for a single edition.
 
 ### 12.5 Hero artwork
 Source artwork lives at `public/images/hero/hero-1.png` and `hero-2.png`. Regenerate at 1920×1080 minimum; prefer 2:1 or 16:9 ratios. Treat them like the brand photography they are — no logos, no busy text.

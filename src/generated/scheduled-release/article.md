@@ -1,453 +1,433 @@
 ---
-id: edition-2026-08-05-signal-routing
-date: 2026-08-05
-publishAt: 2026-08-05T11:15:00-06:00
+id: edition-2026-08-19-work-keeps-running
+date: 2026-08-19
+publishAt: 2026-08-19T11:28:00-06:00
 status: scheduled
-title: "Signal Routing: Models, Machines, and the Cost of Belief"
-summary: "An August 5 briefing on the agentic model wave, open-weight competition, embodied AI and orbital compute, token-cost optimization, and the discipline of measuring claims before deploying them."
+title: "The work keeps running"
+summary: "An August 19 briefing on GLM-5.3's coding and cyber jump, Grok Bot, Nemotron Lightning and Switchyard, Gemini and Muse coding agents, physical AI, WeatherNext cyclones, Qwen-Image 3.0, and the hardware gating the stack."
 ---
 
-## Signal Routing
-
-The last two weeks were not a single-model race. They were a routing problem.
-Frontier and open-weight releases keep making capable coding and knowledge-work
-agents cheaper. At the same time, models are absorbing video, audio, tools,
-physical action, and robots. The result is a bigger choice set and a sharper
-obligation: evaluate the whole system before a release announcement, a
-purchasing decision, or an autonomous action becomes real.
-
-This edition groups the supplied research by the decision it informs: model
-selection, evidence and evaluation, the physical stack, efficiency, markets,
-and governance. Screenshots of posts and vendor charts are labelled as supplied
-claims — useful leads, not replacements for primary documentation or a
-repeatable local test.
-
-**In this edition:** the release board, evidence discipline, long-horizon
-agents, two mathematical-research claims, robotics and orbital compute,
-token-cost optimization, market signals, and a promotion checklist.
-
-{{slideshow:signal-routing}}
-
-## The release board: agentic work gets cheaper, more open, and more multimodal
-
-| Rank | Release | Date | Why it matters in practice |
-| --- | --- | --- | --- |
-| 1 | Claude Opus 5 | Jul. 24 | Anthropic's everyday frontier tier for coding, knowledge work, and automation; vendor-reported near-Fable 5 quality at about half the price. |
-| 2 | Qwen3.8-Max | Aug. 3 | Alibaba's 2.4T-parameter MoE flagship, with 95B active parameters, native vision, and a 1M-token context window. |
-| 3 | DeepSeek-V4-Flash-0731 | Jul. 31 | A re-post-trained Flash API release focused on coding agents, tool use, Responses API compatibility, and Codex. |
-| 4 | Kimi K3 full weights | Jul. 27 | A downloadable 2.8T-parameter MoE with 104B active parameters, vision/video understanding, and 1M context. |
-| 5 | Gemini Robotics ER 2 | Jul. 30 | An embodied-reasoning layer for continuous video, planning, tool use, correction, and multi-robot work. |
-| 6 | FLUX 3 | Jul. 23 | A unified image, video, audio, and action-prediction effort, with video and robotics entering early access. |
-| 7 | MiniMax H3 | Jul. 31; weights Aug. 2 | A 33B omni-modal video model for text, image, video, and audio inputs, with 2K video and stereo sound claims. |
-| 8 | Grok Voice Think Fast 2.0 | Jul. 29 | A real-time speech-to-speech update aimed at lower-latency conversational agents and more reliable tools. |
-| 9 | Microsoft MAI-Cyber-1-Flash | Jul. 27 | A specialized vulnerability-finding model supporting Microsoft's MDASH remediation workflow. |
-| 10 | Mistral Shieldstral | Aug. 4 | A 3B open-weight multimodal classifier for runtime, natural-language safety policies. |
-| 11 | Meta AI with Muse Spark 1.1 | Jul. 24 | Meta extended Muse Spark 1.1 into planning, connected email and calendar work, slide creation, and recurring tasks. |
-| 12 | Grok Build Workflows | Jul. 23 | xAI added background workflows that distribute work across parallel agents and report verified results. |
-
-Two more updates belong on the watchlist: **Google Lyria 3.5** for more
-controllable music generation, and **Grok Imagine Video 1.5** for 1080p video,
-voice references, and character consistency.
-
-Dates, availability, parameter counts, and benchmark figures above are
-provider-reported unless a linked source names an independent harness. The
-table ranks expected practical impact, not parameter count alone.
-
-![Supplied benchmark screenshot for Alpamayo 2, presented as a vendor comparison rather than an independent ranking.](/weekly-screenshots/2026.08.05/alpamayo-reasoning-benchmark.png)
-
-![Supplied Alpamayo 2 comparison chart across major AV tasks, presented as vendor-reported evidence.](/weekly-screenshots/2026.08.05/alpamayo-av-task-benchmark.png)
-
-### The high-impact changes
-
-**Claude Opus 5 is the closed-model release to test first.** Anthropic says it
-is available across Claude surfaces, is the default on Claude Max and the
-strongest model on Claude Pro, and approaches Claude Fable 5 at roughly half
-the price. The announcement frames the gain around software engineering,
-knowledge work, automation, and using effort settings to trade intelligence
-for cost and latency — a routing proposition, so reproduce it against the same
-tasks, tools, permissions, and review gates your team actually uses.
-
-**Qwen3.8-Max and Kimi K3 make open-weight availability part of the frontier
-conversation.** Qwen3.8-Max's claimed 1M context and native vision matter only
-if its API behavior, downloadable release, hardware footprint, and license fit
-the workload. Kimi K3's full weights change the equation differently: they let
-a team inspect, host, and evaluate a very large multimodal MoE without
-depending solely on a proprietary endpoint.
-
-**DeepSeek-V4-Flash-0731 shows that post-training can move the product more
-than an architecture label.** DeepSeek describes a re-post-training update,
-not a new architecture, but reports stronger agent benchmarks, native
-Responses API support, and direct Codex adaptation. Keep the benchmark
-configuration attached to the result — DeepSeek names its own harness and
-max-effort settings for coding-agent measurements.
-
-**The multimodal and robotic releases point beyond chat.** Gemini Robotics
-ER 2, FLUX 3, MiniMax H3, Grok Voice Think Fast 2.0, and Lyria 3.5 all widen
-the model boundary: a system may perceive, plan, act, speak, generate media,
-and re-plan. The acceptance test has to widen too — measure latency,
-grounding, interruption handling, tool failure recovery, permissions, and
-human override, not just a final text answer.
-
-**Security and safety are becoming smaller, deployable components.**
-MAI-Cyber-1-Flash is a specialized agent component; Shieldstral is small
-enough to run as a configurable multimodal policy layer. Neither removes the
-need for staged review, least privilege, isolated test environments, and a
-human decision on material changes.
-
-**Agent products are also becoming orchestration layers.** Meta's Muse Spark
-1.1 update connects planning to email, calendars, slides, and recurring tasks,
-while Grok Build Workflows can fan background work across parallel agents.
-Both make workflow verification and permission boundaries part of the product,
-not an optional layer added after deployment.
-
-## The evidence board: do not route by a single score
-
-![Supplied FrontierCode score-versus-cost chart. It should be read as a chart of listed configurations, not a universal model ranking.](/weekly-screenshots/2026.08.05/frontier-code-cost-comparison.png)
-
-![Supplied agentic coding chart showing how score and cost change by effort level.](/weekly-screenshots/2026.08.05/agentic-coding-effort-level.png)
-
-![Supplied FrontierCode score-versus-cost snapshot with named configurations.](/weekly-screenshots/2026.08.05/frontier-code-score-cost.png)
-
-![Supplied model cost routing chart. The right selection depends on the task, harness, and acceptance threshold.](/weekly-screenshots/2026.08.05/model-cost-routing-chart.png)
-
-![Supplied novel-problem score-versus-evaluation-cost chart.](/weekly-screenshots/2026.08.05/novel-problem-cost-chart.png)
-
-The common message across the supplied cost charts is not that one model has
-won. It is that the cost of an *accepted* result depends on a whole
-configuration: model, reasoning setting, prompt, retries, tool calls, tokens,
-latency, and agent harness. A cheap failed run is not cheap. A high benchmark
-score achieved in a different environment may not transfer.
-
-![Supplied ARC-AGI-3 DLC-games chart. Treat the associated caption and any model comparison as an evaluation result under its named setup.](/weekly-screenshots/2026.08.05/arc-agi-3-dlc-games.png)
-
-> **A better local decision loop**
-> 1. Select five to ten real tasks, including one failure-prone task and one that needs review.
-> 2. Define the acceptance test before choosing a model: tests pass, output is correct, a reviewer can reproduce it, and policy constraints hold.
-> 3. Hold the harness fixed while comparing models, then compare harnesses separately.
-> 4. Record success rate, total wall time, total tokens, tool failures, human intervention, and cost per accepted result.
-> 5. Route routine work to the cheapest configuration that clears the bar. Escalate hard work deliberately, with a capable fallback.
-
-## Long-horizon agents: capability without verification is a fragile asset
-
-![Supplied METR chart at the 50 percent completion threshold, relating model capability to software-task time horizon.](/weekly-screenshots/2026.08.05/metr-50-percent-time-horizon.png)
-
-![Supplied METR chart at the 80 percent completion threshold.](/weekly-screenshots/2026.08.05/metr-80-percent-time-horizon.png)
-
-![Supplied METR linear-scale chart at the 50 percent threshold.](/weekly-screenshots/2026.08.05/metr-linear-50-time-horizon.png)
-
-![Supplied METR linear-scale chart at the 80 percent threshold.](/weekly-screenshots/2026.08.05/metr-linear-80-time-horizon.png)
-
-The time-horizon visuals make a useful distinction: finishing a longer task
-under a benchmark's protocol does not earn a system permission to operate
-without checks. Long runs accumulate ambiguity, stale state, credential
-exposure, partial tool failure, and an incentive to declare success early. The
-answer isn't to avoid agents — it's to give them bounded authority, observable
-checkpoints, rollback paths, and independent verification.
-
-![Supplied example notes on GPT changes. It is presented as a working artifact, not a validated diagnosis.](/weekly-screenshots/2026.08.05/rsi-gpt-tweaks.png)
-
-![Supplied screenshot carrying a suspicious claim. The edition preserves it as a claim and does not treat it as proof.](/weekly-screenshots/2026.08.05/rsi-suspicious-claim.png)
-
-![Supplied review-chain graphic: useful as a process prompt, not proof that a particular review has run.](/weekly-screenshots/2026.08.05/review-chains-work.png)
-
-**Working rule:** model output, a social post, and a chart are inputs to a
-decision. The evidence is the result of an observable test someone else can
-repeat.
-
-## Mathematical breakthroughs: from plausible answers to checked arguments
-
-The most consequential development in this window may not be a chatbot
-release at all — it's the growing ability of AI systems to search for
-original mathematical results and return work that can be checked
-mechanically. That reframes the question from "does this answer sound
-convincing?" to "what exactly has been formalized, what does it establish, and
-what remains for the research community to interpret?"
-
-**OpenAI's Astra results are an extraordinary research claim.** On August 1,
-OpenAI reported that an internal version of its forthcoming Astra model
-resolved or made substantial progress on ten long-standing open problems. The
-company says the model found the arguments and humans prepared manuscripts,
-after which the model formalized every argument as a Lean certificate. The
-claimed results span high-dimensional geometry, coding theory, arithmetic
-circuit complexity, group theory, operator algebras, quantum complexity,
-lattice cryptography, and extremal combinatorics.
-
-The announced examples are unusually concrete:
-
-- New sphere-packing upper bounds reaching the Cohn-Elkies threshold, and exponentially improved bounds for binary and spherical codes.
-- A construction of non-sofic groups, a disproof of Connes's rigidity conjecture, and a resolution of Ehrhart's volume conjecture in every dimension.
-- An arithmetic-formula lower bound of order $n^4 / \log n$, an exponential parallel-repetition theorem for general two-player quantum games, and polynomial-factor hardness of approximation for the Closest Vector Problem.
-- New multicolor Ramsey-number and extremal-graph-theory results that OpenAI describes as resolving three Erdős problems.
-
-The technical significance isn't a score on a familiar contest set — these are
-claims about new bounds, constructions, and counterexamples in open research
-areas. Formal Lean verification can check that the encoded proof follows the
-rules of the formal system, an enormous step beyond trusting a fluent
-natural-language derivation. It does **not** by itself decide whether a result
-is novel, how it relates to earlier literature, whether the formalization
-captures the intended theorem, how important it is, or how credit should be
-assigned. Those remain mathematical-community questions.
-
-**Claude Fable 5's Jacobian-conjecture contribution illustrates both the
-promise and the qualification.** Mathematician Levent Alpöge used the model to
-identify a three-dimensional polynomial map that gives a counterexample to a
-long-standing version of the Jacobian conjecture; Smithsonian reports that
-several mathematicians independently checked it. The result matters because
-the model contributed to original research. It does not resolve every
-formulation or the lower-dimensional cases of the conjecture — the correct
-headline is a significant counterexample, not "AI solved the Jacobian
-conjecture."
-
-### Lean, research loops, and responsible mathematical claims
-
-The wider shift is from math benchmarks with known answers toward open-ended
-research loops: search for a construction or counterexample, generate an
-argument, translate it into Lean 4, and submit both the human-readable proof
-and the formal artifact to expert scrutiny. Some call this "vibe-proving,"
-when AI runs autonomously for hours to explore a search space. The better name
-for a serious workflow is **generate, formalize, review**.
-
-The Leiden Declaration on AI and Mathematics gives this moment useful
-guardrails: disclose AI use, credit prior work, make results available for
-evaluation, and don't let an announcement replace mathematical peer review.
-For builders, this is the clearest available model of high-stakes agentic
-work — generate quickly, verify mechanically where possible, and preserve the
-human process that explains what the proof means.
-
-## The physical stack: from phones to robots to orbital compute
-
-![Supplied on-device model comparison chart.](/weekly-screenshots/2026.08.05/on-device-model-comparison.png)
-
-![Supplied note about on-device frontier-model capability. Confirm the model, quantization, device, and test before inferring a hardware requirement.](/weekly-screenshots/2026.08.05/on-device-model-capability-note.png)
-
-![Supplied on-device model memory table.](/weekly-screenshots/2026.08.05/on-device-model-memory-table.png)
-
-Phone-sized inference belongs in the same conversation as giant open-weight
-models: deployment is a spectrum. Private, low-latency, offline-capable local
-inference can be worth choosing even when it's less capable than a cloud
-frontier endpoint. Compare the whole operating envelope — memory, battery,
-throughput, model quality, data handling, update process, and whether the task
-can fail safely.
-
-Gemini Robotics ER 2 and FLUX 3 put physical action closer to the
-model-release board. In robotics, the acceptance surface is tangible: can the
-system maintain situational awareness, recognize a failed action, stop safely,
-and ask for help? Those are better questions than a single demo clip.
-
-### Robotics: the model is the coordinator, not the whole robot
-
-The current step forward is architectural. Google presents **Gemini Robotics
-ER 2** as a high-level embodied-reasoning layer: it watches continuous video,
-reasons about the next step, plans multi-step work, calls tools, and hands
-motor execution to lower-level vision-language-action models or robotics
-APIs. Google says the model can track progress, retry a failed step, and
-coordinate multiple robots in shared environments. Its public availability in
-the Gemini API and AI Studio makes it a practical system to evaluate, not only
-a research demo.
-
-That division of responsibility matters. A language-and-vision planner
-shouldn't get raw, unrestricted actuator control just because it can describe
-an action. A robust stack separates the work into layers:
-
-1. **Perceive:** stream video, audio, task state, and safety signals into a model that can identify objects, people, locations, and task progress.
-2. **Plan:** turn a human objective into bounded, observable steps with explicit preconditions, a time limit, and a safe stop state.
-3. **Act:** invoke constrained navigation, grasping, manipulation, or teleoperation interfaces through an approved controller rather than arbitrary device access.
-4. **Verify:** use sensors and task-specific checks to decide whether the intended state was actually reached, not whether the model believes it was.
-5. **Recover or escalate:** retry only within a defined budget; otherwise stop, preserve the evidence, and hand the decision to a person.
-
-**Progress understanding is a particularly important capability.** Google
-describes ER 2 as classifying progress from continuous video and finding the
-moments that establish whether a multi-step action is complete — valuable
-because a robot that can't tell a bag is still open, an object is missing, or
-a hand has entered the workspace doesn't have a reliable stopping condition.
-Vendor-reported progress scores are a starting signal; a deployment needs a
-site-specific test set covering glare, clutter, occlusion, novel objects,
-people moving through the scene, delayed tools, and real recovery behavior.
-
-**FLUX 3 points to a second path: models of physical dynamics.** Black Forest
-Labs describes a unified image, video, and audio model meant to represent how
-objects move, interact, and sound, with action prediction being evaluated
-through specialized robotics work. Its announced FLUX-mimic effort combines
-the video backbone with robot-learning systems for dexterous manipulation.
-This is an early-access, partner-led direction, not evidence that a general
-video model is ready to run production robots — but the idea that
-simulation, perception, prediction, and action can share a representation of
-the same world is a promising one.
-
-#### What a credible robotics evaluation looks like
-
-- **Task success:** complete the real task to a measurable specification, across repeated trials rather than a single favorable demo.
-- **Safety behavior:** detect a blocked path, unexpected person, dropped object, or contradictory instruction; enter the defined safe state within the required time.
-- **Grounding:** match plans and verbal explanations to what cameras and sensors actually observed.
-- **Recovery:** demonstrate what happens after a failed grasp, unavailable tool, degraded network, stale scene state, or impossible request.
-- **Human control:** provide an accessible pause, stop, teleoperation, and incident trail; a human must be able to take over without fighting the agent.
-- **Operational fit:** measure latency, uptime, battery or power constraints, maintenance burden, calibration drift, access controls, and cost per completed task.
-
-The near-term opportunity isn't a universal household robot. It's a small
-number of bounded physical workflows where the environment, tools, handoffs,
-and failure modes are known well enough to evaluate. Build the stop button and
-the evidence trail before the clever demo.
-
-### Elon Web Services: when the compute moves to orbit
-
-![Supplied Starlink one-terabit concept graphic.](/weekly-screenshots/2026.08.05/starlink-one-terabit-concept.jpeg)
-
-![Supplied StarMind satellite concept image.](/weekly-screenshots/2026.08.05/starmind-satellite-concept.jpeg)
-
-![Supplied SpaceX post: SpaceX says it is partnering with Nvidia to design the Starmind AI1 satellite compute payload, with each satellite carrying Nvidia Rubin GPUs and Vera CPUs for datacenter-class space compute.](/weekly-screenshots/2026.08.05/starmind-nvidia-compute-claim.png)
-
-![Supplied StarMind satellite concept image. Confirm deployment plans, capacity, financing, and regulatory approvals through primary sources.](/weekly-screenshots/2026.08.05/starmind-nvidia-compute-post.jpeg)
-
-We're only half joking about "Elon Web Services." Between Starlink's claimed
-one-terabit downlink concept, xAI's Grok Voice and Imagine Video updates, and
-the newly supplied Starmind AI1 claim — Nvidia Rubin GPUs and Vera CPUs flown
-as a satellite compute payload — one company's orbital, connectivity, and
-model stack is starting to look like a vertically integrated cloud provider
-that happens to launch itself into space. That's a genuinely interesting
-systems bet: put GPUs where the sun and cooling are free and the fiber
-constraints of a terrestrial datacenter don't apply.
-
-It is also, right now, a set of announcement-stage claims, not a shipping
-product. Treat "Starmind AI1" the way this edition treats every other vendor
-post: confirm launch dates, payload specifications, thermal and power budgets,
-latency to ground stations, and regulatory approval before it enters any
-capacity-planning conversation. Orbital compute is a compelling long-range
-prompt for where the physical stack is headed — it is not yet a line item.
-
-## The efficiency board: optimization techniques for token maxxing
-
-Every board above eventually reduces to the same unit economics: what does an
-*accepted* result cost, in tokens, wall time, and dollars? Model releases get
-the headlines, but three quieter classes of optimization move that number
-more than picking a different model does.
-
-**Squeeze the kernel, not just the prompt.** Cursor's open-sourced
-Mixture-of-Kittens (MoK) training kernel fuses Mixture-of-Experts
-communication and computation into a single deterministic kernel and reports
-up to 2.37x higher forward throughput than the strongest public baseline on
-GB300 NVL72 hardware, across Kimi K2.7, GLM 5.2, Qwen 3.5, and DeepSeek V4
-Pro. This is infrastructure-layer optimization — the same prompt, the same
-model, running faster for less — and it's a reminder that "token maxxing"
-isn't only a prompting trick. Some of the cheapest tokens in this edition
-come from better plumbing, not a better model.
-
-![Supplied Cursor (@cursor_ai) post announcing the open-sourced Mixture-of-Kittens MoE training kernel, reporting up to 2.37x higher throughput than the strongest public baseline.](/weekly-screenshots/2026.08.05/mixture-of-kittens-benchmark.png)
-
-**Cache what repeats.** Qwen3.8-Max's posted pricing — $2.00 per million input
-tokens, $6.00 output, and $0.25 per million tokens served from implicit
-caching — puts a number on a technique every routing decision should already
-use: a cache hit on a repeated system prompt, tool schema, or long context
-costs roughly an eighth of a fresh input token. Multiply that across a coding
-agent that resends the same repo context on every turn, and prompt caching
-stops being a nice-to-have and becomes the largest lever most teams haven't
-pulled.
-
-**Route by effort, not by default.** The agentic-coding effort-level chart in
-the evidence board above shows the same model producing a range of scores and
-costs depending on its reasoning setting. Claude Opus 5's own announcement
-frames effort settings as the mechanism for trading intelligence against cost
-and latency, and DeepSeek names its harness and max-effort configuration
-alongside its benchmark claims for the same reason: the effort dial is part
-of the model's identity for cost purposes, not an afterthought.
-
-**A practical checklist for token maxxing:**
-
-- Cache repeated system prompts, tool schemas, and long context instead of resending them.
-- Batch independent requests where the provider supports it, rather than paying per-call overhead one at a time.
-- Trim context to what the task needs; a bigger window is not free just because it's available.
-- Match reasoning effort to task difficulty, and reserve max-effort settings for the failure-prone cases identified in your acceptance test.
-- Fix retries at the acceptance-test level, not the prompt level — a well-defined pass/fail gate prevents the silent retry loops that quietly multiply token spend.
-- Measure cost per *accepted* result, not cost per token or per call, so infrastructure wins like Mixture-of-Kittens and prompting wins like caching show up in the same ledger.
-
-## The economics board: price changes, supply chains, and market stories
-
-![Supplied model price comparison from before a reported change.](/weekly-screenshots/2026.08.05/model-pricing-before-change.png)
-
-![Supplied model price comparison from after a reported change.](/weekly-screenshots/2026.08.05/model-pricing-after-change.png)
-
-Pricing is a product feature. It shapes routing, retries, effort settings,
-model fallbacks, and whether a workflow is economical at scale — and it's
-the market-level counterpart to the caching and effort-routing techniques
-above. Snapshot images are especially perishable here: preserve the date,
-link the official price page, and calculate cost from current terms and
-observed usage rather than an old card or a headline discount.
-
-The same caution applies one level up, where price becomes valuation.
-
-![Supplied market-cap comparison for AI labs.](/weekly-screenshots/2026.08.05/ai-lab-market-cap-comparison.png)
-
-![Supplied Leopold market timeline screenshot.](/weekly-screenshots/2026.08.05/leopold-market-timeline.png)
-
-![Supplied Situational Awareness Fund composition graphic.](/weekly-screenshots/2026.08.05/leopold-situational-awareness-fund.png)
-
-![Supplied fund-profile screenshot.](/weekly-screenshots/2026.08.05/leopold-fund-profile.png)
-
-These market images show why the AI story isn't limited to model providers.
-Semiconductors, networking, power, cooling, hosting, device makers, and
-software distribution all capture different parts of the value chain. They do
-not, however, establish an investment thesis. Separate a fund's or
-commentator's story from audited financial results, valuation, concentration
-risk, and your own time horizon.
-
-## Open weights, policy, business workflows, and health claims
-
-![Supplied open-weight model-family notes.](/weekly-screenshots/2026.08.05/open-weight-model-family-notes.png)
-
-![Supplied Satya Nadella post on open weights and technology leadership. It is a policy position, not a model benchmark.](/weekly-screenshots/2026.08.05/open-weights-policy-post.png)
-
-Open weights change the operational conversation: a team may inspect, host,
-adapt, and retain a model, but it also inherits evaluation, security,
-license, distribution, and update responsibilities. Check weight
-availability, license terms, region restrictions, acceptable-use terms, and
-model-card limitations before calling a release "open" in the way that
-matters to your deployment.
-
-![Supplied business-agent notes.](/weekly-screenshots/2026.08.05/business-agent-notes.png)
-
-![Supplied business-agent workflow notes.](/weekly-screenshots/2026.08.05/business-agent-workflow-notes.png)
-
-The business-workflow sketches fit the central theme: value appears when an
-agent's action connects to a clear handoff, a responsible owner, data access
-that is actually authorized, and a testable business outcome. The model alone
-is not the workflow.
-
-![Supplied health interface screenshot about a claimed reverse-aging result. It is not clinical evidence and should not guide health decisions.](/weekly-screenshots/2026.08.05/health-reverse-aging-interface.png)
-
-Health is the sharpest reminder that evidence standards are domain-specific. A
-dashboard, paper summary, or post cannot establish safety or efficacy. For any
-health claim, look for the actual study, population, endpoints, limitations,
-independent replication, and appropriate clinical guidance.
+The last two weeks were not another model-badge race. They were the moment
+the work left the chat window. SpaceXAI shipped an always-on Bot with its own
+computer. Z.ai pushed GLM-5.3 further into coding and vulnerability work.
+NVIDIA paired a fast execution model with an open router, while Meta paired a
+coding model with a persistent terminal agent. Google and OpenAI made cheap or
+fast serving part of the product, not a footnote. Alibaba stretched both local
+agents and generated images. And the scientific story moved from fluent
+answers toward artifacts a community can check: a tighter bound on zeta
+zeros, and a cyclone model with an extra day of average lead time.
+
+That is one stack, read at four layers: **models**, **tools**, **science**,
+and **the physical market that still prices all of it**. The right local
+habit is the same as last month. Treat a release as a configuration to test,
+not a verdict. Measure an accepted result. Keep a stop button on anything
+that can send, spend, publish, or act.
+
+**In this edition:** the release board, GLM-5.3 coding and cyber capability,
+Grok Bot, Nemotron Lightning and Switchyard, Muse Code and local open-weight
+agents, workhorse pricing, Qwen-Image 3.0, the physical-AI loop, checked math
+and cyclone science, and the foundry-and-memory constraint underneath.
+
+{{slideshow:work-keeps-running}}
+
+![Longmont AI's cubist parrot beside the title The work keeps running on the branded dark cover slide.](/weekly-screenshots/2026.08.19/source-media/work-keeps-running-cover.png)
+
+*Longmont AI briefing cover. Source graphics and citations appear on the
+relevant slides and in the sections below.*
+
+## The release board: a practical model-and-tool matrix
+
+| Release | Date | Type and access | Best fit | Main caveat |
+| --- | --- | --- | --- | --- |
+| GLM-5.3 | Aug. 14 | Hosted coding/reasoning model; API and Coding Plan now, weights promised after two weeks | Long-horizon coding, tool use, authorized vulnerability research | Coding and cyber results are provider-run; mandatory thinking changes migration behavior |
+| Grok Bot | Aug. 11 | Persistent cloud-computer agent; gated beta | Multi-app jobs that need a browser, terminal, files, and background execution | Bots share one account-level computer; this is a product, not a separate model |
+| Nemotron 3.5 Lightning | Aug. 11 | Open 30B MoE with 3B active parameters; local, hosted, BF16, and NVFP4 | Fast, high-volume execution steps beneath a larger planner | Speed and task-completion comparisons are NVIDIA-reported |
+| NeMo Switchyard | Aug. 11 | Apache-2.0 Rust routing proxy and library | Routing each agent turn by quality, latency, cost, or workflow stage | Pre-alpha and explicitly not production-ready |
+| Gemini 3.7 Flash | Aug. 13 | Hosted multimodal workhorse; API and Gemini products | Cost-sensitive coding, web apps, agent loops, and knowledge work | Introductory pricing expires December 31; benchmark gains are Google-reported |
+| Muse Spark 1.2 + Muse Code beta | Aug. 5 | Hosted coding model in Meta Model API plus macOS/Linux terminal agent | Repository-scale coding with persistent background subagents | Provider evaluations; Spark 1.2 is not the downloadable Glimmer model |
+| Grok 4.6 | Aug. 12 | Hosted frontier model in Cursor, Grok Build, and xAI API | Long-running research, codebase work, and visual artifact creation | Benchmark comparison is compiled from vendor and public figures |
+| Qwen3.8-27B | Aug. 14 | Apache-2.0 dense vision-language weights; 262K native context | Private local multimodal agents on capable hardware | SWE-bench Pro result is Alibaba-reported under a Claude Code harness |
+| Muse Glimmer | Aug. 10 | Apache-2.0 30B local agent model; 4-bit build targets 24–32 GB GPUs | Offline or private computer-use and agent experiments | Smaller-model capability still trails hosted frontier systems |
+| GPT-5.6 Sol and Luna update | Aug. 6 | ChatGPT model retune; Sol for Plus/Pro and Luna for Free/Go | Everyday chat with selectable effort and lower factual-error rates | ChatGPT-only builds do not replace the Codex or API versions |
+| GPT-5.6 Sol Ultrafast | Aug. 13 | Cerebras-hosted limited API preview of Sol | Interactive workloads where generation latency dominates | No public price or general-availability date; 750 tokens/sec is a vendor ceiling |
+| Qwen-Image 3.0 | Jul. 16 | Hosted unified image-generation and editing model in Qwen Chat | Dense infographics, storyboards, multilingual text, and interface mockups | Outside this fortnight; no weights, API terms, or reproducible eval card announced |
+| WeatherNext Cyclones | Aug. 6 | Open weather-research model, code, and weights | Tropical-cyclone track, intensity, and wind-structure forecasting research | Average evaluation gains do not replace official NHC, NWS, or Met Office warnings |
+
+Dates, prices, parameter counts, and scores are provider-reported unless a
+linked source names an independent harness. Products and routing tools are
+included because they materially change how the models can be used.
+
+### Short description breakdown
+
+- **GLM-5.3:** Z.ai's post-trained coding flagship, notable for a large jump on
+  long-horizon coding tests and rapidly improving dual-use cyber capability.
+- **Grok Bot:** an always-on agent workspace that gives Grok-backed workers one
+  persistent cloud computer instead of another temporary chat session.
+- **Nemotron 3.5 Lightning:** NVIDIA's small-active-footprint execution model,
+  designed to handle the repetitive calls that dominate an always-on agent's
+  latency and token budget.
+- **NeMo Switchyard:** an open routing layer that can keep routine turns on a
+  cheaper model and escalate difficult stages to a stronger one.
+- **Gemini 3.7 Flash:** Google's lower-cost coding and agent workhorse, tuned for
+  fast multimodal product work rather than maximum-effort frontier reasoning.
+- **Muse Spark 1.2:** Meta's hosted coding model, co-trained with the Muse Code
+  harness for debugging, repository understanding, compaction, and long jobs.
+- **Muse Code beta:** Meta's restart-safe terminal agent, with persistent
+  background subagents that gather context while the main agent keeps moving.
+- **Grok 4.6:** SpaceXAI's frontier lane for long-running code, research, and
+  visual work, with standard and faster API serving options.
+- **Qwen3.8-27B:** Alibaba's downloadable dense multimodal model for builders who
+  want long context, images, video, and agent controls on their own hardware.
+- **Muse Glimmer:** Meta's compact open-weight computer-use agent for private or
+  offline workflows within a high-end consumer-GPU envelope.
+- **GPT-5.6 Sol and Luna:** OpenAI's ChatGPT pair for deeper paid-tier reasoning
+  and cheaper broad access; the August update changes ChatGPT behavior, not API
+  model identity.
+- **GPT-5.6 Sol Ultrafast:** the same Sol model served through Cerebras for a
+  latency-first API preview rather than a new intelligence tier.
+- **Qwen-Image 3.0:** Alibaba's image model for information-heavy visual output,
+  especially small text, multilingual layouts, editing, and nested interfaces.
+- **WeatherNext Cyclones:** Google's open research system for cyclone tracks,
+  intensity, and wind structure, evaluated at roughly an extra day of average
+  lead-time advantage over leading operational models.
+
+**[GLM-5.3](https://z.ai/blog/glm-5.3) is a coding release with a dual-use
+cyber warning attached.** Z.ai says the model keeps GLM-5.2's base and gets
+its gains from scaled post-training on more long-horizon environments. Under
+the company's Claude Code 2.1.207 harness, GLM-5.3 rose from 4.6 to 28.3 on
+Terminal-Bench 3.0 and from 46.2% to 66.9% on DeepSWE v1.1. On Z.ai's private
+Code Bench, max effort reached 34.5% at about 75K output tokens per task,
+versus 23.4% at 96K for GLM-5.2. These are provider-run evaluations, and the
+private benchmark cannot be independently reproduced.
+
+The cyber result deserves equal weight. Z.ai reports 84.5% on the 1,507-task
+CyberGym vulnerability-discovery set, 54.4% versus GLM-5.2's 24.4% on
+ExploitBench, and 105 / 130 completed ExploitGym tasks under normalized two-
+and six-hour budgets, versus 29 / 39 for 5.2. Closed models still led the
+deeper exploitation tests. Z.ai also says reviewed model runs found 2,436
+vulnerabilities across 269 projects, but its disclosure ledger currently
+lists only 53 as public and 2,383 under embargo. Treat that larger total as a
+vendor claim until disclosures can be inspected, and use the capability only
+inside authorized testing and coordinated disclosure.
+
+GLM-5.3 is available through the API and Coding Plan at $1.40 / $4.40 per
+million input/output tokens. It has 1M context, up to 128K output, mandatory
+thinking, and `low`, `high`, or `max` reasoning effort. Z.ai says weights will
+follow two weeks after launch, after safety evaluation and hardening; this is
+not an open-weight release yet.
+
+**[Grok 4.6](https://x.ai/news/grok-4-6) is the closed-model release to try on long jobs.** SpaceXAI
+presents it as a Grok 4.5 follow-on aimed at staying with research, codebase
+work, and turning a product idea into a working artifact across many steps.
+The company reports that it matches GPT-5.6 Sol on the Artificial Analysis
+Intelligence Index, a nine-benchmark composite, with a posted 61 versus 61
+for Sol Max and 62 for Fable 5 Max. Those figures are compiled from
+developers' system cards and public leaderboards. Reproduce them on your
+tasks before you change a default. Pricing starts at $2 per million input
+tokens and $6 per million output tokens; a fast variant is twice that.
+
+**[Gemini 3.7 Flash](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/) is the workhorse price cut.** Three weeks after 3.6 Flash,
+Google is selling more coding, knowledge-work, and web-app capability at
+half the prior Flash rate through December 31, then $1.50 / $7.50 in 2027.
+Vendor-reported gains over 3.6 Flash include FrontierCode 1.1 Main at 43.6%
+versus 34.4% and DeepSWE v1.1 at 65.3% versus 49.0%. Gemini Spark, the 24/7
+personal agent for Google AI Pro and Ultra subscribers in supported
+countries, now runs on 3.7 Flash. That is a product update, not proof that
+your Workspace workflow is ready to run unattended.
+
+**[Nemotron 3.5 Lightning and NeMo Switchyard](https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/)
+turn model routing into a product pair.** Lightning is an open 30B
+mixture-of-experts model with 3B active parameters, aimed at routine tool
+calls, validation, code review, and other high-volume execution beneath a
+larger planner. NVIDIA reports up to 4× the output speed of similar-size
+models and 30% faster completion of 10,000 PinchBench tasks than Qwen3.6 35B
+at similar accuracy; those are vendor-run comparisons. Weights, data, recipes,
+BF16 and NVFP4 checkpoints are available under OpenMDW-1.1.
+
+[Switchyard](https://github.com/NVIDIA-NeMo/Switchyard) is the Apache-2.0
+routing layer: a Rust proxy and library that translates OpenAI, Anthropic, and
+Responses APIs and can route by classification, agent stage, escalation, or a
+custom policy. NVIDIA and partners report meaningful cost reductions, but the
+trade-offs vary: LangChain's 145-task test cut cost 74% while losing about six
+accuracy points. The repository labels Switchyard pre-alpha and not for
+production, which is the caveat to keep beside every savings number.
+
+**[Muse Code beta and Muse Spark 1.2](https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2)
+are Meta's cloud coding lane.** Muse Code is a macOS/Linux terminal agent whose
+persistent background subagents can research and report back while the main
+agent works. An append-only local event log records calls, tools, approvals,
+and edits so a crashed session can replay and resume. Spark 1.2 was co-trained
+with that harness for repository-scale generation, debugging, compaction, and
+long-horizon work. It is available in Muse Code and the Meta Model API; Meta's
+post describes the benchmark and 24-hour kernel-optimization examples as its
+own evaluations, not independent proof. Do not confuse this closed hosted
+model with the separate open-weight Muse Glimmer below.
+
+**OpenAI split ChatGPT access from API serving.** On August 6 it
+[retuned GPT-5.6 Sol for ChatGPT](https://openai.com/index/improving-gpt-5-6-sol-in-chatgpt/),
+added a reasoning slider for Plus and Pro,
+and began moving Free and Go users onto GPT-5.6 Luna with unlimited text
+chats and a Think button. OpenAI reports that, on an internal set of
+financial, medical, and legal prompts, responses containing at least one
+factual error were about 62% less common with Luna and 68% less common with
+Sol than with GPT-5.5 Instant. The ChatGPT-only versions do not replace the
+July Sol and Luna builds in Codex or ChatGPT Work. A week later, OpenAI
+previewed **[Ultrafast](https://openai.com/index/previewing-ultrafast/)**:
+the same Sol model on Cerebras hardware, at up to
+750 output tokens per second, described as up to 14× Standard. It is a
+limited API preview with no public price and no general-availability date.
+Treat the multiple as a vendor ceiling until a named workload is published.
+
+**[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) and
+[Muse Glimmer](https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model)
+make the local lane look like an agent runtime, not a hobby chat.** Qwen's
+August 14 Hugging Face card describes a
+27-billion-parameter dense vision-language model under Apache 2.0, with
+262,144 native tokens, native image and video understanding, and a
+`reasoning_effort` dial. Alibaba reports 61.7 on SWE-bench Pro under a
+Claude Code harness, above a 53.4 figure it lists for Claude Opus 4.6 Max;
+those are vendor numbers with named evaluation notes, not an independent
+bake-off. A managed Qwen Cloud build with 1M context is listed as coming
+soon. Muse Glimmer, posted August 10, is Meta Superintelligence Labs' 30B
+Apache-2.0 local agent, distilled from a larger Muse teacher. Meta says
+4-bit quantization shrinks the language model under 20 GB so it can share a
+24–32 GB card with KV cache, a perception encoder, and a speculative-decoding
+drafter. Artificial Analysis independently put Glimmer (high) at 35 on its
+Intelligence Index — useful as a size-class signal, not as a substitute for
+running it on your machine.
+
+## Image work: Qwen-Image 3.0 aims at useful, not just pretty
+
+**[Qwen-Image 3.0](https://qwen.ai/blog?id=56cf5a94-052c-4e8f-8d9c-e05ff75a1133)
+is older context requested for this edition, released July 16 rather than in
+this fortnight.** Alibaba's third-generation Qwen image model unifies
+generation and editing around information-dense output: up to 4.5K-token
+instructions, native rendering in 12 languages, claimed legibility down to
+10-pixel text, and layouts such as newspapers, storyboards, exam sheets, and
+nested interfaces. The launch examples are curated provider demonstrations,
+not a measured third-party text-accuracy study. The announcement points to
+Qwen Chat and does not publish weights, an API price, or a reproducible eval
+card, so test spelling, formulas, attribution, and visual facts before using
+its output as a finished document.
+
+## Grok Bot: a computer, not a chat
+
+![Official Grok Bot release graphic on a soft blue background.](/weekly-screenshots/2026.08.19/source-media/grok-bot.png)
+
+*Source image: [SpaceXAI's Grok Bot announcement](https://x.ai/news/introducing-grok-bot),
+August 11, 2026.*
+
+[Grok Bot](https://x.ai/news/introducing-grok-bot) is the tool of the
+fortnight, and it is easy to misread. It is not a better autocomplete. It is
+a roster of named agents that share one persistent cloud VM — browser,
+filesystem, terminal — and keep working after you close the laptop. SpaceXAI
+says Bots can use connectors and MCP where they exist, and computer use
+everywhere else, so the finished work lands in the actual app instead of a
+draft you have to paste. You can show a Bot a workflow once and save it as a
+routine. Several Bots can message each other in a group thread.
+
+That architecture has a security implication the docs state plainly: **the
+computer is isolated to your account, not to an individual Bot.** Files,
+logins, and browser sessions are shared across the roster. Separate Bots are
+not a privilege boundary. Approvals cover proposed actions; they do not undo
+work already done. Passwords, passkeys, and 2FA belong in a take-control
+handoff, not in chat. Grok Bot requires data storage and does not support
+Legacy Privacy Mode.
+
+Availability is gated. The beta is on desktop and iOS for SuperGrok Heavy,
+Cursor Ultra, and Cursor Teams Premium. Enterprise is a waitlist. Android is
+not in the launch set. Internal sales, ops, and engineering anecdotes are
+leads, not a reliability study.
+
+**If you try it this week:** pick one bounded, multi-tool job with a clear
+deliverable and an approval gate on send, pay, publish, or production
+change. Do not point it at a privileged local folder until you have watched
+it fail safely on the cloud computer.
+
+## Physical AI: the loop leaves the screen
+
+The persistent-agent idea becomes harder when the computer has wheels, arms,
+and momentum. A robot cannot stop at a plausible answer. It has to turn sensor
+readings into a model of the world, choose an action, observe what actually
+happened, and feed that result back into the next decision.
+
+![A glowing circular physical-AI flywheel connects real-world robots, data, Gaussian splats, simulation, AI models, and robots again.](/weekly-screenshots/2026.08.19/source-media/physical-ai-flywheel.png)
+
+*What it means: physical AI improves as real robot experience becomes training
+data, reconstructed worlds, simulation practice, and better models that return
+to the machine.*
+
+That loop begins with sensing. Cameras provide texture and color; lidar and
+radar measure geometry and range; microphones capture sound; touch reports
+contact; and an inertial measurement unit tracks motion. The model only sees
+the world that this sensor stack can represent.
+
+![A humanoid robot stands inside a halo of cameras, lidar, radar, microphones, touch sensors, and an IMU, all feeding a central AI core.](/weekly-screenshots/2026.08.19/source-media/humanoid-sensor-halo.png)
+
+*What it means: the AI core is downstream of the sensors. Blind spots, noise,
+latency, and calibration errors become model limits before planning even
+starts.*
+
+Autonomy is therefore a closed loop, not a one-shot prompt. A useful system
+senses, perceives, predicts, plans, acts, and corrects. The correction step is
+what lets a delivery robot stop for the dog it did not expect and update the
+next plan from the new scene.
+
+![A closed autonomy loop surrounds a delivery robot pausing safely for a dog: sense, perceive, predict, plan, act, and correct.](/weekly-screenshots/2026.08.19/source-media/robot-autonomy-closed-loop.png)
+
+*What it means: safe behavior comes from repeated observation and correction,
+not from assuming the first prediction will remain true after the robot acts.*
+
+Gaussian splats can shorten the path from captured place to training ground.
+A 360-degree scan becomes a volumetric reconstruction; that reconstruction can
+seed a simulated world; and the simulator can provide repeatable situations
+for learning and testing a control policy before the robot runs it onboard.
+
+![A four-stage pipeline moves from 360-degree room capture to Gaussian splats, a simulation world, and a robot control policy.](/weekly-screenshots/2026.08.19/source-media/gaussian-splat-sim-pipeline.png)
+
+*What it means: reconstructing a real place gives simulation a concrete world
+to rehearse in, while the control policy remains the part that must transfer
+those rehearsals back to the physical robot.*
+
+The final constraint is onboard compute. A larger model may improve perception
+or planning, but it also competes for memory, battery, cooling, and response
+time. The best robot model is not simply the largest one; it is the model that
+fits the machine and still closes the loop quickly enough for the task.
+
+![A balance scale weighs model size against onboard memory and power for a robot.](/weekly-screenshots/2026.08.19/source-media/onboard-model-tradeoff.png)
+
+*What it means: model capability has to fit a physical budget. Memory and power
+limits are design inputs, not deployment details to solve after training.*
+
+## Science: from plausible answers to checked artifacts
+
+The scientific story this month is not "AI solved a famous problem." It is
+that research systems are starting to return **objects other people can
+inspect**.
+
+**[Claude raised a classical analytic-number-theory bound](https://www.anthropic.com/research/riemann-zeta).** On August 10,
+Anthropic reported that an unreleased research version of Claude improved
+the proven lower bound on the fraction of Riemann zeta zeros that lie on the
+critical line, from 41.6% to 67.2%. The model did not prove the Riemann
+hypothesis, and Anthropic says it does not expect these techniques to do so.
+What happened is still striking: a non-mathematician staff member asked
+Claude to take a real stab at the hypothesis; after a failed first pass, a
+second Claude Code session coordinated about 60 subagents, used 31 million
+output tokens, downloaded 54 arXiv papers, and produced a paper plus a Lean
+formalization. Anthropic mathematicians Levent Alpöge and Ralph Furman
+studied the argument. Number theorists Brian Conrey and Dan Goldston
+examined the paper on short notice. A clearer revision of the paper went up
+on August 13.
+
+Lean can check that the encoded proof follows the rules of the formal
+system. It does not, by itself, settle novelty, literature credit, or
+whether the formal statement is the theorem the community cares about. Those
+remain human questions. Read this next to OpenAI's August 1 Astra package —
+ten claimed advances with Lean certificates in
+[openai/ten-proofs](https://github.com/openai/ten-proofs) — as one research
+loop, not two unrelated headlines: generate, formalize, then wait for the
+field.
+
+**WeatherNext turned a decade of cyclone-forecast progress into an extra day
+of average lead time, then open-sourced the weights.** On August 6, Google
+DeepMind and Google Research published
+[Operational Tropical Cyclone Forecasting with AI](https://www.nature.com/articles/s41586-026-10953-2)
+in *Nature*. The paper reports that WeatherNext Cyclones, evaluated on
+storms from 2023–2025, offers on average a day or more of lead-time
+advantage on track, intensity, and wind structure versus leading operational
+models. DeepMind's accompanying post frames the three-day forecast as
+matching what prior models could do at two days, and says the National
+Hurricane Center used the system during the 2025 season, including on
+Hurricane Melissa. The code and weights, plus a smaller Colab-runnable
+variant, are now public. Official warnings still come from meteorological
+agencies. An extra day of average skill is not a guarantee about the next
+named storm.
+
+![Google DeepMind's WeatherNext release graphic shows a sequence of modeled cyclone positions approaching the southeastern United States.](/weekly-screenshots/2026.08.19/source-media/weathernext-cyclones.png)
+
+*Source image: [Google DeepMind's WeatherNext Cyclones announcement](https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/),
+August 6, 2026. The image is illustrative; the reported comparison comes from
+the linked Nature evaluation.*
+
+## Markets and chips: Arizona turns a profit while memory stays expensive
+
+The model and tool news sits on a physical constraint that did not loosen
+this fortnight.
+
+**[TSMC's Arizona site is no longer just a political talking point](https://www.trendforce.com/news/2026/08/17/news-tsmc-arizona-profit-soars-663-yoy-in-1h26-u-s-earnings-pull-back-8-2-qoq-in-2q-as-depreciation-bites/).** On
+August 17, TrendForce summarized TSMC's first-half 2026 interim report:
+TSMC Arizona posted NT$36.066 billion in profit for 1H26, up 662.8%
+year-over-year, and overtook Nanjing as the company's most profitable
+overseas subsidiary. Second-quarter profit still slipped 8.2% sequentially
+as depreciation rose. The first Phoenix fab has been in 4nm mass production
+since late 2024; the 3nm follow-on is slated for the second half of 2027.
+The $265 billion planned U.S. investment, including the additional $100
+billion discussed on the July earnings call, is the capacity bet behind
+those figures — context, not a new August 17 commitment. None of this is
+investment advice. It is evidence that advanced-node AI demand is showing up
+in an overseas P&L, while packaging, depreciation, and ramp timing still
+tax the margin.
+
+**[Consumer and server memory remain the other bottleneck](https://www.trendforce.com/news/2026/08/17/news-germany-ddr5-prices-near-5x-yoy-in-august-china-reportedly-sees-14-wow-jump-as-global-rally-continues/).** TrendForce's
+August 17 roundup, citing 3D Center via Wccftech, put Germany's DDR5 retail
+index at 486% of the prior-year baseline in August, about 4.9× a typical
+kit versus a year earlier. Separate China, U.S., U.K., and Japan spot
+checks in the same piece describe three- to fourfold kit prices and thin
+availability. TrendForce's own contract outlook, cited there, still has
+server DRAM rising 13–18% quarter-over-quarter in 3Q26, with tightness
+expected to persist into 2027. That is why a "run Qwen locally" plan and a
+"rent Sol Ultrafast" plan are both hardware stories: HBM and DDR5 allocation
+is what makes the GPU, the laptop, and the API bill move together.
+
+OpenAI's Cerebras Ultrafast preview is the inference-side rhyme. Custom or
+wafer-scale serving is how a lab tries to sell frontier intelligence at
+interactive latency without waiting on the same GPU queue. It is also, for
+now, a waitlist.
 
 ## What to do this week
 
-- Test Claude Opus 5, Qwen3.8-Max, DeepSeek-V4-Flash-0731, and Kimi K3 on one shared local acceptance set.
-- Treat availability, licensing, region restrictions, price, context behavior, tool reliability, and data handling as selection criteria alongside score.
-- For voice, video, robotics, and computer-use agents, add interruption, recovery, stop, and human-override tests to the eval.
-- Turn on prompt caching where your provider supports it, and route routine calls to a lower effort setting before reaching for a bigger model.
-- Put a compact policy layer such as Shieldstral behind measured enforcement, but keep least privilege and human review for consequential actions.
-- Preserve a source trail. Label vendor claims, social-media claims, independent evaluations, and local measurements differently.
+- Try GLM-5.3, Grok 4.6, Gemini 3.7 Flash, and Muse Spark 1.2 on the same five
+  coding tasks, with cost per accepted result, not per token, as the score.
+- Put Nemotron Lightning behind a small Switchyard experiment only after you
+  define quality and escalation thresholds; Switchyard is still pre-alpha.
+- If you have Grok Bot access, hand off one multi-app job with an approval
+  gate. Read the shared-computer warning before you log into anything
+  important.
+- If you have a 24 GB+ GPU, download Muse Glimmer or Qwen3.8-27B and run
+  one private agent loop offline. Compare it to the API you already pay for.
+- Do not treat Anthropic's zeta bound or OpenAI's Astra certificates as
+  "AI solved math." Read the paper, the Lean artifact, and the remaining
+  human questions.
+- For weather or emergency use, keep official NHC or NWS guidance in front
+  of any WeatherNext demo.
+- Test Qwen-Image 3.0 on one dense flyer or explainer, then verify every small
+  label and factual visual element before publication.
+- Price local RAM and cloud GPUs as part of the model decision. The memory
+  market is still setting the floor.
 
 ## Sources and watchlist
 
-- [Anthropic: Introducing Claude Opus 5](https://www.anthropic.com/news/claude-opus-5)
-- [Alibaba Cloud: Qwen3.8-Max](https://www.alibabacloud.com/blog/alibaba-unveils-qwen3-8-max-its-largest-and-most-capable-flagship-model-to-date_603420)
-- [DeepSeek API: July 31 V4-Flash update](https://api-docs.deepseek.com/updates/)
-- [OpenAI: Ten advances in mathematics and theoretical computer science](https://openai.com/index/ten-advances-in-mathematics/)
-- [Smithsonian: Claude Fable 5 and the Jacobian-conjecture counterexample](https://www.smithsonianmag.com/smart-news/ai-disproves-a-decades-old-mathematical-idea-the-biggest-conjecture-that-the-tech-has-played-a-role-in-yet-180989189/)
-- [Moonshot AI: Kimi K3 weights commit](https://huggingface.co/moonshotai/Kimi-K3/commit/c5d1dd4c428bd1ce8b88c5044f3b6ccde9e3b721)
-- [Google: Gemini Robotics ER 2](https://blog.google/innovation-and-ai/models-and-research/google-deepmind/gemini-robotics-er-2/)
-- [Black Forest Labs: FLUX 3](https://bfl.ai/blog/flux-3)
-- [MiniMax: MiniMax H3](https://www.minimax.io/blog/minimax-h3)
-- [xAI: Grok Voice Think Fast 2.0](https://x.ai/news/grok-voice-think-fast-2)
-- [Microsoft: Rethinking security for the age of AI](https://blogs.microsoft.com/blog/2026/07/27/rethinking-security-for-the-age-of-ai/)
-- [Mistral AI: Shieldstral](https://mistral.ai/news/shieldstral/)
-- [Google DeepMind: Lyria 3.5](https://deepmind.google/blog/were-launching-lyria-35-in-google-flow-music-with-advances-across-musicality-lyrics-vocals-and-creative-control/)
-- [xAI: Imagine Video 1.5 with References](https://x.ai/news/grok-imagine-video-1-5-references)
-- [Meta: Muse Spark 1.1 acts across connected workflows](https://about.fb.com/news/2026/07/meta-ai-muse-spark-doesnt-just-think-it-acts/)
-- [xAI: Grok Build Workflows](https://x.ai/news/workflows)
-
-**Promotion checklist:** confirm the official sources and time-sensitive price,
-availability, and license claims; review every supplied screenshot for context
-and personal information; copy the approved assets into
-`public/weekly-screenshots/2026.08.05/`; then register the article, run the
-model-watch update, asset check, build, and mobile browser audit.
+- [Z.ai: GLM-5.3 — Frontier Coding with Emergent Cyber Capabilities](https://z.ai/blog/glm-5.3)
+- [Z.ai: GLM-5.3 API documentation](https://docs.z.ai/guides/llm/glm-5.3)
+- [Z.ai: Security Disclosure Ledger](https://cvd.z.ai/)
+- [NVIDIA: Nemotron 3.5 Lightning and NeMo Switchyard](https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/)
+- [NVIDIA NeMo: Switchyard repository](https://github.com/NVIDIA-NeMo/Switchyard)
+- [Meta: Introducing Muse Code and Muse Spark 1.2](https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2)
+- [Qwen: Qwen-Image 3.0](https://qwen.ai/blog?id=56cf5a94-052c-4e8f-8d9c-e05ff75a1133)
+- [SpaceXAI: Introducing Grok Bot](https://x.ai/news/introducing-grok-bot)
+- [SpaceXAI: Grok Bot docs](https://docs.x.ai/grok-bot/overview)
+- [SpaceXAI: Grok Bot approvals, security, and privacy](https://docs.x.ai/grok-bot/approvals-security-and-privacy)
+- [SpaceXAI: Introducing Grok 4.6](https://x.ai/news/grok-4-6)
+- [Google: Gemini 3.7 Flash](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/)
+- [OpenAI: Improving GPT-5.6 Sol in ChatGPT](https://openai.com/index/improving-gpt-5-6-sol-in-chatgpt/)
+- [OpenAI: Previewing Ultrafast](https://openai.com/index/previewing-ultrafast/)
+- [Meta: Introducing Muse Glimmer](https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model)
+- [Hugging Face: Muse Glimmer](https://huggingface.co/blog/muse-glimmer)
+- [Artificial Analysis: Muse Glimmer](https://artificialanalysis.ai/articles/muse-glimmer)
+- [Hugging Face: Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)
+- [Anthropic: Claude's mathematical capabilities](https://www.anthropic.com/research/riemann-zeta)
+- [OpenAI: Ten advances in mathematics](https://openai.com/index/ten-advances-in-mathematics/)
+- [Google DeepMind: WeatherNext cyclones](https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/)
+- [Nature: Operational Tropical Cyclone Forecasting with AI](https://www.nature.com/articles/s41586-026-10953-2)
+- [TrendForce: TSMC Arizona 1H26 profit](https://www.trendforce.com/news/2026/08/17/news-tsmc-arizona-profit-soars-663-yoy-in-1h26-u-s-earnings-pull-back-8-2-qoq-in-2q-as-depreciation-bites/)
+- [TrendForce: DDR5 August price surge](https://www.trendforce.com/news/2026/08/17/news-germany-ddr5-prices-near-5x-yoy-in-august-china-reportedly-sees-14-wow-jump-as-global-rally-continues/)

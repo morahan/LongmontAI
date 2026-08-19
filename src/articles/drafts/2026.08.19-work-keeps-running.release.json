@@ -3,16 +3,27 @@
   "meetingDate": "2026-08-19",
   "timezone": "America/Denver",
   "meetupStartsAt": "2026-08-19T12:00:00-06:00",
-  "publishAt": "2026-08-19T11:50:00-06:00",
-  "status": "draft",
+  "publishAt": "2026-08-19T11:28:00-06:00",
+  "status": "scheduled",
+  "articlePath": "src/articles/drafts/2026.08.19-work-keeps-running.md",
+  "article": "src/articles/drafts/2026.08.19-work-keeps-running.md",
   "slideshowId": "work-keeps-running",
   "assetFolder": "2026.08.19",
-  "releaseChecklist": [
-    "Confirm official sources and time-sensitive price, availability, and license claims.",
-    "Keep the draft out of src/articles/index.ts and the live slideshow registry until 11:50 AM America/Denver.",
-    "Copy approved slides from src/articles/drafts/assets/2026.08.19/ into public/slideshows/2026.08.19/work-keeps-running/.",
-    "Promote markdown, register the article and slideshow, then run model-watch:update.",
-    "Run content:check-assets, build, and test:mobile. Review 360/390/430 screenshots.",
-    "Do not replace the isolated August 5 scheduled-edition implementation as a shortcut."
-  ]
+  "assetRoot": "src/articles/drafts/assets/2026.08.19",
+  "slideshow": {
+    "id": "work-keeps-running",
+    "title": "The work keeps running",
+    "description": "Nine visual moves from persistent agents through physical AI and the hardware floor.",
+    "slides": [
+      { "title": "The work keeps running", "path": "slide-01.png" },
+      { "title": "Five moves", "path": "slide-02.png" },
+      { "title": "Grok Bot is a computer", "path": "slide-03.png" },
+      { "title": "Local agents get serious", "path": "slide-04.png" },
+      { "title": "Route for cost. Then speed.", "path": "slide-05.png" },
+      { "title": "A bound moved. The hypothesis did not.", "path": "slide-06.png" },
+      { "title": "One more day", "path": "slide-07.png" },
+      { "title": "Hardware sets the floor", "path": "slide-08.png" },
+      { "title": "Hand it off. Verify it.", "path": "slide-09.png" }
+    ]
+  }
 }

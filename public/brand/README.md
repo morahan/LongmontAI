@@ -69,6 +69,12 @@ Four 1920×1080 master slides in `deck/`. Import the PNG (or SVG) as a slide bac
 - `slide-content.png` — header bar + body region for talks
 - `slide-closing.png` — thank-you / call-to-action
 
+Meetup edition decks must preserve the same identity even when generated in
+HTML: parrot-led cover and closing slides, the Longmont AI wordmark bar on
+content slides, this palette, and the Beleza/JetBrains Mono hierarchy. Keep each
+slide to one short headline, one supporting sentence at most, and compact data
+labels. Put full explanations in the article, not on the slide.
+
 ## Color palette
 
 One palette, sourced from the running site (`src/index.css`). Use these tokens in any brand asset — slides, social cards, OG images, deck PNGs, printed merch. Don't invent new shades.

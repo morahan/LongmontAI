@@ -1,10 +1,16 @@
 # Source ledger — August 19, 2026 edition
 
-Reporting window: 2026-08-05 through 2026-08-18 (biweekly meetup cadence).
-Today: 2026-08-18. Primary emphasis on 2026-08-11 through 2026-08-18.
+Reporting window: 2026-08-05 through 2026-08-19 (biweekly meetup cadence).
+Today: 2026-08-19. Primary emphasis on 2026-08-11 through 2026-08-19.
 
 | Claim | Event date | Primary source | Corroboration | Confidence | Caveat |
 | --- | --- | --- | --- | --- | --- |
+| Z.ai released GLM-5.3 through its API and Coding Plan with 1M context, up to 128K output, mandatory thinking, and $1.40 / $4.40 per million input/output tokens; weights are promised two weeks after launch | 2026-08-14 | https://z.ai/blog/glm-5.3 | https://docs.z.ai/guides/llm/glm-5.3 ; https://docs.z.ai/guides/overview/pricing | High | Not open weight at launch; migration can fail if an application tries to disable thinking |
+| Z.ai reports GLM-5.3 at 28.3 on Terminal-Bench 3.0, 66.9% on DeepSWE v1.1, 84.5% on CyberGym, 54.4% on ExploitBench, and 105 / 130 ExploitGym completions at normalized two-/six-hour budgets | 2026-08-14 | https://z.ai/blog/glm-5.3 | n/a | Medium-high | Provider-run evaluations under named harnesses; private Code Bench is not independently reproducible; closed models remain ahead on deeper exploitation tests |
+| Z.ai says reviewed model runs identified 2,436 vulnerabilities across 269 projects; 53 are public and 2,383 remain under embargo in its ledger | 2026-08-14 | https://z.ai/blog/glm-5.3 | https://cvd.z.ai/ | Medium | Most findings cannot yet be inspected; aggregate is a vendor claim pending coordinated disclosure |
+| NVIDIA released Nemotron 3.5 Lightning, an open 30B MoE with 3B active parameters for high-volume agent execution, with weights, data, recipes, BF16 and NVFP4 checkpoints under OpenMDW-1.1 | 2026-08-11 | https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/ | https://developer.nvidia.com/blog/nvidia-nemotron-3-5-lightning-delivers-fast-accurate-specialized-task-execution-for-long-running-agents/ | High | Up-to-4× output speed and 30% faster PinchBench completion are vendor-reported comparisons |
+| NVIDIA released NeMo Switchyard, an Apache-2.0 Rust proxy/library for routing agent turns across models and translating OpenAI, Anthropic, and Responses APIs | 2026-08-11 | https://developer.nvidia.com/blog/route-ai-agent-workloads-across-models-with-nvidia-nemo-switchyard/ | https://github.com/NVIDIA-NeMo/Switchyard | High | Repository labels it pre-alpha and not for production; reported cost savings sometimes trade away accuracy |
+| Meta released Muse Code beta, a terminal coding agent with persistent background subagents and a restart-safe local event log, powered by coding-focused Muse Spark 1.2 | 2026-08-05 | https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2 | https://developer.meta.com/ai/models/muse-spark/ | High | Available in Muse Code and Meta Model API; benchmark and long-running kernel examples are provider evaluations; Spark 1.2 is distinct from open-weight Muse Glimmer |
 | SpaceXAI launched Grok Bot in early beta: always-on agents on a persistent cloud computer, available to SuperGrok Heavy, Cursor Ultra, and Cursor Teams Premium on desktop and iOS | 2026-08-11 | https://x.ai/news/introducing-grok-bot | https://docs.x.ai/grok-bot/overview ; https://docs.x.ai/grok-bot/approvals-security-and-privacy | High | Beta; shared computer is account-scoped, not a per-Bot security boundary; vendor usage anecdotes are not production proof |
 | SpaceXAI released Grok 4.6 for long-running agents and visual/interactive work; API price starts at $2 / $6 per million input/output tokens | 2026-08-12 | https://x.ai/news/grok-4-6 | n/a | High | Benchmark table is vendor-compiled from self-reported and public leaderboard figures; fast variant is twice the listed price |
 | Google released Gemini 3.7 Flash as a coding/agent workhorse at an introductory $0.75 / $3.75 per million tokens through 2026-12-31 | 2026-08-13 | https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/ | n/a | High | Benchmarks and “half of 3.6 Flash” pricing are vendor-reported; post-intro price is $1.50 / $7.50 from 2027-01-01 |
@@ -19,6 +25,7 @@ Today: 2026-08-18. Primary emphasis on 2026-08-11 through 2026-08-18.
 | Google DeepMind published WeatherNext cyclone results in Nature and open-sourced model weights | 2026-08-06 | https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/ | https://www.nature.com/articles/s41586-026-10953-2 | High | Average extra-day lead time vs operational models on 2023–2025 storms; not a substitute for official NHC/Met Office warnings |
 | TSMC Arizona posted record 1H26 profit of NT$36.066B, up 662.8% YoY, becoming TSMC’s most profitable overseas subsidiary | 2026-08-17 | https://www.trendforce.com/news/2026/08/17/news-tsmc-arizona-profit-soars-663-yoy-in-1h26-u-s-earnings-pull-back-8-2-qoq-in-2q-as-depreciation-bites/ | TrendForce cites TSMC 1H26 interim report via Commercial Times and Economic Daily News | Medium-high | Secondary report of filing figures; Q2 profit slipped 8.2% QoQ on depreciation; $265B US plan is context from the July earnings call, not a new Aug 17 commitment |
 | German DDR5 retail index rose from 445% to 486% in August, about 4.9× year-ago levels; TrendForce still sees 13–18% QoQ server DRAM contract increases in 3Q26 | 2026-08-17 | https://www.trendforce.com/news/2026/08/17/news-germany-ddr5-prices-near-5x-yoy-in-august-china-reportedly-sees-14-wow-jump-as-global-rally-continues/ | TrendForce own 3Q26 DRAM outlook cited in the same article | Medium | Retail indexes and kit anecdotes, not a company filing; China WoW spike sourced to Aug 5 EDN coverage |
+| Qwen-Image 3.0 supports up to 4.5K-token instructions, 12-language rendering, unified generation/editing, and provider-claimed legibility down to 10-pixel text | 2026-07-16 | https://qwen.ai/blog?id=56cf5a94-052c-4e8f-8d9c-e05ff75a1133 | n/a | Medium-high | Explicitly requested context outside the reporting window; curated demos rather than a reproducible evaluation; launch post points to Qwen Chat but does not announce weights or API terms |
 
 ## Rejected or deferred
 
@@ -26,3 +33,20 @@ Today: 2026-08-18. Primary emphasis on 2026-08-11 through 2026-08-18.
 - Gemini Robotics 2 / ER 2: dated July 30, already covered in the August 5 draft.
 - OpenAI ChatGPT ads test (Aug 11): real, but not a core builder-facing story for this briefing.
 - ESMFold2 / AlphaFold team breakup: dates not verified as in-window primary announcements for this edition.
+
+## Visual ledger
+
+| Asset | Source | Use | Publication note |
+| --- | --- | --- | --- |
+| `grok-bot.png` | https://x.ai/news/introducing-grok-bot | Slides 1-3; article section image | Official announcement social image; credit adjacent to use |
+| `grok-4-6.png` | https://x.ai/news/grok-4-6 | Slides 2 and 9 | Official announcement social image; credit in slide footer/source line |
+| `gemini-3-7-flash.png` | https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/ | Slides 1, 2, 5, and 9 | Official announcement image; credit adjacent to use |
+| `muse-glimmer.png` | https://huggingface.co/blog/muse-glimmer | Slides 1, 2, and 4 | Official Hugging Face article thumbnail; credit adjacent to use |
+| `qwen3-8-27b.png` | https://huggingface.co/Qwen/Qwen3.8-27B | Slides 2, 4, and 9 | Hugging Face model-page social image; credit adjacent to use |
+| `weathernext-cyclones.png` | https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/ | Slides 1, 7, and 9; article section image | Official illustrative announcement image; paper claim is separately cited |
+| TSMC Arizona numeric fact card | TrendForce TSMC article above | Slide 8 | Original Longmont AI typography using cited figures; no source photograph or illustrative chip grid used |
+| DDR5 numeric fact card | TrendForce DDR5 article above | Slide 8 | Original Longmont AI typography using cited figures; no source photograph or illustrative memory module used |
+
+All local derivatives were auto-oriented and stripped of metadata. No source
+image is presented as an independent measurement or as evidence beyond the
+claim made in the accompanying text.

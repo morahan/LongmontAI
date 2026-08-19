@@ -3,6 +3,7 @@ import { Activity, ArrowRight, CheckCircle2, Clock3, Radar } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import modelWatchStatus from '../data/modelWatch.generated.json';
 import {
+  latestBriefingModelIds,
   modelWatchModels,
   modelWatchSnapshots,
 } from '../data/modelWatch';
@@ -26,8 +27,12 @@ const ModelWatch: React.FC = () => {
     return () => controller.abort();
   }, []);
 
+  const briefingModelIds = new Set<string>(latestBriefingModelIds);
+  const briefingModels = latestBriefingModelIds
+    .map((id) => modelWatchModels.find((model) => model.id === id))
+    .filter((model): model is (typeof modelWatchModels)[number] => Boolean(model));
   const latestModels = [...modelWatchModels]
-    .filter((model) => model.releaseDateSort)
+    .filter((model) => model.releaseDateSort && !briefingModelIds.has(model.id))
     .sort((a, b) => (b.releaseDateSort ?? '').localeCompare(a.releaseDateSort ?? ''))
     .slice(0, 8);
   const detectedModelCount = new Set([
@@ -116,6 +121,35 @@ const ModelWatch: React.FC = () => {
         </div>
       </section>
 
+      <section className="model-watch-section" aria-labelledby="briefing-models-heading">
+        <div className="model-watch-section-header">
+          <div>
+            <div className="model-watch-eyebrow">
+              <Radar size={16} />
+              August 19 briefing
+            </div>
+            <h2 id="briefing-models-heading">Models Covered in the Latest Edition</h2>
+          </div>
+        </div>
+        <div className="model-watch-release-list model-watch-briefing-list">
+          {briefingModels.map((model) => (
+            <article key={model.id}>
+              <CheckCircle2 size={17} aria-hidden="true" />
+              <div>
+                <h3>
+                  <a href={model.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    {model.name}
+                  </a>
+                </h3>
+                <p>{model.description ?? model.lane}</p>
+              </div>
+              <span>{model.provider}</span>
+              <time dateTime={model.releaseDateSort}>{model.releaseDate}</time>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="model-watch-section" aria-labelledby="models-heading">
         <div className="model-watch-section-header">
           <div>
@@ -123,7 +157,7 @@ const ModelWatch: React.FC = () => {
               <Radar size={16} />
               Active watchlist
             </div>
-            <h2 id="models-heading">Recently Released</h2>
+            <h2 id="models-heading">Other Recent Releases</h2>
           </div>
         </div>
         <div className="model-watch-release-list">
@@ -132,7 +166,7 @@ const ModelWatch: React.FC = () => {
               <CheckCircle2 size={17} aria-hidden="true" />
               <div>
                 <h3>{model.name}</h3>
-                <p>{model.lane}</p>
+                <p>{model.description ?? model.lane}</p>
               </div>
               <span>{model.provider}</span>
               <time dateTime={model.releaseDateSort}>{model.releaseDate}</time>
