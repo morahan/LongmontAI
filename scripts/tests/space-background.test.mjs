@@ -19,7 +19,9 @@ test('seeded scenes are stable, sparse, and responsive', () => {
   assert.equal(starCountForWidth(1200), 45);
   assert.equal(starCountForWidth(639), 30);
   assert.equal(MOBILE_STAR_COUNT, 30);
-  assert.ok(first.stars.every((star) => star.alpha <= 0.46 && star.size <= 0.9));
+  assert.ok(first.stars.every((star) =>
+    star.alpha >= 0.34 && star.alpha <= 0.74 && star.size >= 0.48 && star.size <= 1.18
+  ));
 });
 
 test('planetary systems stay off-center and contain only bounded detail', () => {

@@ -59,8 +59,8 @@ export const createSpaceScene = (seed = 0x4c4f4e47): SpaceScene => {
     const stars = Array.from({ length: DESKTOP_STAR_COUNT }, (): DistantStar => ({
         x: random(),
         y: random(),
-        size: between(random, 0.28, 0.9),
-        alpha: between(random, 0.16, 0.46),
+        size: between(random, 0.48, 1.18),
+        alpha: between(random, 0.34, 0.74),
         driftX: between(random, -0.000035, 0.000035),
         driftY: between(random, -0.000025, 0.000025),
         twinklePhase: between(random, 0, Math.PI * 2),
