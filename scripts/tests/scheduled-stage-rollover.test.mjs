@@ -5,6 +5,7 @@ import test from 'node:test';
 
 import {
   FIRST_ID,
+  FIRST_PUBLISH_AT,
   HarnessIntegrationError,
   SECOND_ID,
   TEST_NOW,
@@ -116,13 +117,13 @@ test('replacement is refused atomically until article and slideshow are promoted
     const beforeReplacement = await snapshot(root);
 
     await expectContractRejection(
-      stage({ root, manifest: manifestPath(root, 'second'), now: TEST_NOW }),
+      stage({ root, manifest: manifestPath(root, 'second'), now: FIRST_PUBLISH_AT + 1 }),
       'unpromoted replacement',
     );
     assert.deepEqual(await snapshot(root), beforeReplacement, 'refused rollover changed generated outputs');
 
     await promoteFirstEdition(root);
-    await stage({ root, manifest: manifestPath(root, 'second'), now: TEST_NOW });
+    await stage({ root, manifest: manifestPath(root, 'second'), now: FIRST_PUBLISH_AT + 1 });
     await findGeneratedPackages(root, SECOND_ID);
 
     const articleRegistry = await readFile(join(root, 'src/articles/index.ts'), 'utf8');
@@ -146,7 +147,7 @@ test('promotion of only one registry still refuses rollover without changing byt
     );
     const before = await snapshot(root);
     await expectContractRejection(
-      stage({ root, manifest: manifestPath(root, 'second'), now: TEST_NOW }),
+      stage({ root, manifest: manifestPath(root, 'second'), now: FIRST_PUBLISH_AT + 1 }),
       'partial promotion replacement',
     );
     assert.deepEqual(await snapshot(root), before);
