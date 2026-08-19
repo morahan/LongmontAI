@@ -25,6 +25,21 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    'signal-routing': {
+        id: 'signal-routing',
+        title: 'Signal Routing',
+        description: 'A visual briefing on model selection, evidence, embodied AI, open weights, and verification.',
+        slides: createSlides('/slideshows/2026.08.05/signal-routing', [
+            'Signal Routing',
+            'The release board',
+            'Evidence before deployment',
+            'The physical stack',
+            'Open weights and on-device models',
+            'Market incentives',
+            'Governance and verification',
+            'Route the work, measure the claim',
+        ]),
+    },
     'efficiency-frontier': {
         id: 'efficiency-frontier',
         title: 'The Efficiency Frontier',
