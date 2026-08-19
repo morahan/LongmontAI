@@ -23,7 +23,11 @@ assert.deepEqual(report.surfaces.map(({ route }) => route), [
   '/model-watch',
   '/leaderboard',
   '/timeline',
-  '/edition/edition-2026-08-05-signal-routing',
+  '/edition/edition-2026-08-19-work-keeps-running',
+]);
+assert.deepEqual(report.surfaces.at(-1).owners, [
+  'src/articles/scheduledEdition.ts',
+  'src/articles/drafts/2026.08.19-work-keeps-running.md',
 ]);
 assert.ok(report.excluded.includes('new blog posts'));
 assert.ok(report.sources.editorial.length >= 20);
