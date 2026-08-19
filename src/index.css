@@ -393,6 +393,16 @@ a {
   border-radius: 0;
 }
 
+.home-hero-shade {
+  background: linear-gradient(
+    to top,
+    rgba(9, 9, 11, 0.62) 0%,
+    rgba(9, 9, 11, 0.18) 34%,
+    rgba(9, 9, 11, 0.03) 62%,
+    transparent 82%
+  );
+}
+
 .home-hero-copy {
   width: min(var(--container-width), calc(100% - 3rem));
   margin-left: auto;
