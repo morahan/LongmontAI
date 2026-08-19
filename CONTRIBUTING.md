@@ -115,6 +115,28 @@ and why it's significant for the AI community.
    editorial media that is too small or positioned outside the phone viewport.
 8. Commit and push to `main` — Vercel auto-deploys
 
+## Scheduling an Approved Edition
+
+Scheduled content stays in `src/articles/drafts/` and must not be copied to
+`public/` before its embargo. The release manifest is the approval boundary:
+both it and the article frontmatter must say `status: scheduled`; `draft` is
+rejected. The manifest must declare an offset-qualified `publishAt`, matching
+edition ID, dated private asset root, and ordered slideshow metadata.
+
+Stage one approved release from the repository root:
+
+```bash
+npm run release:stage -- src/articles/drafts/YYYY.MM.DD-topic.release.json
+npm run release:check
+```
+
+Staging writes only `src/generated/scheduled-release/`. Its `client.ts` contains
+only the public edition locator and publication time; `server.mjs`, the article,
+and allowlisted media are server-package inputs. A different edition cannot
+replace the active pointer until the active article and slideshow have each
+been promoted exactly once to their static registries. Do not edit generated
+files by hand. The production build recomputes their hashes and fails closed.
+
 ## Quality Standards
 - Every screenshot must have a written explanation
 - Group by theme, not chronological order

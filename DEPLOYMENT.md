@@ -27,6 +27,23 @@ This project is configured to automatically deploy to Vercel on every push to th
    - Wait for the initial build to complete
    - Your site will be live at `https://longmontai.vercel.app` (or similar)
 
+### Scheduled edition predeployment
+
+An approved scheduled edition is packaged into the Vercel Functions before its
+publication time. Server request time is the unlock clock; no cron, browser,
+or author machine mutates the release at the boundary. Before deploying, run:
+
+```bash
+npm run release:check
+npm run verify:local
+```
+
+Embargo responses are generic non-cacheable 404s. Released JSON has at most 60
+seconds of shared freshness, while allowlisted media is immutable under an
+edition-and-revision URL. Only `src/generated/scheduled-release/**` is included
+as private function data. A failed or unavailable required scanner blocks the
+normal commit/push workflow; never bypass hooks.
+
 ### Automatic Deployments
 
 Once connected, Vercel will automatically:

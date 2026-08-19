@@ -1,94 +1,86 @@
 import { readFile } from 'node:fs/promises';
 
-const EDITION_ID = 'edition-2026-08-05-signal-routing';
-const PUBLISH_AT = Date.parse('2026-08-05T11:15:00-06:00');
-const ARTICLE_URL = new URL('../src/articles/drafts/2026.08.05-signal-routing.md', import.meta.url);
-const SLIDE_TITLES = [
-  'Signal Routing',
-  'The release board',
-  'Evidence before deployment',
-  'The physical stack',
-  'Open weights and on-device models',
-  'Market incentives',
-  'Governance and verification',
-  'Route the work, measure the claim',
-];
+import release from '../src/generated/scheduled-release/server.mjs';
 
-function isPublished(now = Date.now()) {
-  return now >= PUBLISH_AT;
-}
+const ARTICLE_URL = new URL(`../src/generated/scheduled-release/${release.article.file}`, import.meta.url);
+const NOT_FOUND_BODY = 'Not Found';
+const RELEASE_CACHE = 'public, max-age=0, s-maxage=60, must-revalidate';
 
 function notFound(response) {
   response.setHeader('Cache-Control', 'no-store');
   response.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  response.status(404).send('Not Found');
+  return response.status(404).send(NOT_FOUND_BODY);
+}
+
+function scalar(value) {
+  return typeof value === 'string' ? value : null;
+}
+
+function mediaUrl(mediaPath) {
+  const query = new URLSearchParams({
+    edition: release.editionId,
+    revision: release.releaseRevision,
+    path: mediaPath,
+  });
+  return `/api/scheduled-media?${query}`;
 }
 
 function parseArticle(raw) {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-  if (!match) {
-    throw new Error('Scheduled edition is missing frontmatter');
-  }
-
+  if (!match) throw new Error('article frontmatter is invalid');
   const data = {};
   for (const line of match[1].split(/\r?\n/)) {
-    const colon = line.indexOf(':');
-    if (colon <= 0) continue;
-
-    const key = line.slice(0, colon).trim();
-    let value = line.slice(colon + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1);
-    }
-    data[key] = value;
+    const separator = line.indexOf(':');
+    if (separator < 1) continue;
+    let value = line.slice(separator + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1);
+    data[line.slice(0, separator).trim()] = value;
   }
-
-  if (data.id !== EDITION_ID || data.publishAt !== '2026-08-05T11:15:00-06:00') {
-    throw new Error('Scheduled edition frontmatter does not match the release contract');
+  if (data.id !== release.editionId || data.publishAt !== release.publishAt || data.status !== 'scheduled') {
+    throw new Error('article does not match generated release');
   }
-
+  let markdownContent = match[2];
+  for (const [mediaPath, media] of Object.entries(release.media).sort(([, left], [, right]) => (right.sourceUrl?.length ?? 0) - (left.sourceUrl?.length ?? 0))) {
+    if (media.sourceUrl) markdownContent = markdownContent.replaceAll(media.sourceUrl, mediaUrl(mediaPath));
+  }
   return {
     id: data.id,
     date: data.date,
     publishAt: data.publishAt,
     title: data.title,
     summary: data.summary,
-    markdownContent: match[2].replace(
-      /\/weekly-screenshots\/2026\.08\.05\/([A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)*)/g,
-      (_url, mediaPath) => `/api/scheduled-media?path=${encodeURIComponent(mediaPath)}`,
-    ),
+    markdownContent,
   };
 }
 
-function scheduledSlideshows() {
+function slideshows() {
+  if (!release.slideshow) return undefined;
   return {
-    'signal-routing': {
-      id: 'signal-routing',
-      title: 'Signal Routing',
-      description: 'A visual briefing on model selection, evidence, embodied AI, open weights, and verification.',
-      slides: SLIDE_TITLES.map((title, index) => ({
-        title,
-        src: `/api/scheduled-media?path=${encodeURIComponent(`slideshow/slide-${String(index + 1).padStart(2, '0')}.png`)}`,
-      })),
+    [release.slideshow.id]: {
+      id: release.slideshow.id,
+      title: release.slideshow.title,
+      description: release.slideshow.description,
+      slides: release.slideshow.slides.map((slide) => ({ title: slide.title, src: mediaUrl(slide.path) })),
     },
   };
 }
 
-export { EDITION_ID, PUBLISH_AT, isPublished, parseArticle, scheduledSlideshows };
-
-export default async function handler(_request, response) {
-  if (!isPublished()) {
-    return notFound(response);
-  }
-
-  try {
-    const edition = parseArticle(await readFile(ARTICLE_URL, 'utf8'));
-    response.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
-    return response.status(200).json({ edition, slideshows: scheduledSlideshows() });
-  } catch (error) {
-    // Do not disclose draft paths or malformed draft contents through this endpoint.
-    console.error(`Unable to serve ${EDITION_ID}:`, error instanceof Error ? error.message : 'unknown error');
-    return notFound(response);
-  }
+export function createScheduledEditionHandler({ now = Date.now } = {}) {
+  return async function scheduledEditionHandler(request, response) {
+    if (request.method !== 'GET' || now() < release.publishAtMs || scalar(request.query?.slug) !== release.editionId) {
+      return notFound(response);
+    }
+    try {
+      const edition = parseArticle(await readFile(ARTICLE_URL, 'utf8'));
+      response.setHeader('Cache-Control', RELEASE_CACHE);
+      response.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return response.status(200).json({ edition, slideshows: slideshows() });
+    } catch (error) {
+      console.error(`Unable to serve scheduled edition: ${error instanceof Error ? error.message : 'unknown error'}`);
+      return notFound(response);
+    }
+  };
 }
+
+export { NOT_FOUND_BODY, RELEASE_CACHE, mediaUrl, notFound, parseArticle, release };
+export default createScheduledEditionHandler();
