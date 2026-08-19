@@ -32,7 +32,14 @@ async function fixture({ nestedMedia = false } = {}) {
     article: 'src/articles/drafts/release.md', assetFolder: '2099.01.01', assetRoot: 'src/articles/drafts/assets/2099.01.01',
   };
   await write(root, 'src/articles/drafts/release.release.json', JSON.stringify(manifest, null, 2));
-  return { root, manifest: 'src/articles/drafts/release.release.json', mediaPath, tools: createScheduledReleaseTools({ root, now: () => clock }) };
+  let currentTime = clock;
+  return {
+    root,
+    manifest: 'src/articles/drafts/release.release.json',
+    mediaPath,
+    tools: createScheduledReleaseTools({ root, now: () => currentTime }),
+    setNow(value) { currentTime = value; },
+  };
 }
 
 async function rejects(action, pattern) {
@@ -47,8 +54,25 @@ try {
   assert.equal(verified.editionId, 'edition-2099-01-01-test');
   assert.deepEqual(await primary.tools.verifyFunctionInventory(), {
     'api/scheduled-edition.mjs': ['src/generated/scheduled-release/article.md', 'src/generated/scheduled-release/server.mjs'],
-    'api/scheduled-media.mjs': ['src/generated/scheduled-release/media/**', 'src/generated/scheduled-release/server.mjs'],
+    'api/scheduled-media.mjs': ['src/generated/scheduled-release/media/pixel.png', 'src/generated/scheduled-release/server.mjs'],
   });
+  const generatedMedia = path.join(primary.tools.generatedDir, 'media/pixel.png');
+  await write(primary.root, 'src/generated/scheduled-release/media/unapproved.png', 'unapproved');
+  await rejects(() => primary.tools.verifyFunctionInventory(), /missing, extra, or unapproved/);
+  await rm(path.join(primary.tools.generatedDir, 'media/unapproved.png'));
+  const approvedMedia = await readFile(generatedMedia);
+  await rm(generatedMedia);
+  await rejects(() => primary.tools.verifyFunctionInventory(), /missing, extra, or unapproved/);
+  await writeFile(generatedMedia, approvedMedia);
+
+  const correction = await fixture();
+  const correctedSource = path.join(correction.root, 'src/articles/drafts/assets/2099.01.01/pixel.png');
+  const firstRevision = (await correction.tools.stageRelease(correction.manifest)).releaseRevision;
+  await writeFile(correctedSource, 'corrected-approved-media-bytes');
+  const correctedRelease = await correction.tools.stageRelease(correction.manifest);
+  assert.notEqual(correctedRelease.releaseRevision, firstRevision, 'same-edition media correction must receive a new revision');
+  assert.equal(await readFile(path.join(correction.tools.generatedDir, 'media/pixel.png'), 'utf8'), 'corrected-approved-media-bytes');
+  await correction.tools.verifyGeneratedRelease();
 
   const publicCopy = `public/weekly-screenshots/2099.01.01/${primary.mediaPath}`;
   await write(primary.root, publicCopy, 'approved-media-bytes');
@@ -61,34 +85,71 @@ try {
   await rejects(() => primary.tools.verifyGeneratedRelease(), /static duplicate.*pixel\.png/);
   await rm(path.join(primary.root, 'dist'), { recursive: true });
 
+  const active = await primary.tools.verifyGeneratedRelease();
+  const bundlePadding = 'bundle-padding-'.repeat(4096);
+  const leakCases = [
+    ['Private title', /article title/],
+    ['Private summary', /article summary/],
+    ['![private](/weekly-screenshots/2099.01.01/pixel.png)', /article body marker|media URL/],
+    ['pixel.png', /media filename/],
+    ['src/articles/drafts/release.md', /private source path/],
+    [active.article.sha256, /article hash/],
+    [active.media['pixel.png'].sha256, /media hash/],
+    [active.releaseRevision, /release revision/],
+  ];
+  for (const [needle, diagnostic] of leakCases) {
+    await write(primary.root, 'dist/assets/large-bundle.js', `${bundlePadding}${needle}${bundlePadding}`);
+    await rejects(() => primary.tools.verifyGeneratedRelease(), diagnostic);
+  }
+  await write(primary.root, 'dist/assets/large-bundle.bin', Buffer.concat([Buffer.alloc(32768, 1), approvedMedia, Buffer.alloc(32768, 2)]));
+  await rejects(() => primary.tools.verifyGeneratedRelease(), /embeds raw media/);
+  await rm(path.join(primary.root, 'dist'), { recursive: true });
+  await write(primary.root, 'dist/assets/large-base64-bundle.js', `${bundlePadding}${approvedMedia.toString('base64')}${bundlePadding}`);
+  await rejects(() => primary.tools.verifyGeneratedRelease(), /embeds base64 media/);
+  await rm(path.join(primary.root, 'dist'), { recursive: true });
+
+  const locatorOnly = `${bundlePadding}${active.editionId}${active.publishAt}${bundlePadding}`;
+  await write(primary.root, 'dist/assets/public-locator.js', locatorOnly);
+  await primary.tools.verifyGeneratedRelease();
+  await rm(path.join(primary.root, 'dist'), { recursive: true });
+
   const client = path.join(primary.tools.generatedDir, 'client.ts');
   const approvedClient = await readFile(client);
   await writeFile(client, `${approvedClient.toString('utf8')}// manual edit\n`);
-  await rejects(() => primary.tools.verifyGeneratedRelease(), /client config differs/);
+  await rejects(() => primary.tools.verifyGeneratedRelease(), /client config is not internally canonical/);
   await writeFile(client, approvedClient);
   const server = path.join(primary.tools.generatedDir, 'server.mjs');
   const approvedServer = await readFile(server);
   await writeFile(server, approvedServer.toString('utf8').replace('releaseRevision', 'manualRevision'));
-  await rejects(() => primary.tools.verifyGeneratedRelease(), /server config differs/);
+  await rejects(() => primary.tools.verifyGeneratedRelease(), /server config is not internally canonical/);
   await writeFile(server, approvedServer);
 
   const before = await readFile(server);
   await write(primary.root, 'src/articles/drafts/next.md', '---\nid: edition-2099-01-02-next\ndate: 2099-01-02\npublishAt: 2099-01-02T12:00:00-07:00\nstatus: scheduled\ntitle: Next\nsummary: Next\n---\n\n![next](/weekly-screenshots/2099.01.02/pixel.png)\n');
   await write(primary.root, 'src/articles/drafts/assets/2099.01.02/pixel.png', 'next-media');
   await write(primary.root, 'src/articles/drafts/next.release.json', JSON.stringify({ status: 'scheduled', editionId: 'edition-2099-01-02-next', publishAt: '2099-01-02T12:00:00-07:00', article: 'src/articles/drafts/next.md', assetFolder: '2099.01.02' }));
-  await rejects(() => primary.tools.stageRelease('src/articles/drafts/next.release.json'), /not promoted/);
+  await rejects(() => primary.tools.stageRelease('src/articles/drafts/next.release.json'), /not reached publishAt/);
   assert.deepEqual(await readFile(server), before);
 
   const promotedArticle = await readFile(path.join(primary.root, 'src/articles/drafts/release.md'));
   await write(primary.root, 'src/articles/2099.01.01.md', promotedArticle);
   await write(primary.root, 'src/articles/index.ts', "import promoted from './2099.01.01.md?raw';\nexport const editions = [promoted];\n");
+  await rejects(() => primary.tools.stageRelease('src/articles/drafts/next.release.json'), /not reached publishAt/);
+  assert.deepEqual(await readFile(server), before);
+
+  primary.setNow(Date.parse('2099-01-01T19:00:00Z'));
+  await rejects(() => primary.tools.stageRelease('src/articles/drafts/next.release.json'), /not fully promoted/);
+  assert.deepEqual(await readFile(server), before);
+  await write(primary.root, publicCopy, 'mismatched-public-bytes');
+  await rejects(() => primary.tools.stageRelease('src/articles/drafts/next.release.json'), /not fully promoted/);
+  assert.deepEqual(await readFile(server), before);
   await write(primary.root, publicCopy, 'approved-media-bytes');
   await primary.tools.stageRelease('src/articles/drafts/next.release.json');
   const nextActive = await primary.tools.verifyGeneratedRelease();
   assert.equal(nextActive.editionId, 'edition-2099-01-02-next', 'historical public bytes must not flag after pointer rollover');
 
   await rm(server);
-  await rejects(() => primary.tools.stageRelease(primary.manifest), /ENOENT|no such file/i);
+  await rejects(() => primary.tools.stageRelease('src/articles/drafts/next.release.json'), /ENOENT|no such file/i);
 
   const linkedManifest = await fixture();
   const external = await write(linkedManifest.root, 'external.json', '{"status":"scheduled"}');

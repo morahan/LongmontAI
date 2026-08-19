@@ -211,17 +211,61 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     catch { fail('generated server config JSON is malformed'); }
   }
 
-  async function scanDuplicateFiles(spec) {
-    const protectedHashes = new Map([[spec.article.sha256, 'article.md'], ...spec.media.map((item) => [item.sha256, item.path])]);
-    const candidates = new Set();
+  function publicMediaTargets(spec) {
+    return spec.media.map((item) => {
+      if (item.sourceUrl) return { item, file: path.join(rootPath, 'public', ...item.sourceUrl.slice(1).split('/')) };
+      if (!spec.slideshow) fail(`media has no approved public target: ${item.path}`);
+      const date = path.posix.basename(spec.source.assetRoot);
+      const slideName = item.path.startsWith('slideshow/') ? item.path.slice('slideshow/'.length) : item.path;
+      return { item, file: path.join(rootPath, 'public/slideshows', date, spec.slideshow.id, ...slideName.split('/')) };
+    });
+  }
+
+  async function scanStaticLeaks(spec) {
+    const articleText = spec.article.bytes.toString('utf8');
+    const { data: frontmatter, body } = parseFrontmatter(articleText);
+    const forbiddenText = new Map();
+    const addText = (label, value, minimum = 1) => {
+      if (typeof value !== 'string' || value.length < minimum) return;
+      forbiddenText.set(value, label);
+      const escaped = JSON.stringify(value).slice(1, -1);
+      if (escaped !== value) forbiddenText.set(escaped, `${label} (escaped)`);
+    };
+    addText('article title', frontmatter.title, 8);
+    addText('article summary', frontmatter.summary, 12);
+    for (const line of body.split(/\r?\n/).map((value) => value.trim()).filter((value) => value.length >= 32)) {
+      addText('article body marker', line);
+    }
+    for (const sourcePath of [spec.source.manifest, spec.source.article, spec.source.assetRoot, 'src/generated/scheduled-release']) {
+      addText('private source path', sourcePath);
+    }
+    addText('article hash', spec.article.sha256);
+    addText('release revision', spec.releaseRevision);
+
+    const protectedHashes = new Map([[spec.article.sha256, 'article.md']]);
+    const rawMedia = [];
+    const base64Media = [];
+    const candidates = new Set(publicMediaTargets(spec).map(({ file }) => file));
     for (const item of spec.media) {
-      if (item.sourceUrl) candidates.add(path.join(rootPath, 'public', ...item.sourceUrl.slice(1).split('/')));
+      protectedHashes.set(item.sha256, item.path);
+      addText(`media hash ${item.path}`, item.sha256);
+      addText(`private media path ${item.path}`, `media/${item.path}`);
+      if (item.sourceUrl) addText(`media URL ${item.path}`, item.sourceUrl);
+      const basename = path.posix.basename(item.path);
+      if (!/^slide-\d+\.[a-z0-9]+$/i.test(basename)) addText(`media filename ${item.path}`, basename, 8);
       if (!item.sourceUrl && spec.slideshow) {
         const date = path.posix.basename(spec.source.assetRoot);
         const slideName = item.path.startsWith('slideshow/') ? item.path.slice('slideshow/'.length) : item.path;
-        candidates.add(path.join(rootPath, 'public/slideshows', date, spec.slideshow.id, ...slideName.split('/')));
+        const publicUrl = `/slideshows/${date}/${spec.slideshow.id}/${slideName}`;
+        addText(`media URL ${item.path}`, publicUrl);
       }
+      const rawProbeStart = Math.max(0, Math.floor(item.bytes.length / 2) - 32);
+      rawMedia.push({ label: item.path, bytes: item.bytes, probe: item.bytes.subarray(rawProbeStart, rawProbeStart + 64) });
+      const base64 = item.bytes.toString('base64');
+      const base64ProbeStart = Math.max(0, Math.floor(base64.length / 2) - 32);
+      base64Media.push({ label: item.path, value: base64, probe: base64.slice(base64ProbeStart, base64ProbeStart + 64) });
     }
+
     async function collect(directory) {
       let entries;
       try { entries = await readdir(directory, { withFileTypes: true }); } catch (error) { if (error?.code === 'ENOENT') return; throw error; }
@@ -239,57 +283,150 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
       try { info = await lstat(file); } catch (error) { if (error?.code === 'ENOENT') continue; throw error; }
       if (info.isSymbolicLink()) fail(`static candidate is a symlink: ${rootRelative(file)}`);
       if (!info.isFile()) continue;
-      const match = protectedHashes.get(digest(await readFile(file)));
-      if (match) fail(`active private release has a static duplicate of ${match}: ${rootRelative(file)}`);
+      const bytes = await readFile(file);
+      const exact = protectedHashes.get(digest(bytes));
+      if (exact) fail(`active private release has a static duplicate of ${exact}: ${rootRelative(file)}`);
+      const text = bytes.toString('utf8');
+      for (const [needle, label] of forbiddenText) {
+        if (text.includes(needle)) fail(`active private release leaks ${label}: ${rootRelative(file)}`);
+      }
+      for (const media of rawMedia) {
+        if (bytes.length >= media.bytes.length && bytes.includes(media.probe) && bytes.includes(media.bytes)) {
+          fail(`active private release embeds raw media ${media.label}: ${rootRelative(file)}`);
+        }
+      }
+      for (const media of base64Media) {
+        if (text.length >= media.value.length && text.includes(media.probe) && text.includes(media.value)) {
+          fail(`active private release embeds base64 media ${media.label}: ${rootRelative(file)}`);
+        }
+      }
     }
   }
 
-  async function verifyFunctionInventory() {
-    const config = JSON.parse(await readFile(path.join(rootPath, 'vercel.json'), 'utf8'));
-    const edition = config.functions?.['api/scheduled-edition.mjs']?.includeFiles;
-    const media = config.functions?.['api/scheduled-media.mjs']?.includeFiles;
-    if (edition !== EDITION_INCLUDE) fail('scheduled edition function includeFiles inventory is not exact');
-    if (media !== MEDIA_INCLUDE) fail('scheduled media function includeFiles inventory is not exact');
-    return {
-      'api/scheduled-edition.mjs': ['src/generated/scheduled-release/article.md', 'src/generated/scheduled-release/server.mjs'],
-      'api/scheduled-media.mjs': ['src/generated/scheduled-release/media/**', 'src/generated/scheduled-release/server.mjs'],
-    };
+  function expandIncludePattern(value) {
+    const match = value.match(/^(.*)\{([^{}]+)\}(.*)$/);
+    if (!match) return [value];
+    return match[2].split(',').flatMap((part) => expandIncludePattern(`${match[1]}${part}${match[3]}`));
   }
 
-  async function verifyGeneratedRelease({ checkStaticDuplicates = true } = {}) {
+  function globExpression(pattern) {
+    let expression = '^';
+    for (let index = 0; index < pattern.length; index += 1) {
+      const character = pattern[index];
+      if (character === '*' && pattern[index + 1] === '*') { expression += '.*'; index += 1; }
+      else if (character === '*') expression += '[^/]*';
+      else expression += character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    return new RegExp(`${expression}$`);
+  }
+
+  async function verifyFunctionInventory(approvedSpec) {
+    let spec = approvedSpec;
+    if (!spec) {
+      const rawServer = await readFile(path.join(generatedDir, 'server.mjs'), 'utf8');
+      const active = parseServer(rawServer);
+      if (typeof active.source?.manifest !== 'string') fail('generated config source manifest is invalid');
+      spec = await specFromManifest(active.source.manifest, { requireFuture: false });
+      if (rawServer !== serverText(spec)) fail('generated server config differs from approved sources');
+    }
+    const config = JSON.parse(await readFile(path.join(rootPath, 'vercel.json'), 'utf8'));
+    const configured = {
+      'api/scheduled-edition.mjs': config.functions?.['api/scheduled-edition.mjs']?.includeFiles,
+      'api/scheduled-media.mjs': config.functions?.['api/scheduled-media.mjs']?.includeFiles,
+    };
+    if (configured['api/scheduled-edition.mjs'] !== EDITION_INCLUDE) fail('scheduled edition function includeFiles inventory is not exact');
+    if (configured['api/scheduled-media.mjs'] !== MEDIA_INCLUDE) fail('scheduled media function includeFiles inventory is not exact');
+    const generatedFiles = (await filesBelow(generatedDir)).map((name) => `src/generated/scheduled-release/${name}`);
+    const resolved = {};
+    for (const [functionName, includeValue] of Object.entries(configured)) {
+      const expressions = expandIncludePattern(includeValue).map(globExpression);
+      resolved[functionName] = generatedFiles.filter((name) => expressions.some((expression) => expression.test(name))).sort();
+    }
+    const expected = {
+      'api/scheduled-edition.mjs': ['src/generated/scheduled-release/article.md', 'src/generated/scheduled-release/server.mjs'],
+      'api/scheduled-media.mjs': ['src/generated/scheduled-release/server.mjs', ...spec.media.map((item) => `src/generated/scheduled-release/media/${item.path}`)].sort(),
+    };
+    for (const functionName of Object.keys(expected)) {
+      if (JSON.stringify(resolved[functionName]) !== JSON.stringify(expected[functionName])) {
+        fail(`${functionName} resolved includeFiles has missing, extra, or unapproved files`);
+      }
+    }
+    return resolved;
+  }
+
+  async function verifyInternalPackage() {
     let info;
     try { info = await lstat(generatedDir); } catch (error) { if (error?.code === 'ENOENT') fail('generated release package is missing'); throw error; }
     if (!info.isDirectory() || info.isSymbolicLink()) fail('generated release package must be a real directory');
     const rawServer = await readFile(path.join(generatedDir, 'server.mjs'), 'utf8');
     const config = parseServer(rawServer);
-    if (config?.schemaVersion !== 1 || typeof config.source?.manifest !== 'string') fail('generated config schema or source manifest is invalid');
-    const spec = await specFromManifest(config.source.manifest, { requireFuture: false });
-    if (rawServer !== serverText(spec)) fail('generated server config differs from approved sources');
-    if (await readFile(path.join(generatedDir, 'client.ts'), 'utf8') !== clientText(spec)) fail('generated client config differs from approved sources');
-    if (!config.article || config.article.file !== 'article.md') fail('generated article path is invalid');
-    if (!Buffer.from(await readFile(path.join(generatedDir, 'article.md'))).equals(spec.article.bytes)) fail('generated article differs from approved source');
-    for (const item of spec.media) {
-      const configured = config.media?.[item.path];
-      if (!configured || configured.file !== `media/${item.path}` || configured.contentType !== item.contentType || configured.sha256 !== item.sha256 || configured.sourceUrl !== item.sourceUrl) {
-        fail(`generated media config is invalid: ${item.path}`);
-      }
-      if (!Buffer.from(await readFile(path.join(generatedDir, configured.file))).equals(item.bytes)) fail(`generated media differs from approved source: ${item.path}`);
+    if (config?.schemaVersion !== 1 || typeof config.source?.manifest !== 'string' || typeof config.source?.article !== 'string' || typeof config.source?.assetRoot !== 'string') {
+      fail('generated config schema or source paths are invalid');
     }
-    const expected = ['article.md', 'client.ts', 'server.mjs', ...spec.media.map(({ path: name }) => `media/${name}`)].sort();
+    safeRelative(config.source.manifest, 'generated source manifest');
+    safeRelative(config.source.article, 'generated source article');
+    safeRelative(config.source.assetRoot, 'generated source assetRoot');
+    if (!/^edition-\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(config.editionId ?? '')) fail('generated editionId is invalid');
+    const publishAtMs = publication(config.publishAt, false);
+    if (config.publishAtMs !== publishAtMs) fail('generated publishAtMs is invalid');
+    if (config.article?.file !== 'article.md' || !/^[a-f0-9]{64}$/.test(config.article.sha256 ?? '')) fail('generated article config is invalid');
+    const articleBytes = await readFile(path.join(generatedDir, 'article.md'));
+    if (digest(articleBytes) !== config.article.sha256) fail('generated article hash mismatch');
+    const articleText = articleBytes.toString('utf8');
+    const articleData = parseFrontmatter(articleText).data;
+    if (articleData.id !== config.editionId || articleData.publishAt !== config.publishAt || articleData.status !== 'scheduled') fail('generated article identity is invalid');
+    const slideshow = config.slideshow === null ? null : slideshowFrom({ slideshow: config.slideshow });
+    const referenced = new Map();
+    const assetDate = path.posix.basename(config.source.assetRoot);
+    for (const match of articleText.matchAll(MEDIA_URL)) {
+      if (match[1] !== assetDate) fail(`generated article media uses wrong dated folder: ${match[0]}`);
+      referenced.set(safeRelative(match[2], 'generated article media'), match[0]);
+    }
+    for (const slide of slideshow?.slides ?? []) if (!referenced.has(slide.path)) referenced.set(slide.path, null);
+    const configuredNames = Object.keys(config.media ?? {}).sort();
+    if (JSON.stringify(configuredNames) !== JSON.stringify([...referenced.keys()].sort())) fail('generated media allowlist does not match article and slideshow references');
+    const media = [];
+    for (const name of configuredNames) {
+      safeRelative(name, 'generated media path');
+      const item = config.media[name];
+      const contentType = TYPES.get(path.extname(name).toLowerCase());
+      if (!item || item.file !== `media/${name}` || item.contentType !== contentType || item.sourceUrl !== referenced.get(name) || !/^[a-f0-9]{64}$/.test(item.sha256 ?? '')) {
+        fail(`generated media config is invalid: ${name}`);
+      }
+      const bytes = await readFile(path.join(generatedDir, item.file));
+      if (digest(bytes) !== item.sha256) fail(`generated media hash mismatch: ${name}`);
+      media.push({ path: name, sourceUrl: item.sourceUrl, sourceFile: null, contentType, sha256: item.sha256, bytes });
+    }
+    const spec = finalize({
+      schemaVersion: 1, editionId: config.editionId, publishAt: config.publishAt, publishAtMs,
+      source: { manifest: config.source.manifest, article: config.source.article, assetRoot: config.source.assetRoot },
+      article: { sourceFile: null, sha256: config.article.sha256, bytes: articleBytes }, slideshow, media,
+    });
+    if (config.releaseRevision !== spec.releaseRevision || rawServer !== serverText(spec)) fail('generated server config is not internally canonical');
+    if (await readFile(path.join(generatedDir, 'client.ts'), 'utf8') !== clientText(spec)) fail('generated client config is not internally canonical');
+    const expected = ['article.md', 'client.ts', 'server.mjs', ...media.map(({ path: name }) => `media/${name}`)].sort();
     if (JSON.stringify(await filesBelow(generatedDir)) !== JSON.stringify(expected)) fail('generated package has unexpected or missing files');
-    await verifyFunctionInventory();
-    if (checkStaticDuplicates) await scanDuplicateFiles(spec);
-    return serverValue(spec);
+    await verifyFunctionInventory(spec);
+    return { config: serverValue(spec), spec, rawServer };
+  }
+
+  async function verifyGeneratedRelease({ checkStaticDuplicates = true } = {}) {
+    const internal = await verifyInternalPackage();
+    const approved = await specFromManifest(internal.config.source.manifest, { requireFuture: false });
+    if (internal.rawServer !== serverText(approved)) fail('generated server config differs from approved sources');
+    if (await readFile(path.join(generatedDir, 'client.ts'), 'utf8') !== clientText(approved)) fail('generated client config differs from approved sources');
+    if (checkStaticDuplicates) await scanStaticLeaks(approved);
+    return serverValue(approved);
   }
 
   async function activeRelease() {
     let info;
     try { info = await lstat(generatedDir); } catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
     if (!info.isDirectory() || info.isSymbolicLink()) fail('active generated release is invalid');
-    return verifyGeneratedRelease({ checkStaticDuplicates: false });
+    return verifyInternalPackage();
   }
 
-  async function isPromoted(active) {
+  async function isPromoted(active, activeSpec) {
     const index = await readFile(path.join(rootPath, 'src/articles/index.ts'), 'utf8');
     let matches = 0;
     for (const found of index.matchAll(/from ['"](\.\/[^'"]+\.md)\?raw['"]/g)) {
@@ -300,10 +437,20 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
       } catch { /* malformed static imports fail the normal content/build checks */ }
     }
     if (matches !== 1) return false;
-    if (!active.slideshow) return true;
-    const registry = await readFile(path.join(rootPath, 'src/articles/slideshows.ts'), 'utf8');
-    const id = active.slideshow.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return (registry.match(new RegExp(`['"]${id}['"]\\s*:`, 'g')) ?? []).length === 1;
+    if (active.slideshow) {
+      const registry = await readFile(path.join(rootPath, 'src/articles/slideshows.ts'), 'utf8');
+      const id = active.slideshow.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if ((registry.match(new RegExp(`['"]${id}['"]\\s*:`, 'g')) ?? []).length !== 1) return false;
+    }
+    for (const { item, file } of publicMediaTargets(activeSpec)) {
+      try {
+        await assertContainedPath(file, `promoted media ${item.path}`, 'file');
+        if (digest(await readFile(file)) !== item.sha256) return false;
+      } catch {
+        return false;
+      }
+    }
+    return true;
   }
 
   async function acquireLock() {
@@ -321,7 +468,12 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     try {
       const spec = await specFromManifest(manifest, { requireFuture: true });
       const active = await activeRelease();
-      if (active && active.editionId !== spec.editionId && !(await isPromoted(active))) fail(`active edition ${active.editionId} is not promoted in both static registries`);
+      if (active && active.config.editionId !== spec.editionId) {
+        const approvedActive = await verifyGeneratedRelease({ checkStaticDuplicates: false });
+        const approvedActiveSpec = await specFromManifest(approvedActive.source.manifest, { requireFuture: false });
+        if (now() < approvedActive.publishAtMs) fail(`active edition ${approvedActive.editionId} has not reached publishAt`);
+        if (!(await isPromoted(approvedActive, approvedActiveSpec))) fail(`active edition ${approvedActive.editionId} is not fully promoted with approved public media`);
+      }
       await rm(next, { recursive: true, force: true });
       await writePackage(next, spec);
       const original = generatedDir;
