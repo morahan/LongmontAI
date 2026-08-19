@@ -20,7 +20,7 @@ test('seeded scenes are stable, sparse, and responsive', () => {
   assert.equal(starCountForWidth(639), 30);
   assert.equal(MOBILE_STAR_COUNT, 30);
   assert.ok(first.stars.every((star) =>
-    star.alpha >= 0.34 && star.alpha <= 0.74 && star.size >= 0.48 && star.size <= 1.18
+    star.alpha >= 0.48 && star.alpha <= 0.88 && star.size >= 0.8 && star.size <= 1.6
   ));
 });
 
