@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Edition, editions, isEditionPublished } from '../articles';
-import { fetchScheduledEdition, scheduledEditionPublishAt } from '../articles/scheduledEdition';
+import { watchScheduledEdition } from '../articles/scheduledEdition';
 import { ScheduledEditionResponse } from '../articles/types';
 import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
 import { motion } from 'framer-motion';
@@ -33,35 +33,24 @@ const Feed: React.FC = () => {
 
     const [publicationNow, setPublicationNow] = useState(() => Date.now());
     const publishedEditions = useMemo(() => {
-        const availableEditions = scheduledEdition
-            ? [scheduledEdition.edition, ...editions]
-            : editions;
-        return availableEditions.filter((edition) => isEditionPublished(edition, publicationNow));
+        const editionsById = new Map(editions.map((edition) => [edition.id, edition]));
+        if (scheduledEdition && !editionsById.has(scheduledEdition.edition.id)) {
+            editionsById.set(scheduledEdition.edition.id, scheduledEdition.edition);
+        }
+
+        return Array.from(editionsById.values())
+            .filter((edition) => isEditionPublished(edition, publicationNow))
+            .sort((left, right) => {
+                const leftTime = Date.parse(left.publishAt ?? `${left.date}T00:00:00`);
+                const rightTime = Date.parse(right.publishAt ?? `${right.date}T00:00:00`);
+                return rightTime - leftTime;
+            });
     }, [publicationNow, scheduledEdition]);
 
-    React.useEffect(() => {
-        const controller = new AbortController();
-        const loadScheduledEdition = () => void fetchScheduledEdition(controller.signal)
-            .then((response) => setScheduledEdition(response))
-            .catch((error: unknown) => {
-                if (!(error instanceof DOMException && error.name === 'AbortError')) {
-                    setScheduledEdition(null);
-                }
-            });
-
-        loadScheduledEdition();
-        const delay = scheduledEditionPublishAt - Date.now();
-        const timer = delay > 0
-            ? window.setTimeout(loadScheduledEdition, delay)
-            : undefined;
-
-        return () => {
-            controller.abort();
-            if (timer !== undefined) {
-                window.clearTimeout(timer);
-            }
-        };
-    }, []);
+    React.useEffect(() => watchScheduledEdition((response) => {
+        setScheduledEdition(response);
+        setPublicationNow(Date.now());
+    }), []);
 
     React.useEffect(() => {
         const nextPublishTime = editions

@@ -11,11 +11,12 @@ import ScheduledEdition from './ScheduledEdition';
 const Edition: React.FC = () => {
     const { id } = useParams();
 
-    if (id === scheduledEditionSlug) {
+    const edition = editions.find(e => e.id === id);
+
+    // Static promotion always wins over a stale active scheduled pointer.
+    if (!edition && id === scheduledEditionSlug) {
         return <ScheduledEdition />;
     }
-
-    const edition = editions.find(e => e.id === id);
 
     if (!edition || !isEditionPublished(edition)) {
         return <Navigate to="/" replace />;

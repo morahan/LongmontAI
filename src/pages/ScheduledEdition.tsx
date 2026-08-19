@@ -1,34 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
 import { ScheduledEditionResponse } from '../articles/types';
-import { fetchScheduledEdition } from '../articles/scheduledEdition';
+import { watchScheduledEdition } from '../articles/scheduledEdition';
 import ContentBlock from '../components/ContentBlock';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
 
 const ScheduledEdition: React.FC = () => {
-    const [result, setResult] = useState<ScheduledEditionResponse | null | undefined>(undefined);
+    const [result, setResult] = useState<ScheduledEditionResponse | undefined>(undefined);
 
-    useEffect(() => {
-        const controller = new AbortController();
-        void fetchScheduledEdition(controller.signal)
-            .then(setResult)
-            .catch((error: unknown) => {
-                if (error instanceof DOMException && error.name === 'AbortError') {
-                    return;
-                }
-                setResult(null);
-            });
-        return () => controller.abort();
-    }, []);
+    useEffect(() => watchScheduledEdition(setResult), []);
 
     if (result === undefined) {
         return null;
-    }
-
-    if (!result) {
-        return <Navigate to="/" replace />;
     }
 
     const { edition, slideshows } = result;
