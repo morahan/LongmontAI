@@ -1,32 +1,36 @@
 import React, { useEffect, useRef } from 'react';
 import {
     createSpaceScene,
-    getSystemAppearance,
+    getTwinkleBrightness,
+    projectTraveler,
+    selectProminentSystem,
     starCountForWidth,
-    type PlanetarySystem,
-    type SystemAppearance,
+    travelerCountForWidth,
+    type Planet,
+    type ProjectedTraveler,
 } from './spaceBackgroundModel';
 
 const TAU = Math.PI * 2;
 
-const wrap = (value: number) => ((value % 1) + 1) % 1;
-
 const drawPlanetarySystem = (
     ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    system: PlanetarySystem,
-    appearance: SystemAppearance,
+    projection: ProjectedTraveler,
+    planets: Planet[],
+    elapsedSeconds: number,
 ) => {
-    const x = system.x * width;
-    const y = system.y * height;
-    const { opacity, scale, orbitAngle } = appearance;
+    const detailFade = Math.min(
+        1,
+        Math.max(0, (projection.progress - 0.38) / 0.12),
+        Math.max(0, (0.84 - projection.progress) / 0.14),
+    );
+    const opacity = projection.opacity * detailFade;
+    const scale = 0.55 + projection.progress * 1.15;
 
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(projection.x, projection.y);
     ctx.scale(scale, scale);
 
-    for (const planet of system.planets) {
+    for (const planet of planets) {
         ctx.strokeStyle = `rgba(151, 189, 211, ${opacity * 0.2})`;
         ctx.lineWidth = 0.45 / scale;
         ctx.beginPath();
@@ -34,35 +38,35 @@ const drawPlanetarySystem = (
         ctx.stroke();
     }
 
-    const starGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 8);
-    starGlow.addColorStop(0, `rgba(238, 248, 255, ${opacity * 0.92})`);
-    starGlow.addColorStop(0.25, `rgba(160, 218, 238, ${opacity * 0.36})`);
-    starGlow.addColorStop(1, 'rgba(106, 182, 211, 0)');
-    ctx.fillStyle = starGlow;
+    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 7);
+    glow.addColorStop(0, `rgba(238, 248, 255, ${opacity})`);
+    glow.addColorStop(0.28, `rgba(160, 218, 238, ${opacity * 0.34})`);
+    glow.addColorStop(1, 'rgba(106, 182, 211, 0)');
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(0, 0, 8, 0, TAU);
+    ctx.arc(0, 0, 7, 0, TAU);
     ctx.fill();
 
-    for (const planet of system.planets) {
-        const angle = system.phase + planet.phase + orbitAngle / Math.sqrt(planet.orbitRadius);
+    for (const planet of planets) {
+        const angle = planet.phase + elapsedSeconds * 0.24 / Math.sqrt(planet.orbitRadius);
         const planetX = Math.cos(angle) * planet.orbitRadius;
         const planetY = Math.sin(angle) * planet.orbitRadius * 0.34;
 
-        ctx.globalAlpha = opacity;
         ctx.fillStyle = planet.color;
+        ctx.globalAlpha = opacity;
         ctx.beginPath();
         ctx.arc(planetX, planetY, planet.radius, 0, TAU);
         ctx.fill();
 
         if (planet.hasMoon) {
             const moonAngle = angle * 2.7 + 1.2;
-            const moonOrbit = planet.radius + 2.1;
-            ctx.strokeStyle = `rgba(190, 211, 222, ${opacity * 0.18})`;
+            const moonOrbit = planet.radius + 2;
+            ctx.strokeStyle = `rgba(190, 211, 222, ${opacity * 0.2})`;
             ctx.lineWidth = 0.35 / scale;
             ctx.beginPath();
             ctx.arc(planetX, planetY, moonOrbit, 0, TAU);
             ctx.stroke();
-            ctx.fillStyle = `rgba(211, 222, 228, ${opacity * 0.68})`;
+            ctx.fillStyle = `rgba(211, 222, 228, ${opacity * 0.72})`;
             ctx.beginPath();
             ctx.arc(
                 planetX + Math.cos(moonAngle) * moonOrbit,
@@ -117,30 +121,63 @@ const SpaceNeuralBackground: React.FC = () => {
             ctx.fillStyle = glow;
             ctx.fillRect(0, 0, width, height);
 
+            // Layer one: fixed coordinates. Only each star's independent twinkle changes.
             const starCount = starCountForWidth(width);
             for (let index = 0; index < starCount; index += 1) {
                 const star = scene.stars[index];
-                const x = wrap(star.x + star.driftX * elapsed) * width;
-                const y = wrap(star.y + star.driftY * elapsed) * height;
-                const twinkle = 0.88 + Math.sin(star.twinklePhase + elapsed * star.twinkleRate) * 0.12;
-
-                ctx.fillStyle = `rgba(214, 231, 239, ${star.alpha * twinkle})`;
+                const brightness = getTwinkleBrightness(star, elapsed);
+                ctx.fillStyle = `rgba(214, 231, 239, ${star.alpha * brightness})`;
                 ctx.beginPath();
-                ctx.arc(x, y, star.size, 0, TAU);
+                ctx.arc(star.x * width, star.y * height, star.size, 0, TAU);
                 ctx.fill();
             }
 
-            const systemAppearance = getSystemAppearance(elapsed);
-            if (systemAppearance) {
-                drawPlanetarySystem(ctx, width, height, scene.system, systemAppearance);
+            // Layer two: a small elapsed-time field using reciprocal-depth projection.
+            const travelerCount = travelerCountForWidth(width);
+            const travelers = scene.travelers.slice(0, travelerCount);
+            const projections = travelers.map((traveler) =>
+                projectTraveler(traveler, elapsed, width, height));
+            const prominentSystem = selectProminentSystem(travelers, projections);
+
+            for (let index = 0; index < travelers.length; index += 1) {
+                const traveler = travelers[index];
+                const projection = projections[index];
+                if (projection.opacity <= 0.01) continue;
+
+                const previous = projectTraveler(traveler, Math.max(0, elapsed - 0.1), width, height);
+                if (previous.cycle === projection.cycle) {
+                    const deltaX = projection.x - previous.x;
+                    const deltaY = projection.y - previous.y;
+                    const distance = Math.hypot(deltaX, deltaY);
+                    if (distance > 0.35) {
+                        const tailScale = Math.min(1, 5 / distance);
+                        ctx.strokeStyle = `rgba(184, 218, 233, ${projection.opacity * 0.16})`;
+                        ctx.lineWidth = Math.max(0.35, projection.radius * 0.45);
+                        ctx.beginPath();
+                        ctx.moveTo(
+                            projection.x - deltaX * tailScale,
+                            projection.y - deltaY * tailScale,
+                        );
+                        ctx.lineTo(projection.x, projection.y);
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.fillStyle = `rgba(224, 242, 254, ${projection.opacity})`;
+                ctx.beginPath();
+                ctx.arc(projection.x, projection.y, projection.radius, 0, TAU);
+                ctx.fill();
+
+                if (index === prominentSystem && traveler.planets) {
+                    drawPlanetarySystem(ctx, projection, traveler.planets, elapsed);
+                }
             }
         };
 
         const animate = (timestamp: number) => {
             animationFrameId = null;
             if (previousTimestamp !== null) {
-                // Clamping protects the scene from jumping after a throttled frame.
-                elapsedSeconds += Math.min((timestamp - previousTimestamp) / 1000, 0.1);
+                elapsedSeconds += Math.min((timestamp - previousTimestamp) / 1000, 0.25);
             }
             previousTimestamp = timestamp;
             drawScene(elapsedSeconds);
