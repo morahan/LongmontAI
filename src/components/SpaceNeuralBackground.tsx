@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
     createSpaceScene,
+    getSystemScale,
     getTwinkleBrightness,
     projectTraveler,
     selectProminentSystem,
@@ -24,7 +25,7 @@ const drawPlanetarySystem = (
         Math.max(0, (0.84 - projection.progress) / 0.14),
     );
     const opacity = projection.opacity * detailFade;
-    const scale = 0.55 + projection.progress * 1.15;
+    const scale = getSystemScale(projection);
 
     ctx.save();
     ctx.translate(projection.x, projection.y);
@@ -137,7 +138,12 @@ const SpaceNeuralBackground: React.FC = () => {
             const travelers = scene.travelers.slice(0, travelerCount);
             const projections = travelers.map((traveler) =>
                 projectTraveler(traveler, elapsed, width, height));
-            const prominentSystem = selectProminentSystem(travelers, projections);
+            const prominentSystem = selectProminentSystem(
+                travelers,
+                projections,
+                width,
+                height,
+            );
 
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];

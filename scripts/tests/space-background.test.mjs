@@ -7,10 +7,14 @@ import {
   MOBILE_STAR_COUNT,
   MOBILE_TRAVELER_COUNT,
   NEAR_DEPTH,
+  SYSTEM_MAX_PROGRESS,
+  SYSTEM_MIN_PROGRESS,
   TWINKLE_WINDOW_SECONDS,
   createSpaceScene,
+  getSystemSafetyMargin,
   getTravelerDepth,
   getTwinkleBrightness,
+  isSystemInViewport,
   projectTraveler,
   selectProminentSystem,
   starCountForWidth,
@@ -81,7 +85,7 @@ test('travelers advance by elapsed time, reset at bounded depth, and project rec
   assert.ok(near.radius > far.radius);
 });
 
-test('a deterministic minority carry bounded systems and only one can be prominent', () => {
+test('a deterministic minority carry bounded, normally discernible systems', () => {
   const scene = createSpaceScene(9876);
   const carriers = scene.travelers.filter((traveler) => traveler.planets);
   assert.ok(carriers.length >= 2 && carriers.length < scene.travelers.length / 3);
@@ -91,13 +95,62 @@ test('a deterministic minority carry bounded systems and only one can be promine
     traveler.planets.filter((planet) => planet.hasMoon).length <= 1
   ));
 
-  for (let elapsed = 0; elapsed < 240; elapsed += 0.5) {
-    const projections = scene.travelers.map((traveler) =>
-      projectTraveler(traveler, elapsed, 1200, 700));
-    const selected = selectProminentSystem(scene.travelers, projections);
-    assert.ok(selected === -1 || scene.travelers[selected].planets);
-    if (selected !== -1) {
-      assert.ok(projections[selected].progress >= 0.38 && projections[selected].progress <= 0.84);
+  const normalProjection = {
+    x: 600,
+    y: 350,
+    depth: 500,
+    progress: 0.6,
+    radius: 1.5,
+    opacity: 0.6,
+    cycle: 0,
+  };
+  const margin = getSystemSafetyMargin(carriers[0], normalProjection);
+  assert.ok(margin * 2 >= 24, `system detail too small at normal scale: ${margin * 2}px`);
+  assert.ok(margin <= 40, `system safety margin is unbounded: ${margin}`);
+});
+
+test('an offscreen nearer carrier never suppresses an eligible visible system', () => {
+  const carriers = createSpaceScene(9876).travelers.filter((traveler) => traveler.planets).slice(0, 2);
+  const projections = [
+    { x: -20, y: 300, depth: 200, progress: 0.8, radius: 2, opacity: 0.5, cycle: 0 },
+    { x: 240, y: 300, depth: 400, progress: 0.6, radius: 1.5, opacity: 0.6, cycle: 0 },
+  ];
+
+  assert.equal(isSystemInViewport(carriers[0], projections[0], 800, 600), false);
+  assert.equal(isSystemInViewport(carriers[1], projections[1], 800, 600), true);
+  assert.equal(selectProminentSystem(carriers, projections, 800, 600), 1);
+});
+
+test('desktop and mobile selection always chooses the nearest eligible visible carrier', () => {
+  const scene = createSpaceScene(9876);
+  const viewports = [
+    { width: 1440, height: 800, count: DESKTOP_TRAVELER_COUNT },
+    { width: 390, height: 844, count: MOBILE_TRAVELER_COUNT },
+  ];
+
+  for (const { width, height, count } of viewports) {
+    const travelers = scene.travelers.slice(0, count);
+    for (let elapsed = 0; elapsed < 600; elapsed += 0.25) {
+      const projections = travelers.map((traveler) =>
+        projectTraveler(traveler, elapsed, width, height));
+      const eligibleVisible = travelers
+        .map((traveler, index) => ({ traveler, projection: projections[index], index }))
+        .filter(({ traveler, projection }) =>
+          projection.progress >= SYSTEM_MIN_PROGRESS &&
+          projection.progress <= SYSTEM_MAX_PROGRESS &&
+          isSystemInViewport(traveler, projection, width, height)
+        )
+        .sort((a, b) => b.projection.progress - a.projection.progress);
+      const selected = selectProminentSystem(travelers, projections, width, height);
+
+      assert.equal(
+        selected,
+        eligibleVisible[0]?.index ?? -1,
+        `wrong ${width}x${height} selection at ${elapsed}s`,
+      );
+      if (selected !== -1) {
+        assert.equal(isSystemInViewport(travelers[selected], projections[selected], width, height), true);
+      }
     }
   }
 });

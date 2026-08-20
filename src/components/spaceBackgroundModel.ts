@@ -6,6 +6,9 @@ export const MOBILE_BREAKPOINT = 640;
 export const TWINKLE_WINDOW_SECONDS = 120;
 export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
+export const SYSTEM_MIN_PROGRESS = 0.38;
+export const SYSTEM_MAX_PROGRESS = 0.84;
+export const MAX_SYSTEM_SAFETY_MARGIN = 40;
 
 export interface DistantStar {
     x: number;
@@ -141,17 +144,61 @@ export const projectTraveler = (
     };
 };
 
-/** Selects no more than one approaching carrier for visible planetary detail. */
+export const getSystemScale = (projection: ProjectedTraveler) =>
+    0.55 + projection.progress * 1.15;
+
+/** The full orbit, body, and optional moon extent, capped to keep selection conservative but bounded. */
+export const getSystemSafetyMargin = (
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+) => {
+    if (!traveler.planets) return 0;
+
+    const unscaledExtent = traveler.planets.reduce((largest, planet) => {
+        const bodyExtent = planet.orbitRadius + planet.radius;
+        const moonExtent = planet.hasMoon
+            ? planet.orbitRadius + planet.radius + 2 + 0.42
+            : bodyExtent;
+        return Math.max(largest, bodyExtent, moonExtent);
+    }, 7);
+
+    return Math.min(MAX_SYSTEM_SAFETY_MARGIN, unscaledExtent * getSystemScale(projection) + 1);
+};
+
+export const isSystemInViewport = (
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    width: number,
+    height: number,
+) => {
+    if (!traveler.planets || width <= 0 || height <= 0) return false;
+    const margin = getSystemSafetyMargin(traveler, projection);
+    return projection.x >= margin
+        && projection.x <= width - margin
+        && projection.y >= margin
+        && projection.y <= height - margin;
+};
+
+/** Selects the nearest eligible carrier whose complete system fits the exact canvas. */
 export const selectProminentSystem = (
     travelers: Traveler[],
     projections: ProjectedTraveler[],
+    width: number,
+    height: number,
 ) => {
     let selected = -1;
     let nearestProgress = -1;
 
     for (let index = 0; index < travelers.length; index += 1) {
+        const traveler = travelers[index];
         const projection = projections[index];
-        if (!travelers[index].planets || projection.progress < 0.38 || projection.progress > 0.84) continue;
+        if (
+            !traveler
+            || !projection
+            || projection.progress < SYSTEM_MIN_PROGRESS
+            || projection.progress > SYSTEM_MAX_PROGRESS
+            || !isSystemInViewport(traveler, projection, width, height)
+        ) continue;
         if (projection.progress > nearestProgress) {
             selected = index;
             nearestProgress = projection.progress;
