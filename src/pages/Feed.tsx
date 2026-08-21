@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Mail, Search, Sparkles, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
+import HeroTitle from '../components/HeroTitle';
 
 function formatDate(dateStr: string): string {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -95,9 +96,7 @@ const Feed: React.FC = () => {
                             Deep in the Latent Space
                         </span>
                     </div>
-                    <h1 className="home-hero-title text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
-                        Navigating the <span className="text-gradient-vibrant">Intelligence Age</span>
-                    </h1>
+                    <HeroTitle />
                     <p className="home-hero-subtitle text-[var(--text-secondary)] text-lg md:text-xl max-w-xl">
                         Charting frontier models, agents, and the ideas reshaping everything — one edition at a time.
                     </p>
