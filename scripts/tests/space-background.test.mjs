@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   AMBIENT_STAR_COUNT,
+  AMBIENT_STAR_RGB,
   CONSTELLATION_INTERVAL_SECONDS,
+  CONSTELLATION_STAR_COUNT,
+  CONSTELLATION_STAR_RGB,
   CONSTELLATION_WINDOW_SECONDS,
   DESKTOP_TRAVELER_COUNT,
   FAR_DEPTH,
@@ -33,6 +36,7 @@ import {
   getSimulationTime,
   getStarFieldStyles,
   getStarPosition,
+  getStarRgb,
   getSystemSafetyMargin,
   getTravelerDepth,
   getTwinkleBrightness,
@@ -104,14 +108,18 @@ test('100k deterministic samples match every reviewed planet percentage within t
   });
 });
 
-test('ambient stars are seeded 50/50 wrap/bounce linear drifters at reviewed speeds', () => {
+test('exactly 50 ambient stars remain visible while all 72 seeded positions are retained', () => {
   const stars = createAmbientLayout(12345, 0);
-  assert.equal(stars.length, 72);
-  assert.equal(starCountForWidth(320), AMBIENT_STAR_COUNT);
-  assert.equal(starCountForWidth(1920), AMBIENT_STAR_COUNT);
+  assert.equal(AMBIENT_STAR_COUNT, 50);
+  assert.equal(CONSTELLATION_STAR_COUNT, 72);
+  assert.equal(stars.length, CONSTELLATION_STAR_COUNT);
+  assert.equal(starCountForWidth(320), 50);
+  assert.equal(starCountForWidth(1920), 50);
+  assert.equal(getStarFieldStyles(12345, 47).filter(({ opacity }) => opacity > 0).length, 50);
   assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 36);
   assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 36);
   assert.ok(stars.every((star) => star.driftSpeed >= 0.0007 && star.driftSpeed <= 0.0017));
+  assert.ok(stars.every((star) => star.alpha >= 0.28 && star.alpha <= 0.68));
 
   const linear = { ...stars[0], x: 0.25, y: 0.4, driftMode: 'wrap', driftAngle: 0, driftSpeed: 0.001 };
   closeTo(getDriftedStar(linear, 100).x, 0.35);
@@ -214,7 +222,9 @@ test('constellation strength and pure star styles are continuous at every phase 
   const atAmbient = getStarFieldStyles(seed, 630);
   atHold.forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
   atMorphOut.forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
-  atAmbient.forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
+  atAmbient.slice(0, AMBIENT_STAR_COUNT)
+    .forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
+  atAmbient.slice(AMBIENT_STAR_COUNT).forEach((style) => closeTo(style.alpha, 0));
 
   for (const boundary of [600, 610, 620, 630]) {
     const before = getStarFieldStyles(seed, boundary - 0.000001);
@@ -225,6 +235,35 @@ test('constellation strength and pure star styles are continuous at every phase 
       }
     });
   }
+});
+
+test('constellation-only stars fade with strength and warm ambient RGB stays separate from text RGB', () => {
+  const seed = 0x72;
+  const ambient = getStarFieldStyles(seed, 599);
+  const morphStart = getStarFieldStyles(seed, 600);
+  const morphMiddle = getStarFieldStyles(seed, 605);
+  const hold = getStarFieldStyles(seed, 610);
+  const outStart = getStarFieldStyles(seed, 620);
+  const outMiddle = getStarFieldStyles(seed, 625);
+  const after = getStarFieldStyles(seed, 630);
+
+  for (let index = AMBIENT_STAR_COUNT; index < CONSTELLATION_STAR_COUNT; index += 1) {
+    assert.equal(ambient[index].alpha, 0);
+    assert.equal(ambient[index].opacity, 0);
+    assert.equal(morphStart[index].alpha, 0);
+    assert.ok(morphMiddle[index].alpha > 0 && morphMiddle[index].opacity > 0);
+    assert.ok(hold[index].alpha > morphMiddle[index].alpha);
+    assert.ok(outStart[index].alpha > outMiddle[index].alpha);
+    assert.ok(outMiddle[index].alpha > 0 && outMiddle[index].opacity > 0);
+    assert.equal(after[index].alpha, 0);
+    assert.equal(after[index].opacity, 0);
+  }
+
+  assert.deepEqual(getStarRgb(0), AMBIENT_STAR_RGB);
+  assert.deepEqual(getStarRgb(1), CONSTELLATION_STAR_RGB);
+  assert.ok(AMBIENT_STAR_RGB[0] > AMBIENT_STAR_RGB[1] && AMBIENT_STAR_RGB[1] > AMBIENT_STAR_RGB[2]);
+  assert.ok(CONSTELLATION_STAR_RGB[2] > CONSTELLATION_STAR_RGB[1]
+    && CONSTELLATION_STAR_RGB[1] > CONSTELLATION_STAR_RGB[0]);
 });
 
 test('morph boundaries are continuous and morph-out lands on a newly seeded star field', () => {

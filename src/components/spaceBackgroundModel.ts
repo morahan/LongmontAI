@@ -1,6 +1,9 @@
-export const AMBIENT_STAR_COUNT = 72;
+export const AMBIENT_STAR_COUNT = 50;
+export const CONSTELLATION_STAR_COUNT = 72;
 export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
+export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
+export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
 export const DESKTOP_TRAVELER_COUNT = 18;
 export const MOBILE_TRAVELER_COUNT = 12;
 export const MOBILE_BREAKPOINT = 640;
@@ -201,18 +204,18 @@ export const getSimulationTime = (elapsedSeconds: number) => {
 export const createAmbientLayout = (seed: number, generation: number): DistantStar[] => {
     const random = createSeededRandom(hashUint(seed, generation, 71));
     const modes: DriftMode[] = Array.from(
-        { length: AMBIENT_STAR_COUNT },
-        (_, index) => index < AMBIENT_STAR_COUNT / 2 ? 'wrap' : 'bounce',
+        { length: CONSTELLATION_STAR_COUNT },
+        (_, index) => index < CONSTELLATION_STAR_COUNT / 2 ? 'wrap' : 'bounce',
     );
     for (let index = modes.length - 1; index > 0; index -= 1) {
         const swapIndex = Math.floor(random() * (index + 1));
         [modes[index], modes[swapIndex]] = [modes[swapIndex], modes[index]];
     }
-    return Array.from({ length: AMBIENT_STAR_COUNT }, (_, index) => ({
+    return Array.from({ length: CONSTELLATION_STAR_COUNT }, (_, index) => ({
         x: between(random, 0.025, 0.975),
         y: between(random, 0.025, 0.975),
         size: between(random, 0.65, 1.7),
-        alpha: between(random, 0.38, 0.86),
+        alpha: between(random, 0.28, 0.68),
         driftMode: modes[index],
         driftSpeed: between(random, 0.0007, 0.0017),
         driftAngle: between(random, 0, TAU),
@@ -308,10 +311,27 @@ export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): S
     const phase = getConstellationPhase(elapsedSeconds);
     const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
     const next = createAmbientLayout(sceneSeed, phase.event);
-    return next.map((star, index) => getStarVisualStyle(previous[index], star, elapsedSeconds));
+    return next.map((star, index) => {
+        const style = getStarVisualStyle(previous[index], star, elapsedSeconds);
+        if (index < AMBIENT_STAR_COUNT) return style;
+        return {
+            ...style,
+            alpha: style.alpha * style.strength,
+            opacity: style.opacity * style.strength,
+        };
+    });
 };
 
-// These sparse 3x5 forms contain exactly one unique anchor per ambient star.
+export const getStarRgb = (strength: number): readonly [number, number, number] => {
+    const amount = clamp01(strength);
+    return [
+        Math.round(mix(AMBIENT_STAR_RGB[0], CONSTELLATION_STAR_RGB[0], amount)),
+        Math.round(mix(AMBIENT_STAR_RGB[1], CONSTELLATION_STAR_RGB[1], amount)),
+        Math.round(mix(AMBIENT_STAR_RGB[2], CONSTELLATION_STAR_RGB[2], amount)),
+    ];
+};
+
+// These sparse 3x5 forms contain exactly one unique anchor per generated star.
 const GLYPHS: Record<string, string[]> = {
     L: ['100', '100', '100', '100', '110'],
     O: ['010', '101', '101', '101', '010'],
@@ -369,8 +389,8 @@ const rawConstellationGeometry = () => {
 
 export const createConstellationGeometry = (width: number, height: number) => {
     const raw = rawConstellationGeometry();
-    if (raw.points.length !== AMBIENT_STAR_COUNT) {
-        throw new Error(`LONGMONT AI requires ${AMBIENT_STAR_COUNT} unique anchors`);
+    if (raw.points.length !== CONSTELLATION_STAR_COUNT) {
+        throw new Error(`LONGMONT AI requires ${CONSTELLATION_STAR_COUNT} unique anchors`);
     }
     const maximumWidth = Math.min(width * 0.76, height * 1.2);
     const cell = Math.max(2, maximumWidth / raw.lineWidth);

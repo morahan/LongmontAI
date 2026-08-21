@@ -10,10 +10,10 @@ import {
     getSimulationTime,
     getStarFieldPositions,
     getStarFieldStyles,
+    getStarRgb,
     getSystemScale,
     projectTraveler,
     selectProminentSystem,
-    starCountForWidth,
     travelerCountForWidth,
     type Moon,
     type OrbitingPlanet,
@@ -178,12 +178,13 @@ const SpaceNeuralBackground: React.FC = () => {
                 ctx.stroke();
             }
 
-            const starCount = starCountForWidth(width);
-            for (let index = 0; index < starCount; index += 1) {
+            for (let index = 0; index < positions.length; index += 1) {
                 const style = styles[index];
+                if (style.opacity <= 0) continue;
                 const position = positions[index];
+                const [red, green, blue] = getStarRgb(style.strength);
                 ctx.globalAlpha = 1;
-                ctx.fillStyle = `rgba(214, 231, 239, ${style.opacity})`;
+                ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${style.opacity})`;
                 ctx.beginPath();
                 ctx.arc(position.x, position.y, style.radius, 0, TAU);
                 ctx.fill();
