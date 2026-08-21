@@ -4,5 +4,9 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-scripts/security-commit-review.sh push
-npm run test:mobile
+PUSH_REFS="$(mktemp "${TMPDIR:-/tmp}/longmontai-pre-push-refs.XXXXXXXX")"
+trap 'rm -f "$PUSH_REFS"' EXIT INT TERM
+cat >"$PUSH_REFS"
+
+scripts/security-commit-review.sh push </dev/null
+node scripts/run-targeted-mobile-audit.mjs push <"$PUSH_REFS"

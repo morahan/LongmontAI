@@ -1,3 +1,4 @@
+/* global process */
 async (page) => {
   const currentUrl = page.url();
   const baseUrl = currentUrl && currentUrl !== 'about:blank'
@@ -16,6 +17,17 @@ async (page) => {
     '/timeline',
     '/edition/edition-2026-06-10-ai-landscape',
   ];
+  let requestedRoutes;
+  try {
+    const parsed = process.env.MOBILE_AUDIT_ROUTES
+      ? JSON.parse(process.env.MOBILE_AUDIT_ROUTES)
+      : undefined;
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((route) => typeof route === 'string' && route.startsWith('/'))) {
+      requestedRoutes = parsed;
+    }
+  } catch {
+    // Invalid targeted input fails closed to the exhaustive seeded matrix.
+  }
 
   async function sameOriginRoutesFromCurrentPage() {
     return page.evaluate(() => {
@@ -34,7 +46,9 @@ async (page) => {
   await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
   const discoveredRoutes = await sameOriginRoutesFromCurrentPage();
   const latestEditionRoute = discoveredRoutes.find((route) => route.startsWith('/edition/'));
-  const routes = Array.from(new Set([...seededRoutes, latestEditionRoute].filter(Boolean)));
+  const routes = Array.from(new Set(
+    requestedRoutes ?? [...seededRoutes, latestEditionRoute].filter(Boolean)
+  ));
 
   const results = [];
 

@@ -36,8 +36,12 @@ Use this guide for every Longmont AI meetup edition.
   data surfaces, newest edition, and a PowerPoint-backed edition at 360 px,
   390 px, and 430 px, retaining 390 px screenshots for review. It fails on
   overflow, broken images, squeezed release tables, and editorial media that is
-  off-screen or too small to read. The same audit runs in the local pre-commit,
-  pre-push, and full local-CI paths.
+  off-screen or too small to read. Full local CI always runs this exhaustive
+  matrix. The pre-commit hook selects from the staged snapshot, and pre-push
+  selects from outgoing commits: page or edition changes run only affected
+  routes, shared UI/CSS/config changes run the full matrix, and known unrelated
+  docs, backend, or tooling changes skip the browser. Unknown selections and
+  new branches fail closed to the full audit.
 
 ## Model Watch cadence
 

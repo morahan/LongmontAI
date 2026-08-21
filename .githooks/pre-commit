@@ -5,4 +5,4 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 scripts/security-commit-review.sh staged
-npm run test:mobile
+node scripts/run-targeted-mobile-audit.mjs staged
