@@ -21,11 +21,13 @@ import {
   createSeededRandom,
   createSpaceScene,
   getConstellationPhase,
+  getConstellationStrength,
   getDriftedStar,
   getElapsedSecondsSinceMount,
   getOrbitingPlanets,
   getPlanetSystemExtent,
   getSimulationTime,
+  getStarFieldStyles,
   getStarPosition,
   getSystemSafetyMargin,
   getTravelerDepth,
@@ -160,19 +162,65 @@ test('monotonic elapsed time includes long RAF gaps while reduced motion can ren
   closeTo(getElapsedSecondsSinceMount(2000, 1000), 0);
 });
 
-test('LONGMONT AI has 72 unique legible anchors and faint-line adjacency geometry', () => {
-  const { points, edges } = createConstellationGeometry(1200, 600);
-  assert.equal(points.length, 72);
-  assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, 72);
-  assert.ok(points.every(({ x, y }) => x > 0 && x < 1200 && y > 0 && y < 600));
-  assert.ok(edges.length >= 45);
-  assert.ok(edges.every(({ from, to }) => from >= 0 && to < 72 && from !== to));
-  const uniqueX = [...new Set(points.map(({ x }) => x))].sort((left, right) => left - right);
-  const cell = Math.min(...uniqueX.slice(1).map((x, index) => x - uniqueX[index]));
-  const minimumX = uniqueX[0];
-  const occupiedCharacterBands = new Set(points.map(({ x }) =>
-    Math.floor(Math.round((x - minimumX) / cell) / 4)));
-  assert.deepEqual([...occupiedCharacterBands].sort((left, right) => left - right), [0, 1, 2, 3, 4, 5, 6, 7, 9, 10]);
+test('LONGMONT AI has 72 unique, connected glyph anchors in the clear top band', () => {
+  for (const { width, height } of [{ width: 1200, height: 600 }, { width: 390, height: 360 }]) {
+    const { points, edges, glyphs } = createConstellationGeometry(width, height);
+    assert.equal(points.length, 72);
+    assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, 72);
+    assert.equal(glyphs.map(({ character }) => character).join(''), 'LONGMONTAI');
+    assert.ok(points.every(({ x, y }) => x > 0 && x < width && y >= height * 0.03 && y < height * 0.16));
+    const constellationWidth = Math.max(...points.map(({ x }) => x)) - Math.min(...points.map(({ x }) => x));
+    assert.ok(constellationWidth <= width * 0.76);
+    assert.ok(edges.every(({ from, to }) => from >= 0 && to < 72 && from !== to));
+
+    const neighbors = Array.from({ length: 72 }, () => []);
+    edges.forEach(({ from, to }) => {
+      neighbors[from].push(to);
+      neighbors[to].push(from);
+    });
+    assert.ok(neighbors.every((entries) => entries.length > 0), 'an isolated anchor remains');
+    glyphs.forEach(({ character, indices }) => {
+      const allowed = new Set(indices);
+      const reached = new Set([indices[0]]);
+      const queue = [indices[0]];
+      while (queue.length > 0) {
+        neighbors[queue.shift()].forEach((neighbor) => {
+          if (allowed.has(neighbor) && !reached.has(neighbor)) {
+            reached.add(neighbor);
+            queue.push(neighbor);
+          }
+        });
+      }
+      assert.equal(reached.size, indices.length, `${character} is not one connected component`);
+    });
+  }
+});
+
+test('constellation strength and pure star styles are continuous at every phase boundary', () => {
+  assert.equal(getConstellationStrength(getConstellationPhase(600)), 0);
+  assert.equal(getConstellationStrength(getConstellationPhase(610)), 1);
+  assert.equal(getConstellationStrength(getConstellationPhase(620)), 1);
+  assert.equal(getConstellationStrength(getConstellationPhase(630)), 0);
+
+  const seed = 0x51a7;
+  const generation0 = createAmbientLayout(seed, 0);
+  const generation1 = createAmbientLayout(seed, 1);
+  const atHold = getStarFieldStyles(seed, 610);
+  const atMorphOut = getStarFieldStyles(seed, 620);
+  const atAmbient = getStarFieldStyles(seed, 630);
+  atHold.forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
+  atMorphOut.forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
+  atAmbient.forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
+
+  for (const boundary of [600, 610, 620, 630]) {
+    const before = getStarFieldStyles(seed, boundary - 0.000001);
+    const at = getStarFieldStyles(seed, boundary);
+    before.forEach((style, index) => {
+      for (const property of ['alpha', 'twinkle', 'strength', 'radius', 'opacity']) {
+        closeTo(style[property], at[index][property], 0.00001);
+      }
+    });
+  }
 });
 
 test('morph boundaries are continuous and morph-out lands on a newly seeded star field', () => {

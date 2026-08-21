@@ -27,6 +27,15 @@ export type DriftMode = 'wrap' | 'bounce';
 
 export interface Point { x: number; y: number }
 export interface ConstellationEdge { from: number; to: number }
+export interface ConstellationGlyph { character: string; indices: number[] }
+
+export interface StarVisualStyle {
+    alpha: number;
+    twinkle: number;
+    strength: number;
+    radius: number;
+    opacity: number;
+}
 
 export interface DistantStar {
     x: number;
@@ -96,7 +105,7 @@ export interface ConstellationPhase {
     eventElapsed: number;
 }
 
-interface GlyphPoint extends Point { glyph: number }
+type GlyphPoint = Point;
 
 export const createSeededRandom = (seed: number): RandomSource => {
     let state = seed >>> 0;
@@ -223,10 +232,8 @@ export const getDriftedStar = (star: DistantStar, elapsedSeconds: number): Point
     return { x: reflect(rawX), y: reflect(rawY) };
 };
 
-/** One independently seeded full-dim-full event per <=120s cycle; constellations stay steady. */
-export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
+const getAmbientTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
     const elapsed = Math.max(0, elapsedSeconds);
-    if (getConstellationPhase(elapsed).name !== 'ambient') return 1;
     const cycle = Math.floor(elapsed / TWINKLE_WINDOW_SECONDS);
     const cycleTime = elapsed - cycle * TWINKLE_WINDOW_SECONDS;
     const fallDuration = 2 + hashRandom(star.twinkleSeed, cycle, 1) * 3;
@@ -242,6 +249,64 @@ export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) 
     return target + (1 - target) * smoothstep(
         (eventTime - fallDuration - restDuration) / riseDuration,
     );
+};
+
+/** One independently seeded full-dim-full event per <=120s cycle. */
+export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) =>
+    getConstellationPhase(elapsedSeconds).name === 'ambient'
+        ? getAmbientTwinkleBrightness(star, elapsedSeconds)
+        : 1;
+
+export const getConstellationStrength = (phase: ConstellationPhase) => {
+    if (phase.name === 'morph-in') return phase.progress;
+    if (phase.name === 'hold') return 1;
+    if (phase.name === 'morph-out') return 1 - phase.progress;
+    return 0;
+};
+
+const mix = (from: number, to: number, amount: number) => from + (to - from) * amount;
+
+/** Pure visual style interpolation with no alpha, radius, or twinkle pops at phase boundaries. */
+export const getStarVisualStyle = (
+    previous: DistantStar,
+    next: DistantStar,
+    elapsedSeconds: number,
+): StarVisualStyle => {
+    const phase = getConstellationPhase(elapsedSeconds);
+    const strength = getConstellationStrength(phase);
+    if (phase.name === 'ambient') {
+        const twinkle = getAmbientTwinkleBrightness(next, elapsedSeconds);
+        return {
+            alpha: next.alpha,
+            twinkle,
+            strength,
+            radius: next.size,
+            opacity: Math.min(1, next.alpha * twinkle),
+        };
+    }
+
+    const styleProgress = phase.name === 'morph-out' ? phase.progress : 0;
+    const alpha = mix(previous.alpha, next.alpha, styleProgress);
+    const size = mix(previous.size, next.size, styleProgress);
+    const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
+    const ambientTwinkle = phase.name === 'morph-out'
+        ? getAmbientTwinkleBrightness(next, eventStart + CONSTELLATION_WINDOW_SECONDS)
+        : getAmbientTwinkleBrightness(previous, eventStart - 0.000001);
+    const twinkle = mix(ambientTwinkle, 1, strength);
+    return {
+        alpha,
+        twinkle,
+        strength,
+        radius: size * (1 + 0.18 * strength),
+        opacity: Math.min(1, alpha * twinkle * (1 + 0.28 * strength)),
+    };
+};
+
+export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): StarVisualStyle[] => {
+    const phase = getConstellationPhase(elapsedSeconds);
+    const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
+    const next = createAmbientLayout(sceneSeed, phase.event);
+    return next.map((star, index) => getStarVisualStyle(previous[index], star, elapsedSeconds));
 };
 
 // These sparse 3x5 forms contain exactly one unique anchor per ambient star.
@@ -260,21 +325,44 @@ const rawConstellationGeometry = () => {
     const text = 'LONGMONT AI';
     const lineWidth = text.length * 4 - 1;
     const points: GlyphPoint[] = [];
+    const glyphs: ConstellationGlyph[] = [];
     for (let glyph = 0; glyph < text.length; glyph += 1) {
         const rows = GLYPHS[text[glyph]];
         if (!rows) continue;
+        const indices: number[] = [];
         rows.forEach((row, y) => [...row].forEach((cell, x) => {
-            if (cell === '1') points.push({ x: glyph * 4 + x, y, glyph });
+            if (cell !== '1') return;
+            indices.push(points.length);
+            points.push({ x: glyph * 4 + x, y });
         }));
+        glyphs.push({ character: text[glyph], indices });
     }
+
+    // A nearest-neighbor tree per glyph guarantees one connected component, including sparse Ns.
     const edges: ConstellationEdge[] = [];
-    points.forEach((from, fromIndex) => points.forEach((to, toIndex) => {
-        if (toIndex <= fromIndex || from.glyph !== to.glyph) return;
-        const dx = Math.abs(from.x - to.x);
-        const dy = Math.abs(from.y - to.y);
-        if (dx <= 1 && dy <= 1 && dx + dy > 0) edges.push({ from: fromIndex, to: toIndex });
-    }));
-    return { points, edges, lineWidth };
+    glyphs.forEach(({ indices }) => {
+        const connected = new Set([indices[0]]);
+        const remaining = new Set(indices.slice(1));
+        while (remaining.size > 0) {
+            let nearestFrom = indices[0];
+            let nearestTo = [...remaining][0];
+            let nearestDistance = Number.POSITIVE_INFINITY;
+            connected.forEach((from) => remaining.forEach((to) => {
+                const dx = points[from].x - points[to].x;
+                const dy = points[from].y - points[to].y;
+                const distance = dx * dx + dy * dy;
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestFrom = from;
+                    nearestTo = to;
+                }
+            }));
+            edges.push({ from: nearestFrom, to: nearestTo });
+            connected.add(nearestTo);
+            remaining.delete(nearestTo);
+        }
+    });
+    return { points, edges, glyphs, lineWidth };
 };
 
 export const createConstellationGeometry = (width: number, height: number) => {
@@ -282,15 +370,16 @@ export const createConstellationGeometry = (width: number, height: number) => {
     if (raw.points.length !== AMBIENT_STAR_COUNT) {
         throw new Error(`LONGMONT AI requires ${AMBIENT_STAR_COUNT} unique anchors`);
     }
-    const maximumWidth = Math.min(width * 0.88, height * 1.8);
+    const maximumWidth = Math.min(width * 0.76, height * 1.2);
     const cell = Math.max(2, maximumWidth / raw.lineWidth);
     const rowWidth = raw.lineWidth * cell;
     return {
         points: raw.points.map((point) => ({
             x: width * 0.5 - rowWidth * 0.5 + point.x * cell,
-            y: height * 0.27 + point.y * cell,
+            y: height * 0.03 + point.y * cell,
         })),
         edges: raw.edges,
+        glyphs: raw.glyphs,
     };
 };
 

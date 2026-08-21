@@ -1,16 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import {
-    createAmbientLayout,
     createConstellationGeometry,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
+    getConstellationStrength,
     getElapsedSecondsSinceMount,
     getOrbitingPlanets,
     getSimulationTime,
     getStarFieldPositions,
+    getStarFieldStyles,
     getSystemScale,
-    getTwinkleBrightness,
     projectTraveler,
     selectProminentSystem,
     starCountForWidth,
@@ -57,7 +57,21 @@ const drawPlanet = (
         ctx.stroke();
     }
 
-    ctx.fillStyle = planet.color;
+    const distanceFromSun = Math.hypot(planet.x, planet.y) || 1;
+    const lightX = planet.x - (planet.x / distanceFromSun) * planet.radius * 0.32;
+    const lightY = planet.y - (planet.y / distanceFromSun) * planet.radius * 0.32;
+    const shading = ctx.createRadialGradient(
+        lightX,
+        lightY,
+        planet.radius * 0.08,
+        lightX,
+        lightY,
+        planet.radius * 1.45,
+    );
+    shading.addColorStop(0, '#eef8fb');
+    shading.addColorStop(0.32, planet.color);
+    shading.addColorStop(1, 'rgba(18, 26, 38, 0.92)');
+    ctx.fillStyle = shading;
     ctx.beginPath();
     ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
     ctx.fill();
@@ -148,17 +162,11 @@ const SpaceNeuralBackground: React.FC = () => {
             ctx.fillRect(0, 0, width, height);
 
             const phase = getConstellationPhase(elapsed);
-            const starGeneration = phase.event;
-            const styleStars = createAmbientLayout(scene.seed, starGeneration);
+            const strength = getConstellationStrength(phase);
+            const styles = getStarFieldStyles(scene.seed, elapsed);
             const positions = getStarFieldPositions(scene.seed, elapsed, width, height);
             const constellation = createConstellationGeometry(width, height);
-            const lineOpacity = phase.name === 'morph-in'
-                ? 0.15 * phase.progress
-                : phase.name === 'hold'
-                    ? 0.15
-                    : phase.name === 'morph-out'
-                        ? 0.15 * (1 - phase.progress)
-                        : 0;
+            const lineOpacity = 0.15 * strength;
             if (lineOpacity > 0) {
                 ctx.strokeStyle = `rgba(176, 217, 235, ${lineOpacity})`;
                 ctx.lineWidth = 0.55;
@@ -172,14 +180,12 @@ const SpaceNeuralBackground: React.FC = () => {
 
             const starCount = starCountForWidth(width);
             for (let index = 0; index < starCount; index += 1) {
-                const star = styleStars[index];
+                const style = styles[index];
                 const position = positions[index];
-                const brightness = getTwinkleBrightness(star, elapsed);
-                const constellationBoost = phase.name === 'ambient' ? 1 : 1.28;
                 ctx.globalAlpha = 1;
-                ctx.fillStyle = `rgba(214, 231, 239, ${Math.min(1, star.alpha * brightness * constellationBoost)})`;
+                ctx.fillStyle = `rgba(214, 231, 239, ${style.opacity})`;
                 ctx.beginPath();
-                ctx.arc(position.x, position.y, star.size * (phase.name === 'hold' ? 1.18 : 1), 0, TAU);
+                ctx.arc(position.x, position.y, style.radius, 0, TAU);
                 ctx.fill();
             }
 
