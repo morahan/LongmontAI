@@ -19,6 +19,29 @@ const englishTranslation: Translation = {
 };
 
 const animationVariants: AnimationVariant[] = ['map-route', 'bearing-lock', 'signal-horizon'];
+const ENGLISH_DURATION_MS = 15_000;
+const FOREIGN_BLOCK_DURATION_MS = 10_000;
+
+function foreignSlotDuration(blockSize: 2 | 3, slot: number): number {
+    const evenDuration = Math.floor(FOREIGN_BLOCK_DURATION_MS / blockSize);
+    return slot === blockSize - 1
+        ? FOREIGN_BLOCK_DURATION_MS - evenDuration * (blockSize - 1)
+        : evenDuration;
+}
+
+type CadenceState = {
+    phase: 'english' | 'foreign';
+    foreignIndex: number;
+    foreignSlot: number;
+    foreignBlockSize: 2 | 3;
+};
+
+const initialCadence: CadenceState = {
+    phase: 'english',
+    foreignIndex: 0,
+    foreignSlot: 0,
+    foreignBlockSize: 2,
+};
 
 const foreignTranslations: Translation[] = [
     { text: 'La era de la inteligencia', lang: 'es', dir: 'ltr', script: 'latin', color: '#a5b4fc' },
@@ -36,13 +59,12 @@ function reducedMotionIsPreferred(): boolean {
 const HeroTitle: React.FC = () => {
     const [animationVariant, setAnimationVariant] = React.useState<AnimationVariant | 'static'>('static');
     const selectedVariant = React.useRef<AnimationVariant | null>(null);
-    const [foreignIndex, setForeignIndex] = React.useState(0);
-    const [showEnglish, setShowEnglish] = React.useState(true);
+    const [cadence, setCadence] = React.useState<CadenceState>(initialCadence);
     const [reducedMotion, setReducedMotion] = React.useState(reducedMotionIsPreferred);
     const [pageVisible, setPageVisible] = React.useState(
         () => typeof document === 'undefined' || document.visibilityState === 'visible'
     );
-    const remainingPhaseTime = React.useRef(8000);
+    const remainingPhaseTime = React.useRef(ENGLISH_DURATION_MS);
     const phaseStartedAt = React.useRef(0);
     const phaseCompleted = React.useRef(false);
 
@@ -58,7 +80,8 @@ const HeroTitle: React.FC = () => {
         const handlePreferenceChange = (event: MediaQueryListEvent) => {
             setReducedMotion(event.matches);
             if (event.matches) {
-                setShowEnglish(true);
+                remainingPhaseTime.current = ENGLISH_DURATION_MS;
+                setCadence(initialCadence);
             }
         };
 
@@ -74,7 +97,7 @@ const HeroTitle: React.FC = () => {
 
     React.useEffect(() => {
         if (reducedMotion) {
-            remainingPhaseTime.current = 8000;
+            remainingPhaseTime.current = ENGLISH_DURATION_MS;
             return undefined;
         }
 
@@ -88,15 +111,31 @@ const HeroTitle: React.FC = () => {
         const timeout = window.setTimeout(() => {
             phaseCompleted.current = true;
 
-            if (showEnglish) {
-                remainingPhaseTime.current = 6000;
-                setShowEnglish(false);
-                return;
-            }
+            setCadence((current) => {
+                if (current.phase === 'english') {
+                    remainingPhaseTime.current = foreignSlotDuration(current.foreignBlockSize, 0);
+                    return { ...current, phase: 'foreign' };
+                }
 
-            remainingPhaseTime.current = 8000;
-            setShowEnglish(true);
-            setForeignIndex((currentIndex) => (currentIndex + 1) % foreignTranslations.length);
+                const nextForeignIndex = (current.foreignIndex + 1) % foreignTranslations.length;
+                if (current.foreignSlot + 1 < current.foreignBlockSize) {
+                    const nextForeignSlot = current.foreignSlot + 1;
+                    remainingPhaseTime.current = foreignSlotDuration(current.foreignBlockSize, nextForeignSlot);
+                    return {
+                        ...current,
+                        foreignIndex: nextForeignIndex,
+                        foreignSlot: nextForeignSlot,
+                    };
+                }
+
+                remainingPhaseTime.current = ENGLISH_DURATION_MS;
+                return {
+                    phase: 'english',
+                    foreignIndex: nextForeignIndex,
+                    foreignSlot: 0,
+                    foreignBlockSize: current.foreignBlockSize === 2 ? 3 : 2,
+                };
+            });
         }, remainingPhaseTime.current);
 
         return () => {
@@ -106,11 +145,11 @@ const HeroTitle: React.FC = () => {
                 remainingPhaseTime.current = Math.max(0, remainingPhaseTime.current - elapsed);
             }
         };
-    }, [pageVisible, reducedMotion, showEnglish]);
+    }, [cadence, pageVisible, reducedMotion]);
 
-    const translation = reducedMotion || showEnglish
+    const translation = reducedMotion || cadence.phase === 'english'
         ? englishTranslation
-        : foreignTranslations[foreignIndex];
+        : foreignTranslations[cadence.foreignIndex];
 
     return (
         <h1 className="home-hero-title text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
@@ -153,7 +192,7 @@ const HeroTitle: React.FC = () => {
                 </span>
                 <span className="hero-title-translation-stage">
                     <bdi
-                        key={`${translation.lang}-${foreignIndex}`}
+                        key={`${cadence.phase}-${translation.lang}`}
                         className={`hero-title-translation hero-title-script-${translation.script}`}
                         lang={translation.lang}
                         dir={translation.dir}

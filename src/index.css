@@ -589,7 +589,7 @@ a {
   letter-spacing: -0.045em;
   line-height: 0.93;
   text-align: start;
-  animation: hero-cartographer-destination 1400ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-cartographer-destination 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-script-latin {
@@ -718,7 +718,7 @@ a {
   letter-spacing: 0.012em;
   line-height: 1.02;
   text-shadow: 0 0 1.1em rgba(232, 193, 255, 0.08);
-  animation: hero-bearing-translation 1250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-bearing-translation 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: left center;
 }
 
@@ -803,7 +803,7 @@ a {
   font-weight: 650;
   letter-spacing: -0.035em;
   text-shadow: 0 0.08em 0.55em rgba(103, 232, 249, 0.13);
-  animation: hero-signal-phrase-ltr 1050ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-signal-phrase-ltr 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-title-visual[data-animation="signal-horizon"] .hero-title-translation[dir="rtl"] {
@@ -895,7 +895,7 @@ a {
 }
 
 @keyframes hero-cartographer-destination {
-  from { opacity: 0; transform: translateY(0.16em); }
+  from { opacity: 0.32; transform: translateY(0.055em); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -915,8 +915,8 @@ a {
 }
 
 @keyframes hero-bearing-translation {
-  from { opacity: 0.16; filter: blur(0.11em); letter-spacing: 0.075em; transform: translateY(0.08em); }
-  to { opacity: 1; filter: blur(0); letter-spacing: 0.012em; transform: translateY(0); }
+  from { opacity: 0.32; transform: translateY(0.045em) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes hero-signal-label-arrive {
@@ -940,13 +940,13 @@ a {
 }
 
 @keyframes hero-signal-phrase-ltr {
-  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-0.06em); }
-  to { opacity: 1; clip-path: inset(0); transform: translateX(0); }
+  from { opacity: 0.32; transform: translateX(-0.045em); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes hero-signal-phrase-rtl {
-  from { opacity: 0; clip-path: inset(0 0 0 100%); transform: translateX(0.06em); }
-  to { opacity: 1; clip-path: inset(0); transform: translateX(0); }
+  from { opacity: 0.32; transform: translateX(0.045em); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .home-hero-actions {
