@@ -45,10 +45,16 @@ Use this guide for every Longmont AI meetup edition.
   UI/CSS/config changes run the full matrix, and known unrelated docs, backend,
   or tooling changes skip the browser. Unknown selections, new branches, and
   conflicting multi-ref article or asset snapshots fail closed to the full
-  audit. Automated audits are headless by default so hooks do not steal focus;
-  for manual visual debugging only, set
-  `MOBILE_AUDIT_HEADED=1` when running `npm run test:mobile`. Headless and
-  headed runs enforce the same audit failures.
+  audit. Each automated audit uses and reliably closes a unique Playwright CLI
+  session. It explicitly runs Playwright's bundled Chromium headless shell—not
+  installed Google Chrome—so hooks do not steal focus. Route selections are
+  encoded into the session's initial URL because shell environment does not
+  propagate into the persistent Playwright CLI daemon; malformed targeting
+  fails closed. If the shell is not installed, the runner prints the one-time
+  `playwright_cli.sh install-browser chromium --only-shell` command. For manual
+  visual debugging only, set `MOBILE_AUDIT_HEADED=1` when running
+  `npm run test:mobile`; that explicit mode may use headed Chrome. Headless and
+  headed runs enforce the same audit failures and retain the same screenshots.
 
 ## Model Watch cadence
 

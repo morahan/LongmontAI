@@ -1,4 +1,3 @@
-/* global process */
 async (page) => {
   const currentUrl = page.url();
   const baseUrl = currentUrl && currentUrl !== 'about:blank'
@@ -21,15 +20,34 @@ async (page) => {
     '/edition/edition-2026-06-10-ai-landscape',
   ];
   let requestedRoutes;
-  try {
-    const parsed = process.env.MOBILE_AUDIT_ROUTES
-      ? JSON.parse(process.env.MOBILE_AUDIT_ROUTES)
-      : undefined;
-    if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((route) => typeof route === 'string' && route.startsWith('/'))) {
+  const hasRouteTransport = currentUrl && currentUrl !== 'about:blank' &&
+    /[?&]__longmont_mobile_audit_routes=/.test(currentUrl);
+  const routeTransportMatch = hasRouteTransport
+    ? currentUrl.match(/[?&]__longmont_mobile_audit_routes=([A-Za-z0-9_-]*)(?:[&#]|$)/)
+    : null;
+  const encodedRoutes = hasRouteTransport ? (routeTransportMatch?.[1] ?? '') : null;
+  if (encodedRoutes !== null) {
+    try {
+      if (!/^[A-Za-z0-9_-]+$/.test(encodedRoutes)) throw new Error('invalid base64url');
+      const { canonical, parsed } = await page.evaluate((encoded) => {
+        const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+        const bytes = Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+        const canonicalValue = btoa(String.fromCharCode(...bytes))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        return { canonical: canonicalValue, parsed: JSON.parse(new TextDecoder().decode(bytes)) };
+      }, encodedRoutes);
+      if (canonical !== encodedRoutes) throw new Error('non-canonical base64url');
+      const validRoute = (route) => typeof route === 'string' &&
+        route.length <= 2048 &&
+        (route === '/' || /^\/(?:[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)(?:\/[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)*$/.test(route));
+      if (!Array.isArray(parsed) || parsed.length === 0 || parsed.length > 50 || !parsed.every(validRoute)) {
+        throw new Error('expected 1-50 normalized same-origin routes');
+      }
       requestedRoutes = parsed;
+    } catch (error) {
+      throw new Error(`Invalid targeted mobile audit route transport: ${error.message}`, { cause: error });
     }
-  } catch {
-    // Invalid targeted input fails closed to the exhaustive seeded matrix.
   }
 
   async function sameOriginRoutesFromCurrentPage() {

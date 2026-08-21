@@ -4,6 +4,7 @@ import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { FULL_ROUTES, selectMobileAudit } from '../mobile-audit-selector.mjs';
 
@@ -63,17 +64,20 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   assert.match(prePush, /cat >"\$PUSH_REFS"/);
   assert.equal(packageJson.scripts['audit:mobile'], 'bash scripts/run-mobile-browser-audit.sh');
   assert.match(browserRunner, /MOBILE_AUDIT_HEADED/);
-  assert.match(browserRunner, /OPEN_ARGS=\(open "\$BASE_URL"\)/);
-  assert.match(browserRunner, /OPEN_ARGS\+=\(--headed\)/);
-  assert.match(browserRunner, /run-code --filename scripts\/mobile-playwright-audit\.js/);
-  assert.match(audit, /MOBILE_AUDIT_ROUTES/);
+  assert.match(browserRunner, /browserName.*chromium/);
+  assert.match(browserRunner, /launchOptions.*headless.*true/);
+  assert.match(browserRunner, /--browser chrome --headed/);
+  assert.match(browserRunner, /--session "\$SESSION" run-code --filename scripts\/mobile-playwright-audit\.js/);
+  assert.match(browserRunner, /--session "\$SESSION" close/);
+  assert.match(audit, /__longmont_mobile_audit_routes/);
+  assert.doesNotMatch(audit, /process\.env\.MOBILE_AUDIT_ROUTES/);
   assert.match(audit, /mediaLayoutFailures/);
   for (const route of FULL_ROUTES) assert.ok(audit.includes(`'${route}'`), `full audit is missing ${route}`);
   assert.match(audit, /latestEditionRoute/);
   assert.match(editorGuide, /selects from the staged\s+snapshot/);
 });
 
-test('browser runner is headless by default, supports explicit headed debugging, and preserves failures', async (t) => {
+test('browser runner isolates and closes sessions, forces bundled headless Chromium, and preserves failures', async (t) => {
   const { directory } = await fixture();
   t.after(() => rm(directory, { recursive: true, force: true }));
 
@@ -82,7 +86,21 @@ test('browser runner is headless by default, supports explicit headed debugging,
   const cliPath = path.join(cliDirectory, 'playwright_cli.sh');
   const logPath = path.join(directory, 'playwright.log');
   await mkdir(cliDirectory, { recursive: true });
-  await writeFile(cliPath, `#!/usr/bin/env bash\nset -eu\nprintf '%s\\n' "$*" >>"$MOBILE_AUDIT_TEST_LOG"\nif [[ "\${MOBILE_AUDIT_TEST_FAIL:-0}" == 1 && "\${1:-}" == run-code ]]; then exit 17; fi\n`);
+  await writeFile(cliPath, `#!/usr/bin/env bash
+set -eu
+printf '%s\\n' "$*" >>"$MOBILE_AUDIT_TEST_LOG"
+case " $* " in
+  *" open "*)
+    if [[ "\${MOBILE_AUDIT_TEST_MISSING_BROWSER:-0}" == 1 ]]; then
+      echo 'Browser chromium_headless_shell is not installed' >&2
+      exit 1
+    fi
+    ;;
+  *" run-code "*)
+    if [[ "\${MOBILE_AUDIT_TEST_FAIL:-0}" == 1 ]]; then exit 17; fi
+    ;;
+esac
+`);
   await chmod(cliPath, 0o755);
 
   const baseEnv = {
@@ -96,24 +114,78 @@ test('browser runner is headless by default, supports explicit headed debugging,
     encoding: 'utf8',
     env: { ...baseEnv, ...extraEnv },
   });
+  const commands = async () => (await readFile(logPath, 'utf8')).trim().split('\n');
 
-  const headless = run();
+  const headless = run({ MOBILE_AUDIT_ROUTES: JSON.stringify(['/', '/edition/test']) });
   assert.equal(headless.status, 0, headless.stderr);
-  assert.deepEqual((await readFile(logPath, 'utf8')).trim().split('\n'), [
-    'open http://audit.test',
-    'run-code --filename scripts/mobile-playwright-audit.js',
-  ]);
+  const headlessCommands = await commands();
+  assert.equal(headlessCommands.length, 3);
+  const session = headlessCommands[0].match(/^--session (\S+) /)?.[1];
+  assert.match(session, /^longmont-mobile-audit-/);
+  assert.ok(headlessCommands.every((command) => command.startsWith(`--session ${session} `)));
+  assert.match(headlessCommands[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_routes=/);
+  assert.match(headlessCommands[0], / --config \/.*longmont-mobile-audit-playwright\./);
+  assert.doesNotMatch(headlessCommands[0], /(?:^|\s)(?:--headed|--browser(?:=|\s+)chrome)(?:\s|$)/);
+  assert.match(headlessCommands[1], / run-code --filename scripts\/mobile-playwright-audit\.js$/);
+  assert.match(headlessCommands[2], / close$/);
 
   await writeFile(logPath, '');
   const headed = run({ MOBILE_AUDIT_HEADED: '1' });
   assert.equal(headed.status, 0, headed.stderr);
-  assert.equal((await readFile(logPath, 'utf8')).trim().split('\n')[0], 'open http://audit.test --headed');
+  assert.match((await commands())[0], / open http:\/\/audit\.test --browser chrome --headed$/);
 
+  await writeFile(logPath, '');
   const failedAudit = run({ MOBILE_AUDIT_TEST_FAIL: '1' });
   assert.equal(failedAudit.status, 17);
+  assert.match((await commands()).at(-1), / close$/);
+
+  await writeFile(logPath, '');
+  const missingBrowser = run({ MOBILE_AUDIT_TEST_MISSING_BROWSER: '1' });
+  assert.equal(missingBrowser.status, 1);
+  assert.match(missingBrowser.stderr, /requires Playwright's bundled Chromium headless shell/);
+  assert.match(missingBrowser.stderr, /install-browser chromium --only-shell/);
+  assert.match((await commands()).at(-1), / close$/);
+
   const invalidMode = run({ MOBILE_AUDIT_HEADED: 'sometimes' });
   assert.equal(invalidMode.status, 2);
   assert.match(invalidMode.stderr, /must be 0 or 1/);
+});
+
+test('encoded targeted routes reach audit code before navigation and invalid transport fails closed', async () => {
+  const source = await readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8');
+  const audit = vm.runInNewContext(`(${source})`, { Error, JSON, Array, Math, Set });
+  const routes = ['/', '/edition/edition-2099-01-01-target'];
+  const encoded = Buffer.from(JSON.stringify(routes)).toString('base64url');
+  const navigations = [];
+  let evaluateCount = 0;
+  const page = {
+    url: () => `http://audit.test/?__longmont_mobile_audit_routes=${encoded}`,
+    evaluate: async (_callback, argument) => {
+      evaluateCount += 1;
+      if (evaluateCount === 1) return 'http://audit.test';
+      if (typeof argument === 'string') {
+        return { canonical: argument, parsed: JSON.parse(Buffer.from(argument, 'base64url').toString('utf8')) };
+      }
+      if (evaluateCount === 3) return [];
+      return {
+        title: 'fixture', viewportWidth: 390, scrollWidth: 390, bodyScrollWidth: 390,
+        overflowingElements: [], brokenImages: [], mediaLayoutFailures: [], unreadableReleaseTables: [],
+      };
+    },
+    goto: async (url) => { navigations.push(url); },
+    setViewportSize: async () => {},
+    waitForFunction: async () => {},
+    waitForTimeout: async () => {},
+    screenshot: async () => {},
+  };
+
+  const result = await audit(page);
+  assert.deepEqual([...result.routes], routes);
+  assert.deepEqual([...new Set(navigations)], ['http://audit.test/', ...routes.slice(1).map((route) => `http://audit.test${route}`)]);
+  assert.ok(!navigations.some((url) => url.includes('/tools')));
+
+  const invalidPage = { ...page, url: () => 'http://audit.test/?__longmont_mobile_audit_routes=not_json' };
+  await assert.rejects(() => audit(invalidPage), /Invalid targeted mobile audit route transport/);
 });
 
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {

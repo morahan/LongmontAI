@@ -114,7 +114,11 @@ and why it's significant for the AI community.
    pre-commit and pre-push hooks; it rejects page overflow, broken assets, and
    editorial media that is too small or positioned outside the phone viewport.
    Full local CI clears inherited route targeting and audits every live app page,
-   the fixed reference edition, and the latest linked edition headlessly.
+   the fixed reference edition, and the latest linked edition with Playwright's
+   bundled Chromium headless shell. Automated runs never use installed Google
+   Chrome, isolate and close their Playwright CLI session, and transport targeted
+   routes through the initial audit URL. If the shell is absent, follow the
+   runner's one-time `install-browser chromium --only-shell` instruction.
 8. Commit and push to `main` — Vercel auto-deploys
 
 ## Scheduling an Approved Edition
