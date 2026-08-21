@@ -7,17 +7,22 @@ import {
     getConstellationStrength,
     getElapsedSecondsSinceMount,
     getOrbitingPlanets,
+    getPlanetSurfaceDetailLevel,
     getSimulationTime,
     getStarFieldPositions,
     getStarFieldStyles,
     getStarRgb,
     getSystemScale,
+    getTravelerAppearance,
+    hasAtmosphereHalo,
+    isStarRenderable,
     projectTraveler,
     selectProminentSystem,
     travelerCountForWidth,
     type Moon,
     type OrbitingPlanet,
     type ProjectedTraveler,
+    type Traveler,
 } from './spaceBackgroundModel';
 
 const TAU = Math.PI * 2;
@@ -42,12 +47,107 @@ const drawMoon = (
     ctx.fill();
 };
 
+const surfaceValue = (seed: number, channel: number) => {
+    let value = (seed ^ Math.imul(channel + 1, 0x9e3779b1)) >>> 0;
+    value = Math.imul(value ^ (value >>> 16), 0x21f0aaad);
+    return ((value ^ (value >>> 15)) >>> 0) / 4294967296;
+};
+
+/** Atmosphere marks are clipped to and scaled from the body's actual Canvas radius. */
+const drawAtmosphereSurface = (
+    ctx: CanvasRenderingContext2D,
+    planet: OrbitingPlanet,
+    detailLevel: 1 | 2,
+) => {
+    const { x, y, radius, surfaceSeed } = planet;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, TAU);
+    ctx.clip();
+    ctx.lineCap = 'round';
+
+    if (planet.atmosphere === 'gas-banded') {
+        const bandLimit = detailLevel === 2 ? 2 : 1;
+        for (let band = -bandLimit; band <= bandLimit; band += 1) {
+            ctx.strokeStyle = band % 2 === 0 ? 'rgba(255, 225, 174, 0.42)' : 'rgba(91, 53, 59, 0.34)';
+            ctx.lineWidth = radius * (0.16 + surfaceValue(surfaceSeed, band + 3) * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(x - radius, y + band * radius * 0.32);
+            ctx.bezierCurveTo(
+                x - radius * 0.35, y + band * radius * 0.22,
+                x + radius * 0.35, y + band * radius * 0.4,
+                x + radius, y + band * radius * 0.3,
+            );
+            ctx.stroke();
+        }
+    } else if (planet.atmosphere === 'ocean-haze') {
+        ctx.fillStyle = 'rgba(159, 224, 231, 0.3)';
+        for (let cloud = 0; cloud < detailLevel + 1; cloud += 1) {
+            const cloudX = x + (surfaceValue(surfaceSeed, cloud) * 1.4 - 0.7) * radius;
+            const cloudY = y + (surfaceValue(surfaceSeed, cloud + 4) * 1.2 - 0.6) * radius;
+            ctx.beginPath();
+            ctx.ellipse(cloudX, cloudY, radius * 0.58, radius * 0.16, -0.2, 0, TAU);
+            ctx.fill();
+        }
+        ctx.strokeStyle = 'rgba(238, 252, 250, 0.58)';
+        ctx.lineWidth = radius * 0.13;
+        ctx.beginPath();
+        ctx.arc(x, y - radius * 0.08, radius * 0.72, 0.15, 2.35);
+        ctx.stroke();
+    } else if (planet.atmosphere === 'rocky-cratered') {
+        for (let crater = 0; crater < detailLevel + 2; crater += 1) {
+            const craterRadius = radius * (0.1 + surfaceValue(surfaceSeed, crater + 8) * 0.12);
+            ctx.fillStyle = 'rgba(43, 31, 32, 0.4)';
+            ctx.beginPath();
+            ctx.arc(
+                x + (surfaceValue(surfaceSeed, crater) * 1.35 - 0.675) * radius,
+                y + (surfaceValue(surfaceSeed, crater + 4) * 1.25 - 0.625) * radius,
+                craterRadius,
+                0,
+                TAU,
+            );
+            ctx.fill();
+        }
+    } else if (planet.atmosphere === 'ice') {
+        ctx.strokeStyle = 'rgba(70, 130, 158, 0.58)';
+        ctx.lineWidth = radius * 0.08;
+        const fissureLimit = detailLevel === 2 ? 1 : 0;
+        for (let fissure = -fissureLimit; fissure <= fissureLimit; fissure += 1) {
+            ctx.beginPath();
+            ctx.moveTo(x - radius, y + fissure * radius * 0.45);
+            ctx.lineTo(x - radius * 0.25, y + (fissure * 0.3 + 0.2) * radius);
+            ctx.lineTo(x + radius * 0.2, y + (fissure * 0.35 - 0.15) * radius);
+            ctx.lineTo(x + radius, y + fissure * radius * 0.25);
+            ctx.stroke();
+        }
+    } else {
+        ctx.fillStyle = 'rgba(31, 24, 29, 0.5)';
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        ctx.strokeStyle = 'rgba(255, 105, 46, 0.86)';
+        ctx.lineWidth = radius * 0.12;
+        const flowLimit = detailLevel === 2 ? 1 : 0;
+        for (let flow = -flowLimit; flow <= flowLimit; flow += 1) {
+            ctx.beginPath();
+            ctx.moveTo(x + flow * radius * 0.45, y - radius);
+            ctx.bezierCurveTo(
+                x - flow * radius * 0.1, y - radius * 0.35,
+                x + flow * radius * 0.55, y + radius * 0.2,
+                x - flow * radius * 0.2, y + radius,
+            );
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+};
+
 const drawPlanet = (
     ctx: CanvasRenderingContext2D,
     planet: OrbitingPlanet,
     simulationSeconds: number,
     opacity: number,
+    systemScale: number,
 ) => {
+    ctx.save();
     ctx.globalAlpha = opacity;
     if (planet.hasRing) {
         ctx.strokeStyle = 'rgba(202, 214, 222, 0.58)';
@@ -57,25 +157,109 @@ const drawPlanet = (
         ctx.stroke();
     }
 
+    if (hasAtmosphereHalo(planet.atmosphere)) {
+        ctx.strokeStyle = planet.atmosphere === 'ice'
+            ? 'rgba(190, 235, 246, 0.34)'
+            : 'rgba(130, 215, 235, 0.3)';
+        ctx.lineWidth = planet.radius * 0.12;
+        ctx.beginPath();
+        ctx.arc(planet.x, planet.y, planet.radius * 1.12, 0, TAU);
+        ctx.stroke();
+    }
+
+    ctx.fillStyle = planet.color;
+    ctx.beginPath();
+    ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+    ctx.fill();
+    const surfaceDetail = getPlanetSurfaceDetailLevel(planet.radius, systemScale);
+    if (surfaceDetail === 1 || surfaceDetail === 2) {
+        drawAtmosphereSurface(ctx, planet, surfaceDetail);
+    }
+
     const distanceFromSun = Math.hypot(planet.x, planet.y) || 1;
-    const lightX = planet.x - (planet.x / distanceFromSun) * planet.radius * 0.32;
-    const lightY = planet.y - (planet.y / distanceFromSun) * planet.radius * 0.32;
+    const lightX = planet.x - (planet.x / distanceFromSun) * planet.radius * 0.35;
+    const lightY = planet.y - (planet.y / distanceFromSun) * planet.radius * 0.35;
     const shading = ctx.createRadialGradient(
-        lightX,
-        lightY,
-        planet.radius * 0.08,
-        lightX,
-        lightY,
-        planet.radius * 1.45,
+        lightX, lightY, planet.radius * 0.05,
+        lightX, lightY, planet.radius * 1.5,
     );
-    shading.addColorStop(0, '#eef8fb');
-    shading.addColorStop(0.32, planet.color);
-    shading.addColorStop(1, 'rgba(18, 26, 38, 0.92)');
+    shading.addColorStop(0, 'rgba(242, 251, 251, 0.55)');
+    shading.addColorStop(0.38, 'rgba(255, 255, 255, 0)');
+    shading.addColorStop(1, 'rgba(10, 15, 24, 0.78)');
     ctx.fillStyle = shading;
     ctx.beginPath();
     ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
     ctx.fill();
+    ctx.restore();
     planet.moons.forEach((moon) => drawMoon(ctx, planet, moon, simulationSeconds, opacity));
+};
+
+const drawTravelerStar = (
+    ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+) => {
+    const appearance = getTravelerAppearance(traveler, projection.progress);
+    const { x, y } = projection;
+    if (appearance.detailLevel === 0) {
+        ctx.fillStyle = `rgba(224, 242, 254, ${projection.opacity})`;
+        ctx.beginPath();
+        ctx.arc(x, y, appearance.radius, 0, TAU);
+        ctx.fill();
+        return;
+    }
+    if (appearance.detailLevel >= 1) {
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.haloRadius);
+        halo.addColorStop(0, `rgba(238, 249, 255, ${projection.opacity * 0.72})`);
+        halo.addColorStop(0.42, `rgba(128, 205, 235, ${projection.opacity * 0.2})`);
+        halo.addColorStop(1, 'rgba(80, 156, 201, 0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(x, y, appearance.haloRadius, 0, TAU);
+        ctx.fill();
+    }
+    if (appearance.detailLevel === 3) {
+        ctx.strokeStyle = `rgba(194, 231, 247, ${projection.opacity * 0.24})`;
+        ctx.lineWidth = Math.max(0.35, appearance.radius * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(x - appearance.flareLength, y);
+        ctx.lineTo(x + appearance.flareLength, y);
+        ctx.moveTo(x, y - appearance.flareLength * 0.62);
+        ctx.lineTo(x, y + appearance.flareLength * 0.62);
+        ctx.stroke();
+    }
+    const disc = ctx.createRadialGradient(
+        x - appearance.radius * 0.22,
+        y - appearance.radius * 0.25,
+        0,
+        x,
+        y,
+        appearance.radius,
+    );
+    disc.addColorStop(0, `rgba(255, 255, 255, ${projection.opacity})`);
+    disc.addColorStop(appearance.detailLevel >= 2 ? 0.38 : 0.62, `rgba(224, 242, 254, ${projection.opacity})`);
+    disc.addColorStop(1, `rgba(109, 190, 226, ${projection.opacity * 0.78})`);
+    ctx.fillStyle = disc;
+    ctx.beginPath();
+    ctx.arc(x, y, appearance.radius, 0, TAU);
+    ctx.fill();
+
+    if (appearance.detailLevel >= 2) {
+        ctx.fillStyle = `rgba(117, 185, 215, ${projection.opacity * 0.32})`;
+        for (let spot = 0; spot < 3; spot += 1) {
+            const spotAngle = surfaceValue(traveler.seed, spot) * TAU;
+            const distance = surfaceValue(traveler.seed, spot + 4) * appearance.coreRadius;
+            ctx.beginPath();
+            ctx.arc(
+                x + Math.cos(spotAngle) * distance,
+                y + Math.sin(spotAngle) * distance,
+                appearance.radius * (0.055 + surfaceValue(traveler.seed, spot + 8) * 0.05),
+                0,
+                TAU,
+            );
+            ctx.fill();
+        }
+    }
 };
 
 const drawSun = (ctx: CanvasRenderingContext2D, opacity: number) => {
@@ -119,10 +303,10 @@ const drawPlanetarySystem = (
 
     // Negative z is behind the sun. Positive z is painted over it.
     orbiting.filter((planet) => planet.z < 0)
-        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity));
+        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale));
     drawSun(ctx, opacity);
     orbiting.filter((planet) => planet.z >= 0)
-        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity));
+        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale));
     ctx.restore();
 };
 
@@ -176,7 +360,7 @@ const SpaceNeuralBackground: React.FC = () => {
 
             for (let index = 0; index < positions.length; index += 1) {
                 const style = styles[index];
-                if (style.opacity <= 0) continue;
+                if (!isStarRenderable(style)) continue;
                 const position = positions[index];
                 const [red, green, blue] = getStarRgb(style.strength);
                 ctx.globalAlpha = 1;
@@ -225,10 +409,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     }
                 }
 
-                ctx.fillStyle = `rgba(224, 242, 254, ${projection.opacity})`;
-                ctx.beginPath();
-                ctx.arc(projection.x, projection.y, projection.radius, 0, TAU);
-                ctx.fill();
+                drawTravelerStar(ctx, traveler, projection);
                 if (index === prominentSystem) {
                     drawPlanetarySystem(ctx, projection, traveler.seed, simulationSeconds);
                 }

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   AMBIENT_STAR_COUNT,
   AMBIENT_STAR_RGB,
+  ATMOSPHERE_HALO_RADIUS_MULTIPLIER,
   CONSTELLATION_INTERVAL_SECONDS,
   CONSTELLATION_STAR_COUNT,
   CONSTELLATION_STAR_RGB,
@@ -14,9 +15,12 @@ import {
   MIN_PLANET_ORBIT_PERIOD_SECONDS,
   MOBILE_TRAVELER_COUNT,
   NEAR_DEPTH,
+  PLANET_ATMOSPHERE_CLASSES,
   PLANET_COUNT_BASIS_POINTS,
+  PLANET_SURFACE_LOD_DIAMETERS,
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
+  TRAVELER_DETAIL_THRESHOLDS,
   TWINKLE_WINDOW_SECONDS,
   chooseWeightedPlanetCount,
   createAmbientLayout,
@@ -32,14 +36,18 @@ import {
   getOrbitingPlanet,
   getOrbitingPlanets,
   getPlanetOrbitPeriod,
+  getPlanetSurfaceDetailLevel,
   getPlanetSystemExtent,
   getSimulationTime,
   getStarFieldStyles,
   getStarPosition,
   getStarRgb,
   getSystemSafetyMargin,
+  getSystemScale,
+  getTravelerAppearance,
   getTravelerDepth,
   getTwinkleBrightness,
+  isStarRenderable,
   isSystemCarrier,
   isSystemInViewport,
   projectTraveler,
@@ -108,14 +116,19 @@ test('100k deterministic samples match every reviewed planet percentage within t
   });
 });
 
-test('exactly 50 ambient stars remain visible while all 72 seeded positions are retained', () => {
+test('ambient stars reduce exactly from 50 to 35 while all 72 constellation anchors remain continuous', () => {
   const stars = createAmbientLayout(12345, 0);
-  assert.equal(AMBIENT_STAR_COUNT, 50);
+  assert.equal(AMBIENT_STAR_COUNT, 35);
   assert.equal(CONSTELLATION_STAR_COUNT, 72);
   assert.equal(stars.length, CONSTELLATION_STAR_COUNT);
-  assert.equal(starCountForWidth(320), 50);
-  assert.equal(starCountForWidth(1920), 50);
-  assert.equal(getStarFieldStyles(12345, 47).filter(({ opacity }) => opacity > 0).length, 50);
+  assert.equal(starCountForWidth(320), 35);
+  assert.equal(starCountForWidth(1920), 35);
+  const ambientDrawIndices = getStarFieldStyles(12345, 47)
+    .map((style, index) => isStarRenderable(style) ? index : -1)
+    .filter((index) => index >= 0);
+  assert.equal(ambientDrawIndices.length, 35);
+  assert.deepEqual(ambientDrawIndices, Array.from({ length: 35 }, (_, index) => index));
+  assert.equal(getStarFieldStyles(12345, 610).filter(isStarRenderable).length, 72);
   assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 36);
   assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 36);
   assert.ok(stars.every((star) => star.driftSpeed >= 0.0007 && star.driftSpeed <= 0.0017));
@@ -285,6 +298,22 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   assert.notDeepEqual(createAmbientLayout(seed, 0), createAmbientLayout(seed, 1));
 });
 
+test('travelers grow strongly on approach and reveal detail at exact monotonic thresholds', () => {
+  const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  assert.deepEqual(TRAVELER_DETAIL_THRESHOLDS, [0.28, 0.5, 0.68]);
+  const samples = [0, 0.279999, 0.28, 0.499999, 0.5, 0.679999, 0.68, 1]
+    .map((progress) => getTravelerAppearance(traveler, progress));
+  assert.deepEqual(samples.map(({ detailLevel }) => detailLevel), [0, 0, 1, 1, 2, 2, 3, 3]);
+  assert.ok(samples.every(({ radius }, index) => index === 0 || radius >= samples[index - 1].radius));
+  assert.ok(samples.at(-1).radius > samples[0].radius * 10, 'near traveler is not visibly larger');
+  assert.ok(samples.every(({ haloRadius, radius }) => haloRadius > radius));
+  assert.equal(samples[5].flareLength, 0);
+  assert.ok(samples[6].flareLength > samples[6].radius * 2);
+
+  const projected = projectTraveler(traveler, 0, 1000, 600);
+  closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
+});
+
 test('only the deterministic minority of travelers can carry visible systems', () => {
   const scene = createSpaceScene(9876);
   const carrierIndices = scene.travelers.map((traveler, index) =>
@@ -305,6 +334,46 @@ test('only the deterministic minority of travelers can carry visible systems', (
   assert.equal(selectProminentSystem(scene.travelers, projections, 1000, 600), 14);
 });
 
+test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', () => {
+  assert.deepEqual(PLANET_ATMOSPHERE_CLASSES,
+    ['gas-banded', 'ocean-haze', 'rocky-cratered', 'ice', 'volcanic']);
+  const observed = new Set();
+  const colorsByAtmosphere = new Map();
+  let diverseSystem;
+  for (let seed = 1; seed <= 500; seed += 1) {
+    const system = createPlanetSystem(seed, 3);
+    assert.deepEqual(system, createPlanetSystem(seed, 3));
+    system.forEach((planet) => {
+      assert.ok(PLANET_ATMOSPHERE_CLASSES.includes(planet.atmosphere));
+      assert.ok(Number.isInteger(planet.surfaceSeed) && planet.surfaceSeed >= 0);
+      observed.add(planet.atmosphere);
+      if (!colorsByAtmosphere.has(planet.atmosphere)) colorsByAtmosphere.set(planet.atmosphere, new Set());
+      colorsByAtmosphere.get(planet.atmosphere).add(planet.color);
+    });
+    if (!diverseSystem && system.length >= PLANET_ATMOSPHERE_CLASSES.length) diverseSystem = system;
+  }
+  assert.deepEqual([...observed].sort(), [...PLANET_ATMOSPHERE_CLASSES].sort());
+  assert.equal(colorsByAtmosphere.size, PLANET_ATMOSPHERE_CLASSES.length);
+  assert.ok(diverseSystem, 'no deterministic multi-atmosphere fixture found');
+  assert.equal(new Set(diverseSystem.slice(0, 5).map(({ atmosphere }) => atmosphere)).size, 5);
+  assert.notDeepEqual(createPlanetSystem(0xface, 3), createPlanetSystem(0xface, 4));
+});
+
+test('planet surface LOD makes every closest body at least four CSS pixels and fully textured', () => {
+  assert.deepEqual(PLANET_SURFACE_LOD_DIAMETERS, [2.5, 4]);
+  assert.equal(getPlanetSurfaceDetailLevel(1, 1.2), 0);
+  assert.equal(getPlanetSurfaceDetailLevel(1.25, 1), 1);
+  assert.equal(getPlanetSurfaceDetailLevel(2, 1), 2);
+  const closestScale = getSystemScale({ progress: SYSTEM_MAX_PROGRESS });
+  for (let seed = 1; seed <= 1000; seed += 1) {
+    createPlanetSystem(seed, 0).forEach((planet) => {
+      const cssDiameter = planet.radius * closestScale * 2;
+      assert.ok(cssDiameter >= 4, `seed ${seed} body is only ${cssDiameter}px`);
+      assert.equal(getPlanetSurfaceDetailLevel(planet.radius, closestScale), 2);
+    });
+  }
+});
+
 test('systems independently cap at two moons and two rings and use compact stratified radii', () => {
   let sawTwoOfEach = false;
   for (let seed = 1; seed <= 10000; seed += 1) {
@@ -320,7 +389,7 @@ test('systems independently cap at two moons and two rings and use compact strat
   assert.notDeepEqual(createPlanetSystem(0xface, 4), createPlanetSystem(0xface, 5));
 });
 
-test('system safety margins are exact, uncapped, and include bodies, moons, and rings', () => {
+test('system safety margins are exact and include bodies, moons, rings, atmospheres, and stellar flares', () => {
   const planets = [{
     orbitRadius: 20,
     radius: 2,
@@ -329,13 +398,22 @@ test('system safety margins are exact, uncapped, and include bodies, moons, and 
     inclination: 0.4,
     tilt: 0,
     color: '#fff',
+    atmosphere: 'ocean-haze',
+    surfaceSeed: 9,
     moons: [{ radius: 0.4, orbitRadius: 4.5, phase: 0, speed: 1 }],
     hasRing: true,
   }];
   closeTo(getPlanetSystemExtent(planets), 24.9);
+  closeTo(getPlanetSystemExtent([{ ...planets[0], moons: [], hasRing: false }]),
+    20 + 2 * ATMOSPHERE_HALO_RADIUS_MULTIPLIER);
   const traveler = createSpaceScene(44).travelers[2];
   const projection = { x: 200, y: 200, depth: 300, progress: 0.8, radius: 2, opacity: 0.5, cycle: 0 };
-  const expected = getPlanetSystemExtent(createPlanetSystem(traveler.seed, 0)) * (0.48 + 0.8 * 1.08) + 0.5;
+  const appearance = getTravelerAppearance(traveler, projection.progress);
+  const expected = Math.max(
+    getPlanetSystemExtent(createPlanetSystem(traveler.seed, 0)) * getSystemScale(projection),
+    appearance.haloRadius,
+    appearance.flareLength,
+  ) + 0.5;
   closeTo(getSystemSafetyMargin(traveler, projection), expected);
 });
 
@@ -426,7 +504,7 @@ test('radius-derived periods are distinct, monotonic, visible, and include a det
   });
 });
 
-test('orbital phase freezes exactly throughout constellation windows and depth ordering remains stable', () => {
+test('orbital phase and deterministic surface detail freeze throughout constellation windows', () => {
   const planets = createPlanetSystem(2468, 2);
   const beforeFreeze = getOrbitingPlanets(planets, getSimulationTime(600));
   for (const wallTime of [610, 620, 629.999, 630]) {

@@ -1,4 +1,4 @@
-export const AMBIENT_STAR_COUNT = 50;
+export const AMBIENT_STAR_COUNT = 35;
 export const CONSTELLATION_STAR_COUNT = 72;
 export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
@@ -16,6 +16,9 @@ export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
+export const TRAVELER_DETAIL_THRESHOLDS = [0.28, 0.5, 0.68] as const;
+export const PLANET_SURFACE_LOD_DIAMETERS = [2.5, 4] as const;
+export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
@@ -24,11 +27,26 @@ export const PLANET_COUNT_BASIS_POINTS = [4000, 2200, 1300, 850, 550, 380, 260, 
 const UINT32_RANGE = 4294967296;
 const DEPTH_RANGE = FAR_DEPTH - NEAR_DEPTH;
 const TAU = Math.PI * 2;
-const PLANET_COLORS = ['#8bc5dd', '#bf9bd2', '#ddb281', '#88bca5', '#a5a9db', '#d28fa3'];
+export const PLANET_ATMOSPHERE_CLASSES = [
+    'gas-banded',
+    'ocean-haze',
+    'rocky-cratered',
+    'ice',
+    'volcanic',
+] as const;
+
+const PLANET_COLORS: Record<PlanetAtmosphereClass, readonly string[]> = {
+    'gas-banded': ['#c99562', '#d5b477', '#ad7f67'],
+    'ocean-haze': ['#4c9ec4', '#63b7ad', '#397ea6'],
+    'rocky-cratered': ['#9b7662', '#b08a68', '#796b66'],
+    ice: ['#b9dce5', '#d4e8e9', '#91bccc'],
+    volcanic: ['#653c38', '#7d4536', '#53343b'],
+};
 
 export type RandomSource = () => number;
 export type ConstellationPhaseName = 'ambient' | 'morph-in' | 'hold' | 'morph-out';
 export type DriftMode = 'wrap' | 'bounce';
+export type PlanetAtmosphereClass = typeof PLANET_ATMOSPHERE_CLASSES[number];
 
 export interface Point { x: number; y: number }
 export interface ConstellationEdge { from: number; to: number }
@@ -68,6 +86,8 @@ export interface Planet {
     inclination: number;
     tilt: number;
     color: string;
+    atmosphere: PlanetAtmosphereClass;
+    surfaceSeed: number;
     moons: Moon[];
     hasRing: boolean;
 }
@@ -91,6 +111,16 @@ export interface SpaceScene {
     seed: number;
     stars: DistantStar[];
     travelers: Traveler[];
+}
+
+export type PlanetSurfaceDetailLevel = 0 | 1 | 2;
+
+export interface TravelerAppearance {
+    radius: number;
+    detailLevel: 0 | 1 | 2 | 3;
+    haloRadius: number;
+    coreRadius: number;
+    flareLength: number;
 }
 
 export interface ProjectedTraveler {
@@ -322,6 +352,9 @@ export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): S
     });
 };
 
+/** Shared by tests and the Canvas loop so ambient draw counts cover the rendered path. */
+export const isStarRenderable = (style: StarVisualStyle) => style.opacity > 0;
+
 export const getStarRgb = (strength: number): readonly [number, number, number] => {
     const amount = clamp01(strength);
     return [
@@ -456,6 +489,24 @@ export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) 
     return { depth: FAR_DEPTH - (distance - cycle * DEPTH_RANGE), cycle };
 };
 
+/** Near travelers grow into resolved stellar discs with deterministic detail stages. */
+export const getTravelerAppearance = (traveler: Traveler, progress: number): TravelerAppearance => {
+    const proximity = smoothstep(progress);
+    const radius = traveler.size * (0.55 + proximity * 5.45);
+    const detailLevel: 0 | 1 | 2 | 3 = progress >= TRAVELER_DETAIL_THRESHOLDS[2]
+        ? 3
+        : progress >= TRAVELER_DETAIL_THRESHOLDS[1]
+            ? 2
+            : progress >= TRAVELER_DETAIL_THRESHOLDS[0] ? 1 : 0;
+    return {
+        radius,
+        detailLevel,
+        haloRadius: radius * (1.8 + detailLevel * 0.24),
+        coreRadius: radius * (detailLevel >= 2 ? 0.48 : 0.34),
+        flareLength: detailLevel === 3 ? radius * 2.6 : 0,
+    };
+};
+
 export const projectTraveler = (
     traveler: Traveler,
     simulationSeconds: number,
@@ -469,16 +520,30 @@ export const projectTraveler = (
     const reciprocalScale = FAR_DEPTH / depth;
     const fadeIn = smoothstep(progress / 0.14);
     const fadeOut = 1 - smoothstep((progress - 0.82) / 0.18);
+    const appearance = getTravelerAppearance(traveler, progress);
     return {
         x: width * 0.5 + laneX * width * 0.39 * reciprocalScale,
         y: height * 0.45 + laneY * height * 0.37 * reciprocalScale,
         depth,
         progress,
-        radius: traveler.size * Math.min(3.1, 0.5 + reciprocalScale * 0.42),
+        radius: appearance.radius,
         opacity: traveler.alpha * fadeIn * fadeOut,
         cycle,
     };
 };
+
+export const getPlanetSurfaceDetailLevel = (
+    radius: number,
+    systemScale: number,
+): PlanetSurfaceDetailLevel => {
+    const diameter = Math.max(0, radius) * Math.max(0, systemScale) * 2;
+    if (diameter >= PLANET_SURFACE_LOD_DIAMETERS[1]) return 2;
+    if (diameter >= PLANET_SURFACE_LOD_DIAMETERS[0]) return 1;
+    return 0;
+};
+
+export const hasAtmosphereHalo = (atmosphere: PlanetAtmosphereClass) =>
+    atmosphere === 'gas-banded' || atmosphere === 'ocean-haze' || atmosphere === 'ice';
 
 export const chooseWeightedPlanetCount = (random: RandomSource) => {
     let cursor = random() * 10000;
@@ -501,8 +566,9 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
     const count = chooseWeightedPlanetCount(random);
     let moonsRemaining = 2;
     let ringsRemaining = 2;
+    const atmosphereOffset = hashUint(travelerSeed, cycle, 97) % PLANET_ATMOSPHERE_CLASSES.length;
     return Array.from({ length: count }, (_, index) => {
-        const radius = between(random, 0.75, 1.7);
+        const radius = between(random, 1.45, 2.3);
         const moons: Moon[] = [];
         if (moonsRemaining > 0 && random() < 0.22) {
             moons.push({
@@ -516,6 +582,9 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
         const hasRing = ringsRemaining > 0 && random() < 0.16;
         if (hasRing) ringsRemaining -= 1;
         const orbitRadius = 6.7 + index * 1.35 + between(random, 0, 0.8);
+        const atmosphere = PLANET_ATMOSPHERE_CLASSES[
+            (atmosphereOffset + index) % PLANET_ATMOSPHERE_CLASSES.length
+        ];
         return {
             orbitRadius,
             radius,
@@ -524,7 +593,9 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
             speed: (index % 5 === 4 ? -1 : 1) * TAU / getPlanetOrbitPeriod(orbitRadius),
             inclination: between(random, 0.28, 0.46),
             tilt: between(random, -0.28, 0.28),
-            color: PLANET_COLORS[Math.floor(random() * PLANET_COLORS.length)],
+            color: PLANET_COLORS[atmosphere][Math.floor(random() * PLANET_COLORS[atmosphere].length)],
+            atmosphere,
+            surfaceSeed: hashUint(travelerSeed, cycle, 131 + index),
             moons,
             hasRing,
         };
@@ -565,7 +636,10 @@ export const getOrbitingPlanets = (
 export const getSystemScale = (projection: ProjectedTraveler) => 0.48 + projection.progress * 1.08;
 
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
-    const bodyExtent = planet.orbitRadius + planet.radius;
+    const atmosphereRadius = hasAtmosphereHalo(planet.atmosphere)
+        ? planet.radius * ATMOSPHERE_HALO_RADIUS_MULTIPLIER
+        : planet.radius;
+    const bodyExtent = planet.orbitRadius + atmosphereRadius;
     const moonExtent = planet.moons.reduce(
         (extent, moon) => Math.max(extent, planet.orbitRadius + moon.orbitRadius + moon.radius),
         bodyExtent,
@@ -576,10 +650,14 @@ export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((larg
     return Math.max(largest, bodyExtent, moonExtent, ringExtent);
 }, 7);
 
-/** Exact rendered system extent: no cap can hide clipping at viewport selection time. */
-export const getSystemSafetyMargin = (traveler: Traveler, projection: ProjectedTraveler) =>
-    getPlanetSystemExtent(createPlanetSystem(traveler.seed, projection.cycle))
-        * getSystemScale(projection) + 0.5;
+/** Exact rendered system extent: planets, stellar halo, and flares all remain in the viewport. */
+export const getSystemSafetyMargin = (traveler: Traveler, projection: ProjectedTraveler) => {
+    const systemExtent = getPlanetSystemExtent(createPlanetSystem(traveler.seed, projection.cycle))
+        * getSystemScale(projection);
+    const appearance = getTravelerAppearance(traveler, projection.progress);
+    const starExtent = Math.max(appearance.haloRadius, appearance.flareLength);
+    return Math.max(systemExtent, starExtent) + 0.5;
+};
 
 export const isSystemInViewport = (
     traveler: Traveler,
