@@ -465,6 +465,13 @@ a {
   vector-effect: non-scaling-stroke;
 }
 
+/* Optional artwork hooks; each variant opts in without changing its siblings. */
+.hero-title-route-ink,
+.hero-title-bearing-mark,
+.hero-title-signal {
+  display: none;
+}
+
 .hero-title-route circle {
   fill: #e0f2fe;
   stroke: #075985;
@@ -489,94 +496,340 @@ a {
   text-wrap: balance;
 }
 
-/* Map route: the original presentation and its exact animation timings. */
+/* The Cartographer's Route: editorial heading, hand-inked cyan trail, modern destination. */
+.hero-title-visual[data-animation="map-route"] {
+  --cartographer-ice: #bae6fd;
+  --cartographer-cyan: #22d3ee;
+  max-width: 15.5em;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-navigation {
+  align-items: flex-end;
+  gap: 0.28em;
+}
+
 .hero-title-visual[data-animation="map-route"] .hero-title-navigating {
-  animation: hero-map-unfold 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  color: #f0f9ff;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Baskerville, Georgia, serif;
+  font-size: 1.08em;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  text-shadow: 0 1px 16px rgba(186, 230, 253, 0.12);
+  animation: hero-cartographer-reveal 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-the {
+  margin-bottom: 0.14em;
+  color: rgba(186, 230, 253, 0.78);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Baskerville, Georgia, serif;
+  font-size: 0.4em;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route {
+  left: 0.02em;
+  bottom: -0.13em;
+  width: 5.72em;
+  height: 0.55em;
+  color: var(--cartographer-cyan);
+  opacity: 0.94;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route-guide {
+  stroke: var(--cartographer-ice);
+  stroke-width: 0.7;
+  opacity: 0.4;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route-ink {
+  display: block;
+  stroke-width: 1.8;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-route path {
   stroke-dashoffset: 1;
-  animation: hero-route-draw 1500ms 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: hero-route-draw 2100ms 420ms cubic-bezier(0.22, 0.75, 0.2, 1) forwards;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route-ink {
+  animation-delay: 520ms;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-route circle {
+  fill: #e0f2fe;
+  stroke: #0891b2;
+  stroke-width: 1.15;
   opacity: 0;
-  animation: hero-waypoint-arrive 700ms 1050ms ease-out forwards;
+  animation: hero-cartographer-waypoint 650ms 1250ms ease-out forwards;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-route circle:nth-of-type(2) {
-  animation-delay: 1300ms;
+  animation-delay: 1770ms;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-route circle:nth-of-type(3) {
-  animation-delay: 1530ms;
+  animation-delay: 2250ms;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-translation-stage {
+  min-height: 1.05em;
+  margin-top: 0.16em;
+  line-height: 0.92;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-translation {
-  animation: hero-translation-arrive 1300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  color: var(--cartographer-ice) !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: clamp(0.66em, 6vw, 0.88em);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.93;
+  text-align: start;
+  animation: hero-cartographer-destination 1400ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Bearing lock: soft optical focus, followed by precise waypoint acquisition. */
+/* Poet's Compass: an editorial title settles from a soft reading into its bearing. */
+.hero-title-visual[data-animation="bearing-lock"] {
+  --bearing-lavender: #e9ddff;
+  --bearing-rose: #efb8d0;
+  width: min(100%, 12.5em);
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-navigation {
+  align-items: center;
+  gap: 0.7em;
+  margin-inline-start: 0.12em;
+  padding-bottom: 0.12em;
+}
+
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-navigating {
-  animation: hero-bearing-resolve 1050ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  color: var(--bearing-lavender);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 0.56em;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.045em;
+  line-height: 1;
+  text-shadow: 0 0 0.7em rgba(216, 180, 254, 0.16);
+  animation: hero-bearing-resolve 1200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-the {
+  color: var(--bearing-rose);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.19em;
+  font-weight: 500;
+  letter-spacing: 0.36em;
+  line-height: 1;
+  opacity: 0.92;
+  text-transform: uppercase;
+  transform: translateY(0.08em);
 }
 
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-route {
-  opacity: 0.58;
+  bottom: -0.03em;
+  left: 0.08em;
+  width: 4.65em;
+  height: 0.42em;
+  color: #d8b4fe;
+  opacity: 0.72;
 }
 
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route path {
-  animation: hero-bearing-line-focus 900ms 300ms ease-out both;
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route > path,
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route > circle {
+  display: none;
 }
 
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route circle {
-  opacity: 0;
-  animation: hero-bearing-waypoint-focus 620ms 620ms ease-out forwards;
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-mark {
+  display: block;
 }
 
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route circle:nth-of-type(2) {
-  animation-delay: 820ms;
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-rule {
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  animation: hero-bearing-line-focus 1150ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route circle:nth-of-type(3) {
-  animation-delay: 1020ms;
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass {
+  color: var(--bearing-rose);
+  opacity: 0.9;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-bearing-compass-lock 900ms 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass circle {
+  fill: rgba(20, 12, 29, 0.72);
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 1;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.8;
+  stroke-dasharray: none;
+  opacity: 0.66;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass .hero-title-bearing-needle {
+  fill: var(--bearing-rose);
+  stroke: none;
+  opacity: 0.95;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-translation-stage {
+  margin-top: 0.05em;
+  min-height: 1.16em;
 }
 
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-translation {
-  animation: hero-bearing-translation 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  width: fit-content;
+  max-width: 100%;
+  background: linear-gradient(102deg, #f6eeff 4%, var(--bearing-lavender) 48%, #eab4ce 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif", Georgia, serif;
+  font-size: clamp(0.65em, 6.2vw, 0.96em);
+  font-weight: 500;
+  letter-spacing: 0.012em;
+  line-height: 1.02;
+  text-shadow: 0 0 1.1em rgba(232, 193, 255, 0.08);
+  animation: hero-bearing-translation 1250ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: left center;
 }
 
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-translation[dir="rtl"] {
+  margin-left: auto;
+  margin-right: 0;
   transform-origin: right center;
 }
 
-/* Atlas unfold: a restrained fold opens horizontally; RTL opens from the other edge. */
-.hero-title-visual[data-animation="atlas-unfold"] .hero-title-navigating {
-  animation: hero-atlas-heading-unfold 1150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-script-cjk {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", serif;
 }
 
-.hero-title-visual[data-animation="atlas-unfold"] .hero-title-route {
-  color: #bae6fd;
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-script-arabic {
+  font-family: "Noto Naskh Arabic", "Geeza Pro", serif;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-script-hebrew {
+  font-family: "Noto Serif Hebrew", "Times New Roman", serif;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-script-devanagari {
+  font-family: "Noto Serif Devanagari", "Kohinoor Devanagari", serif;
+}
+
+/* Signal horizon: quiet editorial telemetry, with a directional phrase reveal. */
+.hero-title-visual[data-animation="signal-horizon"] {
+  --signal-mint: #a7f3d0;
+  --signal-cyan: #67e8f9;
+  --signal-indigo: #a5b4fc;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-navigation {
+  align-items: center;
+  gap: 0.72em;
+  margin: 0 0 0.12em 0.08em;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-navigating,
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-the {
+  font-family: var(--font-mono);
+  font-size: 0.2em;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-navigating {
+  color: var(--signal-mint);
+  animation: hero-signal-label-arrive 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-the {
+  color: var(--signal-indigo);
+  transform: translateY(0.34em);
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-the::before {
+  content: "/";
+  margin-inline-end: 0.72em;
+  color: rgba(103, 232, 249, 0.58);
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-route {
+  display: none;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-translation-stage {
+  position: relative;
+  width: min(100%, 15em);
+  min-height: 1.22em;
+  padding-bottom: 0.18em;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-translation {
+  font-size: clamp(0.72em, 6.5vw, 1em);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  text-shadow: 0 0.08em 0.55em rgba(103, 232, 249, 0.13);
+  animation: hero-signal-phrase-ltr 1050ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-translation[dir="rtl"] {
+  animation-name: hero-signal-phrase-rtl;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: 0.2em;
+  overflow: visible;
+  color: var(--signal-cyan);
+  filter: drop-shadow(0 0 0.16em rgba(103, 232, 249, 0.42));
+  pointer-events: none;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-horizon {
   opacity: 0.42;
-}
-
-.hero-title-visual[data-animation="atlas-unfold"] .hero-title-route path {
+  stroke-width: 1;
+  stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: hero-atlas-route-reveal 1250ms 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: hero-signal-horizon-draw 1250ms 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.hero-title-visual[data-animation="atlas-unfold"] .hero-title-route circle {
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-pulse {
   opacity: 0;
-  animation: hero-atlas-waypoint-soften 900ms 760ms ease-out forwards;
+  stroke: var(--signal-indigo);
+  stroke-width: 1.35;
+  animation: hero-signal-pulse-arrive 850ms 920ms ease-out forwards;
 }
 
-.hero-title-visual[data-animation="atlas-unfold"] .hero-title-translation {
-  animation: hero-atlas-translation-ltr 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.hero-title-visual[data-animation="atlas-unfold"] .hero-title-translation[dir="rtl"] {
-  animation-name: hero-atlas-translation-rtl;
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal circle {
+  fill: var(--signal-mint);
+  opacity: 0;
+  animation: hero-signal-light-arrive 700ms 1250ms ease-out forwards;
 }
 
 .hero-title-script-latin {
@@ -599,16 +852,16 @@ a {
   font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", Mangal, sans-serif;
 }
 
-@keyframes hero-map-unfold {
+@keyframes hero-cartographer-reveal {
   from {
     opacity: 0;
     clip-path: inset(0 100% 0 0);
-    transform: translateX(-0.08em);
+    transform: translateY(0.08em);
   }
   to {
     opacity: 1;
     clip-path: inset(0);
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 
@@ -616,60 +869,65 @@ a {
   to { stroke-dashoffset: 0; }
 }
 
-@keyframes hero-waypoint-arrive {
-  0% { opacity: 0; transform: scale(0.4); }
-  65% { opacity: 0.9; transform: scale(1.25); }
-  100% { opacity: 0.78; transform: scale(1); }
+@keyframes hero-cartographer-waypoint {
+  0% { opacity: 0; transform: scale(0.65); }
+  70% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 0.9; transform: scale(1); }
 }
 
-@keyframes hero-translation-arrive {
-  from { opacity: 0; transform: translateY(0.12em); }
+@keyframes hero-cartographer-destination {
+  from { opacity: 0; transform: translateY(0.16em); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes hero-bearing-resolve {
-  from { opacity: 0.3; filter: blur(0.11em); transform: scaleX(1.035); }
-  to { opacity: 1; filter: blur(0); transform: scaleX(1); }
+  from { opacity: 0.24; filter: blur(0.12em); letter-spacing: 0.12em; transform: translateX(-0.08em); }
+  to { opacity: 1; filter: blur(0); letter-spacing: 0.045em; transform: translateX(0); }
 }
 
 @keyframes hero-bearing-line-focus {
-  from { opacity: 0; filter: blur(0.08em); }
-  to { opacity: 1; filter: blur(0); }
+  from { opacity: 0; filter: blur(0.08em); stroke-dashoffset: 1; }
+  to { opacity: 1; filter: blur(0); stroke-dashoffset: 0; }
 }
 
-@keyframes hero-bearing-waypoint-focus {
-  0% { opacity: 0; transform: scale(1.8); filter: blur(0.08em); }
-  100% { opacity: 0.82; transform: scale(1); filter: blur(0); }
+@keyframes hero-bearing-compass-lock {
+  from { opacity: 0; filter: blur(0.09em); transform: rotate(-24deg) scale(1.32); }
+  to { opacity: 0.9; filter: blur(0); transform: rotate(0) scale(1); }
 }
 
 @keyframes hero-bearing-translation {
-  from { opacity: 0; filter: blur(0.1em); transform: scaleX(1.025); }
-  to { opacity: 1; filter: blur(0); transform: scaleX(1); }
+  from { opacity: 0.16; filter: blur(0.11em); letter-spacing: 0.075em; transform: translateY(0.08em); }
+  to { opacity: 1; filter: blur(0); letter-spacing: 0.012em; transform: translateY(0); }
 }
 
-@keyframes hero-atlas-heading-unfold {
-  from { opacity: 0; clip-path: inset(0 50% 0 50%); transform: scaleX(0.985); }
-  to { opacity: 1; clip-path: inset(0); transform: scaleX(1); }
+@keyframes hero-signal-label-arrive {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-0.08em); }
+  to { opacity: 1; clip-path: inset(0); transform: translateX(0); }
 }
 
-@keyframes hero-atlas-route-reveal {
-  from { opacity: 0.2; stroke-dashoffset: 1; }
-  to { opacity: 1; stroke-dashoffset: 0; }
+@keyframes hero-signal-horizon-draw {
+  to { stroke-dashoffset: 0; }
 }
 
-@keyframes hero-atlas-waypoint-soften {
-  from { opacity: 0; transform: scale(0.75); }
-  to { opacity: 0.6; transform: scale(1); }
+@keyframes hero-signal-pulse-arrive {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 0.82; transform: translateY(0); }
 }
 
-@keyframes hero-atlas-translation-ltr {
-  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: scaleX(0.985); }
-  to { opacity: 1; clip-path: inset(0); transform: scaleX(1); }
+@keyframes hero-signal-light-arrive {
+  0% { opacity: 0; transform: scale(0.5); }
+  65% { opacity: 0.95; transform: scale(1.35); }
+  100% { opacity: 0.78; transform: scale(1); }
 }
 
-@keyframes hero-atlas-translation-rtl {
-  from { opacity: 0; clip-path: inset(0 0 0 100%); transform: scaleX(0.985); }
-  to { opacity: 1; clip-path: inset(0); transform: scaleX(1); }
+@keyframes hero-signal-phrase-ltr {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-0.06em); }
+  to { opacity: 1; clip-path: inset(0); transform: translateX(0); }
+}
+
+@keyframes hero-signal-phrase-rtl {
+  from { opacity: 0; clip-path: inset(0 0 0 100%); transform: translateX(0.06em); }
+  to { opacity: 1; clip-path: inset(0); transform: translateX(0); }
 }
 
 .home-hero-actions {
@@ -1570,10 +1828,15 @@ main .container > * {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-title-navigating,
+  .hero-title-the,
   .hero-title-route path,
   .hero-title-route circle,
-  .hero-title-translation {
+  .hero-title-bearing-compass,
+  .hero-title-translation,
+  .hero-title-signal path,
+  .hero-title-signal circle {
     animation: none !important;
+    filter: none !important;
     transform: none !important;
   }
 
@@ -1583,6 +1846,13 @@ main .container > * {
 
   .hero-title-route circle {
     opacity: 0.78;
+  }
+
+  .hero-title-visual[data-animation="signal-horizon"] .hero-title-horizon,
+  .hero-title-visual[data-animation="signal-horizon"] .hero-title-pulse,
+  .hero-title-visual[data-animation="signal-horizon"] .hero-title-signal circle {
+    opacity: 0.72;
+    stroke-dashoffset: 0;
   }
 }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-type AnimationVariant = 'map-route' | 'bearing-lock' | 'atlas-unfold';
+type AnimationVariant = 'map-route' | 'bearing-lock' | 'signal-horizon';
 
 type Translation = {
     text: string;
@@ -18,7 +18,7 @@ const englishTranslation: Translation = {
     color: '#93c5fd',
 };
 
-const animationVariants: AnimationVariant[] = ['map-route', 'bearing-lock', 'atlas-unfold'];
+const animationVariants: AnimationVariant[] = ['map-route', 'bearing-lock', 'signal-horizon'];
 
 const foreignTranslations: Translation[] = [
     { text: 'La era de la inteligencia', lang: 'es', dir: 'ltr', script: 'latin', color: '#a5b4fc' },
@@ -125,10 +125,29 @@ const HeroTitle: React.FC = () => {
                         aria-hidden="true"
                         focusable="false"
                     >
-                        <path d="M5 24 C72 6, 128 31, 196 17 S318 7, 424 19" pathLength="1" />
+                        <path
+                            className="hero-title-route-guide"
+                            d="M5 24 C72 6, 128 31, 196 17 S318 7, 424 19"
+                            pathLength="1"
+                        />
+                        <path
+                            className="hero-title-route-ink"
+                            d="M5 24 C44 17, 65 8, 99 12 C134 16, 157 28, 196 17 C238 5, 273 12, 307 11 C345 10, 379 14, 424 19"
+                            pathLength="1"
+                        />
                         <circle cx="5" cy="24" r="3" />
                         <circle cx="196" cy="17" r="3" />
                         <circle cx="424" cy="19" r="3" />
+                        <g className="hero-title-bearing-mark">
+                            <path className="hero-title-bearing-rule" d="M6 19 H378" pathLength="1" />
+                            <g transform="translate(402 19)">
+                                <g className="hero-title-bearing-compass">
+                                    <circle r="10" />
+                                    <path d="M0 -14 V14 M-14 0 H14" />
+                                    <path className="hero-title-bearing-needle" d="M-3 5 L2 -8 L4 -3 L3 7 Z" />
+                                </g>
+                            </g>
+                        </g>
                     </svg>
                     <span className="hero-title-the">the</span>
                 </span>
@@ -142,6 +161,17 @@ const HeroTitle: React.FC = () => {
                     >
                         {translation.text}
                     </bdi>
+                    <svg
+                        className="hero-title-signal"
+                        viewBox="0 0 640 20"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                        focusable="false"
+                    >
+                        <path className="hero-title-horizon" d="M2 10 H638" pathLength="1" />
+                        <path className="hero-title-pulse" d="M390 10 C414 10 418 4 442 4 S474 16 500 16 S530 10 554 10" />
+                        <circle cx="554" cy="10" r="2.5" />
+                    </svg>
                 </span>
             </span>
         </h1>
