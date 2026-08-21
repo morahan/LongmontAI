@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import {
     createAmbientLayout,
+    createConstellationGeometry,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
+    getElapsedSecondsSinceMount,
     getOrbitingPlanets,
     getSimulationTime,
     getStarFieldPositions,
@@ -118,13 +120,12 @@ const SpaceNeuralBackground: React.FC = () => {
         const ctx = canvas?.getContext('2d');
         if (!canvas || !ctx) return;
 
-        // The default scene seed is sampled once from Web Crypto for this page refresh.
+        // The refresh seed prefers Web Crypto and has a one-sample legacy fallback.
         const scene = createSpaceScene();
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const mountedAt = performance.now();
         let width = 0;
         let height = 0;
-        let elapsedSeconds = 0;
-        let previousTimestamp: number | null = null;
         let animationFrameId: number | null = null;
         let isOnscreen = typeof IntersectionObserver === 'undefined';
         let pageIsVisible = !document.hidden;
@@ -150,6 +151,25 @@ const SpaceNeuralBackground: React.FC = () => {
             const starGeneration = phase.event;
             const styleStars = createAmbientLayout(scene.seed, starGeneration);
             const positions = getStarFieldPositions(scene.seed, elapsed, width, height);
+            const constellation = createConstellationGeometry(width, height);
+            const lineOpacity = phase.name === 'morph-in'
+                ? 0.15 * phase.progress
+                : phase.name === 'hold'
+                    ? 0.15
+                    : phase.name === 'morph-out'
+                        ? 0.15 * (1 - phase.progress)
+                        : 0;
+            if (lineOpacity > 0) {
+                ctx.strokeStyle = `rgba(176, 217, 235, ${lineOpacity})`;
+                ctx.lineWidth = 0.55;
+                ctx.beginPath();
+                constellation.edges.forEach(({ from, to }) => {
+                    ctx.moveTo(positions[from].x, positions[from].y);
+                    ctx.lineTo(positions[to].x, positions[to].y);
+                });
+                ctx.stroke();
+            }
+
             const starCount = starCountForWidth(width);
             for (let index = 0; index < starCount; index += 1) {
                 const star = styleStars[index];
@@ -207,13 +227,10 @@ const SpaceNeuralBackground: React.FC = () => {
             ctx.globalAlpha = 1;
         };
 
+        // RAF may pause while hidden, but its monotonic timestamp still includes hidden time.
         const animate = (timestamp: number) => {
             animationFrameId = null;
-            if (previousTimestamp !== null) {
-                elapsedSeconds += Math.min((timestamp - previousTimestamp) / 1000, 0.25);
-            }
-            previousTimestamp = timestamp;
-            drawScene(elapsedSeconds);
+            drawScene(getElapsedSecondsSinceMount(mountedAt, timestamp));
             animationFrameId = window.requestAnimationFrame(animate);
         };
 
@@ -221,14 +238,12 @@ const SpaceNeuralBackground: React.FC = () => {
         const syncAnimation = () => {
             if (shouldAnimate()) {
                 if (animationFrameId === null) {
-                    previousTimestamp = null;
                     animationFrameId = window.requestAnimationFrame(animate);
                 }
                 return;
             }
             if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
-            previousTimestamp = null;
             if (reducedMotion) drawScene(0);
         };
 
@@ -240,7 +255,7 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.width = Math.max(1, Math.round(width * dpr));
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            drawScene(reducedMotion ? 0 : elapsedSeconds);
+            drawScene(reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now()));
         };
         const handleVisibilityChange = () => { pageIsVisible = !document.hidden; syncAnimation(); };
         const handleMotionChange = (event: MediaQueryListEvent) => { reducedMotion = event.matches; syncAnimation(); };

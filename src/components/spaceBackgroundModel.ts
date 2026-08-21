@@ -8,34 +8,35 @@ export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
+export const TWINKLE_WINDOW_SECONDS = 120;
 export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
-export const MAX_SYSTEM_SAFETY_MARGIN = 86;
+export const MAX_PLANET_ORBIT_RADIUS = 22.35;
+export const PLANET_COUNT_BASIS_POINTS = [4000, 2200, 1300, 850, 550, 380, 260, 180, 120, 80, 50, 30] as const;
 
-const UINT32_MAX = 4294967296;
+const UINT32_RANGE = 4294967296;
 const DEPTH_RANGE = FAR_DEPTH - NEAR_DEPTH;
 const TAU = Math.PI * 2;
-const PLANET_COUNT_WEIGHTS = [3, 7, 12, 16, 18, 16, 11, 7, 4, 2, 1, 1] as const;
 const PLANET_COLORS = ['#8bc5dd', '#bf9bd2', '#ddb281', '#88bca5', '#a5a9db', '#d28fa3'];
 
 export type RandomSource = () => number;
 export type ConstellationPhaseName = 'ambient' | 'morph-in' | 'hold' | 'morph-out';
+export type DriftMode = 'wrap' | 'bounce';
 
 export interface Point { x: number; y: number }
+export interface ConstellationEdge { from: number; to: number }
 
 export interface DistantStar {
     x: number;
     y: number;
     size: number;
     alpha: number;
-    driftRadiusX: number;
-    driftRadiusY: number;
-    driftPeriod: number;
-    driftPhase: number;
-    twinklePeriod: number;
-    twinklePhase: number;
+    driftMode: DriftMode;
+    driftSpeed: number;
+    driftAngle: number;
+    twinkleSeed: number;
 }
 
 export interface Moon {
@@ -95,6 +96,8 @@ export interface ConstellationPhase {
     eventElapsed: number;
 }
 
+interface GlyphPoint extends Point { glyph: number }
+
 export const createSeededRandom = (seed: number): RandomSource => {
     let state = seed >>> 0;
     return () => {
@@ -102,7 +105,7 @@ export const createSeededRandom = (seed: number): RandomSource => {
         let value = state;
         value = Math.imul(value ^ (value >>> 15), value | 1);
         value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-        return ((value ^ (value >>> 14)) >>> 0) / UINT32_MAX;
+        return ((value ^ (value >>> 14)) >>> 0) / UINT32_RANGE;
     };
 };
 
@@ -117,7 +120,7 @@ const hashUint = (seed: number, cycle: number, channel: number) => {
 };
 
 const hashRandom = (seed: number, cycle: number, channel: number) =>
-    hashUint(seed, cycle, channel) / UINT32_MAX;
+    hashUint(seed, cycle, channel) / UINT32_RANGE;
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const smoothstep = (value: number) => {
@@ -125,21 +128,34 @@ const smoothstep = (value: number) => {
     return bounded * bounded * (3 - 2 * bounded);
 };
 
-export const createCryptoSeed = (cryptoSource: Pick<Crypto, 'getRandomValues'> = globalThis.crypto) => {
-    if (!cryptoSource?.getRandomValues) throw new Error('A cryptographic random source is required');
+const positiveModulo = (value: number, modulus: number) =>
+    ((value % modulus) + modulus) % modulus;
+
+/** Web Crypto is preferred; old/locked-down browsers receive one Math.random uint32 fallback. */
+export const createCryptoSeed = (
+    cryptoSource: Pick<Crypto, 'getRandomValues'> | null | undefined = globalThis.crypto,
+    fallbackRandom: RandomSource = Math.random,
+) => {
+    if (!cryptoSource?.getRandomValues) return Math.floor(fallbackRandom() * UINT32_RANGE) >>> 0;
     const words = new Uint32Array(2);
     cryptoSource.getRandomValues(words);
     return (words[0] ^ Math.imul(words[1], 0x9e3779b1)) >>> 0;
 };
 
+export const getElapsedSecondsSinceMount = (mountedAt: number, now: number) =>
+    Math.max(0, now - mountedAt) / 1000;
+
 export const starCountForWidth = (_width: number) => AMBIENT_STAR_COUNT;
 export const travelerCountForWidth = (width: number) =>
     width < MOBILE_BREAKPOINT ? MOBILE_TRAVELER_COUNT : DESKTOP_TRAVELER_COUNT;
 
+/** Exactly indices 2, 8, and 14 of the desktop field are eligible system carriers. */
+export const isSystemCarrier = (_traveler: Traveler, index: number) => index % 6 === 2;
+
 export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhase => {
     const elapsed = Math.max(0, elapsedSeconds);
     if (elapsed < CONSTELLATION_INTERVAL_SECONDS) {
-        return { name: 'ambient', event: 0, progress: 0, eventElapsed: 0 };
+        return { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed };
     }
     const event = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS);
     const eventElapsed = elapsed - event * CONSTELLATION_INTERVAL_SECONDS;
@@ -173,72 +189,113 @@ export const getSimulationTime = (elapsedSeconds: number) => {
 
 export const createAmbientLayout = (seed: number, generation: number): DistantStar[] => {
     const random = createSeededRandom(hashUint(seed, generation, 71));
-    return Array.from({ length: AMBIENT_STAR_COUNT }, () => ({
+    const modes: DriftMode[] = Array.from(
+        { length: AMBIENT_STAR_COUNT },
+        (_, index) => index < AMBIENT_STAR_COUNT / 2 ? 'wrap' : 'bounce',
+    );
+    for (let index = modes.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(random() * (index + 1));
+        [modes[index], modes[swapIndex]] = [modes[swapIndex], modes[index]];
+    }
+    return Array.from({ length: AMBIENT_STAR_COUNT }, (_, index) => ({
         x: between(random, 0.025, 0.975),
         y: between(random, 0.025, 0.975),
         size: between(random, 0.65, 1.7),
         alpha: between(random, 0.38, 0.86),
-        driftRadiusX: between(random, 0.002, 0.012),
-        driftRadiusY: between(random, 0.002, 0.01),
-        driftPeriod: between(random, 90, 240),
-        driftPhase: between(random, 0, TAU),
-        twinklePeriod: between(random, 5, 14),
-        twinklePhase: between(random, 0, TAU),
+        driftMode: modes[index],
+        driftSpeed: between(random, 0.0007, 0.0017),
+        driftAngle: between(random, 0, TAU),
+        twinkleSeed: Math.floor(random() * UINT32_RANGE),
     }));
 };
 
 export const getDriftedStar = (star: DistantStar, elapsedSeconds: number): Point => {
-    const angle = star.driftPhase + Math.max(0, elapsedSeconds) * TAU / star.driftPeriod;
-    return {
-        x: star.x + Math.cos(angle) * star.driftRadiusX,
-        y: star.y + Math.sin(angle * 0.83) * star.driftRadiusY,
+    const elapsed = Math.max(0, elapsedSeconds);
+    const rawX = star.x + Math.cos(star.driftAngle) * star.driftSpeed * elapsed;
+    const rawY = star.y + Math.sin(star.driftAngle) * star.driftSpeed * elapsed;
+    if (star.driftMode === 'wrap') {
+        return { x: positiveModulo(rawX, 1), y: positiveModulo(rawY, 1) };
+    }
+    const reflect = (value: number) => {
+        const phase = positiveModulo(value, 2);
+        return phase <= 1 ? phase : 2 - phase;
     };
+    return { x: reflect(rawX), y: reflect(rawY) };
 };
 
+/** One independently seeded full-dim-full event per <=120s cycle; constellations stay steady. */
 export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
-    const wave = Math.sin(star.twinklePhase + Math.max(0, elapsedSeconds) * TAU / star.twinklePeriod);
-    return 0.62 + (wave + 1) * 0.19;
+    const elapsed = Math.max(0, elapsedSeconds);
+    if (getConstellationPhase(elapsed).name !== 'ambient') return 1;
+    const cycle = Math.floor(elapsed / TWINKLE_WINDOW_SECONDS);
+    const cycleTime = elapsed - cycle * TWINKLE_WINDOW_SECONDS;
+    const fallDuration = 2 + hashRandom(star.twinkleSeed, cycle, 1) * 3;
+    const restDuration = 0.35 + hashRandom(star.twinkleSeed, cycle, 2) * 1.4;
+    const riseDuration = 2 + hashRandom(star.twinkleSeed, cycle, 3) * 3;
+    const totalDuration = fallDuration + restDuration + riseDuration;
+    const start = hashRandom(star.twinkleSeed, cycle, 0) * (TWINKLE_WINDOW_SECONDS - totalDuration);
+    const target = 0.4 + hashRandom(star.twinkleSeed, cycle, 4) * 0.2;
+    const eventTime = cycleTime - start;
+    if (eventTime < 0 || eventTime >= totalDuration) return 1;
+    if (eventTime < fallDuration) return 1 - (1 - target) * smoothstep(eventTime / fallDuration);
+    if (eventTime < fallDuration + restDuration) return target;
+    return target + (1 - target) * smoothstep(
+        (eventTime - fallDuration - restDuration) / riseDuration,
+    );
 };
 
-// Deliberately sparse 3x5 dot glyphs; all 72 ambient stars become one text dot.
+// These sparse 3x5 forms contain exactly one unique anchor per ambient star.
 const GLYPHS: Record<string, string[]> = {
-    L: ['100', '100', '100', '100', '111'],
+    L: ['100', '100', '100', '100', '110'],
     O: ['010', '101', '101', '101', '010'],
     N: ['101', '100', '010', '001', '101'],
     G: ['010', '101', '100', '101', '011'],
-    M: ['101', '111', '010', '101', '001'],
+    M: ['101', '111', '101', '101', '000'],
     T: ['111', '010', '010', '010', '010'],
     A: ['010', '101', '111', '101', '000'],
-    I: ['010', '010', '010', '010', '010'],
+    I: ['010', '010', '010', '010', '000'],
 };
 
-const rawTextPoints = () => {
+const rawConstellationGeometry = () => {
     const text = 'LONGMONT AI';
     const lineWidth = text.length * 4 - 1;
-    const points: Point[] = [];
-    for (let characterIndex = 0; characterIndex < text.length; characterIndex += 1) {
-        const rows = GLYPHS[text[characterIndex]];
+    const points: GlyphPoint[] = [];
+    for (let glyph = 0; glyph < text.length; glyph += 1) {
+        const rows = GLYPHS[text[glyph]];
         if (!rows) continue;
         rows.forEach((row, y) => [...row].forEach((cell, x) => {
-            if (cell === '1') points.push({ x: characterIndex * 4 + x, y });
+            if (cell === '1') points.push({ x: glyph * 4 + x, y, glyph });
         }));
     }
-    return { points, lineWidth };
+    const edges: ConstellationEdge[] = [];
+    points.forEach((from, fromIndex) => points.forEach((to, toIndex) => {
+        if (toIndex <= fromIndex || from.glyph !== to.glyph) return;
+        const dx = Math.abs(from.x - to.x);
+        const dy = Math.abs(from.y - to.y);
+        if (dx <= 1 && dy <= 1 && dx + dy > 0) edges.push({ from: fromIndex, to: toIndex });
+    }));
+    return { points, edges, lineWidth };
 };
 
-/** Returns exactly 72 viewport points arranged as one line of dotted 3x5 LONGMONT AI glyphs. */
-export const createConstellationTargets = (width: number, height: number): Point[] => {
-    const { points: raw, lineWidth } = rawTextPoints();
-    const selected = Array.from({ length: AMBIENT_STAR_COUNT }, (_, index) =>
-        raw[Math.floor(index * raw.length / AMBIENT_STAR_COUNT)]);
+export const createConstellationGeometry = (width: number, height: number) => {
+    const raw = rawConstellationGeometry();
+    if (raw.points.length !== AMBIENT_STAR_COUNT) {
+        throw new Error(`LONGMONT AI requires ${AMBIENT_STAR_COUNT} unique anchors`);
+    }
     const maximumWidth = Math.min(width * 0.88, height * 1.8);
-    const cell = Math.max(2, maximumWidth / lineWidth);
-    const rowWidth = lineWidth * cell;
-    return selected.map((point) => ({
-        x: width * 0.5 - rowWidth * 0.5 + point.x * cell,
-        y: height * 0.27 + point.y * cell,
-    }));
+    const cell = Math.max(2, maximumWidth / raw.lineWidth);
+    const rowWidth = raw.lineWidth * cell;
+    return {
+        points: raw.points.map((point) => ({
+            x: width * 0.5 - rowWidth * 0.5 + point.x * cell,
+            y: height * 0.27 + point.y * cell,
+        })),
+        edges: raw.edges,
+    };
 };
+
+export const createConstellationTargets = (width: number, height: number): Point[] =>
+    createConstellationGeometry(width, height).points;
 
 const mixPoint = (from: Point, to: Point, amount: number): Point => ({
     x: from.x + (to.x - from.x) * amount,
@@ -313,10 +370,9 @@ export const projectTraveler = (
 };
 
 export const chooseWeightedPlanetCount = (random: RandomSource) => {
-    const total = PLANET_COUNT_WEIGHTS.reduce((sum, weight) => sum + weight, 0);
-    let cursor = random() * total;
-    for (let index = 0; index < PLANET_COUNT_WEIGHTS.length; index += 1) {
-        cursor -= PLANET_COUNT_WEIGHTS[index];
+    let cursor = random() * 10000;
+    for (let index = 0; index < PLANET_COUNT_BASIS_POINTS.length; index += 1) {
+        cursor -= PLANET_COUNT_BASIS_POINTS[index];
         if (cursor < 0) return index + 1;
     }
     return 12;
@@ -326,24 +382,24 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
 export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[] => {
     const random = createSeededRandom(hashUint(travelerSeed, cycle, 43));
     const count = chooseWeightedPlanetCount(random);
-    let accessoriesRemaining = 2;
+    let moonsRemaining = 2;
+    let ringsRemaining = 2;
     return Array.from({ length: count }, (_, index) => {
         const radius = between(random, 0.75, 1.7);
         const moons: Moon[] = [];
-        const wantsMoon = accessoriesRemaining > 0 && random() < 0.22;
-        if (wantsMoon) {
+        if (moonsRemaining > 0 && random() < 0.22) {
             moons.push({
                 radius: between(random, 0.22, 0.42),
                 orbitRadius: radius + between(random, 1.5, 2.5),
                 phase: between(random, 0, TAU),
                 speed: between(random, 0.7, 1.5),
             });
-            accessoriesRemaining -= 1;
+            moonsRemaining -= 1;
         }
-        const hasRing = accessoriesRemaining > 0 && random() < 0.16;
-        if (hasRing) accessoriesRemaining -= 1;
+        const hasRing = ringsRemaining > 0 && random() < 0.16;
+        if (hasRing) ringsRemaining -= 1;
         return {
-            orbitRadius: 9 + index * 5.25 + between(random, 0, 2.2),
+            orbitRadius: 6.7 + index * 1.35 + between(random, 0, 0.8),
             radius,
             phase: between(random, 0, TAU),
             speed: between(random, 0.035, 0.1) / Math.sqrt(index + 1),
@@ -374,11 +430,22 @@ export const getOrbitingPlanets = (planets: Planet[], simulationSeconds: number)
 
 export const getSystemScale = (projection: ProjectedTraveler) => 0.48 + projection.progress * 1.08;
 
-export const getSystemSafetyMargin = (_traveler: Traveler, projection: ProjectedTraveler) => {
-    const planets = createPlanetSystem(_traveler.seed, projection.cycle);
-    const extent = planets.reduce((largest, planet) => Math.max(largest, planet.orbitRadius + planet.radius + 4), 7);
-    return Math.min(MAX_SYSTEM_SAFETY_MARGIN, extent * getSystemScale(projection) + 1);
-};
+export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
+    const bodyExtent = planet.orbitRadius + planet.radius;
+    const moonExtent = planet.moons.reduce(
+        (extent, moon) => Math.max(extent, planet.orbitRadius + moon.orbitRadius + moon.radius),
+        bodyExtent,
+    );
+    const ringExtent = planet.hasRing
+        ? planet.orbitRadius + planet.radius * 1.85 + 0.275
+        : bodyExtent;
+    return Math.max(largest, bodyExtent, moonExtent, ringExtent);
+}, 7);
+
+/** Exact rendered system extent: no cap can hide clipping at viewport selection time. */
+export const getSystemSafetyMargin = (traveler: Traveler, projection: ProjectedTraveler) =>
+    getPlanetSystemExtent(createPlanetSystem(traveler.seed, projection.cycle))
+        * getSystemScale(projection) + 0.5;
 
 export const isSystemInViewport = (
     traveler: Traveler,
@@ -402,7 +469,10 @@ export const selectProminentSystem = (
     let nearestProgress = -1;
     for (let index = 0; index < travelers.length; index += 1) {
         const projection = projections[index];
-        if (!projection || projection.progress < SYSTEM_MIN_PROGRESS || projection.progress > SYSTEM_MAX_PROGRESS
+        if (!isSystemCarrier(travelers[index], index)
+            || !projection
+            || projection.progress < SYSTEM_MIN_PROGRESS
+            || projection.progress > SYSTEM_MAX_PROGRESS
             || !isSystemInViewport(travelers[index], projection, width, height)) continue;
         if (projection.progress > nearestProgress) {
             selected = index;
@@ -415,7 +485,7 @@ export const selectProminentSystem = (
 export const createSpaceScene = (seed = createCryptoSeed()): SpaceScene => {
     const random = createSeededRandom(seed);
     const travelers = Array.from({ length: DESKTOP_TRAVELER_COUNT }, (): Traveler => ({
-        seed: Math.floor(random() * UINT32_MAX),
+        seed: Math.floor(random() * UINT32_RANGE),
         initialDistance: random() * DEPTH_RANGE,
         speed: between(random, 18, 28),
         size: between(random, 0.6, 1.1),
