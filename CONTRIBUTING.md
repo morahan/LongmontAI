@@ -113,6 +113,8 @@ and why it's significant for the AI community.
    screenshots for the changed edition. The mobile audit also runs in the local
    pre-commit and pre-push hooks; it rejects page overflow, broken assets, and
    editorial media that is too small or positioned outside the phone viewport.
+   Full local CI clears inherited route targeting and audits every live app page,
+   the fixed reference edition, and the latest linked edition headlessly.
 8. Commit and push to `main` — Vercel auto-deploys
 
 ## Scheduling an Approved Edition

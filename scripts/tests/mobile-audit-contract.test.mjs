@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { selectMobileAudit } from '../mobile-audit-selector.mjs';
+import { FULL_ROUTES, selectMobileAudit } from '../mobile-audit-selector.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const runnerPath = path.join(root, 'scripts/run-targeted-mobile-audit.mjs');
@@ -56,7 +56,7 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
 
   assert.equal(packageJson.scripts['test:mobile'], 'bash scripts/run-mobile-audit.sh');
   assert.match(localCi, /npm run test:mobile-contract/);
-  assert.match(localCi, /npm run test:mobile/);
+  assert.match(localCi, /MOBILE_AUDIT_HEADED=0 env -u MOBILE_AUDIT_ROUTES npm run test:mobile/);
   assert.doesNotMatch(localCi, /test:mobile:staged/);
   assert.match(preCommit, /run-targeted-mobile-audit\.mjs staged/);
   assert.match(prePush, /run-targeted-mobile-audit\.mjs push/);
@@ -68,8 +68,9 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   assert.match(browserRunner, /run-code --filename scripts\/mobile-playwright-audit\.js/);
   assert.match(audit, /MOBILE_AUDIT_ROUTES/);
   assert.match(audit, /mediaLayoutFailures/);
-  assert.match(audit, /edition-2026-06-10-ai-landscape/);
-  assert.match(editorGuide, /selects from the staged snapshot/);
+  for (const route of FULL_ROUTES) assert.ok(audit.includes(`'${route}'`), `full audit is missing ${route}`);
+  assert.match(audit, /latestEditionRoute/);
+  assert.match(editorGuide, /selects from the staged\s+snapshot/);
 });
 
 test('browser runner is headless by default, supports explicit headed debugging, and preserves failures', async (t) => {
@@ -116,6 +117,10 @@ test('browser runner is headless by default, supports explicit headed debugging,
 });
 
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {
+  assert.deepEqual(FULL_ROUTES, [
+    '/', '/tools', '/model-watch', '/timeline', '/countdown', '/leaderboard', '/about',
+    '/edition/edition-2026-06-10-ai-landscape',
+  ]);
   assert.deepEqual(await selectMobileAudit(['src/pages/Tools.tsx']), {
     action: 'routes', routes: ['/tools'], reason: 'src/pages/Tools.tsx',
   });
@@ -127,6 +132,17 @@ test('selector targets page and edition routes, skips known non-web paths, and f
     readSnapshot: async () => '---\nid: edition-2026-09-02-test\n---\nbody',
   });
   assert.deepEqual(edition.routes, ['/', '/edition/edition-2026-09-02-test']);
+
+  const ambiguousAssetMapping = await selectMobileAudit(['public/weekly-screenshots/2026.09.02/chart.png'], {
+    listPublishedArticles: async () => [
+      'src/articles/2026.09.02-a.md',
+      'src/articles/2026.09.02-b.md',
+    ],
+    readSnapshot: async (articlePath) => articlePath.endsWith('-a.md')
+      ? 'id: edition-2026-09-02-a'
+      : undefined,
+  });
+  assert.equal(ambiguousAssetMapping.action, 'full');
 });
 
 test('staged mode reads only the index snapshot, not unstaged worktree changes', async (t) => {
@@ -158,6 +174,88 @@ test('push mode selects files from outgoing commits rather than the worktree', a
   assert.equal(selection.action, 'routes');
   assert.deepEqual(selection.routes, ['/model-watch']);
   assert.deepEqual(selection.paths, ['src/pages/ModelWatch.tsx']);
+});
+
+test('push mode detects resolution-only paths introduced by an outgoing merge commit', async (t) => {
+  const { directory, base } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+
+  const mainBranch = git(directory, ['branch', '--show-current']);
+  await writeFile(path.join(directory, 'src/pages/Tools.tsx'), 'common\n');
+  git(directory, ['add', '.']);
+  const common = commit(directory, 'common page');
+
+  git(directory, ['checkout', '-q', '-b', 'merge-side', common]);
+  await mkdir(path.join(directory, 'docs'), { recursive: true });
+  await writeFile(path.join(directory, 'docs/side.md'), 'side\n');
+  git(directory, ['add', '.']);
+  commit(directory, 'side docs');
+
+  git(directory, ['checkout', '-q', mainBranch]);
+  await mkdir(path.join(directory, 'docs'), { recursive: true });
+  await writeFile(path.join(directory, 'docs/main.md'), 'main\n');
+  git(directory, ['add', '.']);
+  commit(directory, 'main docs');
+  git(directory, ['merge', '--no-commit', '--no-ff', 'merge-side']);
+  await writeFile(path.join(directory, 'src/pages/Tools.tsx'), 'resolution-only merge change\n');
+  git(directory, ['add', '.']);
+  const merge = commit(directory, 'merge with resolution-only page change');
+
+  const update = `refs/heads/topic ${merge} refs/heads/topic ${common}\n`;
+  const selection = runSelection(directory, 'push', update);
+  assert.equal(selection.action, 'routes');
+  assert.deepEqual(selection.routes, ['/tools']);
+  assert.ok(selection.paths.includes('src/pages/Tools.tsx'));
+  assert.notEqual(common, base);
+});
+
+test('multi-ref conflicting article and asset snapshots fall back to a full audit', async (t) => {
+  const { directory } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+
+  await mkdir(path.join(directory, 'src/articles'), { recursive: true });
+  await writeFile(path.join(directory, 'src/articles/2026.09.02.md'), 'id: edition-2026-09-02-common\n');
+  git(directory, ['add', '.']);
+  const common = commit(directory, 'published article');
+
+  git(directory, ['checkout', '-q', '-b', 'asset-a', common]);
+  await mkdir(path.join(directory, 'public/weekly-screenshots/2026.09.02'), { recursive: true });
+  const assetPath = path.join(directory, 'public/weekly-screenshots/2026.09.02/chart.png');
+  await writeFile(assetPath, 'asset a\n');
+  git(directory, ['add', '.']);
+  const assetA = commit(directory, 'asset a');
+
+  git(directory, ['checkout', '-q', '-b', 'asset-b', common]);
+  await mkdir(path.dirname(assetPath), { recursive: true });
+  await writeFile(assetPath, 'asset b\n');
+  git(directory, ['add', '.']);
+  const assetB = commit(directory, 'asset b');
+
+  const assetUpdates = [
+    `refs/heads/a ${assetA} refs/heads/a ${common}`,
+    `refs/heads/b ${assetB} refs/heads/b ${common}`,
+  ].join('\n');
+  const assetSelection = runSelection(directory, 'push', `${assetUpdates}\n`);
+  assert.equal(assetSelection.action, 'full');
+  assert.match(assetSelection.reason, /ambiguous editorial asset snapshot/);
+
+  git(directory, ['checkout', '-q', '-b', 'article-a', common]);
+  await writeFile(path.join(directory, 'src/articles/2026.09.02.md'), 'id: edition-2026-09-02-a\n');
+  git(directory, ['add', '.']);
+  const articleA = commit(directory, 'article a');
+
+  git(directory, ['checkout', '-q', '-b', 'article-b', common]);
+  await writeFile(path.join(directory, 'src/articles/2026.09.02.md'), 'id: edition-2026-09-02-b\n');
+  git(directory, ['add', '.']);
+  const articleB = commit(directory, 'article b');
+
+  const articleUpdates = [
+    `refs/heads/a ${articleA} refs/heads/a ${common}`,
+    `refs/heads/b ${articleB} refs/heads/b ${common}`,
+  ].join('\n');
+  const articleSelection = runSelection(directory, 'push', `${articleUpdates}\n`);
+  assert.equal(articleSelection.action, 'full');
+  assert.match(articleSelection.reason, /cannot resolve published edition/);
 });
 
 test('new branches and missing push ref data conservatively request a full audit', async (t) => {

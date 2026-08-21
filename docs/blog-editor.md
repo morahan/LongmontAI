@@ -32,17 +32,21 @@ Use this guide for every Longmont AI meetup edition.
   clearly labeled presentation link when the embedded viewer is not usable on a
   phone.
 - Run `npm run test:mobile` before every push that changes articles, editorial
-  components, shared styles, or embedded content. It checks the home, shared
-  data surfaces, newest edition, and a PowerPoint-backed edition at 360 px,
-  390 px, and 430 px, retaining 390 px screenshots for review. It fails on
-  overflow, broken images, squeezed release tables, and editorial media that is
-  off-screen or too small to read. Full local CI always runs this exhaustive
-  matrix. The pre-commit hook selects from the staged snapshot, and pre-push
-  selects from outgoing commits: page or edition changes run only affected
-  routes, shared UI/CSS/config changes run the full matrix, and known unrelated
-  docs, backend, or tooling changes skip the browser. Unknown selections and
-  new branches fail closed to the full audit. Automated audits are headless by
-  default so hooks do not steal focus; for manual visual debugging only, set
+  components, shared styles, or embedded content. The full matrix checks every
+  live application page (`/`, `/tools`, `/model-watch`, `/timeline`,
+  `/countdown`, `/leaderboard`, and `/about`), the fixed PowerPoint-backed
+  edition, and the newest linked edition at 360 px, 390 px, and 430 px,
+  retaining 390 px screenshots for review. It fails on overflow, broken images,
+  squeezed release tables, and editorial media that is off-screen or too small
+  to read. Full local CI clears inherited route targeting and explicitly runs
+  this exhaustive matrix headlessly. The pre-commit hook selects from the staged
+  snapshot, and pre-push selects from outgoing commits, including merge-only
+  resolutions: page or edition changes run only affected routes, shared
+  UI/CSS/config changes run the full matrix, and known unrelated docs, backend,
+  or tooling changes skip the browser. Unknown selections, new branches, and
+  conflicting multi-ref article or asset snapshots fail closed to the full
+  audit. Automated audits are headless by default so hooks do not steal focus;
+  for manual visual debugging only, set
   `MOBILE_AUDIT_HEADED=1` when running `npm run test:mobile`. Headless and
   headed runs enforce the same audit failures.
 

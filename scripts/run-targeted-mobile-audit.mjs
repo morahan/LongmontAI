@@ -60,7 +60,7 @@ try {
       }
       if (!forcedFullReason) {
         for (const commit of commits) {
-          for (const path of splitNul(git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', '-z', commit]))) {
+          for (const path of splitNul(git(['diff-tree', '--root', '-m', '--no-commit-id', '--name-only', '-r', '-z', commit]))) {
             paths.push(path);
           }
         }
@@ -73,19 +73,41 @@ try {
 
 const uniquePaths = [...new Set(paths)];
 
+function selectionRefs() {
+  return snapshotKind === 'staged' ? [':'] : [...new Set(snapshotRefs)];
+}
+
+function snapshotSpec(ref, path) {
+  return ref === ':' ? `:${path}` : `${ref}:${path}`;
+}
+
 async function readSnapshot(path) {
-  const refs = snapshotKind === 'staged' ? [':'] : [...new Set(snapshotRefs)];
   const contents = new Set();
+  const refs = selectionRefs();
+  if (refs.length === 0) return undefined;
   for (const ref of refs) {
     try {
-      const spec = ref === ':' ? `:${path}` : `${ref}:${path}`;
-      contents.add(git(['show', spec], { maxBuffer: 10 * 1024 * 1024 }));
+      contents.add(git(['show', snapshotSpec(ref, path)], { maxBuffer: 10 * 1024 * 1024 }));
     } catch {
-      // A missing or deleted path is resolved only if another pushed tip has it.
+      return undefined;
     }
   }
-  // Different snapshots for the same path are ambiguous and must fail closed.
+  // Different or missing snapshots for the same path are ambiguous and fail closed.
   return contents.size === 1 ? [...contents][0] : undefined;
+}
+
+async function snapshotIsUnambiguous(path) {
+  const objectIds = new Set();
+  const refs = selectionRefs();
+  if (refs.length === 0) return false;
+  for (const ref of refs) {
+    try {
+      objectIds.add(git(['rev-parse', '--verify', snapshotSpec(ref, path)]).trim());
+    } catch {
+      return false;
+    }
+  }
+  return objectIds.size === 1;
 }
 
 async function listPublishedArticles() {
@@ -94,15 +116,17 @@ async function listPublishedArticles() {
       return splitNul(git(['ls-files', '-z', 'src/articles/*.md']))
         .filter((path) => !path.includes('/drafts/'));
     }
-    const articles = new Set();
+    const snapshots = [];
     for (const ref of new Set(snapshotRefs)) {
-      for (const path of git(['ls-tree', '-r', '--name-only', ref, '--', 'src/articles']).split('\n')) {
-        if (/^src\/articles\/[^/]+\.md$/.test(path)) articles.add(path);
-      }
+      snapshots.push(git(['ls-tree', '-r', '--name-only', ref, '--', 'src/articles']).split('\n')
+        .filter((path) => /^src\/articles\/[^/]+\.md$/.test(path))
+        .sort());
     }
-    return [...articles];
+    if (snapshots.length === 0) return undefined;
+    const signatures = new Set(snapshots.map((articles) => JSON.stringify(articles)));
+    return signatures.size === 1 ? snapshots[0] : undefined;
   } catch {
-    return [];
+    return undefined;
   }
 }
 
@@ -110,7 +134,7 @@ const selection = forcedFullReason
   ? { action: 'full', routes: [], reason: forcedFullReason }
   : mode === 'full'
     ? { action: 'full', routes: [], reason: 'explicit exhaustive audit' }
-    : await selectMobileAudit(uniquePaths, { readSnapshot, listPublishedArticles });
+    : await selectMobileAudit(uniquePaths, { readSnapshot, snapshotIsUnambiguous, listPublishedArticles });
 
 console.log(`Mobile browser audit selection: ${selection.action.toUpperCase()} (${selection.reason})`);
 if (selection.action === 'routes') console.log(`Routes: ${selection.routes.join(', ')}`);

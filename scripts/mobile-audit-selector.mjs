@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 
-const FULL_ROUTES = ['/', '/tools', '/model-watch', '/timeline', '/edition/edition-2026-06-10-ai-landscape'];
+export const FULL_ROUTES = [
+  '/',
+  '/tools',
+  '/model-watch',
+  '/timeline',
+  '/countdown',
+  '/leaderboard',
+  '/about',
+  '/edition/edition-2026-06-10-ai-landscape',
+];
 
 const PAGE_ROUTES = new Map([
   ['src/pages/Feed.tsx', ['/']],
@@ -52,6 +61,7 @@ function addRoutes(target, routes) {
 
 export async function selectMobileAudit(paths, options = {}) {
   const readSnapshot = options.readSnapshot ?? (async () => undefined);
+  const snapshotIsUnambiguous = options.snapshotIsUnambiguous ?? (async () => true);
   const listPublishedArticles = options.listPublishedArticles ?? (async () => []);
   const routes = new Set();
   const reasons = [];
@@ -81,13 +91,19 @@ export async function selectMobileAudit(paths, options = {}) {
 
     if (/^public\/weekly-screenshots\/\d{4}\.\d{2}\.\d{2}\//.test(path) ||
         /^public\/documents\/\d{4}\.\d{2}\.\d{2}\//.test(path)) {
+      if (!await snapshotIsUnambiguous(path)) {
+        return full(`ambiguous editorial asset snapshot ${path}`);
+      }
       const date = path.split('/')[2];
+      const articlePaths = await listPublishedArticles();
+      if (!Array.isArray(articlePaths)) return full(`ambiguous published article snapshots for ${path}`);
       const matchingRoutes = [];
-      for (const articlePath of await listPublishedArticles()) {
+      for (const articlePath of articlePaths) {
         if (!articlePath.startsWith(`src/articles/${date}`) || !articlePath.endsWith('.md')) continue;
         const markdown = await readSnapshot(articlePath);
         const id = markdown && editionId(markdown);
-        if (id) matchingRoutes.push(`/edition/${id}`);
+        if (!id) return full(`cannot resolve edition snapshot ${articlePath} for ${path}`);
+        matchingRoutes.push(`/edition/${id}`);
       }
       if (matchingRoutes.length === 0) return full(`cannot map dated editorial asset ${path}`);
       addRoutes(routes, matchingRoutes);

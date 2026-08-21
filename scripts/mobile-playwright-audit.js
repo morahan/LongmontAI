@@ -15,6 +15,9 @@ async (page) => {
     '/tools',
     '/model-watch',
     '/timeline',
+    '/countdown',
+    '/leaderboard',
+    '/about',
     '/edition/edition-2026-06-10-ai-landscape',
   ];
   let requestedRoutes;
