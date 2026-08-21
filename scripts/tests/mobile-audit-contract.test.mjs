@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -62,11 +62,57 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   assert.match(prePush, /run-targeted-mobile-audit\.mjs push/);
   assert.match(prePush, /cat >"\$PUSH_REFS"/);
   assert.equal(packageJson.scripts['audit:mobile'], 'bash scripts/run-mobile-browser-audit.sh');
+  assert.match(browserRunner, /MOBILE_AUDIT_HEADED/);
+  assert.match(browserRunner, /OPEN_ARGS=\(open "\$BASE_URL"\)/);
+  assert.match(browserRunner, /OPEN_ARGS\+=\(--headed\)/);
   assert.match(browserRunner, /run-code --filename scripts\/mobile-playwright-audit\.js/);
   assert.match(audit, /MOBILE_AUDIT_ROUTES/);
   assert.match(audit, /mediaLayoutFailures/);
   assert.match(audit, /edition-2026-06-10-ai-landscape/);
   assert.match(editorGuide, /selects from the staged snapshot/);
+});
+
+test('browser runner is headless by default, supports explicit headed debugging, and preserves failures', async (t) => {
+  const { directory } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+
+  const codexHome = path.join(directory, 'codex-home');
+  const cliDirectory = path.join(codexHome, 'skills/playwright/scripts');
+  const cliPath = path.join(cliDirectory, 'playwright_cli.sh');
+  const logPath = path.join(directory, 'playwright.log');
+  await mkdir(cliDirectory, { recursive: true });
+  await writeFile(cliPath, `#!/usr/bin/env bash\nset -eu\nprintf '%s\\n' "$*" >>"$MOBILE_AUDIT_TEST_LOG"\nif [[ "\${MOBILE_AUDIT_TEST_FAIL:-0}" == 1 && "\${1:-}" == run-code ]]; then exit 17; fi\n`);
+  await chmod(cliPath, 0o755);
+
+  const baseEnv = {
+    ...process.env,
+    CODEX_HOME: codexHome,
+    MOBILE_AUDIT_BASE_URL: 'http://audit.test',
+    MOBILE_AUDIT_TEST_LOG: logPath,
+  };
+  const run = (extraEnv = {}) => spawnSync('bash', [path.join(root, 'scripts/run-mobile-browser-audit.sh')], {
+    cwd: directory,
+    encoding: 'utf8',
+    env: { ...baseEnv, ...extraEnv },
+  });
+
+  const headless = run();
+  assert.equal(headless.status, 0, headless.stderr);
+  assert.deepEqual((await readFile(logPath, 'utf8')).trim().split('\n'), [
+    'open http://audit.test',
+    'run-code --filename scripts/mobile-playwright-audit.js',
+  ]);
+
+  await writeFile(logPath, '');
+  const headed = run({ MOBILE_AUDIT_HEADED: '1' });
+  assert.equal(headed.status, 0, headed.stderr);
+  assert.equal((await readFile(logPath, 'utf8')).trim().split('\n')[0], 'open http://audit.test --headed');
+
+  const failedAudit = run({ MOBILE_AUDIT_TEST_FAIL: '1' });
+  assert.equal(failedAudit.status, 17);
+  const invalidMode = run({ MOBILE_AUDIT_HEADED: 'sometimes' });
+  assert.equal(invalidMode.status, 2);
+  assert.match(invalidMode.stderr, /must be 0 or 1/);
 });
 
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {

@@ -41,7 +41,10 @@ Use this guide for every Longmont AI meetup edition.
   selects from outgoing commits: page or edition changes run only affected
   routes, shared UI/CSS/config changes run the full matrix, and known unrelated
   docs, backend, or tooling changes skip the browser. Unknown selections and
-  new branches fail closed to the full audit.
+  new branches fail closed to the full audit. Automated audits are headless by
+  default so hooks do not steal focus; for manual visual debugging only, set
+  `MOBILE_AUDIT_HEADED=1` when running `npm run test:mobile`. Headless and
+  headed runs enforce the same audit failures.
 
 ## Model Watch cadence
 
