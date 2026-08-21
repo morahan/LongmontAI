@@ -6,7 +6,9 @@ import {
   CONSTELLATION_WINDOW_SECONDS,
   DESKTOP_TRAVELER_COUNT,
   FAR_DEPTH,
+  MAX_PLANET_ORBIT_PERIOD_SECONDS,
   MAX_PLANET_ORBIT_RADIUS,
+  MIN_PLANET_ORBIT_PERIOD_SECONDS,
   MOBILE_TRAVELER_COUNT,
   NEAR_DEPTH,
   PLANET_COUNT_BASIS_POINTS,
@@ -24,7 +26,9 @@ import {
   getConstellationStrength,
   getDriftedStar,
   getElapsedSecondsSinceMount,
+  getOrbitingPlanet,
   getOrbitingPlanets,
+  getPlanetOrbitPeriod,
   getPlanetSystemExtent,
   getSimulationTime,
   getStarFieldStyles,
@@ -319,15 +323,83 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
   }
 });
 
-test('planets orbit on tilted ellipses in painter-sorted z order and travelers stay depth-bounded', () => {
+test('pure orbital positions complete full tilted ellipses around the moving star center', () => {
+  const center = { x: 417.25, y: 238.75 };
+  const planet = {
+    orbitRadius: 14,
+    radius: 1.2,
+    phase: 0.37,
+    speed: (Math.PI * 2) / getPlanetOrbitPeriod(14),
+    inclination: 0.38,
+    tilt: -0.21,
+    color: '#fff',
+    moons: [],
+    hasRing: false,
+  };
+  const period = getPlanetOrbitPeriod(planet.orbitRadius);
+  const start = getOrbitingPlanet(planet, 0, center);
+  const halfway = getOrbitingPlanet(planet, period / 2, center);
+  const complete = getOrbitingPlanet(planet, period, center);
+  const movedCenter = { x: center.x + 83, y: center.y - 29 };
+  const completeAroundMovedStar = getOrbitingPlanet(planet, period, movedCenter);
+
+  closeTo(complete.x, start.x);
+  closeTo(complete.y, start.y);
+  closeTo(complete.z, start.z);
+  closeTo(completeAroundMovedStar.x - movedCenter.x, start.x - center.x);
+  closeTo(completeAroundMovedStar.y - movedCenter.y, start.y - center.y);
+  closeTo((start.x + halfway.x) / 2, center.x);
+  closeTo((start.y + halfway.y) / 2, center.y);
+  closeTo(halfway.z, -start.z);
+});
+
+test('radius-derived periods are distinct, monotonic, visible, and include a deterministic retrograde minority', () => {
+  assert.equal(MIN_PLANET_ORBIT_PERIOD_SECONDS, 8);
+  assert.equal(MAX_PLANET_ORBIT_PERIOD_SECONDS, 18);
+  const radii = Array.from({ length: 12 }, (_, index) => 6.7 + index * 1.35);
+  const periods = radii.map(getPlanetOrbitPeriod);
+  assert.ok(periods.every((period) => period >= 8 && period <= 18));
+  assert.ok(periods.every((period, index) => index === 0 || periods[index - 1] < period));
+  assert.equal(new Set(periods).size, periods.length);
+  assert.ok(periods.at(-1) <= 20, 'outermost orbit exceeds a prominent-system visibility window');
+
+  const systemsByCount = new Map();
+  for (let seed = 1; seed <= 10000 && systemsByCount.size < 12; seed += 1) {
+    const candidate = createPlanetSystem(seed, 0);
+    if (!systemsByCount.has(candidate.length)) systemsByCount.set(candidate.length, candidate);
+  }
+  assert.equal(systemsByCount.size, 12, 'deterministic fixtures do not cover every 1-12 planet count');
+  systemsByCount.forEach((system, count) => {
+    const generatedPeriods = system.map((planet) => Math.PI * 2 / Math.abs(planet.speed));
+    assert.ok(generatedPeriods.every((period, index) =>
+      index === 0 || generatedPeriods[index - 1] < period), `${count}-planet periods are not monotonic`);
+    assert.equal(new Set(generatedPeriods.map((period) => period.toFixed(10))).size, count);
+    assert.equal(system.filter((planet) => planet.speed < 0).length, Math.floor(count / 5));
+    assert.ok(generatedPeriods.at(-1) <= 20, `${count}-planet outer orbit is too slow`);
+    system.forEach((planet) => {
+      const start = getOrbitingPlanet(planet, 0);
+      const acceleratedFixture = getOrbitingPlanet(planet, 1);
+      assert.ok(Math.hypot(
+        acceleratedFixture.x - start.x,
+        acceleratedFixture.y - start.y,
+      ) > 0.4, `${count}-planet system contains imperceptible orbital motion`);
+    });
+  });
+});
+
+test('orbital phase freezes exactly throughout constellation windows and depth ordering remains stable', () => {
   const planets = createPlanetSystem(2468, 2);
-  const start = getOrbitingPlanets(planets, 100);
-  const later = getOrbitingPlanets(planets, 101);
-  assert.ok(start.every((planet, index) => index === 0 || start[index - 1].z <= planet.z));
-  assert.ok(start.some((planet) => {
-    const moved = later.find((candidate) => candidate.phase === planet.phase && candidate.orbitRadius === planet.orbitRadius);
-    return moved && Math.hypot(moved.x - planet.x, moved.y - planet.y) > 0.001;
+  const beforeFreeze = getOrbitingPlanets(planets, getSimulationTime(600));
+  for (const wallTime of [610, 620, 629.999, 630]) {
+    assert.deepEqual(getOrbitingPlanets(planets, getSimulationTime(wallTime)), beforeFreeze);
+  }
+  const afterFreeze = getOrbitingPlanets(planets, getSimulationTime(631));
+  assert.ok(afterFreeze.some((planet) => {
+    const frozen = beforeFreeze.find((candidate) => candidate.phase === planet.phase);
+    return frozen && Math.hypot(planet.x - frozen.x, planet.y - frozen.y) > 0.01;
   }));
+  assert.ok(beforeFreeze.every((planet, index) => index === 0 || beforeFreeze[index - 1].z <= planet.z));
+
   const traveler = createSpaceScene(42).travelers[0];
   assert.equal(travelerCountForWidth(390), MOBILE_TRAVELER_COUNT);
   assert.equal(travelerCountForWidth(1200), DESKTOP_TRAVELER_COUNT);

@@ -14,6 +14,8 @@ export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
+export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
+export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
 export const PLANET_COUNT_BASIS_POINTS = [4000, 2200, 1300, 850, 550, 380, 260, 180, 120, 80, 50, 30] as const;
 
 const UINT32_RANGE = 4294967296;
@@ -467,6 +469,12 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
     return 12;
 };
 
+/** Radius-derived periods keep every visible system legible while preserving clear inner/outer speed tiers. */
+export const getPlanetOrbitPeriod = (orbitRadius: number) => Math.min(
+    MAX_PLANET_ORBIT_PERIOD_SECONDS,
+    Math.max(MIN_PLANET_ORBIT_PERIOD_SECONDS, 4 + Math.max(0, orbitRadius) * 0.62),
+);
+
 /** Planet systems are regenerated solely from traveler seed + lifecycle cycle. */
 export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[] => {
     const random = createSeededRandom(hashUint(travelerSeed, cycle, 43));
@@ -487,11 +495,13 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
         }
         const hasRing = ringsRemaining > 0 && random() < 0.16;
         if (hasRing) ringsRemaining -= 1;
+        const orbitRadius = 6.7 + index * 1.35 + between(random, 0, 0.8);
         return {
-            orbitRadius: 6.7 + index * 1.35 + between(random, 0, 0.8),
+            orbitRadius,
             radius,
             phase: between(random, 0, TAU),
-            speed: between(random, 0.035, 0.1) / Math.sqrt(index + 1),
+            // Every fifth body is retrograde: deterministic, uncommon, and independent of frame timing.
+            speed: (index % 5 === 4 ? -1 : 1) * TAU / getPlanetOrbitPeriod(orbitRadius),
             inclination: between(random, 0.28, 0.46),
             tilt: between(random, -0.28, 0.28),
             color: PLANET_COLORS[Math.floor(random() * PLANET_COLORS.length)],
@@ -501,21 +511,36 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
     });
 };
 
-/** Computes real orbital positions and painter-orders far-side planets before near-side planets. */
-export const getOrbitingPlanets = (planets: Planet[], simulationSeconds: number): OrbitingPlanet[] =>
-    planets.map((planet) => {
-        const angle = planet.phase + Math.max(0, simulationSeconds) * planet.speed;
-        const z = Math.sin(angle);
-        const localX = Math.cos(angle) * planet.orbitRadius;
-        const localY = z * planet.orbitRadius * planet.inclination;
-        return {
-            ...planet,
-            angle,
-            x: localX * Math.cos(planet.tilt) - localY * Math.sin(planet.tilt),
-            y: localX * Math.sin(planet.tilt) + localY * Math.cos(planet.tilt),
-            z,
-        };
-    }).sort((left, right) => left.z - right.z);
+/**
+ * Pure projected position around an explicit center. Visual fixtures can sample 0, period / 4,
+ * period / 2, and period at once instead of waiting in real time.
+ */
+export const getOrbitingPlanet = (
+    planet: Planet,
+    simulationSeconds: number,
+    center: Point = { x: 0, y: 0 },
+): OrbitingPlanet => {
+    const angle = planet.phase + Math.max(0, simulationSeconds) * planet.speed;
+    const z = Math.sin(angle);
+    const localX = Math.cos(angle) * planet.orbitRadius;
+    const localY = z * planet.orbitRadius * planet.inclination;
+    return {
+        ...planet,
+        angle,
+        x: center.x + localX * Math.cos(planet.tilt) - localY * Math.sin(planet.tilt),
+        y: center.y + localX * Math.sin(planet.tilt) + localY * Math.cos(planet.tilt),
+        z,
+    };
+};
+
+/** Computes orbital positions and painter-orders far-side planets before near-side planets. */
+export const getOrbitingPlanets = (
+    planets: Planet[],
+    simulationSeconds: number,
+    center: Point = { x: 0, y: 0 },
+): OrbitingPlanet[] => planets
+    .map((planet) => getOrbitingPlanet(planet, simulationSeconds, center))
+    .sort((left, right) => left.z - right.z);
 
 export const getSystemScale = (projection: ProjectedTraveler) => 0.48 + projection.progress * 1.08;
 
