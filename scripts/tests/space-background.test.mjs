@@ -17,6 +17,7 @@ import {
   NEAR_DEPTH,
   PLANET_ATMOSPHERE_CLASSES,
   PLANET_COUNT_BASIS_POINTS,
+  PLANET_RING_LINE_WIDTH,
   PLANET_SURFACE_LOD_DIAMETERS,
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
@@ -377,17 +378,26 @@ test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', (
   assert.notDeepEqual(createPlanetSystem(0xface, 3), createPlanetSystem(0xface, 4));
 });
 
-test('planet surface LOD makes every closest body at least four CSS pixels and fully textured', () => {
-  assert.deepEqual(PLANET_SURFACE_LOD_DIAMETERS, [2.5, 4]);
-  assert.equal(getPlanetSurfaceDetailLevel(1, 1.2), 0);
-  assert.equal(getPlanetSurfaceDetailLevel(1.25, 1), 1);
-  assert.equal(getPlanetSurfaceDetailLevel(2, 1), 2);
+test('close-system progression reaches unmistakable planet and moon sizes before full texture LOD', () => {
+  assert.deepEqual(PLANET_SURFACE_LOD_DIAMETERS, [5, 10]);
+  assert.equal(getPlanetSurfaceDetailLevel(2, 1.2), 0);
+  assert.equal(getPlanetSurfaceDetailLevel(2.5, 1), 1);
+  assert.equal(getPlanetSurfaceDetailLevel(5, 1), 2);
+  closeTo(getSystemScale({ progress: SYSTEM_MIN_PROGRESS }), 0.55);
+  closeTo(getSystemScale({ progress: SYSTEM_MAX_PROGRESS }), 4);
+  const midpointScale = getSystemScale({ progress: (SYSTEM_MIN_PROGRESS + SYSTEM_MAX_PROGRESS) / 2 });
+  assert.ok(midpointScale > 2 && midpointScale < 3);
+
   const closestScale = getSystemScale({ progress: SYSTEM_MAX_PROGRESS });
   for (let seed = 1; seed <= 1000; seed += 1) {
     createPlanetSystem(seed, 0).forEach((planet) => {
       const cssDiameter = planet.radius * closestScale * 2;
-      assert.ok(cssDiameter >= 4, `seed ${seed} body is only ${cssDiameter}px`);
+      assert.ok(cssDiameter >= 12, `seed ${seed} body is only ${cssDiameter}px`);
       assert.equal(getPlanetSurfaceDetailLevel(planet.radius, closestScale), 2);
+      planet.moons.forEach((moon) => {
+        assert.ok(moon.radius * closestScale * 2 >= 3.5,
+          `seed ${seed} moon is only ${moon.radius * closestScale * 2}px`);
+      });
     });
   }
 });
@@ -422,6 +432,8 @@ test('system safety margins are exact and include bodies, moons, rings, atmosphe
     hasRing: true,
   }];
   closeTo(getPlanetSystemExtent(planets), 24.9);
+  closeTo(getPlanetSystemExtent([{ ...planets[0], moons: [] }]),
+    20 + 2 * 1.85 + PLANET_RING_LINE_WIDTH * 0.5);
   closeTo(getPlanetSystemExtent([{ ...planets[0], moons: [], hasRing: false }]),
     20 + 2 * ATMOSPHERE_HALO_RADIUS_MULTIPLIER);
   const traveler = createSpaceScene(44).travelers[2];

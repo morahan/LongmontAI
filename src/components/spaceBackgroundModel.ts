@@ -17,8 +17,9 @@ export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
 export const TRAVELER_DETAIL_THRESHOLDS = [0.28, 0.5, 0.68] as const;
-export const PLANET_SURFACE_LOD_DIAMETERS = [2.5, 4] as const;
+export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
 export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
+export const PLANET_RING_LINE_WIDTH = 0.8;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
@@ -568,12 +569,12 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
     let ringsRemaining = 2;
     const atmosphereOffset = hashUint(travelerSeed, cycle, 97) % PLANET_ATMOSPHERE_CLASSES.length;
     return Array.from({ length: count }, (_, index) => {
-        const radius = between(random, 1.45, 2.3);
+        const radius = between(random, 1.6, 2.5);
         const moons: Moon[] = [];
         if (moonsRemaining > 0 && random() < 0.22) {
             moons.push({
-                radius: between(random, 0.22, 0.42),
-                orbitRadius: radius + between(random, 1.5, 2.5),
+                radius: between(random, 0.45, 0.75),
+                orbitRadius: radius + between(random, 1.8, 2.8),
                 phase: between(random, 0, TAU),
                 speed: between(random, 0.7, 1.5),
             });
@@ -633,7 +634,13 @@ export const getOrbitingPlanets = (
     .map((planet) => getOrbitingPlanet(planet, simulationSeconds, center))
     .sort((left, right) => left.z - right.z);
 
-export const getSystemScale = (projection: ProjectedTraveler) => 0.48 + projection.progress * 1.08;
+/** Systems stay compact on reveal, then resolve rapidly into a legible close encounter. */
+export const getSystemScale = (projection: ProjectedTraveler) => {
+    const approach = smoothstep(
+        (projection.progress - SYSTEM_MIN_PROGRESS) / (SYSTEM_MAX_PROGRESS - SYSTEM_MIN_PROGRESS),
+    );
+    return 0.55 + approach * 3.45;
+};
 
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
     const atmosphereRadius = hasAtmosphereHalo(planet.atmosphere)
@@ -645,7 +652,7 @@ export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((larg
         bodyExtent,
     );
     const ringExtent = planet.hasRing
-        ? planet.orbitRadius + planet.radius * 1.85 + 0.275
+        ? planet.orbitRadius + planet.radius * 1.85 + PLANET_RING_LINE_WIDTH * 0.5
         : bodyExtent;
     return Math.max(largest, bodyExtent, moonExtent, ringExtent);
 }, 7);

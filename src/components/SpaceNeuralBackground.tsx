@@ -8,6 +8,7 @@ import {
     getElapsedSecondsSinceMount,
     getOrbitingPlanets,
     getPlanetSurfaceDetailLevel,
+    PLANET_RING_LINE_WIDTH,
     getSimulationTime,
     getStarFieldPositions,
     getStarFieldStyles,
@@ -35,16 +36,15 @@ const drawMoon = (
     opacity: number,
 ) => {
     const angle = moon.phase + simulationSeconds * moon.speed;
-    ctx.fillStyle = `rgba(219, 229, 234, ${opacity * 0.75})`;
+    const moonX = planet.x + Math.cos(angle) * moon.orbitRadius;
+    const moonY = planet.y + Math.sin(angle) * moon.orbitRadius * 0.55;
+    ctx.fillStyle = `rgba(225, 236, 241, ${opacity * 0.94})`;
+    ctx.strokeStyle = `rgba(130, 166, 184, ${opacity * 0.9})`;
+    ctx.lineWidth = 0.14;
     ctx.beginPath();
-    ctx.arc(
-        planet.x + Math.cos(angle) * moon.orbitRadius,
-        planet.y + Math.sin(angle) * moon.orbitRadius * 0.55,
-        moon.radius,
-        0,
-        TAU,
-    );
+    ctx.arc(moonX, moonY, moon.radius, 0, TAU);
     ctx.fill();
+    ctx.stroke();
 };
 
 const surfaceValue = (seed: number, channel: number) => {
@@ -69,8 +69,8 @@ const drawAtmosphereSurface = (
     if (planet.atmosphere === 'gas-banded') {
         const bandLimit = detailLevel === 2 ? 2 : 1;
         for (let band = -bandLimit; band <= bandLimit; band += 1) {
-            ctx.strokeStyle = band % 2 === 0 ? 'rgba(255, 225, 174, 0.42)' : 'rgba(91, 53, 59, 0.34)';
-            ctx.lineWidth = radius * (0.16 + surfaceValue(surfaceSeed, band + 3) * 0.08);
+            ctx.strokeStyle = band % 2 === 0 ? 'rgba(255, 232, 181, 0.78)' : 'rgba(67, 37, 49, 0.68)';
+            ctx.lineWidth = radius * (0.22 + surfaceValue(surfaceSeed, band + 3) * 0.1);
             ctx.beginPath();
             ctx.moveTo(x - radius, y + band * radius * 0.32);
             ctx.bezierCurveTo(
@@ -81,7 +81,7 @@ const drawAtmosphereSurface = (
             ctx.stroke();
         }
     } else if (planet.atmosphere === 'ocean-haze') {
-        ctx.fillStyle = 'rgba(159, 224, 231, 0.3)';
+        ctx.fillStyle = 'rgba(210, 244, 241, 0.62)';
         for (let cloud = 0; cloud < detailLevel + 1; cloud += 1) {
             const cloudX = x + (surfaceValue(surfaceSeed, cloud) * 1.4 - 0.7) * radius;
             const cloudY = y + (surfaceValue(surfaceSeed, cloud + 4) * 1.2 - 0.6) * radius;
@@ -89,28 +89,29 @@ const drawAtmosphereSurface = (
             ctx.ellipse(cloudX, cloudY, radius * 0.58, radius * 0.16, -0.2, 0, TAU);
             ctx.fill();
         }
-        ctx.strokeStyle = 'rgba(238, 252, 250, 0.58)';
-        ctx.lineWidth = radius * 0.13;
+        ctx.strokeStyle = 'rgba(247, 255, 252, 0.9)';
+        ctx.lineWidth = radius * 0.18;
         ctx.beginPath();
         ctx.arc(x, y - radius * 0.08, radius * 0.72, 0.15, 2.35);
         ctx.stroke();
     } else if (planet.atmosphere === 'rocky-cratered') {
         for (let crater = 0; crater < detailLevel + 2; crater += 1) {
             const craterRadius = radius * (0.1 + surfaceValue(surfaceSeed, crater + 8) * 0.12);
-            ctx.fillStyle = 'rgba(43, 31, 32, 0.4)';
+            const craterX = x + (surfaceValue(surfaceSeed, crater) * 1.35 - 0.675) * radius;
+            const craterY = y + (surfaceValue(surfaceSeed, crater + 4) * 1.25 - 0.625) * radius;
+            ctx.fillStyle = 'rgba(37, 25, 27, 0.72)';
+            ctx.strokeStyle = 'rgba(218, 175, 132, 0.62)';
+            ctx.lineWidth = radius * 0.07;
             ctx.beginPath();
-            ctx.arc(
-                x + (surfaceValue(surfaceSeed, crater) * 1.35 - 0.675) * radius,
-                y + (surfaceValue(surfaceSeed, crater + 4) * 1.25 - 0.625) * radius,
-                craterRadius,
-                0,
-                TAU,
-            );
+            ctx.arc(craterX, craterY, craterRadius, 0, TAU);
             ctx.fill();
+            ctx.stroke();
         }
     } else if (planet.atmosphere === 'ice') {
-        ctx.strokeStyle = 'rgba(70, 130, 158, 0.58)';
-        ctx.lineWidth = radius * 0.08;
+        ctx.fillStyle = 'rgba(235, 253, 255, 0.36)';
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 0.48);
+        ctx.strokeStyle = 'rgba(43, 112, 149, 0.9)';
+        ctx.lineWidth = radius * 0.13;
         const fissureLimit = detailLevel === 2 ? 1 : 0;
         for (let fissure = -fissureLimit; fissure <= fissureLimit; fissure += 1) {
             ctx.beginPath();
@@ -121,10 +122,10 @@ const drawAtmosphereSurface = (
             ctx.stroke();
         }
     } else {
-        ctx.fillStyle = 'rgba(31, 24, 29, 0.5)';
+        ctx.fillStyle = 'rgba(24, 17, 23, 0.76)';
         ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-        ctx.strokeStyle = 'rgba(255, 105, 46, 0.86)';
-        ctx.lineWidth = radius * 0.12;
+        ctx.strokeStyle = 'rgba(255, 116, 43, 1)';
+        ctx.lineWidth = radius * 0.2;
         const flowLimit = detailLevel === 2 ? 1 : 0;
         for (let flow = -flowLimit; flow <= flowLimit; flow += 1) {
             ctx.beginPath();
@@ -150,8 +151,8 @@ const drawPlanet = (
     ctx.save();
     ctx.globalAlpha = opacity;
     if (planet.hasRing) {
-        ctx.strokeStyle = 'rgba(202, 214, 222, 0.58)';
-        ctx.lineWidth = 0.55;
+        ctx.strokeStyle = 'rgba(222, 231, 235, 0.84)';
+        ctx.lineWidth = PLANET_RING_LINE_WIDTH;
         ctx.beginPath();
         ctx.ellipse(planet.x, planet.y, planet.radius * 1.85, planet.radius * 0.55, planet.tilt, 0, TAU);
         ctx.stroke();
@@ -183,9 +184,9 @@ const drawPlanet = (
         lightX, lightY, planet.radius * 0.05,
         lightX, lightY, planet.radius * 1.5,
     );
-    shading.addColorStop(0, 'rgba(242, 251, 251, 0.55)');
-    shading.addColorStop(0.38, 'rgba(255, 255, 255, 0)');
-    shading.addColorStop(1, 'rgba(10, 15, 24, 0.78)');
+    shading.addColorStop(0, 'rgba(242, 251, 251, 0.42)');
+    shading.addColorStop(0.4, 'rgba(255, 255, 255, 0)');
+    shading.addColorStop(1, 'rgba(10, 15, 24, 0.6)');
     ctx.fillStyle = shading;
     ctx.beginPath();
     ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
@@ -279,11 +280,7 @@ const drawPlanetarySystem = (
     travelerSeed: number,
     simulationSeconds: number,
 ) => {
-    const detailFade = Math.min(
-        1,
-        Math.max(0, (projection.progress - 0.34) / 0.12),
-        Math.max(0, (0.86 - projection.progress) / 0.14),
-    );
+    const detailFade = Math.min(1, Math.max(0, (projection.progress - 0.34) / 0.12));
     const opacity = projection.opacity * detailFade;
     const scale = getSystemScale(projection);
     const planets = createPlanetSystem(travelerSeed, projection.cycle);
@@ -294,8 +291,8 @@ const drawPlanetarySystem = (
     ctx.scale(scale, scale);
 
     planets.forEach((planet) => {
-        ctx.strokeStyle = `rgba(151, 189, 211, ${opacity * 0.17})`;
-        ctx.lineWidth = 0.45 / scale;
+        ctx.strokeStyle = `rgba(165, 207, 226, ${opacity * 0.38})`;
+        ctx.lineWidth = 0.85 / scale;
         ctx.beginPath();
         ctx.ellipse(0, 0, planet.orbitRadius, planet.orbitRadius * planet.inclination, planet.tilt, 0, TAU);
         ctx.stroke();
