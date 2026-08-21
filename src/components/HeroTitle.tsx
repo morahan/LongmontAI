@@ -1,5 +1,7 @@
 import React from 'react';
 
+type AnimationVariant = 'map-route' | 'bearing-lock' | 'atlas-unfold';
+
 type Translation = {
     text: string;
     lang: string;
@@ -16,6 +18,8 @@ const englishTranslation: Translation = {
     color: '#93c5fd',
 };
 
+const animationVariants: AnimationVariant[] = ['map-route', 'bearing-lock', 'atlas-unfold'];
+
 const foreignTranslations: Translation[] = [
     { text: 'La era de la inteligencia', lang: 'es', dir: 'ltr', script: 'latin', color: '#a5b4fc' },
     { text: 'L’ère de l’intelligence', lang: 'fr', dir: 'ltr', script: 'latin', color: '#c4b5fd' },
@@ -30,6 +34,8 @@ function reducedMotionIsPreferred(): boolean {
 }
 
 const HeroTitle: React.FC = () => {
+    const [animationVariant, setAnimationVariant] = React.useState<AnimationVariant | 'static'>('static');
+    const selectedVariant = React.useRef<AnimationVariant | null>(null);
     const [foreignIndex, setForeignIndex] = React.useState(0);
     const [showEnglish, setShowEnglish] = React.useState(true);
     const [reducedMotion, setReducedMotion] = React.useState(reducedMotionIsPreferred);
@@ -39,6 +45,13 @@ const HeroTitle: React.FC = () => {
     const remainingPhaseTime = React.useRef(8000);
     const phaseStartedAt = React.useRef(0);
     const phaseCompleted = React.useRef(false);
+
+    React.useEffect(() => {
+        if (selectedVariant.current === null) {
+            selectedVariant.current = animationVariants[Math.floor(Math.random() * animationVariants.length)];
+            setAnimationVariant(selectedVariant.current);
+        }
+    }, []);
 
     React.useEffect(() => {
         const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -102,7 +115,7 @@ const HeroTitle: React.FC = () => {
     return (
         <h1 className="home-hero-title text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
             <span className="sr-only">Navigating the Intelligence Age</span>
-            <span className="hero-title-visual" aria-hidden="true">
+            <span className="hero-title-visual" aria-hidden="true" data-animation={animationVariant}>
                 <span className="hero-title-navigation">
                     <span className="hero-title-navigating">Navigating</span>
                     <svg

@@ -437,7 +437,6 @@ a {
 
 .hero-title-navigating {
   display: inline-block;
-  animation: hero-map-unfold 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-title-the {
@@ -462,27 +461,17 @@ a {
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-dasharray: 1;
-  stroke-dashoffset: 1;
+  stroke-dashoffset: 0;
   vector-effect: non-scaling-stroke;
-  animation: hero-route-draw 1500ms 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .hero-title-route circle {
   fill: #e0f2fe;
   stroke: #075985;
   stroke-width: 1;
-  opacity: 0;
+  opacity: 0.78;
   transform-box: fill-box;
   transform-origin: center;
-  animation: hero-waypoint-arrive 700ms 1050ms ease-out forwards;
-}
-
-.hero-title-route circle:nth-of-type(2) {
-  animation-delay: 1300ms;
-}
-
-.hero-title-route circle:nth-of-type(3) {
-  animation-delay: 1530ms;
 }
 
 .hero-title-translation-stage {
@@ -498,7 +487,96 @@ a {
   line-height: 0.98;
   overflow-wrap: anywhere;
   text-wrap: balance;
+}
+
+/* Map route: the original presentation and its exact animation timings. */
+.hero-title-visual[data-animation="map-route"] .hero-title-navigating {
+  animation: hero-map-unfold 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route path {
+  stroke-dashoffset: 1;
+  animation: hero-route-draw 1500ms 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route circle {
+  opacity: 0;
+  animation: hero-waypoint-arrive 700ms 1050ms ease-out forwards;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route circle:nth-of-type(2) {
+  animation-delay: 1300ms;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-route circle:nth-of-type(3) {
+  animation-delay: 1530ms;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-translation {
   animation: hero-translation-arrive 1300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Bearing lock: soft optical focus, followed by precise waypoint acquisition. */
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-navigating {
+  animation: hero-bearing-resolve 1050ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route {
+  opacity: 0.58;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route path {
+  animation: hero-bearing-line-focus 900ms 300ms ease-out both;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route circle {
+  opacity: 0;
+  animation: hero-bearing-waypoint-focus 620ms 620ms ease-out forwards;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route circle:nth-of-type(2) {
+  animation-delay: 820ms;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-route circle:nth-of-type(3) {
+  animation-delay: 1020ms;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-translation {
+  animation: hero-bearing-translation 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: left center;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-translation[dir="rtl"] {
+  transform-origin: right center;
+}
+
+/* Atlas unfold: a restrained fold opens horizontally; RTL opens from the other edge. */
+.hero-title-visual[data-animation="atlas-unfold"] .hero-title-navigating {
+  animation: hero-atlas-heading-unfold 1150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="atlas-unfold"] .hero-title-route {
+  color: #bae6fd;
+  opacity: 0.42;
+}
+
+.hero-title-visual[data-animation="atlas-unfold"] .hero-title-route path {
+  stroke-dashoffset: 1;
+  animation: hero-atlas-route-reveal 1250ms 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-title-visual[data-animation="atlas-unfold"] .hero-title-route circle {
+  opacity: 0;
+  animation: hero-atlas-waypoint-soften 900ms 760ms ease-out forwards;
+}
+
+.hero-title-visual[data-animation="atlas-unfold"] .hero-title-translation {
+  animation: hero-atlas-translation-ltr 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="atlas-unfold"] .hero-title-translation[dir="rtl"] {
+  animation-name: hero-atlas-translation-rtl;
 }
 
 .hero-title-script-latin {
@@ -547,6 +625,51 @@ a {
 @keyframes hero-translation-arrive {
   from { opacity: 0; transform: translateY(0.12em); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hero-bearing-resolve {
+  from { opacity: 0.3; filter: blur(0.11em); transform: scaleX(1.035); }
+  to { opacity: 1; filter: blur(0); transform: scaleX(1); }
+}
+
+@keyframes hero-bearing-line-focus {
+  from { opacity: 0; filter: blur(0.08em); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+@keyframes hero-bearing-waypoint-focus {
+  0% { opacity: 0; transform: scale(1.8); filter: blur(0.08em); }
+  100% { opacity: 0.82; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes hero-bearing-translation {
+  from { opacity: 0; filter: blur(0.1em); transform: scaleX(1.025); }
+  to { opacity: 1; filter: blur(0); transform: scaleX(1); }
+}
+
+@keyframes hero-atlas-heading-unfold {
+  from { opacity: 0; clip-path: inset(0 50% 0 50%); transform: scaleX(0.985); }
+  to { opacity: 1; clip-path: inset(0); transform: scaleX(1); }
+}
+
+@keyframes hero-atlas-route-reveal {
+  from { opacity: 0.2; stroke-dashoffset: 1; }
+  to { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes hero-atlas-waypoint-soften {
+  from { opacity: 0; transform: scale(0.75); }
+  to { opacity: 0.6; transform: scale(1); }
+}
+
+@keyframes hero-atlas-translation-ltr {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: scaleX(0.985); }
+  to { opacity: 1; clip-path: inset(0); transform: scaleX(1); }
+}
+
+@keyframes hero-atlas-translation-rtl {
+  from { opacity: 0; clip-path: inset(0 0 0 100%); transform: scaleX(0.985); }
+  to { opacity: 1; clip-path: inset(0); transform: scaleX(1); }
 }
 
 .home-hero-actions {
