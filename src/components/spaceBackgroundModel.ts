@@ -16,6 +16,7 @@ export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
+export const SYSTEM_FADE_OUT_PROGRESS = 0.78;
 export const TRAVELER_DETAIL_THRESHOLDS = [0.28, 0.5, 0.68] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
 export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
@@ -633,6 +634,16 @@ export const getOrbitingPlanets = (
 ): OrbitingPlanet[] => planets
     .map((planet) => getOrbitingPlanet(planet, simulationSeconds, center))
     .sort((left, right) => left.z - right.z);
+
+/** Render opacity reaches exact zero before selection ends, preventing a close-system pop. */
+export const getSystemOpacity = (projection: ProjectedTraveler) => {
+    const reveal = smoothstep((projection.progress - SYSTEM_MIN_PROGRESS) / 0.12);
+    const exit = 1 - smoothstep(
+        (projection.progress - SYSTEM_FADE_OUT_PROGRESS)
+        / (SYSTEM_MAX_PROGRESS - SYSTEM_FADE_OUT_PROGRESS),
+    );
+    return projection.opacity * reveal * exit;
+};
 
 /** Systems stay compact on reveal, then resolve rapidly into a legible close encounter. */
 export const getSystemScale = (projection: ProjectedTraveler) => {

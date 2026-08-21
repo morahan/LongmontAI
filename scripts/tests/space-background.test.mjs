@@ -19,6 +19,7 @@ import {
   PLANET_COUNT_BASIS_POINTS,
   PLANET_RING_LINE_WIDTH,
   PLANET_SURFACE_LOD_DIAMETERS,
+  SYSTEM_FADE_OUT_PROGRESS,
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
   TRAVELER_DETAIL_THRESHOLDS,
@@ -43,6 +44,7 @@ import {
   getStarFieldStyles,
   getStarPosition,
   getStarRgb,
+  getSystemOpacity,
   getSystemSafetyMargin,
   getSystemScale,
   getTravelerAppearance,
@@ -324,6 +326,41 @@ test('moving traveler counts rise by the nearest whole 20% while ambient stars r
   assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 14);
   assert.equal(travelerCountForWidth(639), 14);
   assert.equal(travelerCountForWidth(640), 22);
+});
+
+test('system opacity fades continuously to exact zero at the selection cutoff', () => {
+  assert.equal(SYSTEM_FADE_OUT_PROGRESS, 0.78);
+  const projectionAt = (progress, opacity = 0.72) => ({
+    x: 500,
+    y: 300,
+    depth: 200,
+    progress,
+    radius: 5,
+    opacity,
+    cycle: 0,
+  });
+  closeTo(getSystemOpacity(projectionAt(SYSTEM_FADE_OUT_PROGRESS)), 0.72);
+  const fadeSamples = [0.78, 0.8, 0.82, 0.83, 0.839, 0.8397, 0.8399, 0.84]
+    .map((progress) => getSystemOpacity(projectionAt(progress)));
+  assert.ok(fadeSamples.every((opacity, index) => index === 0 || opacity <= fadeSamples[index - 1]));
+  assert.ok(getSystemOpacity(projectionAt(0.8)) > 0.5, 'substantial close detail fades too early');
+  assert.equal(fadeSamples.at(-1), 0);
+  closeTo(getSystemOpacity(projectionAt(0.8, 0.36)), getSystemOpacity(projectionAt(0.8)) * 0.5);
+
+  // Even a maximum-speed traveler 0.01s before crossing is already visually zero.
+  const maximumTenMillisecondProgress = 28 * 0.01 / (FAR_DEPTH - NEAR_DEPTH);
+  const justBefore = SYSTEM_MAX_PROGRESS - maximumTenMillisecondProgress;
+  assert.ok(getSystemOpacity(projectionAt(justBefore)) < 0.0001);
+
+  const scene = createSpaceScene(9876);
+  const travelers = scene.travelers.slice(0, 3);
+  const projections = travelers.map((_, index) => projectionAt(index === 2 ? justBefore : 0));
+  assert.equal(selectProminentSystem(travelers, projections, 1000, 600), 2);
+  projections[2] = projectionAt(SYSTEM_MAX_PROGRESS);
+  assert.equal(selectProminentSystem(travelers, projections, 1000, 600), 2);
+  assert.equal(getSystemOpacity(projections[2]), 0);
+  projections[2] = projectionAt(SYSTEM_MAX_PROGRESS + 1e-12);
+  assert.equal(selectProminentSystem(travelers, projections, 1000, 600), -1);
 });
 
 test('the expanded deterministic carrier minority still selects one nearest useful system', () => {

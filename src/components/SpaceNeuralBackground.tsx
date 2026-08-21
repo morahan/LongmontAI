@@ -13,6 +13,7 @@ import {
     getStarFieldPositions,
     getStarFieldStyles,
     getStarRgb,
+    getSystemOpacity,
     getSystemScale,
     getTravelerAppearance,
     hasAtmosphereHalo,
@@ -280,8 +281,8 @@ const drawPlanetarySystem = (
     travelerSeed: number,
     simulationSeconds: number,
 ) => {
-    const detailFade = Math.min(1, Math.max(0, (projection.progress - 0.34) / 0.12));
-    const opacity = projection.opacity * detailFade;
+    const opacity = getSystemOpacity(projection);
+    if (opacity <= 0) return;
     const scale = getSystemScale(projection);
     const planets = createPlanetSystem(travelerSeed, projection.cycle);
     const orbiting = getOrbitingPlanets(planets, simulationSeconds);
