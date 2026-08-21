@@ -314,13 +314,25 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
   closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
 });
 
-test('only the deterministic minority of travelers can carry visible systems', () => {
+test('moving traveler counts rise by the nearest whole 20% while ambient stars remain at 35', () => {
+  const scene = createSpaceScene(9876);
+  assert.equal(AMBIENT_STAR_COUNT, 35);
+  assert.equal(DESKTOP_TRAVELER_COUNT, Math.round(18 * 1.2));
+  assert.equal(MOBILE_TRAVELER_COUNT, Math.round(12 * 1.2));
+  assert.equal(scene.travelers.length, 22);
+  assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 14);
+  assert.equal(travelerCountForWidth(639), 14);
+  assert.equal(travelerCountForWidth(640), 22);
+});
+
+test('the expanded deterministic carrier minority still selects one nearest useful system', () => {
   const scene = createSpaceScene(9876);
   const carrierIndices = scene.travelers.map((traveler, index) =>
     isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0);
-  assert.deepEqual(carrierIndices, [2, 8, 14]);
-  assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT)
-    .filter((traveler, index) => isSystemCarrier(traveler, index)).length, 2);
+  assert.deepEqual(carrierIndices, [2, 8, 14, 20]);
+  const mobileTravelers = scene.travelers.slice(0, MOBILE_TRAVELER_COUNT);
+  assert.deepEqual(mobileTravelers.map((traveler, index) =>
+    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8]);
 
   const projections = scene.travelers.map((_, index) => ({
     x: 500,
@@ -331,7 +343,13 @@ test('only the deterministic minority of travelers can carry visible systems', (
     opacity: 0.6,
     cycle: 0,
   }));
-  assert.equal(selectProminentSystem(scene.travelers, projections, 1000, 600), 14);
+  assert.equal(selectProminentSystem(scene.travelers, projections, 1000, 600), 20);
+  assert.equal(selectProminentSystem(
+    mobileTravelers,
+    projections.slice(0, MOBILE_TRAVELER_COUNT),
+    1000,
+    600,
+  ), 8);
 });
 
 test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', () => {
@@ -424,6 +442,8 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
     { width: 390, height: 844, count: MOBILE_TRAVELER_COUNT },
   ]) {
     const travelers = scene.travelers.slice(0, count);
+    let visibleSystemSamples = 0;
+    const selectedCarriers = new Set();
     for (let elapsed = 0; elapsed < 900; elapsed += 0.5) {
       const projections = travelers.map((traveler) => projectTraveler(traveler, elapsed, width, height));
       const eligible = travelers.map((traveler, index) => ({ traveler, projection: projections[index], index }))
@@ -435,8 +455,14 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
         .sort((left, right) => right.projection.progress - left.projection.progress);
       const selected = selectProminentSystem(travelers, projections, width, height);
       assert.equal(selected, eligible[0]?.index ?? -1, `${width}x${height} at ${elapsed}`);
-      if (selected >= 0) assert.equal(isSystemInViewport(travelers[selected], projections[selected], width, height), true);
+      if (selected >= 0) {
+        visibleSystemSamples += 1;
+        selectedCarriers.add(selected);
+        assert.equal(isSystemInViewport(travelers[selected], projections[selected], width, height), true);
+      }
     }
+    assert.ok(visibleSystemSamples > 0, `${width}x${height} never reveals a near system`);
+    assert.ok(selectedCarriers.size > 0, `${width}x${height} has no useful carrier`);
   }
 });
 
