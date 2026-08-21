@@ -89,7 +89,9 @@ const home = join(fixture, 'home')
 const repo = join(fixture, 'repo')
 const reviewScript = join(repo, 'scripts/security-commit-review.sh')
 const scannerLog = join(fixture, 'scanner.log')
-const isolatedEnv = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_')))
+const isolatedEnv = Object.fromEntries(Object.entries(process.env).filter(
+  ([name]) => !name.startsWith('GIT_') && !name.startsWith('SECURITY_COMMIT_'),
+))
 Object.assign(isolatedEnv, {
   HOME: home,
   XDG_CONFIG_HOME: join(home, '.config'),
