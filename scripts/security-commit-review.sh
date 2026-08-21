@@ -62,6 +62,7 @@ gate_results=""
 failed_gates=""
 gate_count=0
 gate_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/security-review.XXXXXXXXXX")"
+chmod 700 "$gate_temp_dir"
 evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$ROOT/.git/security-review}"
 evidence_file=""
 
@@ -237,15 +238,20 @@ secret_scan() {
   fi
 
   local found=0
-  local files_scanned=0
-  local file
-  while IFS= read -r -d '' file; do
-    [[ -f "$file" ]] || continue
-    files_scanned=$((files_scanned + 1))
-    if ! gitleaks dir --redact --no-banner --log-level warn "$file"; then
-      found=1
-    fi
-  done < <(git ls-files -z)
+  local snapshot_dir="$gate_temp_dir/tracked-snapshot"
+  local files_scanned
+  mkdir -m 700 "$snapshot_dir"
+  if ! git archive --format=tar HEAD | tar -xf - -C "$snapshot_dir"; then
+    echo "  Failed to create the exact tracked-file snapshot." >&2
+    return 1
+  fi
+  if ! files_scanned="$(git ls-tree -r --name-only HEAD | wc -l | tr -d ' ')"; then
+    echo "  Failed to count files in the tracked snapshot." >&2
+    return 1
+  fi
+  if ! gitleaks dir --redact --no-banner --log-level warn "$snapshot_dir"; then
+    found=1
+  fi
 
   if [[ "$MODE" == "push" ]]; then
     local upstream
@@ -279,7 +285,32 @@ secret_scan() {
   return "$found"
 }
 
+staged_scope_matches() {
+  local pattern="$1"
+  local staged_files
+  if ! staged_files="$(git diff --cached --name-only --diff-filter=ACMRD)"; then
+    echo "  Failed to determine the staged review scope." >&2
+    return 2
+  fi
+  [[ -n "$staged_files" ]] && printf '%s\n' "$staged_files" | grep -Eq "$pattern"
+}
+
 dependency_audit() {
+  if [[ "$MODE" == "staged" ]]; then
+    local dependency_pattern
+    dependency_pattern='(^|/)(package\.json|package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|pnpm-workspace\.yaml|bun\.lockb?|deno\.jsonc?|deno\.lock|requirements[^/]*\.txt|pyproject\.toml|poetry\.lock|Pipfile(\.lock)?|uv\.lock|Cargo\.(toml|lock)|go\.(mod|sum)|Gemfile(\.lock)?|composer\.(json|lock)|pom\.xml|build\.gradle(\.kts)?|gradle\.lockfile)$'
+    if staged_scope_matches "$dependency_pattern"; then
+      :
+    else
+      local scope_status=$?
+      if [[ "$scope_status" -eq 1 ]]; then
+        echo "  Finding summary: no dependency manifests or lockfiles changed; audit not needed for this staged diff."
+        return 0
+      fi
+      return "$scope_status"
+    fi
+  fi
+
   command -v osv-scanner >/dev/null 2>&1 || {
     echo "  osv-scanner is required for offline dependency scanning." >&2
     return 1
@@ -357,6 +388,21 @@ control_plane_scan() {
 }
 
 security_policy_contract() {
+  if [[ "$MODE" == "staged" ]]; then
+    local policy_pattern
+    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/security\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
+    if staged_scope_matches "$policy_pattern"; then
+      :
+    else
+      local scope_status=$?
+      if [[ "$scope_status" -eq 1 ]]; then
+        echo "  Finding summary: no security-contract or runtime-header governing files changed; contract tests not needed for this staged diff."
+        return 0
+      fi
+      return "$scope_status"
+    fi
+  fi
+
   if ! command -v node >/dev/null 2>&1; then
     echo "  Node.js is required for security policy contract tests." >&2
     return 1

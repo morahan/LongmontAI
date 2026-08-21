@@ -53,8 +53,9 @@ npm run verify:local
 ## What The Hook Checks
 
 - Staged secrets with `gitleaks git --staged`.
-- Full tracked-file secrets with `gitleaks dir` on push/manual review, plus every outgoing commit in `upstream..HEAD` on push.
-- Dependency advisories from the locally cached OSV database with `osv-scanner scan source --offline-vulnerabilities`.
+- Full tracked-file secrets with one `gitleaks dir` scan of an exact archived `HEAD` snapshot on push/manual review, excluding untracked workspace files, plus every outgoing commit in `upstream..HEAD` on push.
+- Dependency advisories from the locally cached OSV database with `osv-scanner scan source --offline-vulnerabilities`. Staged review runs this gate only when a dependency manifest or lockfile changed; push/manual review always runs it.
+- Security-policy and runtime-header contracts. Staged review runs them only when a governing contract, hook, agent-security, workflow-security, package-script, or runtime-header file changed; push/manual review always runs both.
 - Newly staged frontend sink patterns in `src/`, `public/`, `index.html`, and Vite/ESLint config:
   `dangerouslySetInnerHTML`, raw HTML insertion, string code execution, `window.open`, and token-like browser storage.
 - Agent control-plane files under `.github/`, `.codex/`, `.agents/`, `.githooks/`, `api/`, and `scripts/`, plus `package.json`, `justfile`, and `vercel.json`, for prohibited full-access sandboxes, broad writes, and persisted checkout credentials.
