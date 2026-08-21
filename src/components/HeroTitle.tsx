@@ -57,23 +57,19 @@ function reducedMotionIsPreferred(): boolean {
 }
 
 const HeroTitle: React.FC = () => {
-    const [animationVariant, setAnimationVariant] = React.useState<AnimationVariant | 'static'>('static');
-    const selectedVariant = React.useRef<AnimationVariant | null>(null);
+    const [animationVariant] = React.useState<AnimationVariant>(() =>
+        animationVariants[Math.floor(Math.random() * animationVariants.length)]
+    );
     const [cadence, setCadence] = React.useState<CadenceState>(initialCadence);
     const [reducedMotion, setReducedMotion] = React.useState(reducedMotionIsPreferred);
     const [pageVisible, setPageVisible] = React.useState(
         () => typeof document === 'undefined' || document.visibilityState === 'visible'
     );
+    const animationStartRecorded = React.useRef(false);
     const remainingPhaseTime = React.useRef(ENGLISH_DURATION_MS);
     const phaseStartedAt = React.useRef(0);
     const phaseCompleted = React.useRef(false);
 
-    React.useEffect(() => {
-        if (selectedVariant.current === null) {
-            selectedVariant.current = animationVariants[Math.floor(Math.random() * animationVariants.length)];
-            setAnimationVariant(selectedVariant.current);
-        }
-    }, []);
 
     React.useEffect(() => {
         const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -154,7 +150,16 @@ const HeroTitle: React.FC = () => {
     return (
         <h1 className="home-hero-title text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
             <span className="sr-only">Navigating the Intelligence Age</span>
-            <span className="hero-title-visual" aria-hidden="true" data-animation={animationVariant}>
+            <span
+                className="hero-title-visual"
+                aria-hidden="true"
+                data-animation={animationVariant}
+                onAnimationStart={() => {
+                    if (animationStartRecorded.current) return;
+                    animationStartRecorded.current = true;
+                    performance.mark('longmont-hero-text-animation-start');
+                }}
+            >
                 <span className="hero-title-navigation">
                     <span className="hero-title-navigating">Navigating</span>
                     <svg

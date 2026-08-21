@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Edition, editions, isEditionPublished } from '../articles';
+import { editionSummaries, type EditionSummary } from '../articles/editionSummaries';
+import { isEditionPublished } from '../articles/types';
 import { watchScheduledEdition } from '../articles/scheduledEdition';
 import { ScheduledEditionResponse } from '../articles/types';
 import SpaceNeuralBackground from '../components/SpaceNeuralBackground';
-import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Mail, Search, Sparkles, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
@@ -18,7 +18,7 @@ function formatDate(dateStr: string): string {
     });
 }
 
-function editionMatchesQuery(edition: Edition, query: string): boolean {
+function editionMatchesQuery(edition: EditionSummary, query: string): boolean {
     if (!query) {
         return true;
     }
@@ -34,7 +34,7 @@ const Feed: React.FC = () => {
 
     const [publicationNow, setPublicationNow] = useState(() => Date.now());
     const publishedEditions = useMemo(() => {
-        const editionsById = new Map(editions.map((edition) => [edition.id, edition]));
+        const editionsById = new Map(editionSummaries.map((edition) => [edition.id, edition]));
         if (scheduledEdition && !editionsById.has(scheduledEdition.edition.id)) {
             editionsById.set(scheduledEdition.edition.id, scheduledEdition.edition);
         }
@@ -54,7 +54,7 @@ const Feed: React.FC = () => {
     }), []);
 
     React.useEffect(() => {
-        const nextPublishTime = editions
+        const nextPublishTime = editionSummaries
             .map((edition) => edition.publishAt ? Date.parse(edition.publishAt) : Number.POSITIVE_INFINITY)
             .filter((publishTime) => Number.isFinite(publishTime) && publishTime > publicationNow)
             .sort((left, right) => left - right)[0];
@@ -151,36 +151,30 @@ const Feed: React.FC = () => {
                 </div>
                 
                 <div className="grid md:grid-cols-3 gap-8">
-                    {latestEditions.map((edition, index) => (
-                        <motion.div
+                    {latestEditions.map((edition) => (
+                        <Link
                             key={edition.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 * index, duration: 0.5 }}
+                            to={`/edition/${edition.id}`}
+                            className="block group"
                         >
-                            <Link 
-                                to={`/edition/${edition.id}`}
-                                className="block group"
-                            >
-                                <article className="bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-xl overflow-hidden hover:border-[var(--accent-cyan)]/50 transition-all duration-300">
-                                    <div className="p-5">
-                                        <span className="text-xs font-mono text-[var(--accent-cyan)] mb-2 block">
-                                            {edition.date}
-                                        </span>
-                                        <h3 className="text-lg font-semibold mb-2 group-hover:text-[var(--accent-cyan)] transition-colors line-clamp-2">
-                                            {edition.title}
-                                        </h3>
-                                        <p className="text-sm text-[var(--text-secondary)] line-clamp-3">
-                                            {edition.summary}
-                                        </p>
-                                    </div>
-                                    <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between">
-                                        <span className="text-xs text-[var(--accent-cyan)]">Read edition</span>
-                                        <ArrowRight size={14} className="text-[var(--accent-cyan)] latest-card-arrow" />
-                                    </div>
-                                </article>
-                            </Link>
-                        </motion.div>
+                            <article className="bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-xl overflow-hidden hover:border-[var(--accent-cyan)]/50 transition-all duration-300">
+                                <div className="p-5">
+                                    <span className="text-xs font-mono text-[var(--accent-cyan)] mb-2 block">
+                                        {edition.date}
+                                    </span>
+                                    <h3 className="text-lg font-semibold mb-2 group-hover:text-[var(--accent-cyan)] transition-colors line-clamp-2">
+                                        {edition.title}
+                                    </h3>
+                                    <p className="text-sm text-[var(--text-secondary)] line-clamp-3">
+                                        {edition.summary}
+                                    </p>
+                                </div>
+                                <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between">
+                                    <span className="text-xs text-[var(--accent-cyan)]">Read edition</span>
+                                    <ArrowRight size={14} className="text-[var(--accent-cyan)] latest-card-arrow" />
+                                </div>
+                            </article>
+                        </Link>
                     ))}
                 </div>
             </section>

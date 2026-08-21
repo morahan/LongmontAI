@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import {
     createConstellationGeometry,
     createPlanetSystem,
@@ -129,7 +129,7 @@ const drawPlanetarySystem = (
 const SpaceNeuralBackground: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (!canvas || !ctx) return;
@@ -144,34 +144,30 @@ const SpaceNeuralBackground: React.FC = () => {
         let isOnscreen = typeof IntersectionObserver === 'undefined';
         let pageIsVisible = !document.hidden;
         let reducedMotion = motionQuery.matches;
+        let backdropGlow: CanvasGradient | null = null;
+        let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
 
-        const drawScene = (elapsed: number) => {
+        const drawScene = (elapsed: number, renderDetails = true) => {
             if (width <= 0 || height <= 0) return;
             ctx.globalAlpha = 1;
             ctx.fillStyle = '#050508';
             ctx.fillRect(0, 0, width, height);
 
-            const glow = ctx.createRadialGradient(
-                width * 0.5, height * 0.42, 0,
-                width * 0.5, height * 0.42, Math.max(width, height) * 0.62,
-            );
-            glow.addColorStop(0, 'rgba(19, 49, 68, 0.1)');
-            glow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
-            glow.addColorStop(1, 'rgba(5, 5, 8, 0)');
-            ctx.fillStyle = glow;
-            ctx.fillRect(0, 0, width, height);
+            if (backdropGlow) {
+                ctx.fillStyle = backdropGlow;
+                ctx.fillRect(0, 0, width, height);
+            }
 
             const phase = getConstellationPhase(elapsed);
             const strength = getConstellationStrength(phase);
             const styles = getStarFieldStyles(scene.seed, elapsed);
             const positions = getStarFieldPositions(scene.seed, elapsed, width, height);
-            const constellation = createConstellationGeometry(width, height);
             const lineOpacity = 0.15 * strength;
-            if (lineOpacity > 0) {
+            if (lineOpacity > 0 && constellationGeometry) {
                 ctx.strokeStyle = `rgba(176, 217, 235, ${lineOpacity})`;
                 ctx.lineWidth = 0.55;
                 ctx.beginPath();
-                constellation.edges.forEach(({ from, to }) => {
+                constellationGeometry.edges.forEach(({ from, to }) => {
                     ctx.moveTo(positions[from].x, positions[from].y);
                     ctx.lineTo(positions[to].x, positions[to].y);
                 });
@@ -189,6 +185,12 @@ const SpaceNeuralBackground: React.FC = () => {
                 ctx.arc(position.x, position.y, style.radius, 0, TAU);
                 ctx.fill();
             }
+
+            if (canvas.dataset.spaceReady !== 'true') {
+                canvas.dataset.spaceReady = 'true';
+                performance.mark('longmont-hero-space-ready');
+            }
+            if (!renderDetails) return;
 
             // These clocks stop for all 30 seconds of every constellation lifecycle.
             const simulationSeconds = getSimulationTime(elapsed);
@@ -232,6 +234,10 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
             }
             ctx.globalAlpha = 1;
+            if (canvas.dataset.spaceDetailReady !== 'true') {
+                canvas.dataset.spaceDetailReady = 'true';
+                performance.mark('longmont-hero-space-detail-ready');
+            }
         };
 
         // RAF may pause while hidden, but its monotonic timestamp still includes hidden time.
@@ -262,7 +268,15 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.width = Math.max(1, Math.round(width * dpr));
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            drawScene(reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now()));
+            backdropGlow = ctx.createRadialGradient(
+                width * 0.5, height * 0.42, 0,
+                width * 0.5, height * 0.42, Math.max(width, height) * 0.62,
+            );
+            backdropGlow.addColorStop(0, 'rgba(19, 49, 68, 0.1)');
+            backdropGlow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
+            backdropGlow.addColorStop(1, 'rgba(5, 5, 8, 0)');
+            constellationGeometry = createConstellationGeometry(width, height);
+            drawScene(reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now()), false);
         };
         const handleVisibilityChange = () => { pageIsVisible = !document.hidden; syncAnimation(); };
         const handleMotionChange = (event: MediaQueryListEvent) => { reducedMotion = event.matches; syncAnimation(); };

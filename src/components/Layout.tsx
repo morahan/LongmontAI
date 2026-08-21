@@ -1,6 +1,5 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Activity, BrainCircuit, ExternalLink, Users, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
 
 interface LayoutProps {
@@ -144,15 +143,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 id="main-content"
                 className={`flex-grow pt-32 pb-20${location.pathname === '/' ? ' home-main' : ''}`}
             >
-                <motion.div
-                    key={location.pathname}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                    className="container"
-                >
+                <div className="container">
                     {children}
-                </motion.div>
+                </div>
             </main>
 
             <footer role="contentinfo" className="site-footer">
