@@ -8,15 +8,21 @@ type Translation = {
     color: string;
 };
 
-const translations: Translation[] = [
-    { text: 'Intelligence Age', lang: 'en', dir: 'ltr', script: 'latin', color: '#93c5fd' },
+const englishTranslation: Translation = {
+    text: 'Intelligence Age',
+    lang: 'en',
+    dir: 'ltr',
+    script: 'latin',
+    color: '#93c5fd',
+};
+
+const foreignTranslations: Translation[] = [
     { text: 'La era de la inteligencia', lang: 'es', dir: 'ltr', script: 'latin', color: '#a5b4fc' },
     { text: 'L’ère de l’intelligence', lang: 'fr', dir: 'ltr', script: 'latin', color: '#c4b5fd' },
     { text: '知能の時代', lang: 'ja', dir: 'ltr', script: 'cjk', color: '#7dd3fc' },
     { text: 'عصر الذكاء', lang: 'ar', dir: 'rtl', script: 'arabic', color: '#67e8f9' },
     { text: 'बुद्धिमत्ता का युग', lang: 'hi', dir: 'ltr', script: 'devanagari', color: '#a7f3d0' },
     { text: 'עידן הבינה', lang: 'he', dir: 'rtl', script: 'hebrew', color: '#bfdbfe' },
-    { text: 'Intelligence Age', lang: 'en', dir: 'ltr', script: 'latin', color: '#93c5fd' },
 ];
 
 function reducedMotionIsPreferred(): boolean {
@@ -24,18 +30,22 @@ function reducedMotionIsPreferred(): boolean {
 }
 
 const HeroTitle: React.FC = () => {
-    const [translationIndex, setTranslationIndex] = React.useState(0);
+    const [foreignIndex, setForeignIndex] = React.useState(0);
+    const [showEnglish, setShowEnglish] = React.useState(true);
     const [reducedMotion, setReducedMotion] = React.useState(reducedMotionIsPreferred);
     const [pageVisible, setPageVisible] = React.useState(
         () => typeof document === 'undefined' || document.visibilityState === 'visible'
     );
+    const remainingPhaseTime = React.useRef(8000);
+    const phaseStartedAt = React.useRef(0);
+    const phaseCompleted = React.useRef(false);
 
     React.useEffect(() => {
         const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
         const handlePreferenceChange = (event: MediaQueryListEvent) => {
             setReducedMotion(event.matches);
             if (event.matches) {
-                setTranslationIndex(0);
+                setShowEnglish(true);
             }
         };
 
@@ -50,18 +60,44 @@ const HeroTitle: React.FC = () => {
     }, []);
 
     React.useEffect(() => {
-        if (reducedMotion || !pageVisible || translationIndex >= translations.length - 1) {
+        if (reducedMotion) {
+            remainingPhaseTime.current = 8000;
             return undefined;
         }
 
+        if (!pageVisible) {
+            return undefined;
+        }
+
+        phaseStartedAt.current = Date.now();
+        phaseCompleted.current = false;
+
         const timeout = window.setTimeout(() => {
-            setTranslationIndex((currentIndex) => Math.min(currentIndex + 1, translations.length - 1));
-        }, 4800);
+            phaseCompleted.current = true;
 
-        return () => window.clearTimeout(timeout);
-    }, [pageVisible, reducedMotion, translationIndex]);
+            if (showEnglish) {
+                remainingPhaseTime.current = 6000;
+                setShowEnglish(false);
+                return;
+            }
 
-    const translation = reducedMotion ? translations[0] : translations[translationIndex];
+            remainingPhaseTime.current = 8000;
+            setShowEnglish(true);
+            setForeignIndex((currentIndex) => (currentIndex + 1) % foreignTranslations.length);
+        }, remainingPhaseTime.current);
+
+        return () => {
+            window.clearTimeout(timeout);
+            if (!phaseCompleted.current) {
+                const elapsed = Date.now() - phaseStartedAt.current;
+                remainingPhaseTime.current = Math.max(0, remainingPhaseTime.current - elapsed);
+            }
+        };
+    }, [pageVisible, reducedMotion, showEnglish]);
+
+    const translation = reducedMotion || showEnglish
+        ? englishTranslation
+        : foreignTranslations[foreignIndex];
 
     return (
         <h1 className="home-hero-title text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight text-white">
@@ -85,7 +121,7 @@ const HeroTitle: React.FC = () => {
                 </span>
                 <span className="hero-title-translation-stage">
                     <bdi
-                        key={`${translation.lang}-${translationIndex}`}
+                        key={`${translation.lang}-${foreignIndex}`}
                         className={`hero-title-translation hero-title-script-${translation.script}`}
                         lang={translation.lang}
                         dir={translation.dir}

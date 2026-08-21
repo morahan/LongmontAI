@@ -1040,7 +1040,7 @@ table,
 @media (max-width: 760px) {
   .sponsor-acknowledgement-home {
     justify-content: flex-start;
-    margin: -2.35rem 0 2.25rem;
+    margin: 0 0 2.25rem;
   }
 }
 
