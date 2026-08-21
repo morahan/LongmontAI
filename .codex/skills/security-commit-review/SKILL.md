@@ -25,7 +25,7 @@ npm run verify:local
 
 - `npm run hooks:install` sets `core.hooksPath=.githooks` for this local checkout.
 - `npm run security:commit` checks staged changes through the parallel review chain, matching the pre-commit hook.
-- `npm run security:push` checks the full tracked source tree through the parallel review chain, matching the pre-push hook.
+- The pre-push hook checks every unique pushed ref tip plus the exact outgoing ranges supplied by Git on standard input. `npm run security:push` is intended for hook-compatible use and fails closed unless valid pre-push ref-update lines are piped to it.
 - `npm run security:review` checks the full tracked source tree through the parallel review chain.
 - `npm run security:agent-review` runs a read-only, ephemeral Codex security review over local changes.
 - `npm run security:remediate` runs all deterministic gates and, only after a failure, explicitly starts a workspace-write orchestrator. It delegates read-only validation to `security-triage`, then delegates each validated packet to a bounded `security-fixer` subagent.
@@ -40,7 +40,7 @@ npm run verify:local
 
 1. Run `npm run hooks:install` once per checkout so every Git commit and push enters this review chain.
 2. Run `npm run security:commit` before committing or when a pre-commit hook fails.
-3. Run `npm run security:push` before pushing or when a pre-push hook fails.
+3. Run `git push` to exercise push review with Git's exact ref-update stream. To reproduce it directly, pipe valid four-field pre-push lines into `npm run security:push`; an empty or inferred scope is intentionally rejected.
 4. Watch the terminal dashboard: it prints scope, parallel lane launches, numbered gates, progress bars, scanner details, vulnerability counts, and a final pass/fail table.
 5. Keep deterministic scanners and optional agent review parallel; keep only auto-remediation sequential, because it needs the complete set of failed gates.
 6. Treat `gitleaks` findings as blocking until the staged secret is removed, rotated, or proven to be a false positive with a narrow ignore.
@@ -53,12 +53,13 @@ npm run verify:local
 ## What The Hook Checks
 
 - Staged secrets with `gitleaks git --staged`.
-- Full tracked-file secrets with one `gitleaks dir` scan of an exact archived `HEAD` snapshot on push/manual review, excluding untracked workspace files, plus every outgoing commit in `upstream..HEAD` on push.
-- Dependency advisories from the locally cached OSV database with `osv-scanner scan source --offline-vulnerabilities`. Staged review runs this gate only when a dependency manifest or lockfile changed; push/manual review always runs it.
-- Security-policy and runtime-header contracts. Staged review runs them only when a governing contract, hook, agent-security, workflow-security, package-script, or runtime-header file changed; push/manual review always runs both.
+- Full tracked-file secrets with `gitleaks dir` over exact archived snapshots: `HEAD` for manual review and every unique pushed commit tip for pre-push. Untracked and mutable worktree files are excluded. Push review also scans each exact ref-update history range, including new refs and force pushes; deletions add no content.
+- Dependency advisories from the locally cached OSV database with `osv-scanner scan source --offline-vulnerabilities`. Staged review runs this gate only when a dependency manifest or lockfile changed; manual review scans archived `HEAD`, and push scans every unique pushed tip.
+- Security-policy and runtime-header contracts. Staged review runs them only when a governing contract, hook, agent-security, workflow-security, package-script, or runtime-header file changed; manual/push review runs both from each immutable archived snapshot.
 - Newly staged frontend sink patterns in `src/`, `public/`, `index.html`, and Vite/ESLint config:
   `dangerouslySetInnerHTML`, raw HTML insertion, string code execution, `window.open`, and token-like browser storage.
-- Agent control-plane files under `.github/`, `.codex/`, `.agents/`, `.githooks/`, `api/`, and `scripts/`, plus `package.json`, `justfile`, and `vercel.json`, for prohibited full-access sandboxes, broad writes, and persisted checkout credentials.
+- Agent control-plane files under `.github/`, `.codex/`, `.agents/`, `.githooks/`, `api/`, and `scripts/`, plus `package.json`, `justfile`, and `vercel.json`, for prohibited full-access sandboxes, broad writes, and persisted checkout credentials. Push/manual scans read immutable archived snapshots, not the worktree.
+- Pre-push scope is accepted only from Git's four-field ref-update protocol. Missing, malformed, unsupported, or locally unprovable tips/baselines block the push. Multiple refs are deduplicated by pushed commit tip; deletions are validated but do not trigger content scans.
 
 ## Interpreting Results
 

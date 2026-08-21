@@ -5,8 +5,9 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 PUSH_REFS="$(mktemp "${TMPDIR:-/tmp}/longmontai-pre-push-refs.XXXXXXXX")"
+chmod 600 "$PUSH_REFS"
 trap 'rm -f "$PUSH_REFS"' EXIT INT TERM
 cat >"$PUSH_REFS"
 
-scripts/security-commit-review.sh push </dev/null
+scripts/security-commit-review.sh push <"$PUSH_REFS"
 node scripts/run-targeted-mobile-audit.mjs push <"$PUSH_REFS"
