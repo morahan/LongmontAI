@@ -158,35 +158,26 @@ const HeroTitle: React.FC = () => {
                 <span className="hero-title-navigation">
                     <span className="hero-title-navigating">Navigating</span>
                     <svg
-                        className="hero-title-route"
-                        viewBox="0 0 430 34"
+                        className="hero-title-map-mark"
+                        viewBox="0 0 320 14"
                         preserveAspectRatio="none"
                         aria-hidden="true"
                         focusable="false"
                     >
                         <path
-                            className="hero-title-route-guide"
-                            d="M5 24 C72 6, 128 31, 196 17 S318 7, 424 19"
+                            d="M3 9C54 8 76 4 116 5.5C157 7 181 10 221 7C255 4.5 281 5.5 317 6"
                             pathLength="1"
                         />
-                        <path
-                            className="hero-title-route-ink"
-                            d="M5 24 C44 17, 65 8, 99 12 C134 16, 157 28, 196 17 C238 5, 273 12, 307 11 C345 10, 379 14, 424 19"
-                            pathLength="1"
-                        />
-                        <circle cx="5" cy="24" r="3" />
-                        <circle cx="196" cy="17" r="3" />
-                        <circle cx="424" cy="19" r="3" />
-                        <g className="hero-title-bearing-mark">
-                            <path className="hero-title-bearing-rule" d="M6 19 H378" pathLength="1" />
-                            <g transform="translate(402 19)">
-                                <g className="hero-title-bearing-compass">
-                                    <circle r="10" />
-                                    <path d="M0 -14 V14 M-14 0 H14" />
-                                    <path className="hero-title-bearing-needle" d="M-3 5 L2 -8 L4 -3 L3 7 Z" />
-                                </g>
-                            </g>
-                        </g>
+                        <circle cx="317" cy="6" r="1.7" />
+                    </svg>
+                    <svg
+                        className="hero-title-bearing-mark"
+                        viewBox="0 0 220 14"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                        focusable="false"
+                    >
+                        <path d="M4 8H187L193 4.5V11.5L199 8H216" pathLength="1" />
                     </svg>
                     <span className="hero-title-the">the</span>
                 </span>
@@ -201,15 +192,22 @@ const HeroTitle: React.FC = () => {
                         {translation.text}
                     </bdi>
                     <svg
-                        className="hero-title-signal"
-                        viewBox="0 0 640 20"
+                        className="hero-title-signal-mark"
+                        viewBox="0 0 320 16"
                         preserveAspectRatio="none"
                         aria-hidden="true"
                         focusable="false"
                     >
-                        <path className="hero-title-horizon" d="M2 10 H638" pathLength="1" />
-                        <path className="hero-title-pulse" d="M390 10 C414 10 418 4 442 4 S474 16 500 16 S530 10 554 10" />
-                        <circle cx="554" cy="10" r="2.5" />
+                        <defs>
+                            <linearGradient id="hero-signal-wave" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0" stopColor="#A7F3D0" />
+                                <stop offset="1" stopColor="#A5B4FC" />
+                            </linearGradient>
+                        </defs>
+                        <path
+                            d="M4 9C48 9 58 5.5 94 6.5C128 7.5 139 11 175 9.5C211 8 236 4.5 268 6.5C287 7.7 300 8 316 7.5"
+                            pathLength="1"
+                        />
                     </svg>
                 </span>
             </span>

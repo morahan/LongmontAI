@@ -443,42 +443,12 @@ a {
   color: rgba(255, 255, 255, 0.9);
 }
 
-.hero-title-route {
-  position: absolute;
-  left: 0.04em;
-  bottom: -0.05em;
-  width: 5.45em;
-  height: 0.48em;
-  overflow: visible;
-  color: #7dd3fc;
-  opacity: 0.72;
-  pointer-events: none;
-}
-
-.hero-title-route path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
-  vector-effect: non-scaling-stroke;
-}
-
-/* Optional artwork hooks; each variant opts in without changing its siblings. */
-.hero-title-route-ink,
+.hero-title-map-mark,
 .hero-title-bearing-mark,
-.hero-title-signal {
+.hero-title-signal-mark {
   display: none;
-}
-
-.hero-title-route circle {
-  fill: #e0f2fe;
-  stroke: #075985;
-  stroke-width: 1;
-  opacity: 0.78;
-  transform-box: fill-box;
-  transform-origin: center;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .hero-title-translation-stage {
@@ -497,7 +467,7 @@ a {
   text-wrap: balance;
 }
 
-/* The Cartographer's Route: editorial heading, hand-inked cyan trail, modern destination. */
+/* The Cartographer's Route: one fine organic contour and a quiet destination. */
 .hero-title-visual[data-animation="map-route"] {
   --cartographer-ice: #bae6fd;
   --cartographer-cyan: #22d3ee;
@@ -516,7 +486,6 @@ a {
   font-weight: 400;
   letter-spacing: -0.045em;
   line-height: 0.92;
-  text-shadow: 0 1px 16px rgba(186, 230, 253, 0.12);
   animation: hero-cartographer-reveal 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -531,49 +500,32 @@ a {
   line-height: 1;
 }
 
-.hero-title-visual[data-animation="map-route"] .hero-title-route {
+.hero-title-visual[data-animation="map-route"] .hero-title-map-mark {
+  position: absolute;
   left: 0.02em;
   bottom: -0.13em;
-  width: 5.72em;
-  height: 0.55em;
-  color: var(--cartographer-cyan);
-  opacity: 0.94;
-}
-
-.hero-title-visual[data-animation="map-route"] .hero-title-route-guide {
-  stroke: var(--cartographer-ice);
-  stroke-width: 0.7;
-  opacity: 0.4;
-}
-
-.hero-title-visual[data-animation="map-route"] .hero-title-route-ink {
   display: block;
-  stroke-width: 1.8;
+  width: 5.72em;
+  height: 0.24em;
 }
 
-.hero-title-visual[data-animation="map-route"] .hero-title-route path {
+.hero-title-visual[data-animation="map-route"] .hero-title-map-mark path {
+  fill: none;
+  stroke: #67d7e8;
+  stroke-width: 1.05;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: hero-route-draw 2100ms 420ms cubic-bezier(0.22, 0.75, 0.2, 1) forwards;
+  opacity: 0.68;
+  vector-effect: non-scaling-stroke;
+  animation: hero-mark-draw 950ms 420ms cubic-bezier(0.22, 0.75, 0.2, 1) forwards;
 }
 
-.hero-title-visual[data-animation="map-route"] .hero-title-route-ink {
-  animation-delay: 520ms;
-}
-
-.hero-title-visual[data-animation="map-route"] .hero-title-route circle {
-  fill: #e0f2fe;
-  stroke: #0891b2;
-  stroke-width: 1.15;
+.hero-title-visual[data-animation="map-route"] .hero-title-map-mark circle {
+  fill: #67d7e8;
+  stroke: none;
   opacity: 0;
-  animation: hero-cartographer-waypoint 650ms 1250ms ease-out forwards;
-}
-
-.hero-title-visual[data-animation="map-route"] .hero-title-route circle:nth-of-type(2) {
-  animation-delay: 1770ms;
-}
-
-.hero-title-visual[data-animation="map-route"] .hero-title-route circle:nth-of-type(3) {
-  animation-delay: 2250ms;
+  animation: hero-endpoint-arrive 260ms 1250ms ease-out forwards;
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-translation-stage {
@@ -612,7 +564,7 @@ a {
   font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", Mangal, sans-serif;
 }
 
-/* Poet's Compass: an editorial title settles from a soft reading into its bearing. */
+/* Poet's bearing: one short lavender rule resolves into a notched terminal. */
 .hero-title-visual[data-animation="bearing-lock"] {
   --bearing-lavender: #e9ddff;
   --bearing-rose: #efb8d0;
@@ -634,7 +586,6 @@ a {
   font-weight: 400;
   letter-spacing: 0.045em;
   line-height: 1;
-  text-shadow: 0 0 0.7em rgba(216, 180, 254, 0.16);
   animation: hero-bearing-resolve 1200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -650,58 +601,24 @@ a {
   transform: translateY(0.08em);
 }
 
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route {
-  bottom: -0.03em;
-  left: 0.08em;
-  width: 4.65em;
-  height: 0.42em;
-  color: #d8b4fe;
-  opacity: 0.72;
-}
-
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route > path,
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-route > circle {
-  display: none;
-}
-
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-mark {
+  position: absolute;
+  bottom: -0.02em;
+  left: 0.08em;
   display: block;
+  width: 3.05em;
+  height: 0.2em;
 }
 
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-rule {
-  stroke: currentColor;
-  stroke-width: 1;
-  stroke-dasharray: 1;
-  animation: hero-bearing-line-focus 1150ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass {
-  color: var(--bearing-rose);
-  opacity: 0.9;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hero-bearing-compass-lock 900ms 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass circle {
-  fill: rgba(20, 12, 29, 0.72);
-  stroke: currentColor;
-  stroke-width: 1;
-  opacity: 1;
-}
-
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass path {
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-mark path {
   fill: none;
-  stroke: currentColor;
-  stroke-width: 0.8;
-  stroke-dasharray: none;
-  opacity: 0.66;
-}
-
-.hero-title-visual[data-animation="bearing-lock"] .hero-title-bearing-compass .hero-title-bearing-needle {
-  fill: var(--bearing-rose);
-  stroke: none;
-  opacity: 0.95;
+  stroke: #d8b4fe;
+  stroke-width: 0.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+  animation: hero-bearing-focus 1050ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-translation-stage {
@@ -717,7 +634,6 @@ a {
   font-weight: 500;
   letter-spacing: 0.012em;
   line-height: 1.02;
-  text-shadow: 0 0 1.1em rgba(232, 193, 255, 0.08);
   animation: hero-bearing-translation 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: left center;
 }
@@ -748,10 +664,9 @@ a {
   font-family: "Noto Serif Devanagari", "Kohinoor Devanagari", serif;
 }
 
-/* Signal horizon: quiet editorial telemetry, with a directional phrase reveal. */
+/* Signal horizon: a localized mint-to-indigo wave beneath the phrase. */
 .hero-title-visual[data-animation="signal-horizon"] {
   --signal-mint: #a7f3d0;
-  --signal-cyan: #67e8f9;
   --signal-indigo: #a5b4fc;
 }
 
@@ -787,10 +702,6 @@ a {
   color: rgba(103, 232, 249, 0.58);
 }
 
-.hero-title-visual[data-animation="signal-horizon"] .hero-title-route {
-  display: none;
-}
-
 .hero-title-visual[data-animation="signal-horizon"] .hero-title-translation-stage {
   position: relative;
   width: min(100%, 15em);
@@ -802,7 +713,6 @@ a {
   font-size: clamp(0.72em, 6.5vw, 1em);
   font-weight: 650;
   letter-spacing: -0.035em;
-  text-shadow: 0 0.08em 0.55em rgba(103, 232, 249, 0.13);
   animation: hero-signal-phrase-ltr 1450ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -810,45 +720,25 @@ a {
   animation-name: hero-signal-phrase-rtl;
 }
 
-.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal {
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal-mark {
   position: absolute;
-  inset-inline: 0;
   bottom: 0;
+  inset-inline-start: 14%;
   display: block;
-  width: 100%;
+  width: 48%;
   height: 0.2em;
-  overflow: visible;
-  color: var(--signal-cyan);
-  filter: drop-shadow(0 0 0.16em rgba(103, 232, 249, 0.42));
-  pointer-events: none;
 }
 
-.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal path {
+.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal-mark path {
   fill: none;
-  stroke: currentColor;
+  stroke: url(#hero-signal-wave);
+  stroke-width: 1.05;
   stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.hero-title-visual[data-animation="signal-horizon"] .hero-title-horizon {
-  opacity: 0.42;
-  stroke-width: 1;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: hero-signal-horizon-draw 1250ms 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.hero-title-visual[data-animation="signal-horizon"] .hero-title-pulse {
-  opacity: 0;
-  stroke: var(--signal-indigo);
-  stroke-width: 1.35;
-  animation: hero-signal-pulse-arrive 850ms 920ms ease-out forwards;
-}
-
-.hero-title-visual[data-animation="signal-horizon"] .hero-title-signal circle {
-  fill: var(--signal-mint);
-  opacity: 0;
-  animation: hero-signal-light-arrive 700ms 1250ms ease-out forwards;
+  opacity: 0.72;
+  vector-effect: non-scaling-stroke;
+  animation: hero-mark-draw 1100ms 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .hero-title-script-latin {
@@ -884,14 +774,12 @@ a {
   }
 }
 
-@keyframes hero-route-draw {
+@keyframes hero-mark-draw {
   to { stroke-dashoffset: 0; }
 }
 
-@keyframes hero-cartographer-waypoint {
-  0% { opacity: 0; transform: scale(0.65); }
-  70% { opacity: 1; transform: scale(1.12); }
-  100% { opacity: 0.9; transform: scale(1); }
+@keyframes hero-endpoint-arrive {
+  to { opacity: 0.68; }
 }
 
 @keyframes hero-cartographer-destination {
@@ -904,14 +792,9 @@ a {
   to { opacity: 1; filter: blur(0); letter-spacing: 0.045em; transform: translateX(0); }
 }
 
-@keyframes hero-bearing-line-focus {
-  from { opacity: 0; filter: blur(0.08em); stroke-dashoffset: 1; }
-  to { opacity: 1; filter: blur(0); stroke-dashoffset: 0; }
-}
-
-@keyframes hero-bearing-compass-lock {
-  from { opacity: 0; filter: blur(0.09em); transform: rotate(-24deg) scale(1.32); }
-  to { opacity: 0.9; filter: blur(0); transform: rotate(0) scale(1); }
+@keyframes hero-bearing-focus {
+  from { opacity: 0.16; filter: blur(1.2px); }
+  to { opacity: 0.7; filter: blur(0); }
 }
 
 @keyframes hero-bearing-translation {
@@ -924,21 +807,6 @@ a {
   to { opacity: 1; clip-path: inset(0); transform: translateX(0); }
 }
 
-@keyframes hero-signal-horizon-draw {
-  to { stroke-dashoffset: 0; }
-}
-
-@keyframes hero-signal-pulse-arrive {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 0.82; transform: translateY(0); }
-}
-
-@keyframes hero-signal-light-arrive {
-  0% { opacity: 0; transform: scale(0.5); }
-  65% { opacity: 0.95; transform: scale(1.35); }
-  100% { opacity: 0.78; transform: scale(1); }
-}
-
 @keyframes hero-signal-phrase-ltr {
   from { opacity: 0.32; transform: translateX(-0.045em); }
   to { opacity: 1; transform: translateX(0); }
@@ -948,7 +816,6 @@ a {
   from { opacity: 0.32; transform: translateX(0.045em); }
   to { opacity: 1; transform: translateX(0); }
 }
-
 .home-hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1848,30 +1715,23 @@ main .container > * {
 @media (prefers-reduced-motion: reduce) {
   .hero-title-navigating,
   .hero-title-the,
-  .hero-title-route path,
-  .hero-title-route circle,
-  .hero-title-bearing-compass,
   .hero-title-translation,
-  .hero-title-signal path,
-  .hero-title-signal circle {
+  .hero-title-map-mark path,
+  .hero-title-map-mark circle,
+  .hero-title-bearing-mark path,
+  .hero-title-signal-mark path {
     animation: none !important;
     filter: none !important;
     transform: none !important;
   }
 
-  .hero-title-route path {
+  .hero-title-map-mark path,
+  .hero-title-signal-mark path {
     stroke-dashoffset: 0;
   }
 
-  .hero-title-route circle {
-    opacity: 0.78;
-  }
-
-  .hero-title-visual[data-animation="signal-horizon"] .hero-title-horizon,
-  .hero-title-visual[data-animation="signal-horizon"] .hero-title-pulse,
-  .hero-title-visual[data-animation="signal-horizon"] .hero-title-signal circle {
-    opacity: 0.72;
-    stroke-dashoffset: 0;
+  .hero-title-map-mark circle {
+    opacity: 0.68;
   }
 }
 
@@ -2297,6 +2157,10 @@ iframe {
 
   .hero-title-translation {
     font-size: clamp(0.67em, 10vw, 0.9em);
+  }
+
+  .hero-title-map-mark circle {
+    display: none;
   }
 
   .home-hero-subtitle {
