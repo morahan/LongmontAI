@@ -157,7 +157,7 @@ const HeroTitle: React.FC = () => {
                         className={`hero-title-translation hero-title-script-${translation.script}`}
                         lang={translation.lang}
                         dir={translation.dir}
-                        style={{ color: translation.color }}
+                        style={{ '--hero-language-color': translation.color } as React.CSSProperties}
                     >
                         {translation.text}
                     </bdi>

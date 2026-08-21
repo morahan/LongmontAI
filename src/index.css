@@ -489,6 +489,7 @@ a {
 .hero-title-translation {
   display: block;
   max-width: 100%;
+  color: var(--hero-language-color);
   font-size: clamp(0.68em, 6.4vw, 1em);
   font-weight: 700;
   line-height: 0.98;
@@ -582,14 +583,33 @@ a {
 }
 
 .hero-title-visual[data-animation="map-route"] .hero-title-translation {
-  color: var(--cartographer-ice) !important;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: color-mix(in srgb, var(--hero-language-color) 72%, var(--cartographer-ice));
   font-size: clamp(0.66em, 6vw, 0.88em);
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 0.93;
   text-align: start;
   animation: hero-cartographer-destination 1400ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-script-latin {
+  font-family: "Arial Narrow", "Avenir Next Condensed", ui-sans-serif, system-ui, sans-serif;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-script-cjk {
+  font-family: "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans CJK JP", sans-serif;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-script-arabic {
+  font-family: "Geeza Pro", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-script-hebrew {
+  font-family: "Arial Hebrew", "Noto Sans Hebrew", Arial, sans-serif;
+}
+
+.hero-title-visual[data-animation="map-route"] .hero-title-script-devanagari {
+  font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", Mangal, sans-serif;
 }
 
 /* Poet's Compass: an editorial title settles from a soft reading into its bearing. */
@@ -692,12 +712,7 @@ a {
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-translation {
   width: fit-content;
   max-width: 100%;
-  background: linear-gradient(102deg, #f6eeff 4%, var(--bearing-lavender) 48%, #eab4ce 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent !important;
-  -webkit-text-fill-color: transparent;
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif", Georgia, serif;
+  color: color-mix(in srgb, var(--hero-language-color) 68%, var(--bearing-lavender));
   font-size: clamp(0.65em, 6.2vw, 0.96em);
   font-weight: 500;
   letter-spacing: 0.012em;
@@ -711,6 +726,10 @@ a {
   margin-left: auto;
   margin-right: 0;
   transform-origin: right center;
+}
+
+.hero-title-visual[data-animation="bearing-lock"] .hero-title-script-latin {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif", Georgia, serif;
 }
 
 .hero-title-visual[data-animation="bearing-lock"] .hero-title-script-cjk {
