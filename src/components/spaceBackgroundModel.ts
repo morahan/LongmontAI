@@ -4,6 +4,7 @@ export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
 export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
+export const AMBIENT_STAR_RADIUS_RANGE = [0.75, 1.9] as const;
 export const DESKTOP_TRAVELER_COUNT = 22;
 export const MOBILE_TRAVELER_COUNT = 14;
 export const MOBILE_BREAKPOINT = 640;
@@ -21,6 +22,7 @@ export const TRAVELER_DETAIL_THRESHOLDS = [0.28, 0.5, 0.68] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
 export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const PLANET_RING_LINE_WIDTH = 0.8;
+export const PLANET_RADIUS_RANGE = [1.45, 2.3] as const;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
@@ -246,7 +248,7 @@ export const createAmbientLayout = (seed: number, generation: number): DistantSt
     return Array.from({ length: CONSTELLATION_STAR_COUNT }, (_, index) => ({
         x: between(random, 0.025, 0.975),
         y: between(random, 0.025, 0.975),
-        size: between(random, 0.65, 1.7),
+        size: between(random, AMBIENT_STAR_RADIUS_RANGE[0], AMBIENT_STAR_RADIUS_RANGE[1]),
         alpha: between(random, 0.28, 0.68),
         driftMode: modes[index],
         driftSpeed: between(random, 0.0007, 0.0017),
@@ -570,7 +572,7 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
     let ringsRemaining = 2;
     const atmosphereOffset = hashUint(travelerSeed, cycle, 97) % PLANET_ATMOSPHERE_CLASSES.length;
     return Array.from({ length: count }, (_, index) => {
-        const radius = between(random, 1.6, 2.5);
+        const radius = between(random, PLANET_RADIUS_RANGE[0], PLANET_RADIUS_RANGE[1]);
         const moons: Moon[] = [];
         if (moonsRemaining > 0 && random() < 0.22) {
             moons.push({

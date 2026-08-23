@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   AMBIENT_STAR_COUNT,
+  AMBIENT_STAR_RADIUS_RANGE,
   AMBIENT_STAR_RGB,
   ATMOSPHERE_HALO_RADIUS_MULTIPLIER,
   CONSTELLATION_INTERVAL_SECONDS,
@@ -17,6 +18,7 @@ import {
   NEAR_DEPTH,
   PLANET_ATMOSPHERE_CLASSES,
   PLANET_COUNT_BASIS_POINTS,
+  PLANET_RADIUS_RANGE,
   PLANET_RING_LINE_WIDTH,
   PLANET_SURFACE_LOD_DIAMETERS,
   SYSTEM_FADE_OUT_PROGRESS,
@@ -135,6 +137,9 @@ test('ambient stars reduce exactly from 50 to 35 while all 72 constellation anch
   assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 36);
   assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 36);
   assert.ok(stars.every((star) => star.driftSpeed >= 0.0007 && star.driftSpeed <= 0.0017));
+  assert.deepEqual(AMBIENT_STAR_RADIUS_RANGE, [0.75, 1.9]);
+  assert.ok(stars.every((star) =>
+    star.size >= AMBIENT_STAR_RADIUS_RANGE[0] && star.size <= AMBIENT_STAR_RADIUS_RANGE[1]));
   assert.ok(stars.every((star) => star.alpha >= 0.28 && star.alpha <= 0.68));
 
   const linear = { ...stars[0], x: 0.25, y: 0.4, driftMode: 'wrap', driftAngle: 0, driftSpeed: 0.001 };
@@ -415,7 +420,8 @@ test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', (
   assert.notDeepEqual(createPlanetSystem(0xface, 3), createPlanetSystem(0xface, 4));
 });
 
-test('close-system progression reaches unmistakable planet and moon sizes before full texture LOD', () => {
+test('close-system progression keeps smaller planets and moons legible before full texture LOD', () => {
+  assert.deepEqual(PLANET_RADIUS_RANGE, [1.45, 2.3]);
   assert.deepEqual(PLANET_SURFACE_LOD_DIAMETERS, [5, 10]);
   assert.equal(getPlanetSurfaceDetailLevel(2, 1.2), 0);
   assert.equal(getPlanetSurfaceDetailLevel(2.5, 1), 1);
@@ -428,8 +434,10 @@ test('close-system progression reaches unmistakable planet and moon sizes before
   const closestScale = getSystemScale({ progress: SYSTEM_MAX_PROGRESS });
   for (let seed = 1; seed <= 1000; seed += 1) {
     createPlanetSystem(seed, 0).forEach((planet) => {
+      assert.ok(planet.radius >= PLANET_RADIUS_RANGE[0] && planet.radius <= PLANET_RADIUS_RANGE[1]);
       const cssDiameter = planet.radius * closestScale * 2;
-      assert.ok(cssDiameter >= 12, `seed ${seed} body is only ${cssDiameter}px`);
+      assert.ok(cssDiameter >= 11.6, `seed ${seed} body is only ${cssDiameter}px`);
+      assert.ok(cssDiameter <= 18.4, `seed ${seed} body is ${cssDiameter}px`);
       assert.equal(getPlanetSurfaceDetailLevel(planet.radius, closestScale), 2);
       planet.moons.forEach((moon) => {
         assert.ok(moon.radius * closestScale * 2 >= 3.5,

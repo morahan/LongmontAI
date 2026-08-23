@@ -142,6 +142,27 @@ const drawAtmosphereSurface = (
     ctx.restore();
 };
 
+const drawPlanetRing = (
+    ctx: CanvasRenderingContext2D,
+    planet: OrbitingPlanet,
+    startAngle: number,
+    endAngle: number,
+) => {
+    ctx.strokeStyle = 'rgba(222, 231, 235, 0.84)';
+    ctx.lineWidth = PLANET_RING_LINE_WIDTH;
+    ctx.beginPath();
+    ctx.ellipse(
+        planet.x,
+        planet.y,
+        planet.radius * 1.85,
+        planet.radius * 0.55,
+        planet.tilt,
+        startAngle,
+        endAngle,
+    );
+    ctx.stroke();
+};
+
 const drawPlanet = (
     ctx: CanvasRenderingContext2D,
     planet: OrbitingPlanet,
@@ -151,13 +172,7 @@ const drawPlanet = (
 ) => {
     ctx.save();
     ctx.globalAlpha = opacity;
-    if (planet.hasRing) {
-        ctx.strokeStyle = 'rgba(222, 231, 235, 0.84)';
-        ctx.lineWidth = PLANET_RING_LINE_WIDTH;
-        ctx.beginPath();
-        ctx.ellipse(planet.x, planet.y, planet.radius * 1.85, planet.radius * 0.55, planet.tilt, 0, TAU);
-        ctx.stroke();
-    }
+    if (planet.hasRing) drawPlanetRing(ctx, planet, Math.PI, TAU);
 
     if (hasAtmosphereHalo(planet.atmosphere)) {
         ctx.strokeStyle = planet.atmosphere === 'ice'
@@ -192,6 +207,7 @@ const drawPlanet = (
     ctx.beginPath();
     ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
     ctx.fill();
+    if (planet.hasRing) drawPlanetRing(ctx, planet, 0, Math.PI);
     ctx.restore();
     planet.moons.forEach((moon) => drawMoon(ctx, planet, moon, simulationSeconds, opacity));
 };
@@ -290,14 +306,6 @@ const drawPlanetarySystem = (
     ctx.save();
     ctx.translate(projection.x, projection.y);
     ctx.scale(scale, scale);
-
-    planets.forEach((planet) => {
-        ctx.strokeStyle = `rgba(165, 207, 226, ${opacity * 0.38})`;
-        ctx.lineWidth = 0.85 / scale;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, planet.orbitRadius, planet.orbitRadius * planet.inclination, planet.tilt, 0, TAU);
-        ctx.stroke();
-    });
 
     // Negative z is behind the sun. Positive z is painted over it.
     orbiting.filter((planet) => planet.z < 0)
