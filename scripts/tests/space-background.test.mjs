@@ -57,6 +57,7 @@ import {
   isSystemInViewport,
   projectTraveler,
   selectProminentSystem,
+  selectProminentSystemOwner,
   starCountForWidth,
   travelerCountForWidth,
 } from '../../src/components/spaceBackgroundModel.ts';
@@ -366,6 +367,74 @@ test('system opacity fades continuously to exact zero at the selection cutoff', 
   assert.equal(getSystemOpacity(projections[2]), 0);
   projections[2] = projectionAt(SYSTEM_MAX_PROGRESS + 1e-12);
   assert.equal(selectProminentSystem(travelers, projections, 1000, 600), -1);
+});
+
+test('sticky ownership prevents seed-1 carrier transfer while the outgoing system remains visible', () => {
+  const width = 1440;
+  const height = 800;
+  const travelers = createSpaceScene(1).travelers;
+  let owner = null;
+  let previousOwner = null;
+  let sawClippedOverlap = false;
+  let sawCleanTransfer = false;
+
+  for (let elapsed = 0; elapsed <= 18; elapsed += 0.01) {
+    const projections = travelers.map((traveler) => projectTraveler(traveler, elapsed, width, height));
+    const frameSelection = selectProminentSystem(travelers, projections, width, height);
+    previousOwner = owner;
+    owner = selectProminentSystemOwner(travelers, projections, width, height, owner);
+
+    if (elapsed >= 16.35 && elapsed < 16.36) {
+      assert.equal(frameSelection, 8, 'fixture no longer exercises frame-by-frame ownership transfer');
+      assert.equal(owner?.travelerIndex, 2);
+      assert.ok(getSystemOpacity(projections[2]) > 0.07);
+      assert.equal(isSystemInViewport(travelers[2], projections[2], width, height), false);
+      sawClippedOverlap = true;
+    }
+    if (previousOwner?.travelerIndex === 2 && owner?.travelerIndex === 8) {
+      assert.equal(getSystemOpacity(projections[2]), 0);
+      assert.equal(projections[2].cycle, previousOwner.cycle);
+      sawCleanTransfer = true;
+    }
+  }
+
+  assert.equal(sawClippedOverlap, true);
+  assert.equal(sawCleanTransfer, true);
+});
+
+test('traveler trajectories remain straight and collinear through every reveal threshold', () => {
+  const width = 1440;
+  const height = 800;
+  const center = { x: width * 0.5, y: height * 0.45 };
+  const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const progresses = [
+    TRAVELER_DETAIL_THRESHOLDS[0] - 0.000001,
+    TRAVELER_DETAIL_THRESHOLDS[0],
+    SYSTEM_MIN_PROGRESS - 0.000001,
+    SYSTEM_MIN_PROGRESS,
+    TRAVELER_DETAIL_THRESHOLDS[1],
+    TRAVELER_DETAIL_THRESHOLDS[2],
+    SYSTEM_FADE_OUT_PROGRESS,
+    SYSTEM_MAX_PROGRESS,
+  ];
+  const projections = progresses.map((progress) => projectTraveler(
+    traveler,
+    progress * (FAR_DEPTH - NEAR_DEPTH) / traveler.speed,
+    width,
+    height,
+  ));
+  const direction = {
+    x: projections[0].x - center.x,
+    y: projections[0].y - center.y,
+  };
+
+  projections.forEach((projection, index) => {
+    closeTo(projection.progress, progresses[index]);
+    assert.equal(projection.cycle, 0);
+    const offset = { x: projection.x - center.x, y: projection.y - center.y };
+    closeTo(direction.x * offset.y - direction.y * offset.x, 0, 1e-8);
+    assert.ok(direction.x * offset.x + direction.y * offset.y > 0);
+  });
 });
 
 test('the expanded deterministic carrier minority still selects one nearest useful system', () => {

@@ -137,6 +137,11 @@ export interface ProjectedTraveler {
     cycle: number;
 }
 
+export interface ProminentSystemOwner {
+    travelerIndex: number;
+    cycle: number;
+}
+
 export interface ConstellationPhase {
     name: ConstellationPhaseName;
     event: number;
@@ -712,6 +717,26 @@ export const selectProminentSystem = (
         }
     }
     return selected;
+};
+
+/** A visible system keeps its carrier until its lifecycle has fully faded or changed cycle. */
+export const selectProminentSystemOwner = (
+    travelers: Traveler[],
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+    currentOwner: ProminentSystemOwner | null,
+): ProminentSystemOwner | null => {
+    if (currentOwner) {
+        const projection = projections[currentOwner.travelerIndex];
+        if (projection?.cycle === currentOwner.cycle && getSystemOpacity(projection) > 0) {
+            return currentOwner;
+        }
+    }
+
+    const travelerIndex = selectProminentSystem(travelers, projections, width, height);
+    if (travelerIndex < 0) return null;
+    return { travelerIndex, cycle: projections[travelerIndex].cycle };
 };
 
 export const createSpaceScene = (seed = createCryptoSeed()): SpaceScene => {

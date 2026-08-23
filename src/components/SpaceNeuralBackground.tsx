@@ -19,11 +19,12 @@ import {
     hasAtmosphereHalo,
     isStarRenderable,
     projectTraveler,
-    selectProminentSystem,
+    selectProminentSystemOwner,
     travelerCountForWidth,
     type Moon,
     type OrbitingPlanet,
     type ProjectedTraveler,
+    type ProminentSystemOwner,
     type Traveler,
 } from './spaceBackgroundModel';
 
@@ -336,6 +337,7 @@ const SpaceNeuralBackground: React.FC = () => {
         let reducedMotion = motionQuery.matches;
         let backdropGlow: CanvasGradient | null = null;
         let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
+        let prominentSystemOwner: ProminentSystemOwner | null = null;
 
         const drawScene = (elapsed: number, renderDetails = true) => {
             if (width <= 0 || height <= 0) return;
@@ -388,7 +390,13 @@ const SpaceNeuralBackground: React.FC = () => {
             const travelers = scene.travelers.slice(0, travelerCount);
             const projections = travelers.map((traveler) =>
                 projectTraveler(traveler, simulationSeconds, width, height));
-            const prominentSystem = selectProminentSystem(travelers, projections, width, height);
+            prominentSystemOwner = selectProminentSystemOwner(
+                travelers,
+                projections,
+                width,
+                height,
+                prominentSystemOwner,
+            );
 
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
@@ -416,7 +424,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
 
                 drawTravelerStar(ctx, traveler, projection);
-                if (index === prominentSystem) {
+                if (index === prominentSystemOwner?.travelerIndex) {
                     drawPlanetarySystem(ctx, projection, traveler.seed, simulationSeconds);
                 }
             }
