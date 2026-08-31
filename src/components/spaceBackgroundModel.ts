@@ -5,8 +5,8 @@ export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
 export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
 export const AMBIENT_STAR_RADIUS_RANGE = [0.75, 1.9] as const;
-export const DESKTOP_TRAVELER_COUNT = 22;
-export const MOBILE_TRAVELER_COUNT = 14;
+export const DESKTOP_TRAVELER_COUNT = 23;
+export const MOBILE_TRAVELER_COUNT = 15;
 export const MOBILE_BREAKPOINT = 640;
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
@@ -17,12 +17,13 @@ export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
-export const SYSTEM_FADE_OUT_PROGRESS = 0.78;
 export const TRAVELER_DETAIL_THRESHOLDS = [0.28, 0.5, 0.68] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
 export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const PLANET_RING_LINE_WIDTH = 0.8;
 export const PLANET_RADIUS_RANGE = [1.45, 2.3] as const;
+export const PLANET_RENDER_SCALE = 0.5;
+export const SYSTEM_STAR_RADIUS = 10.5;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
@@ -202,7 +203,7 @@ export const starCountForWidth = (_width: number) => AMBIENT_STAR_COUNT;
 export const travelerCountForWidth = (width: number) =>
     width < MOBILE_BREAKPOINT ? MOBILE_TRAVELER_COUNT : DESKTOP_TRAVELER_COUNT;
 
-/** Exactly indices 2, 8, and 14 of the desktop field are eligible system carriers. */
+/** Every sixth moving star is eligible to carry a prominent planetary system. */
 export const isSystemCarrier = (_traveler: Traveler, index: number) => index % 6 === 2;
 
 export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhase => {
@@ -642,14 +643,13 @@ export const getOrbitingPlanets = (
     .map((planet) => getOrbitingPlanet(planet, simulationSeconds, center))
     .sort((left, right) => left.z - right.z);
 
-/** Render opacity reaches exact zero before selection ends, preventing a close-system pop. */
-export const getSystemOpacity = (projection: ProjectedTraveler) => {
+/** Systems reveal smoothly, then stay opaque until their rendered bounds leave the viewport. */
+export const getSystemOpacity = (
+    projection: ProjectedTraveler,
+    carrierOpacity = projection.opacity,
+) => {
     const reveal = smoothstep((projection.progress - SYSTEM_MIN_PROGRESS) / 0.12);
-    const exit = 1 - smoothstep(
-        (projection.progress - SYSTEM_FADE_OUT_PROGRESS)
-        / (SYSTEM_MAX_PROGRESS - SYSTEM_FADE_OUT_PROGRESS),
-    );
-    return projection.opacity * reveal * exit;
+    return carrierOpacity * reveal;
 };
 
 /** Systems stay compact on reveal, then resolve rapidly into a legible close encounter. */
@@ -661,16 +661,17 @@ export const getSystemScale = (projection: ProjectedTraveler) => {
 };
 
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
+    const renderedRadius = planet.radius * PLANET_RENDER_SCALE;
     const atmosphereRadius = hasAtmosphereHalo(planet.atmosphere)
-        ? planet.radius * ATMOSPHERE_HALO_RADIUS_MULTIPLIER
-        : planet.radius;
+        ? renderedRadius * ATMOSPHERE_HALO_RADIUS_MULTIPLIER
+        : renderedRadius;
     const bodyExtent = planet.orbitRadius + atmosphereRadius;
     const moonExtent = planet.moons.reduce(
         (extent, moon) => Math.max(extent, planet.orbitRadius + moon.orbitRadius + moon.radius),
         bodyExtent,
     );
     const ringExtent = planet.hasRing
-        ? planet.orbitRadius + planet.radius * 1.85 + PLANET_RING_LINE_WIDTH * 0.5
+        ? planet.orbitRadius + renderedRadius * 1.85 + PLANET_RING_LINE_WIDTH * 0.5
         : bodyExtent;
     return Math.max(largest, bodyExtent, moonExtent, ringExtent);
 }, 7);
@@ -680,7 +681,11 @@ export const getSystemSafetyMargin = (traveler: Traveler, projection: ProjectedT
     const systemExtent = getPlanetSystemExtent(createPlanetSystem(traveler.seed, projection.cycle))
         * getSystemScale(projection);
     const appearance = getTravelerAppearance(traveler, projection.progress);
-    const starExtent = Math.max(appearance.haloRadius, appearance.flareLength);
+    const starExtent = Math.max(
+        SYSTEM_STAR_RADIUS * getSystemScale(projection),
+        appearance.haloRadius,
+        appearance.flareLength,
+    );
     return Math.max(systemExtent, starExtent) + 0.5;
 };
 
@@ -694,6 +699,39 @@ export const isSystemInViewport = (
     const margin = getSystemSafetyMargin(traveler, projection);
     return projection.x >= margin && projection.x <= width - margin
         && projection.y >= margin && projection.y <= height - margin;
+};
+
+export const isSystemOverlappingViewport = (
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    width: number,
+    height: number,
+) => {
+    if (width <= 0 || height <= 0) return false;
+    const margin = getSystemSafetyMargin(traveler, projection);
+    return projection.x + margin >= 0 && projection.x - margin <= width
+        && projection.y + margin >= 0 && projection.y - margin <= height;
+};
+
+/** Carrier paths must clear the viewport before their depth cycle resets to the far field. */
+export const doesSystemExitViewportBeforeCycle = (
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    width: number,
+    height: number,
+) => {
+    if (width <= 0 || height <= 0 || projection.depth <= 0) return false;
+    const centerX = width * 0.5;
+    const centerY = height * 0.45;
+    const nearScale = projection.depth / NEAR_DEPTH;
+    const nearProjection: ProjectedTraveler = {
+        ...projection,
+        x: centerX + (projection.x - centerX) * nearScale,
+        y: centerY + (projection.y - centerY) * nearScale,
+        depth: NEAR_DEPTH,
+        progress: 1,
+    };
+    return !isSystemOverlappingViewport(traveler, nearProjection, width, height);
 };
 
 export const selectProminentSystem = (
@@ -710,6 +748,7 @@ export const selectProminentSystem = (
             || !projection
             || projection.progress < SYSTEM_MIN_PROGRESS
             || projection.progress > SYSTEM_MAX_PROGRESS
+            || !doesSystemExitViewportBeforeCycle(travelers[index], projection, width, height)
             || !isSystemInViewport(travelers[index], projection, width, height)) continue;
         if (projection.progress > nearestProgress) {
             selected = index;
@@ -719,7 +758,7 @@ export const selectProminentSystem = (
     return selected;
 };
 
-/** A visible system keeps its carrier until its lifecycle has fully faded or changed cycle. */
+/** An owned system remains mounted until its complete rendered bounds leave the viewport. */
 export const selectProminentSystemOwner = (
     travelers: Traveler[],
     projections: ProjectedTraveler[],
@@ -729,7 +768,10 @@ export const selectProminentSystemOwner = (
 ): ProminentSystemOwner | null => {
     if (currentOwner) {
         const projection = projections[currentOwner.travelerIndex];
-        if (projection?.cycle === currentOwner.cycle && getSystemOpacity(projection) > 0) {
+        const traveler = travelers[currentOwner.travelerIndex];
+        if (traveler
+            && projection?.cycle === currentOwner.cycle
+            && isSystemOverlappingViewport(traveler, projection, width, height)) {
             return currentOwner;
         }
     }

@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Activity, BrainCircuit, ExternalLink, Users, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
 
@@ -6,20 +6,63 @@ interface LayoutProps {
     children: ReactNode;
 }
 
+const HEADER_SCROLL_THRESHOLD = 48;
+
 const Layout: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
+    const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    const [isHeaderScrolled, setIsHeaderScrolled] = useState(
+        () => window.scrollY >= HEADER_SCROLL_THRESHOLD
+    );
+    const isHome = location.pathname === '/';
+    const isHeaderCompact = !isHome || isHeaderScrolled;
 
     useEffect(() => {
         setIsMobileNavOpen(false);
     }, [location.pathname]);
+
+    useEffect(() => {
+        let animationFrameId: number | null = null;
+
+        const updateHeaderState = () => {
+            animationFrameId = null;
+            setIsHeaderScrolled(window.scrollY >= HEADER_SCROLL_THRESHOLD);
+        };
+        const handleScroll = () => {
+            if (animationFrameId === null) {
+                animationFrameId = window.requestAnimationFrame(updateHeaderState);
+            }
+        };
+
+        updateHeaderState();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
+        };
+    }, [location.pathname]);
+
+    useEffect(() => {
+        if (!isMobileNavOpen) return undefined;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault();
+            setIsMobileNavOpen(false);
+            menuTriggerRef.current?.focus();
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isMobileNavOpen]);
 
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden">
             {/* Skip to main content — first focusable element */}
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:right-0 focus:z-[100] focus:bg-[var(--accent-cyan)] focus:text-black focus:text-center focus:py-3 focus:px-4 focus:font-semibold focus:text-sm"
+                className="skip-link sr-only"
             >
                 Skip to main content
             </a>
@@ -27,42 +70,52 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Background Elements */}
             <div className="bg-mesh" />
 
-            <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 header-glass">
-                <nav aria-label="Main navigation" className="container h-16 sm:h-20 flex flex-row items-center justify-between px-4 sm:px-0">
-                    <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
+            <header
+                className={`site-header fixed top-0 left-0 right-0 z-50 header-glass ${isHeaderCompact ? 'site-header--compact' : 'site-header--hero'}`}
+                data-header-state={isHeaderCompact ? 'compact' : 'hero'}
+            >
+                <nav aria-label="Main navigation" className="site-header-nav container flex flex-row items-center justify-between px-4 sm:px-0">
+                    <Link
+                        to="/"
+                        aria-current={isHome ? 'page' : undefined}
+                        className="site-header-brand flex items-center gap-2 sm:gap-3 group"
+                    >
                         <img
                             src="/brand/logo/logo-128.png"
-                            alt="LongmontAI logo"
-                            className="w-9 h-9 rounded-lg border border-white/10 transition-colors"
+                            alt=""
+                            className="site-header-logo w-9 h-9 rounded-lg border border-white/10 transition-colors"
                         />
-                        <span className="font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
+                        <span className="site-header-name font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
                     </Link>
                     <div className="desktop-nav">
                         <Link
                             to="/model-watch"
                             aria-label="Model Watch"
                             title="Model Watch"
+                            aria-current={location.pathname === '/model-watch' ? 'page' : undefined}
                             className={`nav-link${location.pathname === '/model-watch' ? ' is-active' : ''}`}
                         >
-                            <Activity size={16} />
+                            <Activity size={16} aria-hidden="true" />
                             <span>Model Watch</span>
                         </Link>
                         <Link
                             to="/leaderboard"
                             aria-label="Leaderboard"
                             title="Leaderboard"
+                            aria-current={location.pathname === '/leaderboard' ? 'page' : undefined}
                             className={`nav-link${location.pathname === '/leaderboard' ? ' is-active' : ''}`}
                         >
-                            <Trophy size={16} />
+                            <Trophy size={16} aria-hidden="true" />
                             <span>Leaderboard</span>
                         </Link>
                         <Link
                             to="/timeline"
                             aria-label="AI Timeline"
                             title="AI Timeline"
+                            aria-current={location.pathname === '/timeline' ? 'page' : undefined}
                             className={`nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}
                         >
-                            <Network size={16} />
+                            <Network size={16} aria-hidden="true" />
                             <span>Timeline</span>
                         </Link>
                         <a
@@ -73,24 +126,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             title="GitHub"
                             className="nav-link"
                         >
-                            <GitBranch size={16} />
+                            <GitBranch size={16} aria-hidden="true" />
                             <span>GitHub</span>
                         </a>
                         <Link
                             to="/countdown"
                             aria-label="Countdown"
                             title="Countdown"
+                            aria-current={location.pathname === '/countdown' ? 'page' : undefined}
                             className={`nav-link nav-link-button${location.pathname === '/countdown' ? ' is-active' : ''}`}
                         >
-                            <Clock size={14} />
+                            <Clock size={14} aria-hidden="true" />
                             <span>Countdown</span>
                         </Link>
                     </div>
                     <button
+                        ref={menuTriggerRef}
                         type="button"
                         className="mobile-menu-trigger"
                         aria-expanded={isMobileNavOpen}
                         aria-controls="mobile-main-navigation"
+                        aria-label={isMobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                        title={isMobileNavOpen ? 'Close menu' : 'Open menu'}
                         onClick={() => setIsMobileNavOpen((isOpen) => !isOpen)}
                     >
                         {isMobileNavOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
@@ -98,21 +155,37 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </button>
                 </nav>
                 {isMobileNavOpen && (
-                    <div id="mobile-main-navigation" className="mobile-nav-panel">
+                    <nav id="mobile-main-navigation" aria-label="Menu navigation" className="mobile-nav-panel">
                         <div className="container mobile-nav-grid">
-                            <Link to="/model-watch" className={`mobile-nav-link${location.pathname === '/model-watch' ? ' is-active' : ''}`}>
+                            <Link
+                                to="/model-watch"
+                                aria-current={location.pathname === '/model-watch' ? 'page' : undefined}
+                                className={`mobile-nav-link${location.pathname === '/model-watch' ? ' is-active' : ''}`}
+                            >
                                 <Activity size={16} aria-hidden="true" />
                                 <span>Model Watch</span>
                             </Link>
-                            <Link to="/leaderboard" className={`mobile-nav-link${location.pathname === '/leaderboard' ? ' is-active' : ''}`}>
+                            <Link
+                                to="/leaderboard"
+                                aria-current={location.pathname === '/leaderboard' ? 'page' : undefined}
+                                className={`mobile-nav-link${location.pathname === '/leaderboard' ? ' is-active' : ''}`}
+                            >
                                 <Trophy size={16} aria-hidden="true" />
                                 <span>Leaderboard</span>
                             </Link>
-                            <Link to="/timeline" className={`mobile-nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}>
+                            <Link
+                                to="/timeline"
+                                aria-current={location.pathname === '/timeline' ? 'page' : undefined}
+                                className={`mobile-nav-link${location.pathname === '/timeline' ? ' is-active' : ''}`}
+                            >
                                 <Network size={16} aria-hidden="true" />
                                 <span>Timeline</span>
                             </Link>
-                            <Link to="/countdown" className={`mobile-nav-link${location.pathname === '/countdown' ? ' is-active' : ''}`}>
+                            <Link
+                                to="/countdown"
+                                aria-current={location.pathname === '/countdown' ? 'page' : undefined}
+                                className={`mobile-nav-link${location.pathname === '/countdown' ? ' is-active' : ''}`}
+                            >
                                 <Clock size={16} aria-hidden="true" />
                                 <span>Countdown</span>
                             </Link>
@@ -135,13 +208,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span>Meetup</span>
                             </a>
                         </div>
-                    </div>
+                    </nav>
                 )}
             </header>
 
             <main
                 id="main-content"
-                className={`flex-grow pt-32 pb-20${location.pathname === '/' ? ' home-main' : ''}`}
+                tabIndex={-1}
+                className={`flex-grow pt-32 pb-20${isHome ? ' home-main' : ''}`}
             >
                 <div className="container">
                     {children}

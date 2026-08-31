@@ -19,11 +19,12 @@ import {
   PLANET_ATMOSPHERE_CLASSES,
   PLANET_COUNT_BASIS_POINTS,
   PLANET_RADIUS_RANGE,
+  PLANET_RENDER_SCALE,
   PLANET_RING_LINE_WIDTH,
   PLANET_SURFACE_LOD_DIAMETERS,
-  SYSTEM_FADE_OUT_PROGRESS,
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
+  SYSTEM_STAR_RADIUS,
   TRAVELER_DETAIL_THRESHOLDS,
   TWINKLE_WINDOW_SECONDS,
   chooseWeightedPlanetCount,
@@ -33,6 +34,7 @@ import {
   createPlanetSystem,
   createSeededRandom,
   createSpaceScene,
+  doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
   getConstellationStrength,
   getDriftedStar,
@@ -55,6 +57,7 @@ import {
   isStarRenderable,
   isSystemCarrier,
   isSystemInViewport,
+  isSystemOverlappingViewport,
   projectTraveler,
   selectProminentSystem,
   selectProminentSystemOwner,
@@ -323,19 +326,18 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
   closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
 });
 
-test('moving traveler counts rise by the nearest whole 20% while ambient stars remain at 35', () => {
+test('moving traveler counts rise exactly 5% from 22 / 14 with nearest-integer rounding', () => {
   const scene = createSpaceScene(9876);
   assert.equal(AMBIENT_STAR_COUNT, 35);
-  assert.equal(DESKTOP_TRAVELER_COUNT, Math.round(18 * 1.2));
-  assert.equal(MOBILE_TRAVELER_COUNT, Math.round(12 * 1.2));
-  assert.equal(scene.travelers.length, 22);
-  assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 14);
-  assert.equal(travelerCountForWidth(639), 14);
-  assert.equal(travelerCountForWidth(640), 22);
+  assert.equal(DESKTOP_TRAVELER_COUNT, Math.round(22 * 1.05));
+  assert.equal(MOBILE_TRAVELER_COUNT, Math.round(14 * 1.05));
+  assert.equal(scene.travelers.length, 23);
+  assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 15);
+  assert.equal(travelerCountForWidth(639), 15);
+  assert.equal(travelerCountForWidth(640), 23);
 });
 
-test('system opacity fades continuously to exact zero at the selection cutoff', () => {
-  assert.equal(SYSTEM_FADE_OUT_PROGRESS, 0.78);
+test('system opacity reveals once and remains stable past the selection cutoff', () => {
   const projectionAt = (progress, opacity = 0.72) => ({
     x: 500,
     y: 300,
@@ -345,61 +347,44 @@ test('system opacity fades continuously to exact zero at the selection cutoff', 
     opacity,
     cycle: 0,
   });
-  closeTo(getSystemOpacity(projectionAt(SYSTEM_FADE_OUT_PROGRESS)), 0.72);
-  const fadeSamples = [0.78, 0.8, 0.82, 0.83, 0.839, 0.8397, 0.8399, 0.84]
+  assert.equal(getSystemOpacity(projectionAt(SYSTEM_MIN_PROGRESS - 0.001)), 0);
+  closeTo(getSystemOpacity(projectionAt(SYSTEM_MIN_PROGRESS + 0.06)), 0.36);
+  const stableSamples = [SYSTEM_MIN_PROGRESS + 0.12, 0.78, 0.84, 0.9, 0.99]
     .map((progress) => getSystemOpacity(projectionAt(progress)));
-  assert.ok(fadeSamples.every((opacity, index) => index === 0 || opacity <= fadeSamples[index - 1]));
-  assert.ok(getSystemOpacity(projectionAt(0.8)) > 0.5, 'substantial close detail fades too early');
-  assert.equal(fadeSamples.at(-1), 0);
-  closeTo(getSystemOpacity(projectionAt(0.8, 0.36)), getSystemOpacity(projectionAt(0.8)) * 0.5);
+  stableSamples.forEach((opacity) => closeTo(opacity, 0.72));
+  closeTo(getSystemOpacity(projectionAt(0.9, 0), 0.36), 0.36);
 
-  // Even a maximum-speed traveler 0.01s before crossing is already visually zero.
-  const maximumTenMillisecondProgress = 28 * 0.01 / (FAR_DEPTH - NEAR_DEPTH);
-  const justBefore = SYSTEM_MAX_PROGRESS - maximumTenMillisecondProgress;
-  assert.ok(getSystemOpacity(projectionAt(justBefore)) < 0.0001);
-
-  const scene = createSpaceScene(9876);
-  const travelers = scene.travelers.slice(0, 3);
-  const projections = travelers.map((_, index) => projectionAt(index === 2 ? justBefore : 0));
-  assert.equal(selectProminentSystem(travelers, projections, 1000, 600), 2);
-  projections[2] = projectionAt(SYSTEM_MAX_PROGRESS);
-  assert.equal(selectProminentSystem(travelers, projections, 1000, 600), 2);
-  assert.equal(getSystemOpacity(projections[2]), 0);
-  projections[2] = projectionAt(SYSTEM_MAX_PROGRESS + 1e-12);
-  assert.equal(selectProminentSystem(travelers, projections, 1000, 600), -1);
 });
 
-test('sticky ownership prevents seed-1 carrier transfer while the outgoing system remains visible', () => {
+test('sticky ownership lasts through partial clipping and ends only after the system clears the screen', () => {
   const width = 1440;
   const height = 800;
   const travelers = createSpaceScene(1).travelers;
-  let owner = null;
-  let previousOwner = null;
-  let sawClippedOverlap = false;
-  let sawCleanTransfer = false;
+  const projection = {
+    x: 0,
+    y: height * 0.5,
+    depth: 100,
+    progress: 0.9,
+    radius: 5,
+    opacity: 0,
+    cycle: 0,
+  };
+  const margin = getSystemSafetyMargin(travelers[2], projection);
+  const projections = Array(travelers.length);
+  projections[2] = { ...projection, x: -margin * 0.5 };
+  const currentOwner = { travelerIndex: 2, cycle: 0 };
 
-  for (let elapsed = 0; elapsed <= 18; elapsed += 0.01) {
-    const projections = travelers.map((traveler) => projectTraveler(traveler, elapsed, width, height));
-    const frameSelection = selectProminentSystem(travelers, projections, width, height);
-    previousOwner = owner;
-    owner = selectProminentSystemOwner(travelers, projections, width, height, owner);
+  assert.equal(isSystemInViewport(travelers[2], projections[2], width, height), false);
+  assert.equal(isSystemOverlappingViewport(travelers[2], projections[2], width, height), true);
+  assert.deepEqual(
+    selectProminentSystemOwner(travelers, projections, width, height, currentOwner),
+    currentOwner,
+  );
+  assert.ok(getSystemOpacity(projections[2], travelers[2].alpha) > 0);
 
-    if (elapsed >= 16.35 && elapsed < 16.36) {
-      assert.equal(frameSelection, 8, 'fixture no longer exercises frame-by-frame ownership transfer');
-      assert.equal(owner?.travelerIndex, 2);
-      assert.ok(getSystemOpacity(projections[2]) > 0.07);
-      assert.equal(isSystemInViewport(travelers[2], projections[2], width, height), false);
-      sawClippedOverlap = true;
-    }
-    if (previousOwner?.travelerIndex === 2 && owner?.travelerIndex === 8) {
-      assert.equal(getSystemOpacity(projections[2]), 0);
-      assert.equal(projections[2].cycle, previousOwner.cycle);
-      sawCleanTransfer = true;
-    }
-  }
-
-  assert.equal(sawClippedOverlap, true);
-  assert.equal(sawCleanTransfer, true);
+  projections[2] = { ...projection, x: -margin - 0.01 };
+  assert.equal(isSystemOverlappingViewport(travelers[2], projections[2], width, height), false);
+  assert.equal(selectProminentSystemOwner(travelers, projections, width, height, currentOwner), null);
 });
 
 test('traveler trajectories remain straight and collinear through every reveal threshold', () => {
@@ -414,7 +399,7 @@ test('traveler trajectories remain straight and collinear through every reveal t
     SYSTEM_MIN_PROGRESS,
     TRAVELER_DETAIL_THRESHOLDS[1],
     TRAVELER_DETAIL_THRESHOLDS[2],
-    SYSTEM_FADE_OUT_PROGRESS,
+    (SYSTEM_MIN_PROGRESS + SYSTEM_MAX_PROGRESS) / 2,
     SYSTEM_MAX_PROGRESS,
   ];
   const projections = progresses.map((progress) => projectTraveler(
@@ -444,10 +429,10 @@ test('the expanded deterministic carrier minority still selects one nearest usef
   assert.deepEqual(carrierIndices, [2, 8, 14, 20]);
   const mobileTravelers = scene.travelers.slice(0, MOBILE_TRAVELER_COUNT);
   assert.deepEqual(mobileTravelers.map((traveler, index) =>
-    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8]);
+    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8, 14]);
 
   const projections = scene.travelers.map((_, index) => ({
-    x: 500,
+    x: 400,
     y: 300,
     depth: 400,
     progress: SYSTEM_MIN_PROGRESS + index * 0.02,
@@ -461,7 +446,7 @@ test('the expanded deterministic carrier minority still selects one nearest usef
     projections.slice(0, MOBILE_TRAVELER_COUNT),
     1000,
     600,
-  ), 8);
+  ), 14);
 });
 
 test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', () => {
@@ -489,8 +474,10 @@ test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', (
   assert.notDeepEqual(createPlanetSystem(0xface, 3), createPlanetSystem(0xface, 4));
 });
 
-test('close-system progression keeps smaller planets and moons legible before full texture LOD', () => {
+test('planet bodies are exactly half-sized while system stars are exactly 50% larger', () => {
   assert.deepEqual(PLANET_RADIUS_RANGE, [1.45, 2.3]);
+  assert.equal(PLANET_RENDER_SCALE, 0.5);
+  assert.equal(SYSTEM_STAR_RADIUS, 10.5);
   assert.deepEqual(PLANET_SURFACE_LOD_DIAMETERS, [5, 10]);
   assert.equal(getPlanetSurfaceDetailLevel(2, 1.2), 0);
   assert.equal(getPlanetSurfaceDetailLevel(2.5, 1), 1);
@@ -504,10 +491,10 @@ test('close-system progression keeps smaller planets and moons legible before fu
   for (let seed = 1; seed <= 1000; seed += 1) {
     createPlanetSystem(seed, 0).forEach((planet) => {
       assert.ok(planet.radius >= PLANET_RADIUS_RANGE[0] && planet.radius <= PLANET_RADIUS_RANGE[1]);
-      const cssDiameter = planet.radius * closestScale * 2;
-      assert.ok(cssDiameter >= 11.6, `seed ${seed} body is only ${cssDiameter}px`);
-      assert.ok(cssDiameter <= 18.4, `seed ${seed} body is ${cssDiameter}px`);
-      assert.equal(getPlanetSurfaceDetailLevel(planet.radius, closestScale), 2);
+      const cssDiameter = planet.radius * PLANET_RENDER_SCALE * closestScale * 2;
+      assert.ok(cssDiameter >= 5.8, `seed ${seed} body is only ${cssDiameter}px`);
+      assert.ok(cssDiameter <= 9.2, `seed ${seed} body is ${cssDiameter}px`);
+      assert.equal(getPlanetSurfaceDetailLevel(planet.radius * PLANET_RENDER_SCALE, closestScale), 1);
       planet.moons.forEach((moon) => {
         assert.ok(moon.radius * closestScale * 2 >= 3.5,
           `seed ${seed} moon is only ${moon.radius * closestScale * 2}px`);
@@ -547,14 +534,15 @@ test('system safety margins are exact and include bodies, moons, rings, atmosphe
   }];
   closeTo(getPlanetSystemExtent(planets), 24.9);
   closeTo(getPlanetSystemExtent([{ ...planets[0], moons: [] }]),
-    20 + 2 * 1.85 + PLANET_RING_LINE_WIDTH * 0.5);
+    20 + 2 * PLANET_RENDER_SCALE * 1.85 + PLANET_RING_LINE_WIDTH * 0.5);
   closeTo(getPlanetSystemExtent([{ ...planets[0], moons: [], hasRing: false }]),
-    20 + 2 * ATMOSPHERE_HALO_RADIUS_MULTIPLIER);
+    20 + 2 * PLANET_RENDER_SCALE * ATMOSPHERE_HALO_RADIUS_MULTIPLIER);
   const traveler = createSpaceScene(44).travelers[2];
   const projection = { x: 200, y: 200, depth: 300, progress: 0.8, radius: 2, opacity: 0.5, cycle: 0 };
   const appearance = getTravelerAppearance(traveler, projection.progress);
   const expected = Math.max(
     getPlanetSystemExtent(createPlanetSystem(traveler.seed, 0)) * getSystemScale(projection),
+    SYSTEM_STAR_RADIUS * getSystemScale(projection),
     appearance.haloRadius,
     appearance.flareLength,
   ) + 0.5;
@@ -577,6 +565,7 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
           isSystemCarrier(traveler, index) &&
           projection.progress >= SYSTEM_MIN_PROGRESS &&
           projection.progress <= SYSTEM_MAX_PROGRESS &&
+          doesSystemExitViewportBeforeCycle(traveler, projection, width, height) &&
           isSystemInViewport(traveler, projection, width, height))
         .sort((left, right) => right.projection.progress - left.projection.progress);
       const selected = selectProminentSystem(travelers, projections, width, height);
@@ -585,6 +574,10 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
         visibleSystemSamples += 1;
         selectedCarriers.add(selected);
         assert.equal(isSystemInViewport(travelers[selected], projections[selected], width, height), true);
+        assert.equal(
+          doesSystemExitViewportBeforeCycle(travelers[selected], projections[selected], width, height),
+          true,
+        );
       }
     }
     assert.ok(visibleSystemSamples > 0, `${width}x${height} never reveals a near system`);
