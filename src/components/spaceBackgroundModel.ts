@@ -435,6 +435,26 @@ export const getDriftedStar = (star: DistantStar, elapsedSeconds: number): Point
 };
 
 /** Right-hand drift velocity, including the direction reversal at each bounce cusp. */
+export const getScreenWrappedVelocity = (
+    from: Point,
+    to: Point,
+    elapsedSeconds: number,
+    width: number,
+    height: number,
+): Point => {
+    const duration = Math.max(Number.EPSILON, elapsedSeconds);
+    const circularDelta = (start: number, end: number, span: number) => {
+        let delta = end - start;
+        if (span > 0 && delta > span / 2) delta -= span;
+        if (span > 0 && delta < -span / 2) delta += span;
+        return delta;
+    };
+    return {
+        x: circularDelta(from.x, to.x, width) / duration,
+        y: circularDelta(from.y, to.y, height) / duration,
+    };
+};
+
 export const getDriftedStarVelocity = (
     star: DistantStar,
     elapsedSeconds: number,

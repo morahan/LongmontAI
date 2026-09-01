@@ -25,6 +25,7 @@ import {
     RETAINED_AMBIENT_STAR_COUNT,
     SYSTEM_STAR_RADIUS,
     getSimulationTime,
+    getScreenWrappedVelocity,
     getStarFieldPositions,
     getStarFieldStyles,
     getStarRgb,
@@ -1015,10 +1016,14 @@ const SpaceNeuralBackground: React.FC = () => {
             const afterEndPositions = getStarFieldPositions(
                 scene.seed, endpointElapsed + velocitySampleSeconds, width, height,
             );
-            const rawEndVelocities = rawEndPositions.map((point, index) => ({
-                x: ((afterEndPositions[index] ?? point).x - point.x) / velocitySampleSeconds,
-                y: ((afterEndPositions[index] ?? point).y - point.y) / velocitySampleSeconds,
-            }));
+            const rawEndVelocities = rawEndPositions.map((point, index) =>
+                getScreenWrappedVelocity(
+                    point,
+                    afterEndPositions[index] ?? point,
+                    velocitySampleSeconds,
+                    width,
+                    height,
+                ));
             const rawEndStyles = getStarFieldStyles(scene.seed, endpointElapsed);
             const retainedIndices = currentFrame.styles
                 .map((style, index) => ({ style, index }))

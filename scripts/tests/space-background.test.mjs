@@ -84,6 +84,7 @@ import {
   getPlanetSurfaceDetailLevel,
   getPlanetSystemExtent,
   getSimulationTime,
+  getScreenWrappedVelocity,
   getStarFieldPositions,
   getStarFieldStyles,
   getStarRgb,
@@ -370,6 +371,59 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
     getEasterEggStarFieldStyles(renderedStylesAtRestart, targetStyles, endStyles, 0),
     renderedStylesAtRestart,
   );
+});
+
+test('screen-wrapped endpoint sampling rejects a full-screen wrap as physical velocity', () => {
+  const width = 1200;
+  const height = 600;
+  const elapsed = 581.601153;
+  const delta = 0.001;
+  const before = getStarFieldPositions(0, elapsed, width, height)[1];
+  const after = getStarFieldPositions(0, elapsed + delta, width, height)[1];
+  assert.ok(after.y - before.y > height * 0.99, 'fixture no longer crosses the y wrap seam');
+  const velocity = getScreenWrappedVelocity(before, after, delta, width, height);
+  closeTo(velocity.x, 0.6250094093, 0.0001);
+  closeTo(velocity.y, -0.8335609414, 0.0001);
+  assert.ok(Math.abs(velocity.x) < 3 && Math.abs(velocity.y) < 3);
+});
+
+test('Easter returns stay finite and in bounds across wrapped endpoint samples', () => {
+  const width = 1200;
+  const height = 600;
+  const sampleDelta = 0.001;
+  const derivativeDelta = 0.00001;
+  const endpoints = [581.601153, ...Array.from({ length: 20 }, (_, index) => 40 + index * 26.7)];
+  let parityChecks = 0;
+  endpoints.forEach((endpoint, fixtureIndex) => {
+    const seed = fixtureIndex === 0 ? 0 : fixtureIndex;
+    const start = getStarFieldPositions(seed, Math.max(0, endpoint - 30), width, height);
+    const end = getStarFieldPositions(seed, endpoint, width, height);
+    const after = getStarFieldPositions(seed, endpoint + sampleDelta, width, height);
+    const targets = createConstellationGeometry(width, height, seed, 1).points.slice(0, start.length);
+    const velocities = end.map((point, index) => getScreenWrappedVelocity(
+      point, after[index] ?? point, sampleDelta, width, height,
+    ));
+    for (const age of [20, 22.5, 25, 27.5, 29.5, 29.999]) {
+      getEasterEggStarFieldPositions(start, targets, end, age, velocities)
+        .forEach(({ x, y }, index) => {
+          assert.ok(Number.isFinite(x) && Number.isFinite(y), `non-finite ${fixtureIndex}/${age}/${index}`);
+          assert.ok(x >= 0 && x <= width && y >= 0 && y <= height,
+            `out of bounds ${fixtureIndex}/${age}/${index}: ${x},${y}`);
+        });
+    }
+    const incoming = getEasterEggStarFieldPositions(
+      start, targets, end, 30 - derivativeDelta, velocities,
+    );
+    end.forEach((point, index) => {
+      const rawX = (after[index]?.x ?? point.x) - point.x;
+      const rawY = (after[index]?.y ?? point.y) - point.y;
+      if (Math.abs(rawX) > width / 2 || Math.abs(rawY) > height / 2) return;
+      closeTo((point.x - incoming[index].x) / derivativeDelta, velocities[index].x, 0.01);
+      closeTo((point.y - incoming[index].y) / derivativeDelta, velocities[index].y, 0.01);
+      parityChecks += 1;
+    });
+  });
+  assert.ok(parityChecks > 1000, `only ${parityChecks} non-seam velocity checks`);
 });
 
 test('Easter target styles retain every constellation anchor and scheduled selection remains unchanged', () => {
