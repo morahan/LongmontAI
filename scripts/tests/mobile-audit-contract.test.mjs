@@ -190,7 +190,7 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
 
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {
   assert.deepEqual(FULL_ROUTES, [
-    '/', '/tools', '/model-watch', '/timeline', '/countdown', '/leaderboard', '/about',
+    '/', '/tools', '/model-watch', '/timeline', '/newsletter', '/countdown', '/leaderboard', '/about',
     '/edition/edition-2026-06-10-ai-landscape',
   ]);
   assert.deepEqual(await selectMobileAudit(['src/pages/Tools.tsx']), {

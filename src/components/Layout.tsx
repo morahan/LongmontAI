@@ -118,6 +118,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <Network size={16} aria-hidden="true" />
                             <span>Timeline</span>
                         </Link>
+                        <Link
+                            to="/newsletter"
+                            aria-label="Newsletter"
+                            title="Newsletter"
+                            aria-current={location.pathname === '/newsletter' ? 'page' : undefined}
+                            className={`nav-link${location.pathname === '/newsletter' ? ' is-active' : ''}`}
+                        >
+                            <Mail size={16} aria-hidden="true" />
+                            <span>Newsletter</span>
+                        </Link>
                         <a
                             href="https://github.com/morahan/LongmontAI"
                             target="_blank"
@@ -182,6 +192,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span>Timeline</span>
                             </Link>
                             <Link
+                                to="/newsletter"
+                                aria-current={location.pathname === '/newsletter' ? 'page' : undefined}
+                                className={`mobile-nav-link${location.pathname === '/newsletter' ? ' is-active' : ''}`}
+                            >
+                                <Mail size={16} aria-hidden="true" />
+                                <span>Newsletter</span>
+                            </Link>
+                            <Link
                                 to="/countdown"
                                 aria-current={location.pathname === '/countdown' ? 'page' : undefined}
                                 className={`mobile-nav-link${location.pathname === '/countdown' ? ' is-active' : ''}`}
@@ -244,6 +262,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <li><Link to="/model-watch" className="site-footer-link">Model Watch</Link></li>
                                     <li><Link to="/leaderboard" className="site-footer-link">Leaderboard</Link></li>
                                     <li><Link to="/timeline" className="site-footer-link">AI Timeline</Link></li>
+                                    <li><Link to="/newsletter" className="site-footer-link">Newsletter</Link></li>
                                     <li><Link to="/tools" className="site-footer-link">Tools</Link></li>
                                 </ul>
                             </div>

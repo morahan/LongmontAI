@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 const summaryFields = ['id', 'date', 'publishAt', 'title', 'summary'];
 function articleSummaryPlugin() {
     return {
@@ -41,5 +42,5 @@ function articleSummaryPlugin() {
     };
 }
 export default defineConfig({
-    plugins: [articleSummaryPlugin(), react()],
+    plugins: [articleSummaryPlugin(), svelte({ compilerOptions: { customElement: true } }), react()],
 });

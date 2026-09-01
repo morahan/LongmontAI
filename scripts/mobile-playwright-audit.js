@@ -14,6 +14,7 @@ async (page) => {
     '/tools',
     '/model-watch',
     '/timeline',
+    '/newsletter',
     '/countdown',
     '/leaderboard',
     '/about',

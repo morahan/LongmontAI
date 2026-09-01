@@ -8,6 +8,12 @@
     },
     "api/scheduled-media.mjs": {
       "includeFiles": "{src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/media/**}"
+    },
+    "api/newsletter/generate.mjs": {
+      "includeFiles": "{scripts/lib/newsletter/**,scripts/model-watch-sources.mjs,src/data/modelWatch.generated.json,src/articles/*.md}"
+    },
+    "api/newsletter/subscribe.mjs": {
+      "includeFiles": "{scripts/lib/newsletter/**}"
     }
   },
   "headers": [
@@ -53,6 +59,10 @@
     {
       "path": "/api/model-watch",
       "schedule": "17 13 * * *"
+    },
+    {
+      "path": "/api/newsletter/generate",
+      "schedule": "7 15 * * 1"
     }
   ],
   "redirects": [
