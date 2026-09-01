@@ -341,6 +341,7 @@ const SpaceNeuralBackground: React.FC = () => {
         let reducedMotion = motionQuery.matches;
         let backdropGlow: CanvasGradient | null = null;
         let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
+        let constellationEvent = -1;
         let prominentSystemOwner: ProminentSystemOwner | null = null;
 
         const drawScene = (elapsed: number, renderDetails = true) => {
@@ -355,6 +356,10 @@ const SpaceNeuralBackground: React.FC = () => {
             }
 
             const phase = getConstellationPhase(elapsed);
+            if (!constellationGeometry || constellationEvent !== phase.event) {
+                constellationGeometry = createConstellationGeometry(width, height, scene.seed, phase.event);
+                constellationEvent = phase.event;
+            }
             const strength = getConstellationStrength(phase);
             const styles = getStarFieldStyles(scene.seed, elapsed);
             const positions = getStarFieldPositions(scene.seed, elapsed, width, height);
@@ -476,8 +481,10 @@ const SpaceNeuralBackground: React.FC = () => {
             backdropGlow.addColorStop(0, 'rgba(19, 49, 68, 0.1)');
             backdropGlow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
             backdropGlow.addColorStop(1, 'rgba(5, 5, 8, 0)');
-            constellationGeometry = createConstellationGeometry(width, height);
-            drawScene(reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now()), false);
+            const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
+            constellationEvent = getConstellationPhase(elapsed).event;
+            constellationGeometry = createConstellationGeometry(width, height, scene.seed, constellationEvent);
+            drawScene(elapsed, false);
         };
         const handleVisibilityChange = () => { pageIsVisible = !document.hidden; syncAnimation(); };
         const handleMotionChange = (event: MediaQueryListEvent) => { reducedMotion = event.matches; syncAnimation(); };

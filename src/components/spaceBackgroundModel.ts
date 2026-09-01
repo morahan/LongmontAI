@@ -56,6 +56,12 @@ export type PlanetAtmosphereClass = typeof PLANET_ATMOSPHERE_CLASSES[number];
 export interface Point { x: number; y: number }
 export interface ConstellationEdge { from: number; to: number }
 export interface ConstellationGlyph { character: string; indices: number[] }
+export interface ConstellationGeometry {
+    phrase: ConstellationPhrase;
+    points: Point[];
+    edges: ConstellationEdge[];
+    glyphs: ConstellationGlyph[];
+}
 
 export interface StarVisualStyle {
     alpha: number;
@@ -374,82 +380,195 @@ export const getStarRgb = (strength: number): readonly [number, number, number] 
     ];
 };
 
-// These sparse 3x5 forms contain exactly one unique anchor per generated star.
+export const CONSTELLATION_PHRASES = [
+    'LONGMONT AI',
+    '1023.Digital',
+    'Nerual Networks',
+    'Attention',
+    'Transformer',
+    'Context',
+    'Harness',
+] as const;
+export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
+
+const CONSTELLATION_BUCKET_COUNT = 12;
+
+/** Six of twelve equiprobable buckets are the brand; every alternative owns one bucket. */
+export const getConstellationPhraseForBucket = (bucket: number): ConstellationPhrase => {
+    const normalized = positiveModulo(Math.trunc(bucket), CONSTELLATION_BUCKET_COUNT);
+    return normalized < 6 ? CONSTELLATION_PHRASES[0] : CONSTELLATION_PHRASES[normalized - 5];
+};
+
+/** Phrase choice is stable for an event and changes only with scene seed/event identity. */
+export const selectConstellationPhrase = (sceneSeed: number, event: number): ConstellationPhrase => {
+    const stableEvent = Math.max(0, Math.trunc(event));
+    // The uint32 midpoint is an exact half split, without modulo bias.
+    if (hashUint(sceneSeed, stableEvent, 211) < UINT32_RANGE / 2) return CONSTELLATION_PHRASES[0];
+    // Rejection sampling gives all six alternatives an exactly equal uint32 domain.
+    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % 6);
+    let channel = 212;
+    let alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
+    while (alternativeRoll >= acceptedRange) {
+        channel += 1;
+        alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
+    }
+    return CONSTELLATION_PHRASES[1 + alternativeRoll % 6];
+};
+
+// A shared 5x7 pixel alphabet provides consistent proportions and much fuller letterforms.
 const GLYPHS: Record<string, string[]> = {
-    L: ['100', '100', '100', '100', '110'],
-    O: ['010', '101', '101', '101', '010'],
-    N: ['101', '100', '010', '001', '101'],
-    G: ['010', '101', '100', '101', '011'],
-    M: ['101', '111', '101', '101', '000'],
-    T: ['111', '010', '010', '010', '010'],
-    A: ['010', '101', '111', '101', '000'],
-    I: ['010', '010', '010', '010', '000'],
+    A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+    C: ['01111', '10000', '10000', '10000', '10000', '10000', '01111'],
+    D: ['11110', '10001', '10001', '10001', '10001', '10001', '11110'],
+    E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+    F: ['11111', '10000', '10000', '11110', '10000', '10000', '10000'],
+    G: ['01111', '10000', '10000', '10111', '10001', '10001', '01111'],
+    H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
+    I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
+    K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
+    L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+    M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
+    N: ['10001', '11001', '11001', '10101', '10011', '10011', '10001'],
+    O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+    R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
+    S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
+    T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+    U: ['10001', '10001', '10001', '10001', '10001', '10001', '01110'],
+    W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
+    X: ['10001', '10001', '01010', '00100', '01010', '10001', '10001'],
+    '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
+    '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
+    '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
+    '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
+    '.': ['00000', '00000', '00000', '00000', '00000', '00110', '00110'],
 };
 
-const rawConstellationGeometry = () => {
-    const text = 'LONGMONT AI';
-    const lineWidth = text.length * 4 - 1;
-    const points: GlyphPoint[] = [];
-    const glyphs: ConstellationGlyph[] = [];
-    for (let glyph = 0; glyph < text.length; glyph += 1) {
-        const rows = GLYPHS[text[glyph]];
-        if (!rows) continue;
-        const indices: number[] = [];
-        rows.forEach((row, y) => [...row].forEach((cell, x) => {
-            if (cell !== '1') return;
-            indices.push(points.length);
-            points.push({ x: glyph * 4 + x, y });
-        }));
-        glyphs.push({ character: text[glyph], indices });
+const distributeAnchorCounts = (glyphPoints: GlyphPoint[][]) => {
+    const minimums = glyphPoints.map((points) => Math.min(3, points.length));
+    const counts = [...minimums];
+    let remaining = CONSTELLATION_STAR_COUNT - counts.reduce((sum, value) => sum + value, 0);
+    const capacities = glyphPoints.map((points, index) => points.length - counts[index]);
+    while (remaining > 0) {
+        let selected = -1;
+        let best = Number.NEGATIVE_INFINITY;
+        capacities.forEach((capacity, index) => {
+            if (counts[index] - minimums[index] >= capacity) return;
+            const score = glyphPoints[index].length / (counts[index] + 1);
+            if (score > best) {
+                best = score;
+                selected = index;
+            }
+        });
+        if (selected < 0) throw new Error('Constellation alphabet does not provide 72 unique anchors');
+        counts[selected] += 1;
+        remaining -= 1;
     }
+    return counts;
+};
 
-    // A nearest-neighbor tree per glyph guarantees one connected component, including sparse Ns.
+const selectSpreadPoints = (candidates: GlyphPoint[], count: number) => {
+    if (count >= candidates.length) return candidates;
+    const selected = [candidates[0]];
+    const remaining = candidates.slice(1);
+    while (selected.length < count) {
+        let bestIndex = 0;
+        let bestDistance = -1;
+        remaining.forEach((candidate, index) => {
+            const distance = Math.min(...selected.map((point) =>
+                (point.x - candidate.x) ** 2 + (point.y - candidate.y) ** 2));
+            if (distance > bestDistance) {
+                bestDistance = distance;
+                bestIndex = index;
+            }
+        });
+        selected.push(remaining.splice(bestIndex, 1)[0]);
+    }
+    return selected;
+};
+
+const connectNearestTree = (points: GlyphPoint[]): ConstellationEdge[] => {
     const edges: ConstellationEdge[] = [];
-    glyphs.forEach(({ indices }) => {
-        const connected = new Set([indices[0]]);
-        const remaining = new Set(indices.slice(1));
-        while (remaining.size > 0) {
-            let nearestFrom = indices[0];
-            let nearestTo = [...remaining][0];
-            let nearestDistance = Number.POSITIVE_INFINITY;
-            connected.forEach((from) => remaining.forEach((to) => {
-                const dx = points[from].x - points[to].x;
-                const dy = points[from].y - points[to].y;
-                const distance = dx * dx + dy * dy;
-                if (distance < nearestDistance) {
-                    nearestDistance = distance;
-                    nearestFrom = from;
-                    nearestTo = to;
-                }
-            }));
-            edges.push({ from: nearestFrom, to: nearestTo });
-            connected.add(nearestTo);
-            remaining.delete(nearestTo);
-        }
-    });
-    return { points, edges, glyphs, lineWidth };
+    const connected = new Set([0]);
+    const remaining = new Set(Array.from({ length: points.length - 1 }, (_, index) => index + 1));
+    while (remaining.size > 0) {
+        let nearestFrom = 0;
+        let nearestTo = [...remaining][0];
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        connected.forEach((from) => remaining.forEach((to) => {
+            const distance = (points[from].x - points[to].x) ** 2 + (points[from].y - points[to].y) ** 2;
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestFrom = from;
+                nearestTo = to;
+            }
+        }));
+        edges.push({ from: nearestFrom, to: nearestTo });
+        connected.add(nearestTo);
+        remaining.delete(nearestTo);
+    }
+    return edges;
 };
 
-export const createConstellationGeometry = (width: number, height: number) => {
-    const raw = rawConstellationGeometry();
-    if (raw.points.length !== CONSTELLATION_STAR_COUNT) {
-        throw new Error(`LONGMONT AI requires ${CONSTELLATION_STAR_COUNT} unique anchors`);
+const rawConstellationGeometry = (phrase: ConstellationPhrase) => {
+    let cursor = 0;
+    const characters: string[] = [];
+    const candidates: GlyphPoint[][] = [];
+    for (const character of phrase) {
+        if (character === ' ') {
+            cursor += 4;
+            continue;
+        }
+        const rows = GLYPHS[character.toUpperCase()];
+        if (!rows) throw new Error(`Unsupported constellation glyph: ${character}`);
+        characters.push(character);
+        candidates.push(rows.flatMap((row, y) => [...row].flatMap((cell, x) =>
+            cell === '1' ? [{ x: cursor + x, y }] : [])));
+        cursor += 6;
     }
-    const maximumWidth = Math.min(width * 0.76, height * 1.2);
-    const cell = Math.max(2, maximumWidth / raw.lineWidth);
+    const counts = distributeAnchorCounts(candidates);
+    const points: GlyphPoint[] = [];
+    const glyphs = candidates.map((candidatePoints, index) => {
+        const indices = selectSpreadPoints(candidatePoints, counts[index]).map((point) => {
+            points.push(point);
+            return points.length - 1;
+        });
+        return { character: characters[index], indices };
+    });
+    return { points, edges: connectNearestTree(points), glyphs, lineWidth: Math.max(1, cursor - 1) };
+};
+
+export const createConstellationGeometry = (
+    width: number,
+    height: number,
+    sceneSeed = 0,
+    event = 1,
+): ConstellationGeometry => {
+    const phrase = selectConstellationPhrase(sceneSeed, event);
+    const raw = rawConstellationGeometry(phrase);
+    const safeWidth = Math.max(1, width);
+    const safeHeight = Math.max(1, height);
+    const maximumWidth = safeWidth * 0.84;
+    const maximumHeight = safeHeight * 0.22;
+    const cell = Math.min(maximumWidth / raw.lineWidth, maximumHeight / 6);
     const rowWidth = raw.lineWidth * cell;
+    const centerY = safeWidth < safeHeight ? safeHeight * 0.45 : safeHeight * 0.34;
     return {
+        phrase,
         points: raw.points.map((point) => ({
-            x: width * 0.5 - rowWidth * 0.5 + point.x * cell,
-            y: height * 0.03 + point.y * cell,
+            x: safeWidth * 0.5 - rowWidth * 0.5 + point.x * cell,
+            y: centerY + (point.y - 3) * cell,
         })),
         edges: raw.edges,
         glyphs: raw.glyphs,
     };
 };
 
-export const createConstellationTargets = (width: number, height: number): Point[] =>
-    createConstellationGeometry(width, height).points;
+export const createConstellationTargets = (
+    width: number,
+    height: number,
+    sceneSeed = 0,
+    event = 1,
+): Point[] => createConstellationGeometry(width, height, sceneSeed, event).points;
 
 const mixPoint = (from: Point, to: Point, amount: number): Point => ({
     x: from.x + (to.x - from.x) * amount,
@@ -465,7 +584,7 @@ export const getStarFieldPositions = (
     const phase = getConstellationPhase(elapsedSeconds);
     const current = createAmbientLayout(sceneSeed, phase.event);
     const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
-    const targets = createConstellationTargets(width, height);
+    const targets = createConstellationTargets(width, height, sceneSeed, phase.event);
     const currentDriftTime = phase.event === 0
         ? elapsedSeconds
         : Math.max(0, phase.eventElapsed - CONSTELLATION_WINDOW_SECONDS);

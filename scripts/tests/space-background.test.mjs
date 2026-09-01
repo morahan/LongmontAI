@@ -6,6 +6,7 @@ import {
   AMBIENT_STAR_RGB,
   ATMOSPHERE_HALO_RADIUS_MULTIPLIER,
   CONSTELLATION_INTERVAL_SECONDS,
+  CONSTELLATION_PHRASES,
   CONSTELLATION_STAR_COUNT,
   CONSTELLATION_STAR_RGB,
   CONSTELLATION_WINDOW_SECONDS,
@@ -36,6 +37,7 @@ import {
   createSpaceScene,
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
+  getConstellationPhraseForBucket,
   getConstellationStrength,
   getDriftedStar,
   getElapsedSecondsSinceMount,
@@ -45,6 +47,7 @@ import {
   getPlanetSurfaceDetailLevel,
   getPlanetSystemExtent,
   getSimulationTime,
+  getStarFieldPositions,
   getStarFieldStyles,
   getStarPosition,
   getStarRgb,
@@ -59,6 +62,7 @@ import {
   isSystemInViewport,
   isSystemOverlappingViewport,
   projectTraveler,
+  selectConstellationPhrase,
   selectProminentSystem,
   selectProminentSystemOwner,
   starCountForWidth,
@@ -199,37 +203,86 @@ test('monotonic elapsed time includes long RAF gaps while reduced motion can ren
   closeTo(getElapsedSecondsSinceMount(2000, 1000), 0);
 });
 
-test('LONGMONT AI has 72 unique, connected glyph anchors in the clear top band', () => {
-  for (const { width, height } of [{ width: 1200, height: 600 }, { width: 390, height: 360 }]) {
-    const { points, edges, glyphs } = createConstellationGeometry(width, height);
-    assert.equal(points.length, 72);
-    assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, 72);
-    assert.equal(glyphs.map(({ character }) => character).join(''), 'LONGMONTAI');
-    assert.ok(points.every(({ x, y }) => x > 0 && x < width && y >= height * 0.03 && y < height * 0.16));
-    const constellationWidth = Math.max(...points.map(({ x }) => x)) - Math.min(...points.map(({ x }) => x));
-    assert.ok(constellationWidth <= width * 0.76);
-    assert.ok(edges.every(({ from, to }) => from >= 0 && to < 72 && from !== to));
+test('constellation phrase buckets preserve spelling and exact 50/50 then equal-alternative semantics', () => {
+  assert.deepEqual(CONSTELLATION_PHRASES, [
+    'LONGMONT AI',
+    '1023.Digital',
+    'Nerual Networks',
+    'Attention',
+    'Transformer',
+    'Context',
+    'Harness',
+  ]);
+  const buckets = Array.from({ length: 12 }, (_, bucket) => getConstellationPhraseForBucket(bucket));
+  assert.equal(buckets.filter((phrase) => phrase === 'LONGMONT AI').length, 6);
+  CONSTELLATION_PHRASES.slice(1).forEach((phrase) => {
+    assert.equal(buckets.filter((candidate) => candidate === phrase).length, 1, phrase);
+  });
+  assert.equal(getConstellationPhraseForBucket(12), 'LONGMONT AI');
+  assert.equal(getConstellationPhraseForBucket(-1), 'Harness');
+});
 
-    const neighbors = Array.from({ length: 72 }, () => []);
-    edges.forEach(({ from, to }) => {
-      neighbors[from].push(to);
-      neighbors[to].push(from);
-    });
-    assert.ok(neighbors.every((entries) => entries.length > 0), 'an isolated anchor remains');
-    glyphs.forEach(({ character, indices }) => {
-      const allowed = new Set(indices);
-      const reached = new Set([indices[0]]);
-      const queue = [indices[0]];
+test('event selection is stable and every phrase is reachable from deterministic seed/event identity', () => {
+  const observed = new Set();
+  for (let seed = 0; seed < 64; seed += 1) {
+    for (let event = 1; event < 64; event += 1) {
+      const selected = selectConstellationPhrase(seed, event);
+      assert.equal(selectConstellationPhrase(seed, event), selected);
+      observed.add(selected);
+    }
+  }
+  assert.deepEqual([...observed].sort(), [...CONSTELLATION_PHRASES].sort());
+});
+
+test('every phrase has 72 unique safe lowered anchors and one valid connected line tree', () => {
+  const sceneSeed = 0x51a7;
+  const eventByPhrase = new Map();
+  for (let event = 1; event < 1000 && eventByPhrase.size < CONSTELLATION_PHRASES.length; event += 1) {
+    const phrase = selectConstellationPhrase(sceneSeed, event);
+    if (!eventByPhrase.has(phrase)) eventByPhrase.set(phrase, event);
+  }
+  assert.equal(eventByPhrase.size, CONSTELLATION_PHRASES.length);
+
+  for (const phrase of CONSTELLATION_PHRASES) {
+    for (const { width, height, minimumY } of [
+      { width: 1200, height: 600, minimumY: 0.2 },
+      { width: 390, height: 844, minimumY: 0.34 },
+    ]) {
+      const { points, edges, glyphs, phrase: renderedPhrase } = createConstellationGeometry(
+        width,
+        height,
+        sceneSeed,
+        eventByPhrase.get(phrase),
+      );
+      assert.equal(renderedPhrase, phrase);
+      assert.equal(glyphs.map(({ character }) => character).join(''), phrase.replaceAll(' ', ''));
+      assert.equal(points.length, CONSTELLATION_STAR_COUNT);
+      assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, CONSTELLATION_STAR_COUNT);
+      assert.ok(points.every(({ x, y }) =>
+        x > width * 0.05 && x < width * 0.95 && y > height * minimumY && y < height * 0.58),
+      `${phrase} escaped ${width}x${height} safe bounds`);
+      assert.equal(edges.length, CONSTELLATION_STAR_COUNT - 1);
+      assert.ok(edges.every(({ from, to }) =>
+        from >= 0 && from < 72 && to >= 0 && to < 72 && from !== to));
+
+      const neighbors = Array.from({ length: 72 }, () => []);
+      edges.forEach(({ from, to }) => {
+        neighbors[from].push(to);
+        neighbors[to].push(from);
+      });
+      assert.ok(neighbors.every((entries) => entries.length > 0), `${phrase} has an isolated anchor`);
+      const reached = new Set([0]);
+      const queue = [0];
       while (queue.length > 0) {
         neighbors[queue.shift()].forEach((neighbor) => {
-          if (allowed.has(neighbor) && !reached.has(neighbor)) {
+          if (!reached.has(neighbor)) {
             reached.add(neighbor);
             queue.push(neighbor);
           }
         });
       }
-      assert.equal(reached.size, indices.length, `${character} is not one connected component`);
-    });
+      assert.equal(reached.size, 72, `${phrase} line geometry is disconnected`);
+    }
   }
 });
 
@@ -295,7 +348,10 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   const width = 1200;
   const height = 600;
   const seed = 777;
-  const targets = createConstellationGeometry(width, height).points;
+  const targets = createConstellationGeometry(width, height, seed, 1).points;
+  assert.deepEqual(getStarFieldPositions(seed, 610, width, height), targets);
+  assert.equal(createConstellationGeometry(width, height, seed, 1).phrase,
+    selectConstellationPhrase(seed, 1));
   for (let index = 0; index < 72; index += 1) {
     assert.deepEqual(getStarPosition(seed, index, 610, width, height), targets[index]);
     assert.deepEqual(getStarPosition(seed, index, 619.9, width, height), targets[index]);
