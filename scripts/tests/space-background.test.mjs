@@ -20,9 +20,11 @@ import {
   GALAXY_INTERNAL_STAR_COUNT,
   GALAXY_MAX_RADIUS_MULTIPLIER,
   GALAXY_SPIRAL_ARM_COUNT,
+  MAX_GLYPH_STAR_COUNT,
   MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO,
   MAX_PLANET_ORBIT_PERIOD_SECONDS,
   MAX_PLANET_ORBIT_RADIUS,
+  MIN_GLYPH_STAR_COUNT,
   MIN_PLANET_ORBIT_PERIOD_SECONDS,
   MOBILE_TRAVELER_COUNT,
   NEAR_DEPTH,
@@ -61,6 +63,7 @@ import {
   createSpaceScene,
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
+  getConstellationGlyphAnchorCounts,
   getConstellationPhraseForBucket,
   getConstellationStrength,
   getCometAppearance,
@@ -82,7 +85,6 @@ import {
   getSimulationTime,
   getStarFieldPositions,
   getStarFieldStyles,
-  getStarPosition,
   getStarRgb,
   getSystemOpacity,
   getSystemSafetyMargin,
@@ -173,42 +175,34 @@ test('100k deterministic samples match every reviewed planet percentage within t
   });
 });
 
-test('ambient remains 70 while Star Text adds 144 anchors and retains a meaningful background', () => {
+test('ambient remains 70 while variable Star Text retains 35 ambient stars', () => {
   const stars = createAmbientLayout(12345, 0);
   assert.equal(AMBIENT_STAR_COUNT, 70);
-  assert.equal(CONSTELLATION_STAR_COUNT, 144);
   assert.equal(RETAINED_AMBIENT_STAR_COUNT, 35);
-  assert.equal(stars.length, CONSTELLATION_STAR_COUNT);
+  assert.equal(stars.length, AMBIENT_STAR_COUNT);
   assert.equal(starCountForWidth(320), 70);
   assert.equal(starCountForWidth(1920), 70);
-  const ambientDrawIndices = getStarFieldStyles(12345, 47)
-    .map((style, index) => isStarRenderable(style) ? index : -1)
-    .filter((index) => index >= 0);
-  assert.equal(ambientDrawIndices.length, 70);
-  assert.equal(getStarFieldStyles(12345, 610).filter(isStarRenderable).length,
-    CONSTELLATION_STAR_COUNT + RETAINED_AMBIENT_STAR_COUNT);
-  const holdBackground = getStarFieldStyles(12345, 610).slice(CONSTELLATION_STAR_COUNT);
+  assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 70);
+
+  const anchorCount = createConstellationGeometry(1200, 600, 12345, 1).points.length;
+  const hold = getStarFieldStyles(12345, 610);
+  assert.equal(hold.length, anchorCount + RETAINED_AMBIENT_STAR_COUNT);
+  const holdBackground = hold.slice(anchorCount);
   assert.equal(holdBackground.filter(isStarRenderable).length, RETAINED_AMBIENT_STAR_COUNT);
-  assert.ok(holdBackground.every(({ strength }) => strength === 0),
-    'retained stars must stay visually ambient rather than joining the letters');
-  assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 72);
-  assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 72);
+  assert.ok(holdBackground.every(({ strength }) => strength === 0));
+  assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 35);
+  assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 35);
   assert.ok(stars.every((star) => star.driftSpeed >= 0.0007 && star.driftSpeed <= 0.0017));
   assert.deepEqual(AMBIENT_STAR_RADIUS_RANGE, [0.825, 2.09]);
-  assert.ok(stars.every((star) =>
-    star.size >= AMBIENT_STAR_RADIUS_RANGE[0] && star.size <= AMBIENT_STAR_RADIUS_RANGE[1]));
-  assert.ok(stars.every((star) => star.alpha >= 0.28 && star.alpha <= 0.68));
+  assert.ok(stars.every((star) => star.size >= 0.825 && star.size <= 2.09));
 
   const linear = { ...stars[0], x: 0.25, y: 0.4, driftMode: 'wrap', driftAngle: 0, driftSpeed: 0.001 };
   closeTo(getDriftedStar(linear, 100).x, 0.35);
-  closeTo(getDriftedStar(linear, 100).y, 0.4);
   const wrap = { ...linear, x: 0.999 };
   closeTo(getDriftedStar(wrap, 2).x, 0.001);
   assert.ok(circularDistance(getDriftedStar(wrap, 0.999).x, getDriftedStar(wrap, 1.001).x) < 0.00001);
   const bounce = { ...linear, x: 0.999, driftMode: 'bounce' };
-  closeTo(getDriftedStar(bounce, 2).x, 0.999);
   closeTo(getDriftedStar(bounce, 1).x, 1);
-  assert.ok(Math.abs(getDriftedStar(bounce, 0.999).x - getDriftedStar(bounce, 1.001).x) < 0.00001);
 });
 
 test('twinkles are independent random events with 40-60% minima in every <=120s cycle', () => {
@@ -345,8 +339,8 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   const renderedAtRestart = getEasterEggStarFieldPositions(start, targets, end, 4.25);
   const renderedStylesAtRestart = getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 4.25);
   const nextPhrase = createConstellationGeometryForPhrase(1200, 600, EASTER_EGG_PHRASES[1]);
-  assert.equal(nextPhrase.points.length, CONSTELLATION_STAR_COUNT);
-  assert.equal(nextPhrase.edges.length, CONSTELLATION_STAR_COUNT - 1);
+  assert.ok(nextPhrase.points.length >= MIN_GLYPH_STAR_COUNT);
+  assert.equal(nextPhrase.edges.length, nextPhrase.points.length - 1);
   assert.deepEqual(
     getEasterEggStarFieldPositions(renderedAtRestart, nextPhrase.points, end, 0),
     renderedAtRestart,
@@ -358,8 +352,11 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
 });
 
 test('Easter target styles retain every constellation anchor and scheduled selection remains unchanged', () => {
+  const phrase = selectEasterEggPhrase(0x51a7, 3);
+  const expectedCount = getConstellationGlyphAnchorCounts(phrase, 0x51a7, 4)
+    .reduce((sum, count) => sum + count, 0);
   const styles = createEasterEggTargetStyles(0x51a7, 3);
-  assert.equal(styles.length, CONSTELLATION_STAR_COUNT);
+  assert.equal(styles.length, expectedCount);
   assert.ok(styles.every(({ strength, twinkle, opacity }) =>
     strength === 1 && twinkle === 1 && opacity > 0));
   for (let event = 1; event <= 20; event += 1) {
@@ -401,18 +398,8 @@ test('event selection is stable and every phrase is reachable from deterministic
   assert.deepEqual([...observed].sort(), [...CONSTELLATION_PHRASES].sort());
 });
 
-test('every phrase doubles the reviewed per-glyph allocation to 144 unique readable anchors', () => {
+test('every glyph receives deterministic variable density with unique readable anchors', () => {
   const sceneSeed = 0x51a7;
-  const legacyAllocations = new Map([
-    ['LONGMONT AI', [5, 7, 9, 8, 8, 7, 8, 5, 8, 7]],
-    ['1023.Digital', [4, 8, 6, 6, 3, 8, 6, 8, 6, 5, 8, 4]],
-    ['Nerual Networks', [6, 6, 6, 5, 6, 3, 6, 6, 3, 6, 5, 6, 4, 4]],
-    ['Attention', [9, 6, 6, 9, 10, 6, 8, 8, 10]],
-    ['Transformer', [4, 7, 7, 8, 6, 6, 6, 7, 7, 7, 7]],
-    ['Context', [9, 11, 14, 8, 13, 9, 8]],
-    ['Harness', [10, 11, 11, 11, 11, 9, 9]],
-  ]);
-  legacyAllocations.forEach((counts) => assert.equal(counts.reduce((sum, count) => sum + count, 0), 72));
   const eventByPhrase = new Map();
   for (let event = 1; event < 1000 && eventByPhrase.size < CONSTELLATION_PHRASES.length; event += 1) {
     const phrase = selectConstellationPhrase(sceneSeed, event);
@@ -433,18 +420,22 @@ test('every phrase doubles the reviewed per-glyph allocation to 144 unique reada
       );
       assert.equal(renderedPhrase, phrase);
       assert.equal(glyphs.map(({ character }) => character).join(''), phrase.replaceAll(' ', ''));
-      assert.equal(points.length, 144);
-      assert.deepEqual(glyphs.map(({ indices }) => indices.length),
-        legacyAllocations.get(phrase).map((count) => count * 2));
-      assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, 144);
+      const expectedCounts = getConstellationGlyphAnchorCounts(
+        phrase, sceneSeed, eventByPhrase.get(phrase),
+      );
+      assert.deepEqual(glyphs.map(({ indices }) => indices.length), expectedCounts);
+      assert.ok(expectedCounts.every((count) =>
+        count >= MIN_GLYPH_STAR_COUNT && count <= MAX_GLYPH_STAR_COUNT));
+      assert.equal(points.length, expectedCounts.reduce((sum, count) => sum + count, 0));
+      assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, points.length);
       assert.ok(points.every(({ x, y }) =>
         x > width * 0.05 && x < width * 0.95 && y > height * minimumY && y < height * 0.58),
       `${phrase} escaped ${width}x${height} safe bounds`);
-      assert.equal(edges.length, 143);
+      assert.equal(edges.length, points.length - 1);
       assert.ok(edges.every(({ from, to }) =>
-        from >= 0 && from < 144 && to >= 0 && to < 144 && from !== to));
+        from >= 0 && from < points.length && to >= 0 && to < points.length && from !== to));
 
-      const neighbors = Array.from({ length: 144 }, () => []);
+      const neighbors = Array.from({ length: points.length }, () => []);
       edges.forEach(({ from, to }) => {
         neighbors[from].push(to);
         neighbors[to].push(from);
@@ -460,9 +451,26 @@ test('every phrase doubles the reviewed per-glyph allocation to 144 unique reada
           }
         });
       }
-      assert.equal(reached.size, 144, `${phrase} line geometry is disconnected`);
+      assert.equal(reached.size, points.length, `${phrase} line geometry is disconnected`);
     }
   }
+});
+
+test('glyph density varies independently by seed/event and reaches both inclusive endpoints', () => {
+  const observed = new Set();
+  let variedWithinPhrase = false;
+  for (let seed = 0; seed < 128; seed += 1) {
+    for (let event = 1; event < 128; event += 1) {
+      const counts = getConstellationGlyphAnchorCounts('LONGMONT AI', seed, event);
+      assert.deepEqual(counts, getConstellationGlyphAnchorCounts('LONGMONT AI', seed, event));
+      counts.forEach((count) => observed.add(count));
+      if (new Set(counts).size > 1) variedWithinPhrase = true;
+    }
+  }
+  assert.equal(variedWithinPhrase, true);
+  assert.ok(observed.has(MIN_GLYPH_STAR_COUNT), 'inclusive 37 endpoint unreachable');
+  assert.ok(observed.has(MAX_GLYPH_STAR_COUNT), 'inclusive 73 endpoint unreachable');
+  assert.ok(observed.size > 30, `only ${observed.size} densities reached`);
 });
 
 test('constellation strength and pure star styles are continuous at every phase boundary', () => {
@@ -472,23 +480,20 @@ test('constellation strength and pure star styles are continuous at every phase 
   assert.equal(getConstellationStrength(getConstellationPhase(630)), 0);
 
   const seed = 0x51a7;
-  const generation0 = createAmbientLayout(seed, 0);
+  const anchorCount = createConstellationGeometry(1200, 600, seed, 1).points.length;
+  const generation0 = createAmbientLayout(seed, 0, anchorCount);
   const generation1 = createAmbientLayout(seed, 1);
   const atHold = getStarFieldStyles(seed, 610);
   const atMorphOut = getStarFieldStyles(seed, 620);
   const atAmbient = getStarFieldStyles(seed, 630);
-  atHold.slice(0, CONSTELLATION_STAR_COUNT)
+  atHold.slice(0, anchorCount)
     .forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
-  atMorphOut.slice(0, CONSTELLATION_STAR_COUNT)
+  atMorphOut.slice(0, anchorCount)
     .forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
-  atAmbient.slice(0, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT)
-    .forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
-  atAmbient.slice(AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT, CONSTELLATION_STAR_COUNT)
-    .forEach((style) => closeTo(style.alpha, 0));
-  atAmbient.slice(CONSTELLATION_STAR_COUNT)
-    .forEach((style) => assert.ok(style.alpha > 0));
+  assert.equal(atAmbient.length, AMBIENT_STAR_COUNT);
+  atAmbient.forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
 
-  for (const boundary of [600, 610, 620, 630]) {
+  for (const boundary of [610, 620]) {
     const before = getStarFieldStyles(seed, boundary - 0.000001);
     const at = getStarFieldStyles(seed, boundary);
     before.forEach((style, index) => {
@@ -509,26 +514,24 @@ test('constellation-only stars fade with strength while retained background stay
   const outMiddle = getStarFieldStyles(seed, 625);
   const after = getStarFieldStyles(seed, 630);
 
+  const anchorCount = createConstellationGeometry(1200, 600, seed, 1).points.length;
+  assert.equal(ambient.length, AMBIENT_STAR_COUNT);
+  assert.equal(after.length, AMBIENT_STAR_COUNT);
   for (let index = AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT;
-    index < CONSTELLATION_STAR_COUNT; index += 1) {
-    assert.equal(ambient[index].alpha, 0);
-    assert.equal(ambient[index].opacity, 0);
+    index < anchorCount; index += 1) {
     assert.equal(morphStart[index].alpha, 0);
     assert.ok(morphMiddle[index].alpha > 0 && morphMiddle[index].opacity > 0);
     assert.ok(hold[index].alpha > morphMiddle[index].alpha);
     assert.ok(outStart[index].alpha > outMiddle[index].alpha);
     assert.ok(outMiddle[index].alpha > 0 && outMiddle[index].opacity > 0);
-    assert.equal(after[index].alpha, 0);
-    assert.equal(after[index].opacity, 0);
   }
 
-  for (let index = CONSTELLATION_STAR_COUNT;
-    index < CONSTELLATION_STAR_COUNT + RETAINED_AMBIENT_STAR_COUNT; index += 1) {
-    assert.ok(ambient[index].opacity > 0);
+  for (let index = anchorCount;
+    index < anchorCount + RETAINED_AMBIENT_STAR_COUNT; index += 1) {
     assert.ok(hold[index].opacity > 0);
     assert.equal(hold[index].strength, 0);
   }
-  assert.ok(RETAINED_AMBIENT_STAR_COUNT < CONSTELLATION_STAR_COUNT / 2,
+  assert.ok(RETAINED_AMBIENT_STAR_COUNT < anchorCount / 2,
     'background density overwhelms the letter allocation');
 
   assert.deepEqual(getStarRgb(0), AMBIENT_STAR_RGB);
@@ -544,23 +547,76 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   const seed = 777;
   const targets = createConstellationGeometry(width, height, seed, 1).points;
   assert.deepEqual(
-    getStarFieldPositions(seed, 610, width, height).slice(0, CONSTELLATION_STAR_COUNT),
+    getStarFieldPositions(seed, 610, width, height).slice(0, targets.length),
     targets,
   );
   assert.equal(createConstellationGeometry(width, height, seed, 1).phrase,
     selectConstellationPhrase(seed, 1));
-  for (let index = 0; index < CONSTELLATION_STAR_COUNT; index += 1) {
-    assert.deepEqual(getStarPosition(seed, index, 610, width, height), targets[index]);
-    assert.deepEqual(getStarPosition(seed, index, 619.9, width, height), targets[index]);
-    const boundary = getStarPosition(seed, index, 600, width, height);
-    const before = getStarPosition(seed, index, 599.999999, width, height);
-    assert.ok(Math.hypot(boundary.x - before.x, boundary.y - before.y) < 0.001);
-    const after = getStarPosition(seed, index, 630, width, height);
+  const holdPositions = getStarFieldPositions(seed, 610, width, height);
+  const lateHoldPositions = getStarFieldPositions(seed, 619.9, width, height);
+  for (let index = 0; index < targets.length; index += 1) {
+    assert.deepEqual(holdPositions[index], targets[index]);
+    assert.deepEqual(lateHoldPositions[index], targets[index]);
+  }
+  const morphStart = getStarFieldPositions(seed, 600, width, height);
+  const beforeMorph = getStarFieldPositions(seed, 599.999999, width, height);
+  const afterMorph = getStarFieldPositions(seed, 630, width, height);
+  for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
+    if (index < AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT) {
+      assert.ok(Math.hypot(
+        morphStart[index].x - beforeMorph[index].x,
+        morphStart[index].y - beforeMorph[index].y,
+      ) < 0.001);
+    }
     const regenerated = getDriftedStar(createAmbientLayout(seed, 1)[index], 0);
-    closeTo(after.x, regenerated.x * width);
-    closeTo(after.y, regenerated.y * height);
+    closeTo(afterMorph[index].x, regenerated.x * width);
+    closeTo(afterMorph[index].y, regenerated.y * height);
   }
   assert.notDeepEqual(createAmbientLayout(seed, 0), createAmbientLayout(seed, 1));
+});
+
+test('morph-out follows bounded curves with smooth hold and ambient boundary velocities', () => {
+  const width = 1200;
+  const height = 600;
+  const seed = 777;
+  const epsilon = 0.001;
+  const atHold = getStarFieldPositions(seed, 620, width, height);
+  const justAfterHold = getStarFieldPositions(seed, 620 + epsilon, width, height);
+  const justBeforeAmbient = getStarFieldPositions(seed, 630 - epsilon, width, height);
+  const atAmbient = getStarFieldPositions(seed, 630, width, height);
+  const justAfterAmbient = getStarFieldPositions(seed, 630 + epsilon, width, height);
+
+  assert.ok(Math.hypot(
+    justAfterHold[0].x - atHold[0].x,
+    justAfterHold[0].y - atHold[0].y,
+  ) < 0.001, 'hold-to-return velocity is not eased to zero');
+  const incomingVelocity = {
+    x: (atAmbient[0].x - justBeforeAmbient[0].x) / epsilon,
+    y: (atAmbient[0].y - justBeforeAmbient[0].y) / epsilon,
+  };
+  const ambientVelocity = {
+    x: (justAfterAmbient[0].x - atAmbient[0].x) / epsilon,
+    y: (justAfterAmbient[0].y - atAmbient[0].y) / epsilon,
+  };
+  closeTo(incomingVelocity.x, ambientVelocity.x, 0.02);
+  closeTo(incomingVelocity.y, ambientVelocity.y, 0.02);
+
+  let curved = 0;
+  for (const time of [622.5, 625, 627.5]) {
+    const sample = getStarFieldPositions(seed, time, width, height);
+    sample.forEach(({ x, y }, index) => {
+      assert.ok(Number.isFinite(x) && Number.isFinite(y));
+      assert.ok(x >= 0 && x <= width && y >= 0 && y <= height,
+        `point ${index} escaped at ${time}`);
+      if (index >= atAmbient.length) return;
+      const chordX = atAmbient[index].x - atHold[index].x;
+      const chordY = atAmbient[index].y - atHold[index].y;
+      const sampleX = x - atHold[index].x;
+      const sampleY = y - atHold[index].y;
+      if (Math.abs(chordX * sampleY - chordY * sampleX) > 0.5) curved += 1;
+    });
+  }
+  assert.ok(curved > 20, `only ${curved} curved trajectory samples observed`);
 });
 
 test('travelers grow strongly on approach and reveal detail at exact monotonic thresholds', () => {

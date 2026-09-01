@@ -22,6 +22,7 @@ import {
     getPlanetSurfaceDetailLevel,
     PLANET_RENDER_SCALE,
     PLANET_RING_LINE_WIDTH,
+    RETAINED_AMBIENT_STAR_COUNT,
     SYSTEM_STAR_RADIUS,
     getSimulationTime,
     getStarFieldPositions,
@@ -65,6 +66,7 @@ interface LineLayer {
 
 interface EasterEggTransition {
     startedAt: number;
+    densityEvent: number;
     phrase: ConstellationPhrase;
     startStrength: number;
     endStrength: number;
@@ -689,18 +691,18 @@ const SpaceNeuralBackground: React.FC = () => {
 
         const getScheduledStarFrame = (elapsed: number) => {
             const phase = getConstellationPhase(elapsed);
-            if (!constellationGeometry || constellationEvent !== phase.event) {
+            if (phase.name !== 'ambient'
+                && (!constellationGeometry || constellationEvent !== phase.event)) {
                 constellationGeometry = createConstellationGeometry(width, height, scene.seed, phase.event);
                 constellationEvent = phase.event;
             }
+            const strength = getConstellationStrength(phase);
             return {
-                geometry: constellationGeometry,
                 phase,
-                strength: getConstellationStrength(phase),
-                lineLayers: [{
-                    geometry: constellationGeometry,
-                    strength: getConstellationStrength(phase),
-                }],
+                strength,
+                lineLayers: constellationGeometry && phase.name !== 'ambient'
+                    ? [{ geometry: constellationGeometry, strength }]
+                    : [],
                 positions: getStarFieldPositions(scene.seed, elapsed, width, height),
                 styles: getStarFieldStyles(scene.seed, elapsed),
             };
@@ -781,15 +783,18 @@ const SpaceNeuralBackground: React.FC = () => {
                 ctx.lineWidth = 0.55;
                 ctx.beginPath();
                 geometry.edges.forEach(({ from, to }) => {
-                    ctx.moveTo(positions[from].x, positions[from].y);
-                    ctx.lineTo(positions[to].x, positions[to].y);
+                    const fromPoint = positions[from];
+                    const toPoint = positions[to];
+                    if (!fromPoint || !toPoint) return;
+                    ctx.moveTo(fromPoint.x, fromPoint.y);
+                    ctx.lineTo(toPoint.x, toPoint.y);
                 });
                 ctx.stroke();
             });
 
             for (let index = 0; index < positions.length; index += 1) {
                 const style = styles[index];
-                if (!isStarRenderable(style)) continue;
+                if (!style || !isStarRenderable(style)) continue;
                 const position = positions[index];
                 const [red, green, blue] = getStarRgb(style.strength);
                 ctx.globalAlpha = 1;
@@ -920,8 +925,11 @@ const SpaceNeuralBackground: React.FC = () => {
             backdropGlow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
             backdropGlow.addColorStop(1, 'rgba(5, 5, 8, 0)');
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
-            constellationEvent = getConstellationPhase(elapsed).event;
-            constellationGeometry = createConstellationGeometry(width, height, scene.seed, constellationEvent);
+            const resizePhase = getConstellationPhase(elapsed);
+            constellationEvent = resizePhase.event;
+            constellationGeometry = resizePhase.name === 'ambient'
+                ? null
+                : createConstellationGeometry(width, height, scene.seed, constellationEvent);
             if (easterEgg && previousWidth > 0 && previousHeight > 0) {
                 const scalePoints = (points: Point[]) => points.map(({ x, y }) => ({
                     x: x * width / previousWidth,
@@ -929,8 +937,17 @@ const SpaceNeuralBackground: React.FC = () => {
                 }));
                 easterEgg.startPositions = scalePoints(easterEgg.startPositions);
                 easterEgg.endPositions = scalePoints(easterEgg.endPositions);
-                easterEgg.geometry = createConstellationGeometryForPhrase(width, height, easterEgg.phrase);
-                easterEgg.targetPositions = easterEgg.geometry.points;
+                const oldAnchorCount = easterEgg.geometry.points.length;
+                const retainedTargets = scalePoints(
+                    easterEgg.targetPositions.slice(oldAnchorCount),
+                );
+                easterEgg.geometry = createConstellationGeometryForPhrase(
+                    width, height, easterEgg.phrase, scene.seed, easterEgg.densityEvent,
+                );
+                easterEgg.targetPositions = [
+                    ...easterEgg.geometry.points,
+                    ...retainedTargets,
+                ];
             }
             drawScene(elapsed, false);
         };
@@ -969,10 +986,54 @@ const SpaceNeuralBackground: React.FC = () => {
             const elapsed = getElapsedSecondsSinceMount(mountedAt, performance.now());
             const currentFrame = getRenderedStarFrame(elapsed);
             const phrase = selectEasterEggPhrase(scene.seed, easterEggTriggerCount);
-            const geometry = createConstellationGeometryForPhrase(width, height, phrase);
+            const densityEvent = easterEggTriggerCount + 1;
+            const geometry = createConstellationGeometryForPhrase(
+                width, height, phrase, scene.seed, densityEvent,
+            );
             const endpointPhase = getConstellationPhase(elapsed + CONSTELLATION_WINDOW_SECONDS);
+            const rawEndPositions = getStarFieldPositions(
+                scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS, width, height,
+            );
+            const rawEndStyles = getStarFieldStyles(
+                scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS,
+            );
+            const retainedIndices = currentFrame.styles
+                .map((style, index) => ({ style, index }))
+                .filter(({ style }) => style.strength === 0 && style.opacity > 0)
+                .slice(-RETAINED_AMBIENT_STAR_COUNT)
+                .map(({ index }) => index);
+            const retainedPositions = retainedIndices.map((index) => currentFrame.positions[index]);
+            const retainedStyles = retainedIndices.map((index) => ({
+                ...currentFrame.styles[index], strength: 0,
+            }));
+            const totalCount = Math.max(
+                currentFrame.positions.length,
+                geometry.points.length + retainedPositions.length,
+                rawEndPositions.length,
+            );
+            const fallbackPoint = currentFrame.positions[0] ?? { x: width * 0.5, y: height * 0.5 };
+            const hiddenStyle: StarVisualStyle = {
+                alpha: 0, twinkle: 1, strength: 0, radius: 1, opacity: 0,
+            };
+            const fillPoints = (points: Point[]) => Array.from(
+                { length: totalCount },
+                (_, index) => ({ ...(points[index] ?? currentFrame.positions[index] ?? fallbackPoint) }),
+            );
+            const fillStyles = (styles: StarVisualStyle[]) => Array.from(
+                { length: totalCount },
+                (_, index) => ({ ...(styles[index] ?? hiddenStyle) }),
+            );
+            const targetPositions = [
+                ...geometry.points,
+                ...retainedPositions,
+            ];
+            const targetStyles = [
+                ...createEasterEggTargetStyles(scene.seed, easterEggTriggerCount, geometry.points.length),
+                ...retainedStyles,
+            ];
             easterEgg = {
                 startedAt: elapsed,
+                densityEvent,
                 phrase,
                 startStrength: currentFrame.strength,
                 endStrength: getConstellationStrength(endpointPhase),
@@ -984,17 +1045,12 @@ const SpaceNeuralBackground: React.FC = () => {
                     endpointPhase.event,
                 ),
                 geometry,
-                startPositions: currentFrame.positions.map((point) => ({ ...point })),
-                targetPositions: geometry.points,
-                endPositions: getStarFieldPositions(
-                    scene.seed,
-                    elapsed + CONSTELLATION_WINDOW_SECONDS,
-                    width,
-                    height,
-                ),
-                startStyles: currentFrame.styles.map((style) => ({ ...style })),
-                targetStyles: createEasterEggTargetStyles(scene.seed, easterEggTriggerCount),
-                endStyles: getStarFieldStyles(scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS),
+                startPositions: fillPoints(currentFrame.positions),
+                targetPositions: fillPoints(targetPositions),
+                endPositions: fillPoints(rawEndPositions),
+                startStyles: fillStyles(currentFrame.styles),
+                targetStyles: fillStyles(targetStyles),
+                endStyles: fillStyles(rawEndStyles),
             };
             easterEggTriggerCount += 1;
             // Publish trigger state before drawing so observers see the transition immediately.
