@@ -97,6 +97,7 @@ import {
   getStarFieldStyles,
   getStarRgb,
   getSystemOpacity,
+  getSystemOwnerDiscLocalRadius,
   getSystemSafetyMargin,
   getSystemScale,
   getTravelerAppearance,
@@ -935,6 +936,15 @@ test('system-owning traveler stars suppress every glow layer while ordinary star
   assert.equal(isPlanetBehindSystemStar(-Number.EPSILON), true);
   assert.equal(isPlanetBehindSystemStar(0), false);
   assert.equal(isPlanetBehindSystemStar(Number.EPSILON), false);
+
+  const appearanceRadius = 6.75;
+  for (const systemScale of [0.55, 1, 2.25, 4]) {
+    const localRadius = getSystemOwnerDiscLocalRadius(appearanceRadius, systemScale);
+    closeTo(localRadius * systemScale, appearanceRadius);
+    assert.notEqual(localRadius, SYSTEM_STAR_RADIUS, 'owner disc reused the old fixed halo extent');
+  }
+  assert.equal(getSystemOwnerDiscLocalRadius(appearanceRadius, 0), 0);
+  assert.equal(getSystemOwnerDiscLocalRadius(Number.NaN, 1), 0);
 });
 
 test('traveler approach glow grows monotonically while blur and opacity remain subtle and bounded', () => {

@@ -1580,6 +1580,15 @@ export const getSystemScale = (projection: ProjectedTraveler) => {
     return 0.55 + approach * 3.45;
 };
 
+/** Converts the owner's screen-space body radius into the currently scaled system coordinate space. */
+export const getSystemOwnerDiscLocalRadius = (appearanceRadius: number, systemScale: number) => {
+    if (!Number.isFinite(appearanceRadius)
+        || !Number.isFinite(systemScale)
+        || appearanceRadius <= 0
+        || systemScale <= 0) return 0;
+    return appearanceRadius / systemScale;
+};
+
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
     const renderedRadius = planet.radius * PLANET_RENDER_SCALE;
     const atmosphereRadius = hasAtmosphereHalo(planet.atmosphere)
