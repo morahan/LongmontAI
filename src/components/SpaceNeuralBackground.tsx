@@ -748,6 +748,7 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endPositions,
                             age,
                             easterEgg.endVelocities,
+                            { x: width, y: height },
                         ),
                         styles: getEasterEggStarFieldStyles(
                             easterEgg.startStyles,

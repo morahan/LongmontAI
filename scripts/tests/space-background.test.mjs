@@ -85,6 +85,7 @@ import {
   getPlanetSystemExtent,
   getSimulationTime,
   getScreenWrappedVelocity,
+  getSeamAwareReturnVelocity,
   getStarFieldPositions,
   getStarFieldStyles,
   getStarRgb,
@@ -351,7 +352,7 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   }));
   const epsilon = 0.00001;
   const justBeforeEnd = getEasterEggStarFieldPositions(
-    start, targets, end, 30 - epsilon, endpointVelocities,
+    start, targets, end, 30 - epsilon, endpointVelocities, { x: 1000, y: 1000 },
   );
   end.forEach((point, index) => {
     closeTo((point.x - justBeforeEnd[index].x) / epsilon, endpointVelocities[index].x, 0.001);
@@ -404,26 +405,96 @@ test('Easter returns stay finite and in bounds across wrapped endpoint samples',
       point, after[index] ?? point, sampleDelta, width, height,
     ));
     for (const age of [20, 22.5, 25, 27.5, 29.5, 29.999]) {
-      getEasterEggStarFieldPositions(start, targets, end, age, velocities)
-        .forEach(({ x, y }, index) => {
+      getEasterEggStarFieldPositions(
+        start, targets, end, age, velocities, { x: width, y: height },
+      ).forEach(({ x, y }, index) => {
           assert.ok(Number.isFinite(x) && Number.isFinite(y), `non-finite ${fixtureIndex}/${age}/${index}`);
           assert.ok(x >= 0 && x <= width && y >= 0 && y <= height,
             `out of bounds ${fixtureIndex}/${age}/${index}: ${x},${y}`);
         });
     }
     const incoming = getEasterEggStarFieldPositions(
-      start, targets, end, 30 - derivativeDelta, velocities,
+      start, targets, end, 30 - derivativeDelta, velocities, { x: width, y: height },
     );
     end.forEach((point, index) => {
       const rawX = (after[index]?.x ?? point.x) - point.x;
       const rawY = (after[index]?.y ?? point.y) - point.y;
       if (Math.abs(rawX) > width / 2 || Math.abs(rawY) > height / 2) return;
+      const bounded = getSeamAwareReturnVelocity(
+        point, velocities[index], width, height,
+      );
+      if (bounded.x !== velocities[index].x || bounded.y !== velocities[index].y) return;
       closeTo((point.x - incoming[index].x) / derivativeDelta, velocities[index].x, 0.01);
       closeTo((point.y - incoming[index].y) / derivativeDelta, velocities[index].y, 0.01);
       parityChecks += 1;
     });
   });
   assert.ok(parityChecks > 1000, `only ${parityChecks} non-seam velocity checks`);
+});
+
+test('seam-aware Easter return attenuates the seed 149 edge derivative without leaving canvas', () => {
+  const width = 1200;
+  const height = 600;
+  const endpoint = 348.2;
+  const sampleDelta = 0.001;
+  const seed = 149;
+  const starIndex = 57;
+  const start = getStarFieldPositions(seed, endpoint - 30, width, height);
+  const end = getStarFieldPositions(seed, endpoint, width, height);
+  const after = getStarFieldPositions(seed, endpoint + sampleDelta, width, height);
+  const targets = createConstellationGeometry(width, height, seed, 1).points.slice(0, start.length);
+  const velocities = end.map((point, index) => getScreenWrappedVelocity(
+    point, after[index] ?? point, sampleDelta, width, height,
+  ));
+  closeTo(end[starIndex].x, 0.0046035425, 1e-8);
+  assert.ok(velocities[starIndex].x > 1.79);
+  const attenuated = getSeamAwareReturnVelocity(
+    end[starIndex], velocities[starIndex], width, height,
+  );
+  closeTo(attenuated.x, end[starIndex].x * 4 / 10, 1e-12);
+  assert.ok(attenuated.x < velocities[starIndex].x * 0.01);
+
+  let minimumX = Infinity;
+  for (let age = 20; age <= 30; age += 0.02) {
+    const point = getEasterEggStarFieldPositions(
+      start, targets, end, age, velocities, { x: width, y: height },
+    )[starIndex];
+    minimumX = Math.min(minimumX, point.x);
+    assert.ok(point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height,
+      `${age}: ${point.x},${point.y}`);
+  }
+  assert.ok(minimumX >= 0, `curve escaped to ${minimumX}`);
+  assert.deepEqual(getEasterEggStarFieldPositions(
+    start, targets, end, 30, velocities, { x: width, y: height },
+  ), end);
+});
+
+test('broad Easter seam sweep keeps every sampled trajectory finite and in bounds', () => {
+  const width = 1200;
+  const height = 600;
+  const sampleDelta = 0.001;
+  let checked = 0;
+  for (let seed = 0; seed < 160; seed += 1) {
+    const endpoint = 35 + (seed * 17.381) % 540;
+    const start = getStarFieldPositions(seed, Math.max(0, endpoint - 30), width, height);
+    const end = getStarFieldPositions(seed, endpoint, width, height);
+    const after = getStarFieldPositions(seed, endpoint + sampleDelta, width, height);
+    const targets = createConstellationGeometry(width, height, seed, 1).points.slice(0, start.length);
+    const velocities = end.map((point, index) => getScreenWrappedVelocity(
+      point, after[index] ?? point, sampleDelta, width, height,
+    ));
+    for (const age of [20, 23, 26, 28, 29.5, 29.9, 29.99]) {
+      getEasterEggStarFieldPositions(
+        start, targets, end, age, velocities, { x: width, y: height },
+      ).forEach(({ x, y }, index) => {
+        assert.ok(Number.isFinite(x) && Number.isFinite(y));
+        assert.ok(x >= 0 && x <= width && y >= 0 && y <= height,
+          `seed ${seed} age ${age} star ${index}: ${x},${y}`);
+        checked += 1;
+      });
+    }
+  }
+  assert.equal(checked, 160 * 7 * AMBIENT_STAR_COUNT);
 });
 
 test('Easter target styles retain every constellation anchor and scheduled selection remains unchanged', () => {

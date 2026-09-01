@@ -903,6 +903,26 @@ const quarticPoint = (controls: readonly Point[], amount: number): Point => {
     };
 };
 
+export const getSeamAwareReturnVelocity = (
+    endpoint: Point,
+    requestedVelocity: Point,
+    width: number,
+    height: number,
+): Point => {
+    const boundedComponent = (position: number, velocity: number, span: number) => {
+        // The backward endpoint control must remain on-screen. Close to a wrap seam, exact
+        // Euclidean C1 continuity is impossible without approaching from outside the canvas;
+        // attenuate only that incompatible component and let ambient motion accelerate inward.
+        const available = velocity >= 0 ? position : span - position;
+        const maximum = Math.max(0, available) * 4 / MORPH_SECONDS;
+        return Math.sign(velocity) * Math.min(Math.abs(velocity), maximum);
+    };
+    return {
+        x: boundedComponent(endpoint.x, requestedVelocity.x, width),
+        y: boundedComponent(endpoint.y, requestedVelocity.y, height),
+    };
+};
+
 const curvedReturnPoint = (
     from: Point,
     to: Point,
@@ -930,15 +950,15 @@ const curvedReturnPoint = (
         x: (from.x + to.x) * 0.5 - deltaY / distance * bend,
         y: (from.y + to.y) * 0.5 + deltaX / distance * bend,
     });
-    // This control must not be clamped: its exact offset is the endpoint derivative contract.
-    // Generated ambient endpoints have a 2.5% margin, while the maximum offset is only 0.425%,
-    // so the control and the convex-hull curve remain on-screen even at the density extremes.
+    const boundedVelocity = getSeamAwareReturnVelocity(
+        to, endVelocity, width, height,
+    );
     const beforeEnd = {
-        x: to.x - endVelocity.x * MORPH_SECONDS / 4,
-        y: to.y - endVelocity.y * MORPH_SECONDS / 4,
+        x: to.x - boundedVelocity.x * MORPH_SECONDS / 4,
+        y: to.y - boundedVelocity.y * MORPH_SECONDS / 4,
     };
-    // Repeated first control gives zero hold-boundary velocity; the penultimate control matches
-    // the right-hand scheduled velocity exactly at the return boundary.
+    // Repeated first control gives zero hold-boundary velocity. Away from a wrap seam the
+    // penultimate control exactly matches scheduled velocity; at a seam it stays in bounds.
     return quarticPoint([from, from, middle, beforeEnd, to], amount);
 };
 
@@ -953,6 +973,7 @@ export const getEasterEggStarFieldPositions = (
     end: Point[],
     elapsedSinceTrigger: number,
     endVelocities: Point[] = [],
+    viewport?: Point,
 ): Point[] => {
     const phase = getEasterEggPhase(elapsedSinceTrigger);
     const targetFor = (point: Point, index: number) => targets[index] ?? point;
@@ -964,8 +985,8 @@ export const getEasterEggStarFieldPositions = (
         const amount = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
         const xs = [...start, ...targets, ...end].map(({ x }) => x);
         const ys = [...start, ...targets, ...end].map(({ y }) => y);
-        const width = Math.max(1, ...xs);
-        const height = Math.max(1, ...ys);
+        const width = Math.max(1, viewport?.x ?? 0, ...xs);
+        const height = Math.max(1, viewport?.y ?? 0, ...ys);
         return start.map((point, index) => curvedReturnPoint(
             targetFor(point, index), end[index] ?? point, amount, 0x51a7e99, index, width, height,
             endVelocities[index],
