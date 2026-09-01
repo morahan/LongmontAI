@@ -68,6 +68,7 @@ import {
   getConstellationStrength,
   getCometAppearance,
   getDriftedStar,
+  getDriftedStarVelocity,
   getGalaxyAppearance,
   getEasterEggPhase,
   getEasterEggStarFieldPositions,
@@ -106,6 +107,7 @@ import {
   isSystemInViewport,
   isSystemOverlappingViewport,
   projectTraveler,
+  scaleConstellationGeometry,
   selectConstellationPhrase,
   selectEasterEggPhrase,
   selectProminentSystem,
@@ -198,11 +200,17 @@ test('ambient remains 70 while variable Star Text retains 35 ambient stars', () 
 
   const linear = { ...stars[0], x: 0.25, y: 0.4, driftMode: 'wrap', driftAngle: 0, driftSpeed: 0.001 };
   closeTo(getDriftedStar(linear, 100).x, 0.35);
+  closeTo(getDriftedStar(linear, 100).y, 0.4);
   const wrap = { ...linear, x: 0.999 };
   closeTo(getDriftedStar(wrap, 2).x, 0.001);
   assert.ok(circularDistance(getDriftedStar(wrap, 0.999).x, getDriftedStar(wrap, 1.001).x) < 0.00001);
+  closeTo(getDriftedStarVelocity(wrap, 1, 1200, 600).x, 1.2);
   const bounce = { ...linear, x: 0.999, driftMode: 'bounce' };
   closeTo(getDriftedStar(bounce, 1).x, 1);
+  closeTo(getDriftedStar(bounce, 2).x, 0.999);
+  assert.ok(Math.abs(getDriftedStar(bounce, 0.999).x - getDriftedStar(bounce, 1.001).x) < 0.00001);
+  closeTo(getDriftedStarVelocity(bounce, 1, 1200, 600).x, -1.2);
+  closeTo(getDriftedStarVelocity({ ...bounce, x: 0, driftAngle: Math.PI }, 0, 1200, 600).x, 1.2);
 });
 
 test('twinkles are independent random events with 40-60% minima in every <=120s cycle', () => {
@@ -336,6 +344,19 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   assert.deepEqual(getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 10), holdStyles);
   assert.deepEqual(getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 30), endStyles);
 
+  const endpointVelocities = start.map((_, index) => ({
+    x: (index % 5 - 2) * 0.17,
+    y: (index % 7 - 3) * 0.11,
+  }));
+  const epsilon = 0.00001;
+  const justBeforeEnd = getEasterEggStarFieldPositions(
+    start, targets, end, 30 - epsilon, endpointVelocities,
+  );
+  end.forEach((point, index) => {
+    closeTo((point.x - justBeforeEnd[index].x) / epsilon, endpointVelocities[index].x, 0.001);
+    closeTo((point.y - justBeforeEnd[index].y) / epsilon, endpointVelocities[index].y, 0.001);
+  });
+
   const renderedAtRestart = getEasterEggStarFieldPositions(start, targets, end, 4.25);
   const renderedStylesAtRestart = getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 4.25);
   const nextPhrase = createConstellationGeometryForPhrase(1200, 600, EASTER_EGG_PHRASES[1]);
@@ -454,6 +475,19 @@ test('every glyph receives deterministic variable density with unique readable a
       assert.equal(reached.size, points.length, `${phrase} line geometry is disconnected`);
     }
   }
+});
+
+test('resizing constellation line geometry preserves topology and scales every point', () => {
+  const geometry = createConstellationGeometry(1200, 600, 0x51a7, 7);
+  const resized = scaleConstellationGeometry(geometry, 0.5, 1.4);
+  assert.notEqual(resized, geometry);
+  assert.deepEqual(resized.edges, geometry.edges);
+  assert.deepEqual(resized.glyphs, geometry.glyphs);
+  resized.points.forEach((point, index) => {
+    closeTo(point.x, geometry.points[index].x * 0.5);
+    closeTo(point.y, geometry.points[index].y * 1.4);
+  });
+  assert.ok(resized.edges.every(({ from, to }) => resized.points[from] && resized.points[to]));
 });
 
 test('glyph density varies independently by seed/event and reaches both inclusive endpoints', () => {
@@ -617,6 +651,37 @@ test('morph-out follows bounded curves with smooth hold and ambient boundary vel
     });
   }
   assert.ok(curved > 20, `only ${curved} curved trajectory samples observed`);
+});
+
+test('scheduled return velocity matches 7,000 wrap and bounce ambient endpoints', () => {
+  const width = 1200;
+  const height = 600;
+  const epsilon = 0.0001;
+  let checked = 0;
+  let wraps = 0;
+  let bounces = 0;
+  for (let seed = 0; seed < 100; seed += 1) {
+    const before = getStarFieldPositions(seed, 630 - epsilon, width, height);
+    const at = getStarFieldPositions(seed, 630, width, height);
+    const ambient = createAmbientLayout(seed, 1);
+    for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
+      const expected = getDriftedStarVelocity(ambient[index], 0, width, height);
+      const incoming = {
+        x: (at[index].x - before[index].x) / epsilon,
+        y: (at[index].y - before[index].y) / epsilon,
+      };
+      closeTo(incoming.x, expected.x, 0.005);
+      closeTo(incoming.y, expected.y, 0.005);
+      assert.ok(before[index].x >= 0 && before[index].x <= width);
+      assert.ok(before[index].y >= 0 && before[index].y <= height);
+      if (ambient[index].driftMode === 'wrap') wraps += 1;
+      else bounces += 1;
+      checked += 1;
+    }
+  }
+  assert.equal(checked, 7000);
+  assert.equal(wraps, 3500);
+  assert.equal(bounces, 3500);
 });
 
 test('travelers grow strongly on approach and reveal detail at exact monotonic thresholds', () => {

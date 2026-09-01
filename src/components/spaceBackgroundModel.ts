@@ -434,6 +434,31 @@ export const getDriftedStar = (star: DistantStar, elapsedSeconds: number): Point
     return { x: reflect(rawX), y: reflect(rawY) };
 };
 
+/** Right-hand drift velocity, including the direction reversal at each bounce cusp. */
+export const getDriftedStarVelocity = (
+    star: DistantStar,
+    elapsedSeconds: number,
+    width = 1,
+    height = 1,
+): Point => {
+    const elapsed = Math.max(0, elapsedSeconds);
+    const velocityX = Math.cos(star.driftAngle) * star.driftSpeed;
+    const velocityY = Math.sin(star.driftAngle) * star.driftSpeed;
+    if (star.driftMode === 'wrap') {
+        return { x: velocityX * width, y: velocityY * height };
+    }
+    const reflectedVelocity = (initial: number, velocity: number) => {
+        const phase = positiveModulo(initial + velocity * elapsed, 2);
+        if (phase < 1e-12 || 2 - phase < 1e-12) return Math.abs(velocity);
+        if (Math.abs(phase - 1) < 1e-12) return -Math.abs(velocity);
+        return phase < 1 ? velocity : -velocity;
+    };
+    return {
+        x: reflectedVelocity(star.x, velocityX) * width,
+        y: reflectedVelocity(star.y, velocityY) * height,
+    };
+};
+
 const getAmbientTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
     const elapsed = Math.max(0, elapsedSeconds);
     const cycle = Math.floor(elapsed / TWINKLE_WINDOW_SECONDS);
@@ -802,6 +827,17 @@ export const createConstellationGeometryForPhrase = (
     width, height, phrase, sceneSeed, event, true,
 );
 
+export const scaleConstellationGeometry = (
+    geometry: ConstellationGeometry,
+    scaleX: number,
+    scaleY: number,
+): ConstellationGeometry => ({
+    ...geometry,
+    points: geometry.points.map(({ x, y }) => ({ x: x * scaleX, y: y * scaleY })),
+    edges: geometry.edges.map((edge) => ({ ...edge })),
+    glyphs: geometry.glyphs.map((glyph) => ({ ...glyph, indices: [...glyph.indices] })),
+});
+
 export const createConstellationGeometry = (
     width: number,
     height: number,
@@ -874,12 +910,15 @@ const curvedReturnPoint = (
         x: (from.x + to.x) * 0.5 - deltaY / distance * bend,
         y: (from.y + to.y) * 0.5 + deltaX / distance * bend,
     });
-    const beforeEnd = clampPoint({
+    // This control must not be clamped: its exact offset is the endpoint derivative contract.
+    // Generated ambient endpoints have a 2.5% margin, while the maximum offset is only 0.425%,
+    // so the control and the convex-hull curve remain on-screen even at the density extremes.
+    const beforeEnd = {
         x: to.x - endVelocity.x * MORPH_SECONDS / 4,
         y: to.y - endVelocity.y * MORPH_SECONDS / 4,
-    });
-    // Repeated first control gives zero hold-boundary velocity. The penultimate control matches
-    // ambient velocity at the end; all controls stay in the safe rectangle, preventing overshoot.
+    };
+    // Repeated first control gives zero hold-boundary velocity; the penultimate control matches
+    // the right-hand scheduled velocity exactly at the return boundary.
     return quarticPoint([from, from, middle, beforeEnd, to], amount);
 };
 
@@ -893,6 +932,7 @@ export const getEasterEggStarFieldPositions = (
     targets: Point[],
     end: Point[],
     elapsedSinceTrigger: number,
+    endVelocities: Point[] = [],
 ): Point[] => {
     const phase = getEasterEggPhase(elapsedSinceTrigger);
     const targetFor = (point: Point, index: number) => targets[index] ?? point;
@@ -908,6 +948,7 @@ export const getEasterEggStarFieldPositions = (
         const height = Math.max(1, ...ys);
         return start.map((point, index) => curvedReturnPoint(
             targetFor(point, index), end[index] ?? point, amount, 0x51a7e99, index, width, height,
+            endVelocities[index],
         ));
     }
     return end;
@@ -998,13 +1039,9 @@ export const getStarFieldPositions = (
         if (phase.name === 'hold') return targets[index];
         if (phase.name === 'morph-out') {
             const rawProgress = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
-            const velocity = {
-                x: Math.cos(star.driftAngle) * star.driftSpeed * width,
-                y: Math.sin(star.driftAngle) * star.driftSpeed * height,
-            };
             return curvedReturnPoint(
                 targets[index], pixelCurrent, rawProgress, sceneSeed ^ phase.event, index,
-                width, height, velocity,
+                width, height, getDriftedStarVelocity(star, currentDriftTime, width, height),
             );
         }
         return pixelCurrent;
@@ -1020,13 +1057,10 @@ export const getStarFieldPositions = (
         if (phase.name === 'morph-in' || phase.name === 'hold') return pixelPrevious;
         if (phase.name === 'morph-out') {
             const rawProgress = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
-            const velocity = {
-                x: Math.cos(star.driftAngle) * star.driftSpeed * width,
-                y: Math.sin(star.driftAngle) * star.driftSpeed * height,
-            };
             return curvedReturnPoint(
                 pixelPrevious, pixelCurrent, rawProgress, sceneSeed ^ phase.event,
-                targets.length + index, width, height, velocity,
+                targets.length + index, width, height,
+                getDriftedStarVelocity(star, currentDriftTime, width, height),
             );
         }
         return pixelCurrent;

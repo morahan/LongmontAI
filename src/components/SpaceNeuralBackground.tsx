@@ -37,6 +37,7 @@ import {
     hasAtmosphereHalo,
     isStarRenderable,
     projectTraveler,
+    scaleConstellationGeometry,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
     shouldTriggerEasterEgg,
@@ -76,6 +77,7 @@ interface EasterEggTransition {
     startPositions: Point[];
     targetPositions: Point[];
     endPositions: Point[];
+    endVelocities: Point[];
     startStyles: StarVisualStyle[];
     targetStyles: StarVisualStyle[];
     endStyles: StarVisualStyle[];
@@ -744,6 +746,7 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.targetPositions,
                             easterEgg.endPositions,
                             age,
+                            easterEgg.endVelocities,
                         ),
                         styles: getEasterEggStarFieldStyles(
                             easterEgg.startStyles,
@@ -935,8 +938,21 @@ const SpaceNeuralBackground: React.FC = () => {
                     x: x * width / previousWidth,
                     y: y * height / previousHeight,
                 }));
+                const scaleX = width / previousWidth;
+                const scaleY = height / previousHeight;
                 easterEgg.startPositions = scalePoints(easterEgg.startPositions);
                 easterEgg.endPositions = scalePoints(easterEgg.endPositions);
+                easterEgg.endVelocities = easterEgg.endVelocities.map(({ x, y }) => ({
+                    x: x * scaleX,
+                    y: y * scaleY,
+                }));
+                easterEgg.startLineLayers = easterEgg.startLineLayers.map((layer) => ({
+                    ...layer,
+                    geometry: scaleConstellationGeometry(layer.geometry, scaleX, scaleY),
+                }));
+                easterEgg.endGeometry = scaleConstellationGeometry(
+                    easterEgg.endGeometry, scaleX, scaleY,
+                );
                 const oldAnchorCount = easterEgg.geometry.points.length;
                 const retainedTargets = scalePoints(
                     easterEgg.targetPositions.slice(oldAnchorCount),
@@ -994,9 +1010,16 @@ const SpaceNeuralBackground: React.FC = () => {
             const rawEndPositions = getStarFieldPositions(
                 scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS, width, height,
             );
-            const rawEndStyles = getStarFieldStyles(
-                scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS,
+            const endpointElapsed = elapsed + CONSTELLATION_WINDOW_SECONDS;
+            const velocitySampleSeconds = 0.001;
+            const afterEndPositions = getStarFieldPositions(
+                scene.seed, endpointElapsed + velocitySampleSeconds, width, height,
             );
+            const rawEndVelocities = rawEndPositions.map((point, index) => ({
+                x: ((afterEndPositions[index] ?? point).x - point.x) / velocitySampleSeconds,
+                y: ((afterEndPositions[index] ?? point).y - point.y) / velocitySampleSeconds,
+            }));
+            const rawEndStyles = getStarFieldStyles(scene.seed, endpointElapsed);
             const retainedIndices = currentFrame.styles
                 .map((style, index) => ({ style, index }))
                 .filter(({ style }) => style.strength === 0 && style.opacity > 0)
@@ -1023,6 +1046,10 @@ const SpaceNeuralBackground: React.FC = () => {
                 { length: totalCount },
                 (_, index) => ({ ...(styles[index] ?? hiddenStyle) }),
             );
+            const fillVelocities = (velocities: Point[]) => Array.from(
+                { length: totalCount },
+                (_, index) => ({ ...(velocities[index] ?? { x: 0, y: 0 }) }),
+            );
             const targetPositions = [
                 ...geometry.points,
                 ...retainedPositions,
@@ -1048,6 +1075,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 startPositions: fillPoints(currentFrame.positions),
                 targetPositions: fillPoints(targetPositions),
                 endPositions: fillPoints(rawEndPositions),
+                endVelocities: fillVelocities(rawEndVelocities),
                 startStyles: fillStyles(currentFrame.styles),
                 targetStyles: fillStyles(targetStyles),
                 endStyles: fillStyles(rawEndStyles),
