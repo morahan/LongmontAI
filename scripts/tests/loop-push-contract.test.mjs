@@ -30,6 +30,7 @@ assert.match(loopScript, /COMMIT_MESSAGE: <concise Git commit subject>/);
 assert.match(loopScript, /outer loop immediately repeats until the working tree is clean and the branch is synced/);
 assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 git commit --file "\$message_file"/);
 assert.match(loopScript, /bash scripts\/local-ci\.sh/);
+assert.doesNotMatch(loopScript, /npm run security:push/);
 assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 git push/);
 assert.match(loopScript, /git push -u origin/);
 
@@ -145,6 +146,33 @@ codex exec --ephemeral --sandbox read-only 'security review'
   assert.equal(readFileSync(reviews, 'utf8'), 'review\n');
   assert.equal(execFileSync('git', ['log', '-1', '--pretty=%s'], { cwd: repository, encoding: 'utf8' }).trim(), 'test: commit prepared batch');
   assert.equal(execFileSync('git', ['rev-list', '--count', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim(), '2');
+
+  const remote = join(repository, '.git', 'loop-push-remote.git');
+  const pushLog = join(repository, '.git', 'pre-push.log');
+  execFileSync('git', ['init', '--bare', '-q', remote], { cwd: repository });
+  execFileSync('git', ['remote', 'add', 'origin', remote], { cwd: repository });
+  const prePushHook = join(repository, '.git', 'hooks', 'pre-push');
+  writeFileSync(prePushHook, `#!/usr/bin/env bash
+set -euo pipefail
+[[ "\${SECURITY_COMMIT_AGENT_REVIEW:-0}" == "1" ]]
+read -r local_ref local_oid remote_ref remote_oid
+[[ -n "$local_ref" && -n "$local_oid" && -n "$remote_ref" && -n "$remote_oid" ]]
+printf '%s %s %s %s\\n' "$local_ref" "$local_oid" "$remote_ref" "$remote_oid" > "$LOOP_PUSH_TEST_PUSH_LOG"
+`);
+  chmodSync(prePushHook, 0o755);
+
+  const pushRun = execFileSync('bash', [script, '0'], {
+    cwd: repository,
+    encoding: 'utf8',
+    env: { ...testEnv, LOOP_PUSH_TEST_PUSH_LOG: pushLog },
+  });
+  assert.match(pushRun, /loop-push complete\./);
+  assert.match(readFileSync(pushLog, 'utf8'), /^refs\/heads\/\S+ [0-9a-f]{40,64} refs\/heads\/\S+ [0-9a-f]{40,64}\n$/);
+  const branch = execFileSync('git', ['branch', '--show-current'], { cwd: repository, encoding: 'utf8' }).trim();
+  assert.equal(
+    execFileSync('git', [`--git-dir=${remote}`, 'rev-parse', `refs/heads/${branch}`], { encoding: 'utf8' }).trim(),
+    execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim(),
+  );
 } finally {
   rmSync(repository, { recursive: true, force: true });
 }

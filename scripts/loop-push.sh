@@ -140,7 +140,6 @@ push_current_branch() {
   if [[ "$LOCAL_VERIFY" -eq 1 ]]; then
     bash scripts/local-ci.sh
   fi
-  npm run security:push
   if git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1; then
     SECURITY_COMMIT_AGENT_REVIEW=1 git push
   else
