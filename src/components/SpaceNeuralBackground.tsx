@@ -40,6 +40,7 @@ import {
     isPlanetBehindSystemStar,
     isStarRenderable,
     projectTraveler,
+    remapAmbientStarsToFirstGlyphSlots,
     scaleConstellationGeometry,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
@@ -84,6 +85,7 @@ interface EasterEggTransition {
     startStyles: StarVisualStyle[];
     targetStyles: StarVisualStyle[];
     endStyles: StarVisualStyle[];
+    endVisibility: boolean[];
 }
 
 const drawMoon = (
@@ -836,6 +838,7 @@ const SpaceNeuralBackground: React.FC = () => {
                             {
                                 firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
+                                endpointVisible: easterEgg.endVisibility,
                             },
                         ),
                         styles: getEasterEggStarFieldStyles(
@@ -846,6 +849,7 @@ const SpaceNeuralBackground: React.FC = () => {
                             {
                                 firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
+                                endpointVisible: easterEgg.endVisibility,
                             },
                         ),
                     };
@@ -1162,6 +1166,22 @@ const SpaceNeuralBackground: React.FC = () => {
                 targetPositions[sourceIndex] = { ...retainedPositions[index] };
                 targetStyles[sourceIndex] = { ...retainedStyles[index] };
             });
+            let startPositions = fillPoints(currentFrame.positions);
+            let startStyles = fillStyles(currentFrame.styles);
+            const endStyles = fillStyles(rawEndStyles);
+            if (currentFrame.phase.name === 'ambient') {
+                const remapped = remapAmbientStarsToFirstGlyphSlots(
+                    startPositions,
+                    startStyles,
+                    geometry.glyphs[0].indices.length,
+                );
+                startPositions = remapped.positions;
+                startStyles = remapped.styles;
+                remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
+                    .forEach((sourceIndex) => {
+                        targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
+                    });
+            }
             easterEgg = {
                 startedAt: elapsed,
                 densityEvent,
@@ -1176,13 +1196,14 @@ const SpaceNeuralBackground: React.FC = () => {
                     endpointPhase.event,
                 ),
                 geometry,
-                startPositions: fillPoints(currentFrame.positions),
+                startPositions,
                 targetPositions,
                 endPositions: fillPoints(rawEndPositions),
                 endVelocities: fillVelocities(rawEndVelocities),
-                startStyles: fillStyles(currentFrame.styles),
+                startStyles,
                 targetStyles,
-                endStyles: fillStyles(rawEndStyles),
+                endStyles,
+                endVisibility: endStyles.map(isStarRenderable),
             };
             easterEggTriggerCount += 1;
             // Publish trigger state before drawing so observers see the transition immediately.

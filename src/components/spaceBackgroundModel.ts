@@ -287,6 +287,8 @@ export interface StarTextIntroProgress {
 export interface StarTextTransitionOptions {
     firstGlyphCount: number;
     targetCount: number;
+    /** End-frame visibility decides whether a slot fades in place or converges to live content. */
+    endpointVisible?: readonly boolean[];
 }
 
 type GlyphPoint = Point;
@@ -1093,6 +1095,40 @@ const mixPoint = (from: Point, to: Point, amount: number): Point => ({
     y: from.y + (to.y - from.y) * amount,
 });
 
+/**
+ * Move production ambient slots into the first glyph before an Easter transition starts. Each
+ * visible default star is transferred once and its old slot is hidden, preserving the exact frame
+ * without duplicate stars. Any density beyond the available ambient field spawns hidden.
+ */
+export const remapAmbientStarsToFirstGlyphSlots = (
+    positions: Point[],
+    styles: StarVisualStyle[],
+    firstGlyphCount: number,
+    ambientStartIndex = MAX_STAR_TEXT_ANCHOR_COUNT,
+): { positions: Point[]; styles: StarVisualStyle[]; sourceIndices: number[] } => {
+    const remappedPositions = positions.map((point) => ({ ...point }));
+    const remappedStyles = styles.map((style) => ({ ...style }));
+    const sourceIndices = styles
+        .map((style, index) => ({ style, index }))
+        .filter(({ style, index }) => index >= ambientStartIndex
+            && style.strength === 0 && style.opacity > 0)
+        .map(({ index }) => index);
+    if (sourceIndices.length === 0) {
+        return { positions: remappedPositions, styles: remappedStyles, sourceIndices };
+    }
+    for (let index = 0; index < firstGlyphCount; index += 1) {
+        const sourceIndex = sourceIndices[index % sourceIndices.length];
+        remappedPositions[index] = { ...positions[sourceIndex] };
+        remappedStyles[index] = index < sourceIndices.length
+            ? { ...styles[sourceIndex] }
+            : hiddenStarStyle(styles[sourceIndex].radius);
+    }
+    sourceIndices.slice(0, firstGlyphCount).forEach((sourceIndex) => {
+        remappedStyles[sourceIndex] = hiddenStarStyle(styles[sourceIndex].radius);
+    });
+    return { positions: remappedPositions, styles: remappedStyles, sourceIndices };
+};
+
 /** Every post-first-glyph node has a deterministic, visible first-glyph burst origin. */
 export const createStarTextBurstOrigins = (
     targets: Point[],
@@ -1229,12 +1265,19 @@ export const getEasterEggStarFieldPositions = (
         });
     }
     if (phase.name === 'hold') return start.map(targetFor);
+    const endpointIsVisible = (index: number) => options.endpointVisible?.[index] ?? false;
     if (phase.name === 'morph-out') {
-        return start.map((point, index) => index < targetCount
-            ? targetFor(point, index)
-            : mixPoint(targetFor(point, index), end[index] ?? point, phase.progress));
+        return start.map((point, index) => {
+            const target = targetFor(point, index);
+            if (endpointIsVisible(index) || index >= targetCount) {
+                return mixPoint(target, end[index] ?? point, phase.progress);
+            }
+            return target;
+        });
     }
-    return end;
+    return start.map((point, index) => index < targetCount && !endpointIsVisible(index)
+        ? targetFor(point, index)
+        : end[index] ?? point);
 };
 
 const mixStarVisualStyle = (
@@ -1290,15 +1333,9 @@ export const getEasterEggStarFieldStyles = (
     }
     if (phase.name === 'hold') return start.map(targetFor);
     if (phase.name === 'morph-out') {
-        return start.map((style, index) => {
-            if (index >= targetCount) return mixStarVisualStyle(
-                targetFor(style, index), end[index] ?? style, phase.progress,
-            );
-            const target = targetFor(style, index);
-            const visible = 1 - phase.progress;
-            return { ...target, alpha: target.alpha * visible, strength: visible,
-                opacity: target.opacity * visible };
-        });
+        return start.map((style, index) => mixStarVisualStyle(
+            targetFor(style, index), end[index] ?? hiddenStarStyle(style.radius), phase.progress,
+        ));
     }
     return end;
 };

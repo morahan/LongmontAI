@@ -126,6 +126,7 @@ import {
   isSystemInViewport,
   isSystemOverlappingViewport,
   projectTraveler,
+  remapAmbientStarsToFirstGlyphSlots,
   scaleConstellationGeometry,
   selectConstellationPhrase,
   selectEasterEggPhrase,
@@ -231,6 +232,62 @@ test('ambient remains 70 while variable Star Text retains 35 ambient stars', () 
   assert.ok(Math.abs(getDriftedStar(bounce, 0.999).x - getDriftedStar(bounce, 1.001).x) < 0.00001);
   closeTo(getDriftedStarVelocity(bounce, 1, 1200, 600).x, -1.2);
   closeTo(getDriftedStarVelocity({ ...bounce, x: 0, driftAngle: Math.PI }, 0, 1200, 600).x, 1.2);
+});
+
+test('production ambient slots transfer into Easter first-glyph slots without hidden starts or duplicates', () => {
+  const seed = 0x51a7;
+  const elapsed = 180;
+  const width = 1200;
+  const height = 600;
+  const positions = getStarFieldPositions(seed, elapsed, width, height);
+  const styles = getStarFieldStyles(seed, elapsed);
+  const geometry = createConstellationGeometryForPhrase(width, height, 'Attention', seed, 1);
+  const firstGlyphCount = geometry.glyphs[0].indices.length;
+  const remapped = remapAmbientStarsToFirstGlyphSlots(
+    positions, styles, firstGlyphCount,
+  );
+  assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT);
+  assert.ok(remapped.sourceIndices.every((index) => index >= MAX_STAR_TEXT_ANCHOR_COUNT));
+
+  const transferredCount = Math.min(firstGlyphCount, AMBIENT_STAR_COUNT);
+  for (let index = 0; index < transferredCount; index += 1) {
+    const sourceIndex = remapped.sourceIndices[index];
+    assert.deepEqual(remapped.positions[index], positions[sourceIndex]);
+    assert.deepEqual(remapped.styles[index], styles[sourceIndex]);
+    assert.equal(remapped.styles[sourceIndex].opacity, 0);
+  }
+  assert.ok(remapped.styles.slice(transferredCount, firstGlyphCount)
+    .every(({ opacity }) => opacity === 0));
+
+  const visibleFrame = (framePositions, frameStyles) => frameStyles
+    .map((style, index) => ({ style, point: framePositions[index] }))
+    .filter(({ style }) => isStarRenderable(style))
+    .map(({ style, point }) => `${point.x.toFixed(8)},${point.y.toFixed(8)},${style.opacity.toFixed(8)}`)
+    .sort();
+  assert.deepEqual(
+    visibleFrame(remapped.positions, remapped.styles),
+    visibleFrame(positions, styles),
+    'slot transfer changed the rendered trigger frame',
+  );
+
+  const targetPositions = positions.map((point, index) =>
+    ({ ...(geometry.points[index] ?? point) }));
+  const targetStyles = styles.map((style, index) => index < geometry.points.length
+    ? createEasterEggTargetStyles(seed, 0, geometry.points.length)[index]
+    : style);
+  const options = { firstGlyphCount, targetCount: geometry.points.length };
+  const firstStage = getEasterEggStarFieldPositions(
+    remapped.positions, targetPositions, positions, 2, [], undefined, options,
+  );
+  const firstStageStyles = getEasterEggStarFieldStyles(
+    remapped.styles, targetStyles, styles, 2, options,
+  );
+  assert.ok(firstStageStyles.slice(0, firstGlyphCount).every(isStarRenderable));
+  assert.ok(firstStageStyles.slice(firstGlyphCount, geometry.points.length)
+    .every(({ opacity }) => opacity === 0));
+  assert.ok(firstStage.slice(0, firstGlyphCount).some((point, index) =>
+    Math.hypot(point.x - remapped.positions[index].x,
+      point.y - remapped.positions[index].y) > 1));
 });
 
 test('twinkles are independent random events with 40-60% minima in every <=120s cycle', () => {
@@ -438,6 +495,96 @@ test('Easter choreography shares first-glyph origins, exact burst geometry, and 
     getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 30, options),
     endStyles,
   );
+});
+
+test('Easter outro converges to scheduled endpoint frames, including trigger wall time 580', () => {
+  const width = 1200;
+  const height = 600;
+  const seed = 0x72a7;
+  const hidden = { alpha: 0, twinkle: 1, strength: 0, radius: 1, opacity: 0 };
+  const createProductionTransition = (triggerElapsed) => {
+    const geometry = createConstellationGeometryForPhrase(
+      width, height, 'Attention', seed, 1,
+    );
+    const rawStartPositions = getStarFieldPositions(seed, triggerElapsed, width, height);
+    const rawStartStyles = getStarFieldStyles(seed, triggerElapsed);
+    const retainedIndices = rawStartStyles
+      .map((style, index) => ({ style, index }))
+      .filter(({ style }) => style.strength === 0 && style.opacity > 0)
+      .slice(-RETAINED_AMBIENT_STAR_COUNT)
+      .map(({ index }) => index);
+    const targetPositions = rawStartPositions.map((point) => ({ ...point }));
+    const targetStyles = rawStartStyles.map(() => ({ ...hidden }));
+    geometry.points.forEach((point, index) => { targetPositions[index] = { ...point }; });
+    createEasterEggTargetStyles(seed, 0, geometry.points.length)
+      .forEach((style, index) => { targetStyles[index] = { ...style }; });
+    retainedIndices.forEach((index) => { targetStyles[index] = { ...rawStartStyles[index] }; });
+
+    let startPositions = rawStartPositions;
+    let startStyles = rawStartStyles;
+    if (getConstellationPhase(triggerElapsed).name === 'ambient') {
+      const remapped = remapAmbientStarsToFirstGlyphSlots(
+        rawStartPositions, rawStartStyles, geometry.glyphs[0].indices.length,
+      );
+      startPositions = remapped.positions;
+      startStyles = remapped.styles;
+      remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
+        .forEach((index) => { targetStyles[index] = { ...startStyles[index] }; });
+    }
+    const endpoint = triggerElapsed + CONSTELLATION_WINDOW_SECONDS;
+    const endPositions = getStarFieldPositions(seed, endpoint, width, height);
+    const endStyles = getStarFieldStyles(seed, endpoint);
+    const options = {
+      firstGlyphCount: geometry.glyphs[0].indices.length,
+      targetCount: geometry.points.length,
+      endpointVisible: endStyles.map(isStarRenderable),
+    };
+    return { geometry, startPositions, startStyles, targetPositions, targetStyles,
+      endPositions, endStyles, options };
+  };
+
+  let checkedVisible = 0;
+  for (const triggerElapsed of [0, 120, 550, 560, 570, 580, 590, 600, 605, 610, 615, 620, 625]) {
+    const transition = createProductionTransition(triggerElapsed);
+    const before = getEasterEggStarFieldPositions(
+      transition.startPositions, transition.targetPositions, transition.endPositions,
+      29.999, [], { x: width, y: height }, transition.options,
+    );
+    const at = getEasterEggStarFieldPositions(
+      transition.startPositions, transition.targetPositions, transition.endPositions,
+      30, [], { x: width, y: height }, transition.options,
+    );
+    const beforeStyles = getEasterEggStarFieldStyles(
+      transition.startStyles, transition.targetStyles, transition.endStyles,
+      29.999, transition.options,
+    );
+    const atStyles = getEasterEggStarFieldStyles(
+      transition.startStyles, transition.targetStyles, transition.endStyles,
+      30, transition.options,
+    );
+    assert.deepEqual(atStyles, transition.endStyles);
+    transition.options.endpointVisible.forEach((visible, index) => {
+      if (!visible) return;
+      assert.deepEqual(at[index], transition.endPositions[index]);
+      assert.ok(Math.hypot(at[index].x - before[index].x, at[index].y - before[index].y) < 0.01,
+        `trigger ${triggerElapsed} visible slot ${index} position popped`);
+      for (const property of ['alpha', 'twinkle', 'strength', 'radius', 'opacity']) {
+        closeTo(beforeStyles[index][property], atStyles[index][property], 0.00001);
+      }
+      checkedVisible += 1;
+    });
+    for (let index = 0; index < transition.geometry.points.length; index += 1) {
+      if (transition.options.endpointVisible[index]) continue;
+      assert.deepEqual(before[index], transition.targetPositions[index]);
+      assert.deepEqual(at[index], transition.targetPositions[index]);
+    }
+  }
+  assert.ok(checkedVisible > 1000, `only ${checkedVisible} live endpoint slots checked`);
+
+  const overlap = createProductionTransition(580);
+  const holdEndpointVisible = overlap.endStyles
+    .slice(0, overlap.geometry.points.length).filter(isStarRenderable).length;
+  assert.ok(holdEndpointVisible > 0, 'trigger 580 fixture no longer ends in scheduled hold');
 });
 
 test('screen-wrapped endpoint sampling rejects a full-screen wrap as physical velocity', () => {
