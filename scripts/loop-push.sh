@@ -122,6 +122,18 @@ commit_dirty_work() {
   }
 }
 
+refresh_upstream() {
+  local branch remote
+  branch="$(git branch --show-current)"
+  remote="$(git config --get "branch.${branch}.remote" 2>/dev/null || true)"
+  if [[ -z "$remote" ]] && git remote get-url origin >/dev/null 2>&1; then
+    remote="origin"
+  fi
+  if [[ -n "$remote" ]] && [[ "$remote" != "." ]]; then
+    git fetch --quiet "$remote"
+  fi
+}
+
 ahead_count() {
   local upstream
   upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
@@ -168,6 +180,7 @@ while [[ "$empty_checks" -lt "$EMPTY_STOP_COUNT" ]]; do
     continue
   fi
 
+  refresh_upstream
   if [[ "$(ahead_count)" -gt 0 ]]; then
     push_current_branch
     empty_checks=0
@@ -178,6 +191,7 @@ while [[ "$empty_checks" -lt "$EMPTY_STOP_COUNT" ]]; do
     prune_repository
   fi
 
+  refresh_upstream
   if ! tree_clean || [[ "$(ahead_count)" -gt 0 ]]; then
     empty_checks=0
     continue

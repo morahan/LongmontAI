@@ -17,6 +17,8 @@ assert.match(justfile, /^loop-push minutes="2":/m);
 assert.match(justfile, /^loop-merge-push minutes="2": \(loop-push-merge minutes\)/m);
 const loopScript = readFileSync(script, 'utf8');
 assert.match(loopScript, /commit_dirty_work\(\)/);
+assert.match(loopScript, /refresh_upstream\(\)/);
+assert.match(loopScript, /git fetch --quiet "\$remote"/);
 assert.match(loopScript, /restore_generated_buildinfo_only\(\)/);
 assert.match(loopScript, /git restore --source=HEAD --staged --worktree --[\s\\]+tsconfig\.tsbuildinfo tsconfig\.node\.tsbuildinfo/);
 assert.match(loopScript, /Never stage tsconfig\.tsbuildinfo or tsconfig\.node\.tsbuildinfo/);
@@ -173,6 +175,34 @@ printf '%s %s %s %s\\n' "$local_ref" "$local_oid" "$remote_ref" "$remote_oid" > 
     execFileSync('git', [`--git-dir=${remote}`, 'rev-parse', `refs/heads/${branch}`], { encoding: 'utf8' }).trim(),
     execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim(),
   );
+
+  writeFileSync(join(repository, 'README.md'), '# Concurrently Published Batch\n');
+  execFileSync('git', ['add', 'README.md'], { cwd: repository });
+  execFileSync('git', ['commit', '-qm', 'concurrent published batch'], {
+    cwd: repository,
+    env: { ...testEnv, SECURITY_COMMIT_AGENT_REVIEW: '1' },
+  });
+  const concurrentlyPublished = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim();
+  execFileSync('git', [
+    `--git-dir=${remote}`,
+    'fetch',
+    repository,
+    `${concurrentlyPublished}:refs/heads/${branch}`,
+  ]);
+  assert.notEqual(
+    execFileSync('git', ['rev-parse', '@{upstream}'], { cwd: repository, encoding: 'utf8' }).trim(),
+    concurrentlyPublished,
+  );
+  rmSync(pushLog, { force: true });
+
+  const concurrentRun = execFileSync('bash', [script, '0'], {
+    cwd: repository,
+    encoding: 'utf8',
+    env: { ...testEnv, LOOP_PUSH_TEST_PUSH_LOG: pushLog },
+  });
+  assert.match(concurrentRun, /loop-push complete\./);
+  assert.equal(execFileSync('git', ['rev-parse', '@{upstream}'], { cwd: repository, encoding: 'utf8' }).trim(), concurrentlyPublished);
+  assert.throws(() => readFileSync(pushLog, 'utf8'), { code: 'ENOENT' });
 } finally {
   rmSync(repository, { recursive: true, force: true });
 }
