@@ -1,11 +1,20 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import {
+    CONSTELLATION_WINDOW_SECONDS,
     createConstellationGeometry,
+    createConstellationGeometryForPhrase,
+    createEasterEggTargetStyles,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
     getConstellationStrength,
+    getEasterEggPhase,
+    getEasterEggStarFieldPositions,
+    getEasterEggStrength,
+    getEasterEggStarFieldStyles,
     getElapsedSecondsSinceMount,
+    getNeuralSignals,
+    getOrbitingMoon,
     getOrbitingPlanets,
     getPlanetSurfaceDetailLevel,
     PLANET_RENDER_SCALE,
@@ -18,35 +27,63 @@ import {
     getSystemOpacity,
     getSystemScale,
     getTravelerAppearance,
+    getUfoAppearance,
     hasAtmosphereHalo,
     isStarRenderable,
+    isUfoTraveler,
     projectTraveler,
+    selectEasterEggPhrase,
     selectProminentSystemOwner,
+    shouldTriggerEasterEgg,
     travelerCountForWidth,
-    type Moon,
+    type ConstellationGeometry,
+    type ConstellationPhrase,
+    type OrbitingMoon,
+    type Point,
     type OrbitingPlanet,
     type ProjectedTraveler,
     type ProminentSystemOwner,
+    type StarVisualStyle,
     type Traveler,
 } from './spaceBackgroundModel';
 
 const TAU = Math.PI * 2;
+const INTERACTIVE_TARGET_SELECTOR = [
+    'a', 'button', 'input', 'select', 'textarea', 'summary', 'label',
+    '[role="button"]', '[role="link"]', '[contenteditable="true"]',
+].join(',');
+
+interface LineLayer {
+    geometry: ConstellationGeometry;
+    strength: number;
+}
+
+interface EasterEggTransition {
+    startedAt: number;
+    phrase: ConstellationPhrase;
+    startStrength: number;
+    endStrength: number;
+    startLineLayers: LineLayer[];
+    endGeometry: ConstellationGeometry;
+    geometry: ConstellationGeometry;
+    startPositions: Point[];
+    targetPositions: Point[];
+    endPositions: Point[];
+    startStyles: StarVisualStyle[];
+    targetStyles: StarVisualStyle[];
+    endStyles: StarVisualStyle[];
+}
 
 const drawMoon = (
     ctx: CanvasRenderingContext2D,
-    planet: OrbitingPlanet,
-    moon: Moon,
-    simulationSeconds: number,
+    moon: OrbitingMoon,
     opacity: number,
 ) => {
-    const angle = moon.phase + simulationSeconds * moon.speed;
-    const moonX = planet.x + Math.cos(angle) * moon.orbitRadius;
-    const moonY = planet.y + Math.sin(angle) * moon.orbitRadius * 0.55;
     ctx.fillStyle = `rgba(225, 236, 241, ${opacity * 0.94})`;
     ctx.strokeStyle = `rgba(130, 166, 184, ${opacity * 0.9})`;
     ctx.lineWidth = 0.14;
     ctx.beginPath();
-    ctx.arc(moonX, moonY, moon.radius, 0, TAU);
+    ctx.arc(moon.x, moon.y, moon.radius, 0, TAU);
     ctx.fill();
     ctx.stroke();
 };
@@ -213,7 +250,50 @@ const drawPlanet = (
     ctx.fill();
     if (renderedPlanet.hasRing) drawPlanetRing(ctx, renderedPlanet, 0, Math.PI);
     ctx.restore();
-    planet.moons.forEach((moon) => drawMoon(ctx, planet, moon, simulationSeconds, opacity));
+    planet.moons.forEach((moon) =>
+        drawMoon(ctx, getOrbitingMoon(planet, moon, simulationSeconds), opacity));
+};
+
+const drawNeuralSignal = (
+    ctx: CanvasRenderingContext2D,
+    from: ProjectedTraveler,
+    to: ProjectedTraveler,
+    opacity: number,
+    pulseProgress: number,
+    lineWidth: number,
+    bend: number,
+) => {
+    if (opacity <= 0) return;
+    const deltaX = to.x - from.x;
+    const deltaY = to.y - from.y;
+    const controlX = (from.x + to.x) * 0.5 - deltaY * bend;
+    const controlY = (from.y + to.y) * 0.5 + deltaX * bend;
+
+    ctx.save();
+    ctx.strokeStyle = `rgba(116, 202, 236, ${opacity})`;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
+    ctx.stroke();
+
+    const inverse = 1 - pulseProgress;
+    const pulseX = inverse * inverse * from.x
+        + 2 * inverse * pulseProgress * controlX
+        + pulseProgress * pulseProgress * to.x;
+    const pulseY = inverse * inverse * from.y
+        + 2 * inverse * pulseProgress * controlY
+        + pulseProgress * pulseProgress * to.y;
+    const glint = ctx.createRadialGradient(pulseX, pulseY, 0, pulseX, pulseY, 4.5);
+    glint.addColorStop(0, `rgba(218, 246, 255, ${opacity * 1.7})`);
+    glint.addColorStop(0.35, `rgba(133, 215, 242, ${opacity * 0.7})`);
+    glint.addColorStop(1, 'rgba(99, 190, 226, 0)');
+    ctx.fillStyle = glint;
+    ctx.beginPath();
+    ctx.arc(pulseX, pulseY, 4.5, 0, TAU);
+    ctx.fill();
+    ctx.restore();
 };
 
 const drawTravelerStar = (
@@ -284,6 +364,72 @@ const drawTravelerStar = (
     }
 };
 
+const drawUfo = (
+    ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    deltaX: number,
+    deltaY: number,
+) => {
+    const appearance = getUfoAppearance(traveler, projection.progress);
+    const distance = Math.hypot(deltaX, deltaY);
+    const directionX = distance > 0 ? deltaX / distance : 1;
+    const directionY = distance > 0 ? deltaY / distance : 0;
+    const angle = Math.atan2(directionY, directionX);
+    const { x, y, opacity } = projection;
+
+    // A luminous exhaust line extends directly opposite the current motion vector.
+    const streak = ctx.createLinearGradient(
+        x - directionX * appearance.streakLength,
+        y - directionY * appearance.streakLength,
+        x,
+        y,
+    );
+    streak.addColorStop(0, 'rgba(93, 213, 255, 0)');
+    streak.addColorStop(1, `rgba(167, 235, 255, ${opacity * 0.72})`);
+    ctx.strokeStyle = streak;
+    ctx.lineWidth = Math.max(0.7, appearance.radius * 0.42);
+    ctx.beginPath();
+    ctx.moveTo(x - directionX * appearance.streakLength, y - directionY * appearance.streakLength);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, appearance.glowRadius);
+    glow.addColorStop(0, `rgba(127, 225, 255, ${opacity * 0.5})`);
+    glow.addColorStop(1, 'rgba(74, 178, 231, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, appearance.glowRadius, 0, TAU);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = `rgba(206, 230, 239, ${opacity})`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, appearance.radius, appearance.radius * 0.38, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = `rgba(102, 205, 236, ${opacity * 0.95})`;
+    ctx.beginPath();
+    ctx.ellipse(
+        appearance.radius * 0.12,
+        -appearance.radius * 0.28,
+        appearance.radius * 0.42,
+        appearance.radius * 0.34,
+        0,
+        Math.PI,
+        TAU,
+    );
+    ctx.fill();
+    ctx.strokeStyle = `rgba(246, 253, 255, ${opacity})`;
+    ctx.lineWidth = Math.max(0.3, appearance.radius * 0.1);
+    ctx.beginPath();
+    ctx.moveTo(-appearance.radius * 0.72, appearance.radius * 0.08);
+    ctx.lineTo(appearance.radius * 0.72, appearance.radius * 0.08);
+    ctx.stroke();
+    ctx.restore();
+};
+
 const drawSun = (ctx: CanvasRenderingContext2D, opacity: number) => {
     const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, SYSTEM_STAR_RADIUS);
     glow.addColorStop(0, `rgba(245, 250, 255, ${opacity})`);
@@ -343,6 +489,83 @@ const SpaceNeuralBackground: React.FC = () => {
         let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
         let constellationEvent = -1;
         let prominentSystemOwner: ProminentSystemOwner | null = null;
+        let easterEgg: EasterEggTransition | null = null;
+        let easterEggTriggerCount = 0;
+
+        const clearEasterEggDataset = () => {
+            delete canvas.dataset.constellationPhrase;
+            delete canvas.dataset.easterEggState;
+        };
+
+        const getScheduledStarFrame = (elapsed: number) => {
+            const phase = getConstellationPhase(elapsed);
+            if (!constellationGeometry || constellationEvent !== phase.event) {
+                constellationGeometry = createConstellationGeometry(width, height, scene.seed, phase.event);
+                constellationEvent = phase.event;
+            }
+            return {
+                geometry: constellationGeometry,
+                phase,
+                strength: getConstellationStrength(phase),
+                lineLayers: [{
+                    geometry: constellationGeometry,
+                    strength: getConstellationStrength(phase),
+                }],
+                positions: getStarFieldPositions(scene.seed, elapsed, width, height),
+                styles: getStarFieldStyles(scene.seed, elapsed),
+            };
+        };
+
+        const getRenderedStarFrame = (elapsed: number) => {
+            if (easterEgg) {
+                const age = Math.max(0, elapsed - easterEgg.startedAt);
+                const phase = getEasterEggPhase(age);
+                if (phase.name !== 'ambient') {
+                    const lineLayers: LineLayer[] = phase.name === 'morph-in'
+                        ? [
+                            ...easterEgg.startLineLayers.map((layer) => ({
+                                ...layer,
+                                strength: layer.strength * (1 - phase.progress),
+                            })),
+                            { geometry: easterEgg.geometry, strength: phase.progress },
+                        ]
+                        : phase.name === 'hold'
+                            ? [{ geometry: easterEgg.geometry, strength: 1 }]
+                            : [
+                                { geometry: easterEgg.geometry, strength: 1 - phase.progress },
+                                {
+                                    geometry: easterEgg.endGeometry,
+                                    strength: easterEgg.endStrength * phase.progress,
+                                },
+                            ];
+                    return {
+                        geometry: easterEgg.geometry,
+                        phase,
+                        strength: getEasterEggStrength(
+                            easterEgg.startStrength,
+                            easterEgg.endStrength,
+                            age,
+                        ),
+                        lineLayers,
+                        positions: getEasterEggStarFieldPositions(
+                            easterEgg.startPositions,
+                            easterEgg.targetPositions,
+                            easterEgg.endPositions,
+                            age,
+                        ),
+                        styles: getEasterEggStarFieldStyles(
+                            easterEgg.startStyles,
+                            easterEgg.targetStyles,
+                            easterEgg.endStyles,
+                            age,
+                        ),
+                    };
+                }
+                easterEgg = null;
+                clearEasterEggDataset();
+            }
+            return getScheduledStarFrame(elapsed);
+        };
 
         const drawScene = (elapsed: number, renderDetails = true) => {
             if (width <= 0 || height <= 0) return;
@@ -355,25 +578,24 @@ const SpaceNeuralBackground: React.FC = () => {
                 ctx.fillRect(0, 0, width, height);
             }
 
-            const phase = getConstellationPhase(elapsed);
-            if (!constellationGeometry || constellationEvent !== phase.event) {
-                constellationGeometry = createConstellationGeometry(width, height, scene.seed, phase.event);
-                constellationEvent = phase.event;
+            const frame = getRenderedStarFrame(elapsed);
+            const { phase, positions, styles, lineLayers } = frame;
+            if (easterEgg) {
+                canvas.dataset.constellationPhrase = easterEgg.phrase;
+                canvas.dataset.easterEggState = phase.name;
             }
-            const strength = getConstellationStrength(phase);
-            const styles = getStarFieldStyles(scene.seed, elapsed);
-            const positions = getStarFieldPositions(scene.seed, elapsed, width, height);
-            const lineOpacity = 0.15 * strength;
-            if (lineOpacity > 0 && constellationGeometry) {
+            lineLayers.forEach(({ geometry, strength }) => {
+                const lineOpacity = 0.15 * strength;
+                if (lineOpacity <= 0) return;
                 ctx.strokeStyle = `rgba(176, 217, 235, ${lineOpacity})`;
                 ctx.lineWidth = 0.55;
                 ctx.beginPath();
-                constellationGeometry.edges.forEach(({ from, to }) => {
+                geometry.edges.forEach(({ from, to }) => {
                     ctx.moveTo(positions[from].x, positions[from].y);
                     ctx.lineTo(positions[to].x, positions[to].y);
                 });
                 ctx.stroke();
-            }
+            });
 
             for (let index = 0; index < positions.length; index += 1) {
                 const style = styles[index];
@@ -407,6 +629,18 @@ const SpaceNeuralBackground: React.FC = () => {
                 prominentSystemOwner,
             );
 
+            // Filaments sit below traveler stars; their endpoints are always current projections.
+            getNeuralSignals(scene.seed, elapsed, projections, width, height, reducedMotion)
+                .forEach((signal) => drawNeuralSignal(
+                    ctx,
+                    projections[signal.fromTravelerIndex],
+                    projections[signal.toTravelerIndex],
+                    signal.opacity,
+                    signal.pulseProgress,
+                    signal.lineWidth,
+                    signal.bend,
+                ));
+
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
                 const projection = projections[index];
@@ -417,22 +651,26 @@ const SpaceNeuralBackground: React.FC = () => {
                         width,
                         height,
                     );
-                    if (previous.cycle === projection.cycle) {
-                        const deltaX = projection.x - previous.x;
-                        const deltaY = projection.y - previous.y;
-                        const distance = Math.hypot(deltaX, deltaY);
-                        if (distance > 0.35) {
-                            const tailScale = Math.min(1, 5 / distance);
-                            ctx.strokeStyle = `rgba(184, 218, 233, ${projection.opacity * 0.14})`;
-                            ctx.lineWidth = Math.max(0.35, projection.radius * 0.45);
-                            ctx.beginPath();
-                            ctx.moveTo(projection.x - deltaX * tailScale, projection.y - deltaY * tailScale);
-                            ctx.lineTo(projection.x, projection.y);
-                            ctx.stroke();
+                    const sameCycle = previous.cycle === projection.cycle;
+                    const deltaX = sameCycle ? projection.x - previous.x : 0;
+                    const deltaY = sameCycle ? projection.y - previous.y : 0;
+                    if (isUfoTraveler(traveler, projection.cycle)) {
+                        drawUfo(ctx, traveler, projection, deltaX, deltaY);
+                    } else {
+                        if (sameCycle) {
+                            const distance = Math.hypot(deltaX, deltaY);
+                            if (distance > 0.35) {
+                                const tailScale = Math.min(1, 5 / distance);
+                                ctx.strokeStyle = `rgba(184, 218, 233, ${projection.opacity * 0.14})`;
+                                ctx.lineWidth = Math.max(0.35, projection.radius * 0.45);
+                                ctx.beginPath();
+                                ctx.moveTo(projection.x - deltaX * tailScale, projection.y - deltaY * tailScale);
+                                ctx.lineTo(projection.x, projection.y);
+                                ctx.stroke();
+                            }
                         }
+                        drawTravelerStar(ctx, traveler, projection);
                     }
-
-                    drawTravelerStar(ctx, traveler, projection);
                 }
 
                 if (index === prominentSystemOwner?.travelerIndex) {
@@ -467,6 +705,8 @@ const SpaceNeuralBackground: React.FC = () => {
         };
 
         const handleResize = () => {
+            const previousWidth = width;
+            const previousHeight = height;
             const rect = canvas.getBoundingClientRect();
             width = rect.width;
             height = rect.height;
@@ -484,10 +724,77 @@ const SpaceNeuralBackground: React.FC = () => {
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
             constellationEvent = getConstellationPhase(elapsed).event;
             constellationGeometry = createConstellationGeometry(width, height, scene.seed, constellationEvent);
+            if (easterEgg && previousWidth > 0 && previousHeight > 0) {
+                const scalePoints = (points: Point[]) => points.map(({ x, y }) => ({
+                    x: x * width / previousWidth,
+                    y: y * height / previousHeight,
+                }));
+                easterEgg.startPositions = scalePoints(easterEgg.startPositions);
+                easterEgg.endPositions = scalePoints(easterEgg.endPositions);
+                easterEgg.geometry = createConstellationGeometryForPhrase(width, height, easterEgg.phrase);
+                easterEgg.targetPositions = easterEgg.geometry.points;
+            }
             drawScene(elapsed, false);
         };
         const handleVisibilityChange = () => { pageIsVisible = !document.hidden; syncAnimation(); };
-        const handleMotionChange = (event: MediaQueryListEvent) => { reducedMotion = event.matches; syncAnimation(); };
+        const handleMotionChange = (event: MediaQueryListEvent) => {
+            reducedMotion = event.matches;
+            if (reducedMotion) {
+                easterEgg = null;
+                clearEasterEggDataset();
+            }
+            syncAnimation();
+        };
+        const handleDocumentClick = (event: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const isInsideCanvas = rect.width > 0 && rect.height > 0
+                && event.clientX >= rect.left && event.clientX <= rect.right
+                && event.clientY >= rect.top && event.clientY <= rect.bottom;
+            const target = event.target instanceof Element ? event.target : null;
+            const isInteractiveTarget = Boolean(target?.closest(INTERACTIVE_TARGET_SELECTOR));
+            if (!shouldTriggerEasterEgg(
+                event.detail,
+                isInsideCanvas,
+                isInteractiveTarget,
+                reducedMotion,
+            )) return;
+
+            const elapsed = getElapsedSecondsSinceMount(mountedAt, performance.now());
+            const currentFrame = getRenderedStarFrame(elapsed);
+            const phrase = selectEasterEggPhrase(scene.seed, easterEggTriggerCount);
+            const geometry = createConstellationGeometryForPhrase(width, height, phrase);
+            const endpointPhase = getConstellationPhase(elapsed + CONSTELLATION_WINDOW_SECONDS);
+            easterEgg = {
+                startedAt: elapsed,
+                phrase,
+                startStrength: currentFrame.strength,
+                endStrength: getConstellationStrength(endpointPhase),
+                startLineLayers: currentFrame.lineLayers,
+                endGeometry: createConstellationGeometry(
+                    width,
+                    height,
+                    scene.seed,
+                    endpointPhase.event,
+                ),
+                geometry,
+                startPositions: currentFrame.positions.map((point) => ({ ...point })),
+                targetPositions: geometry.points,
+                endPositions: getStarFieldPositions(
+                    scene.seed,
+                    elapsed + CONSTELLATION_WINDOW_SECONDS,
+                    width,
+                    height,
+                ),
+                startStyles: currentFrame.styles.map((style) => ({ ...style })),
+                targetStyles: createEasterEggTargetStyles(scene.seed, easterEggTriggerCount),
+                endStyles: getStarFieldStyles(scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS),
+            };
+            easterEggTriggerCount += 1;
+            // Publish trigger state before drawing so observers see the transition immediately.
+            canvas.dataset.constellationPhrase = phrase;
+            canvas.dataset.easterEggState = 'morph-in';
+            drawScene(elapsed);
+        };
         const intersectionObserver = typeof IntersectionObserver === 'undefined' ? null
             : new IntersectionObserver(([entry]) => {
                 isOnscreen = entry?.isIntersecting ?? false;
@@ -495,6 +802,7 @@ const SpaceNeuralBackground: React.FC = () => {
             }, { threshold: 0.01 });
 
         window.addEventListener('resize', handleResize);
+        document.addEventListener('click', handleDocumentClick, { passive: true });
         document.addEventListener('visibilitychange', handleVisibilityChange);
         motionQuery.addEventListener('change', handleMotionChange);
         intersectionObserver?.observe(canvas);
@@ -506,6 +814,7 @@ const SpaceNeuralBackground: React.FC = () => {
             intersectionObserver?.disconnect();
             motionQuery.removeEventListener('change', handleMotionChange);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('click', handleDocumentClick);
             window.removeEventListener('resize', handleResize);
         };
     }, []);

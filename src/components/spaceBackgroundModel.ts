@@ -1,13 +1,24 @@
-export const AMBIENT_STAR_COUNT = 35;
-export const CONSTELLATION_STAR_COUNT = 72;
+export const AMBIENT_STAR_COUNT = 70;
+export const CONSTELLATION_STAR_COUNT = 144;
+export const RETAINED_AMBIENT_STAR_COUNT = 35;
 export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
 export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
-export const AMBIENT_STAR_RADIUS_RANGE = [0.75, 1.9] as const;
-export const DESKTOP_TRAVELER_COUNT = 23;
+export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
+export const DESKTOP_TRAVELER_COUNT = 24;
 export const MOBILE_TRAVELER_COUNT = 15;
+export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
+export const UFO_BASIS_POINTS = 300;
+export const UFO_SIZE_MULTIPLIER = 1.5;
 export const MOBILE_BREAKPOINT = 640;
+export const NEURAL_SIGNAL_SLOT_SECONDS = 24;
+export const NEURAL_SIGNAL_DURATION_RANGE = [2.4, 3.2] as const;
+export const NEURAL_SIGNAL_MAX_CONCURRENT = 1;
+export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.32;
+export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.2;
+export const NEURAL_SIGNAL_MAX_OPACITY = 0.12;
+export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
@@ -23,7 +34,8 @@ export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const PLANET_RING_LINE_WIDTH = 0.8;
 export const PLANET_RADIUS_RANGE = [1.45, 2.3] as const;
 export const PLANET_RENDER_SCALE = 0.5;
-export const SYSTEM_STAR_RADIUS = 10.5;
+export const MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO = 0.5;
+export const SYSTEM_STAR_RADIUS = 11.55;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
@@ -50,6 +62,7 @@ const PLANET_COLORS: Record<PlanetAtmosphereClass, readonly string[]> = {
 
 export type RandomSource = () => number;
 export type ConstellationPhaseName = 'ambient' | 'morph-in' | 'hold' | 'morph-out';
+export type EasterEggState = ConstellationPhaseName;
 export type DriftMode = 'wrap' | 'bounce';
 export type PlanetAtmosphereClass = typeof PLANET_ATMOSPHERE_CLASSES[number];
 
@@ -110,6 +123,12 @@ export interface OrbitingPlanet extends Planet {
     angle: number;
 }
 
+export interface OrbitingMoon extends Moon {
+    x: number;
+    y: number;
+    angle: number;
+}
+
 export interface Traveler {
     seed: number;
     initialDistance: number;
@@ -134,6 +153,12 @@ export interface TravelerAppearance {
     flareLength: number;
 }
 
+export interface UfoAppearance {
+    radius: number;
+    glowRadius: number;
+    streakLength: number;
+}
+
 export interface ProjectedTraveler {
     x: number;
     y: number;
@@ -147,6 +172,15 @@ export interface ProjectedTraveler {
 export interface ProminentSystemOwner {
     travelerIndex: number;
     cycle: number;
+}
+
+export interface NeuralSignal {
+    fromTravelerIndex: number;
+    toTravelerIndex: number;
+    opacity: number;
+    pulseProgress: number;
+    lineWidth: number;
+    bend: number;
 }
 
 export interface ConstellationPhase {
@@ -182,6 +216,25 @@ const hashUint = (seed: number, cycle: number, channel: number) => {
 const hashRandom = (seed: number, cycle: number, channel: number) =>
     hashUint(seed, cycle, channel) / UINT32_RANGE;
 
+const UFO_BASIS_POINT_RANGE = 10000;
+
+/** Exactly 300 of 10,000 equiprobable outcomes classify as spacecraft. */
+export const isUfoBasisPoint = (basisPoint: number) =>
+    positiveModulo(Math.trunc(basisPoint), UFO_BASIS_POINT_RANGE) < UFO_BASIS_POINTS;
+
+/** Spacecraft identity is stable within a traveler lifecycle and reseeded on its next depth cycle. */
+export const isUfoTraveler = (traveler: Pick<Traveler, 'seed'>, cycle: number) => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % UFO_BASIS_POINT_RANGE);
+    let channel = 307;
+    let roll = hashUint(traveler.seed, stableCycle, channel);
+    while (roll >= acceptedRange) {
+        channel += 1;
+        roll = hashUint(traveler.seed, stableCycle, channel);
+    }
+    return isUfoBasisPoint(roll % UFO_BASIS_POINT_RANGE);
+};
+
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const smoothstep = (value: number) => {
     const bounded = clamp01(value);
@@ -212,13 +265,7 @@ export const travelerCountForWidth = (width: number) =>
 /** Every sixth moving star is eligible to carry a prominent planetary system. */
 export const isSystemCarrier = (_traveler: Traveler, index: number) => index % 6 === 2;
 
-export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhase => {
-    const elapsed = Math.max(0, elapsedSeconds);
-    if (elapsed < CONSTELLATION_INTERVAL_SECONDS) {
-        return { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed };
-    }
-    const event = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS);
-    const eventElapsed = elapsed - event * CONSTELLATION_INTERVAL_SECONDS;
+const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPhase => {
     if (eventElapsed < MORPH_SECONDS) {
         return { name: 'morph-in', event, progress: smoothstep(eventElapsed / MORPH_SECONDS), eventElapsed };
     }
@@ -236,6 +283,19 @@ export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhas
     return { name: 'ambient', event, progress: 0, eventElapsed };
 };
 
+export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhase => {
+    const elapsed = Math.max(0, elapsedSeconds);
+    if (elapsed < CONSTELLATION_INTERVAL_SECONDS) {
+        return { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed };
+    }
+    const event = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS);
+    return getLifecyclePhase(elapsed - event * CONSTELLATION_INTERVAL_SECONDS, event);
+};
+
+/** An explicit trigger gets the same exact 10s in / 10s hold / 10s out lifecycle. */
+export const getEasterEggPhase = (elapsedSinceTrigger: number): ConstellationPhase =>
+    getLifecyclePhase(Math.max(0, elapsedSinceTrigger), 1);
+
 /** Traveler and planet clocks exclude every constellation window, including the active partial one. */
 export const getSimulationTime = (elapsedSeconds: number) => {
     const elapsed = Math.max(0, elapsedSeconds);
@@ -247,17 +307,17 @@ export const getSimulationTime = (elapsedSeconds: number) => {
         - Math.min(inInterval, CONSTELLATION_WINDOW_SECONDS);
 };
 
-export const createAmbientLayout = (seed: number, generation: number): DistantStar[] => {
-    const random = createSeededRandom(hashUint(seed, generation, 71));
+const createStarLayout = (seed: number, generation: number, count: number, channel: number) => {
+    const random = createSeededRandom(hashUint(seed, generation, channel));
     const modes: DriftMode[] = Array.from(
-        { length: CONSTELLATION_STAR_COUNT },
-        (_, index) => index < CONSTELLATION_STAR_COUNT / 2 ? 'wrap' : 'bounce',
+        { length: count },
+        (_, index) => index < count / 2 ? 'wrap' : 'bounce',
     );
     for (let index = modes.length - 1; index > 0; index -= 1) {
         const swapIndex = Math.floor(random() * (index + 1));
         [modes[index], modes[swapIndex]] = [modes[swapIndex], modes[index]];
     }
-    return Array.from({ length: CONSTELLATION_STAR_COUNT }, (_, index) => ({
+    return Array.from({ length: count }, (_, index) => ({
         x: between(random, 0.025, 0.975),
         y: between(random, 0.025, 0.975),
         size: between(random, AMBIENT_STAR_RADIUS_RANGE[0], AMBIENT_STAR_RADIUS_RANGE[1]),
@@ -268,6 +328,12 @@ export const createAmbientLayout = (seed: number, generation: number): DistantSt
         twinkleSeed: Math.floor(random() * UINT32_RANGE),
     }));
 };
+
+export const createAmbientLayout = (seed: number, generation: number): DistantStar[] =>
+    createStarLayout(seed, generation, CONSTELLATION_STAR_COUNT, 71);
+
+const createRetainedAmbientLayout = (seed: number, generation: number): DistantStar[] =>
+    createStarLayout(seed, generation, RETAINED_AMBIENT_STAR_COUNT, 73);
 
 export const getDriftedStar = (star: DistantStar, elapsedSeconds: number): Point => {
     const elapsed = Math.max(0, elapsedSeconds);
@@ -315,6 +381,19 @@ export const getConstellationStrength = (phase: ConstellationPhase) => {
     return 0;
 };
 
+/** Line strength also starts from the exact rendered frame when a trigger restarts. */
+export const getEasterEggStrength = (
+    startStrength: number,
+    endStrength: number,
+    elapsedSinceTrigger: number,
+) => {
+    const phase = getEasterEggPhase(elapsedSinceTrigger);
+    if (phase.name === 'morph-in') return mix(startStrength, 1, phase.progress);
+    if (phase.name === 'hold') return 1;
+    if (phase.name === 'morph-out') return mix(1, endStrength, phase.progress);
+    return endStrength;
+};
+
 const mix = (from: number, to: number, amount: number) => from + (to - from) * amount;
 
 /** Pure visual style interpolation with no alpha, radius, or twinkle pops at phase boundaries. */
@@ -357,15 +436,38 @@ export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): S
     const phase = getConstellationPhase(elapsedSeconds);
     const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
     const next = createAmbientLayout(sceneSeed, phase.event);
-    return next.map((star, index) => {
+    const constellationStyles = next.map((star, index) => {
         const style = getStarVisualStyle(previous[index], star, elapsedSeconds);
-        if (index < AMBIENT_STAR_COUNT) return style;
+        if (index < AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT) return style;
         return {
             ...style,
             alpha: style.alpha * style.strength,
             opacity: style.opacity * style.strength,
         };
     });
+
+    const retainedPrevious = createRetainedAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
+    const retainedNext = createRetainedAmbientLayout(sceneSeed, phase.event);
+    const retainedStyles = retainedNext.map((star, index) => {
+        if (phase.name === 'ambient') {
+            const twinkle = getAmbientTwinkleBrightness(star, elapsedSeconds);
+            return { alpha: star.alpha, twinkle, strength: 0, radius: star.size,
+                opacity: Math.min(1, star.alpha * twinkle) };
+        }
+        const progress = phase.name === 'morph-out' ? phase.progress : 0;
+        const alpha = mix(retainedPrevious[index].alpha, star.alpha, progress);
+        const radius = mix(retainedPrevious[index].size, star.size, progress);
+        const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
+        const beforeTwinkle = getAmbientTwinkleBrightness(
+            retainedPrevious[index], eventStart - 0.000001,
+        );
+        const afterTwinkle = getAmbientTwinkleBrightness(
+            star, eventStart + CONSTELLATION_WINDOW_SECONDS,
+        );
+        const twinkle = mix(beforeTwinkle, afterTwinkle, progress);
+        return { alpha, twinkle, strength: 0, radius, opacity: Math.min(1, alpha * twinkle) };
+    });
+    return [...constellationStyles, ...retainedStyles];
 };
 
 /** Shared by tests and the Canvas loop so ambient draw counts cover the rendered path. */
@@ -390,6 +492,23 @@ export const CONSTELLATION_PHRASES = [
     'Harness',
 ] as const;
 export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
+export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(1) as readonly ConstellationPhrase[];
+
+/** Native click detail reaches three only after a browser-recognized quick triple click. */
+export const shouldTriggerEasterEgg = (
+    clickDetail: number,
+    isInsideCanvas: boolean,
+    isInteractiveTarget: boolean,
+    prefersReducedMotion = false,
+) => clickDetail === 3 && isInsideCanvas && !isInteractiveTarget && !prefersReducedMotion;
+
+/** Seed chooses the first hidden phrase; subsequent triggers cycle all six without repeats. */
+export const selectEasterEggPhrase = (sceneSeed: number, triggerIndex: number): ConstellationPhrase => {
+    const firstIndex = hashUint(sceneSeed, 0, 313) % EASTER_EGG_PHRASES.length;
+    return EASTER_EGG_PHRASES[
+        positiveModulo(firstIndex + Math.max(0, Math.trunc(triggerIndex)), EASTER_EGG_PHRASES.length)
+    ];
+};
 
 const CONSTELLATION_BUCKET_COUNT = 12;
 
@@ -443,10 +562,12 @@ const GLYPHS: Record<string, string[]> = {
     '.': ['00000', '00000', '00000', '00000', '00000', '00110', '00110'],
 };
 
+const LEGACY_CONSTELLATION_STAR_COUNT = CONSTELLATION_STAR_COUNT / 2;
+
 const distributeAnchorCounts = (glyphPoints: GlyphPoint[][]) => {
     const minimums = glyphPoints.map((points) => Math.min(3, points.length));
     const counts = [...minimums];
-    let remaining = CONSTELLATION_STAR_COUNT - counts.reduce((sum, value) => sum + value, 0);
+    let remaining = LEGACY_CONSTELLATION_STAR_COUNT - counts.reduce((sum, value) => sum + value, 0);
     const capacities = glyphPoints.map((points, index) => points.length - counts[index]);
     while (remaining > 0) {
         let selected = -1;
@@ -528,22 +649,29 @@ const rawConstellationGeometry = (phrase: ConstellationPhrase) => {
     const counts = distributeAnchorCounts(candidates);
     const points: GlyphPoint[] = [];
     const glyphs = candidates.map((candidatePoints, index) => {
-        const indices = selectSpreadPoints(candidatePoints, counts[index]).map((point) => {
-            points.push(point);
-            return points.length - 1;
+        const indices = selectSpreadPoints(candidatePoints, counts[index]).flatMap((point, pointIndex) => {
+            // Preserve the reviewed 72-anchor allocation exactly, then give every anchor a
+            // deterministic companion. Alternating axes add density without blurring strokes.
+            const horizontal = (index + pointIndex) % 2 === 0;
+            const offset = 0.14;
+            const pair = horizontal
+                ? [{ x: point.x - offset, y: point.y }, { x: point.x + offset, y: point.y }]
+                : [{ x: point.x, y: point.y - offset }, { x: point.x, y: point.y + offset }];
+            return pair.map((expandedPoint) => {
+                points.push(expandedPoint);
+                return points.length - 1;
+            });
         });
         return { character: characters[index], indices };
     });
     return { points, edges: connectNearestTree(points), glyphs, lineWidth: Math.max(1, cursor - 1) };
 };
 
-export const createConstellationGeometry = (
+export const createConstellationGeometryForPhrase = (
     width: number,
     height: number,
-    sceneSeed = 0,
-    event = 1,
+    phrase: ConstellationPhrase,
 ): ConstellationGeometry => {
-    const phrase = selectConstellationPhrase(sceneSeed, event);
     const raw = rawConstellationGeometry(phrase);
     const safeWidth = Math.max(1, width);
     const safeHeight = Math.max(1, height);
@@ -563,6 +691,17 @@ export const createConstellationGeometry = (
     };
 };
 
+export const createConstellationGeometry = (
+    width: number,
+    height: number,
+    sceneSeed = 0,
+    event = 1,
+): ConstellationGeometry => createConstellationGeometryForPhrase(
+    width,
+    height,
+    selectConstellationPhrase(sceneSeed, event),
+);
+
 export const createConstellationTargets = (
     width: number,
     height: number,
@@ -574,6 +713,77 @@ const mixPoint = (from: Point, to: Point, amount: number): Point => ({
     x: from.x + (to.x - from.x) * amount,
     y: from.y + (to.y - from.y) * amount,
 });
+
+/**
+ * Pure three-endpoint interpolation lets an active transition restart from its rendered frame.
+ * Stars without constellation targets (such as the retained ambient layer) stay in place until
+ * morph-out, rather than disappearing or producing undefined coordinates.
+ */
+export const getEasterEggStarFieldPositions = (
+    start: Point[],
+    targets: Point[],
+    end: Point[],
+    elapsedSinceTrigger: number,
+): Point[] => {
+    const phase = getEasterEggPhase(elapsedSinceTrigger);
+    const targetFor = (point: Point, index: number) => targets[index] ?? point;
+    if (phase.name === 'morph-in') {
+        return start.map((point, index) => mixPoint(point, targetFor(point, index), phase.progress));
+    }
+    if (phase.name === 'hold') return start.map(targetFor);
+    if (phase.name === 'morph-out') {
+        return start.map((point, index) => mixPoint(
+            targetFor(point, index),
+            end[index] ?? point,
+            phase.progress,
+        ));
+    }
+    return end;
+};
+
+const mixStarVisualStyle = (
+    from: StarVisualStyle,
+    to: StarVisualStyle,
+    amount: number,
+): StarVisualStyle => ({
+    alpha: mix(from.alpha, to.alpha, amount),
+    twinkle: mix(from.twinkle, to.twinkle, amount),
+    strength: mix(from.strength, to.strength, amount),
+    radius: mix(from.radius, to.radius, amount),
+    opacity: mix(from.opacity, to.opacity, amount),
+});
+
+export const getEasterEggStarFieldStyles = (
+    start: StarVisualStyle[],
+    targets: StarVisualStyle[],
+    end: StarVisualStyle[],
+    elapsedSinceTrigger: number,
+): StarVisualStyle[] => {
+    const phase = getEasterEggPhase(elapsedSinceTrigger);
+    const targetFor = (style: StarVisualStyle, index: number) => targets[index] ?? style;
+    if (phase.name === 'morph-in') {
+        return start.map((style, index) => mixStarVisualStyle(style, targetFor(style, index), phase.progress));
+    }
+    if (phase.name === 'hold') return start.map(targetFor);
+    if (phase.name === 'morph-out') {
+        return start.map((style, index) => mixStarVisualStyle(
+            targetFor(style, index),
+            end[index] ?? style,
+            phase.progress,
+        ));
+    }
+    return end;
+};
+
+/** Matches the scheduled constellation's cool color, 18% radius, and 28% opacity lift. */
+export const createEasterEggTargetStyles = (sceneSeed: number, triggerIndex: number): StarVisualStyle[] =>
+    createAmbientLayout(sceneSeed, triggerIndex + 1).map((star) => ({
+        alpha: star.alpha,
+        twinkle: 1,
+        strength: 1,
+        radius: star.size * 1.18,
+        opacity: Math.min(1, star.alpha * 1.28),
+    }));
 
 export const getStarFieldPositions = (
     sceneSeed: number,
@@ -592,7 +802,7 @@ export const getStarFieldPositions = (
         ? CONSTELLATION_INTERVAL_SECONDS
         : CONSTELLATION_INTERVAL_SECONDS - CONSTELLATION_WINDOW_SECONDS;
 
-    return current.map((star, index) => {
+    const constellationPositions = current.map((star, index) => {
         const currentPoint = getDriftedStar(star, currentDriftTime);
         const previousPoint = getDriftedStar(previous[index], previousDriftTime);
         const pixelCurrent = { x: currentPoint.x * width, y: currentPoint.y * height };
@@ -602,6 +812,19 @@ export const getStarFieldPositions = (
         if (phase.name === 'morph-out') return mixPoint(targets[index], pixelCurrent, phase.progress);
         return pixelCurrent;
     });
+
+    const retainedCurrent = createRetainedAmbientLayout(sceneSeed, phase.event);
+    const retainedPrevious = createRetainedAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
+    const retainedPositions = retainedCurrent.map((star, index) => {
+        const currentPoint = getDriftedStar(star, currentDriftTime);
+        const previousPoint = getDriftedStar(retainedPrevious[index], previousDriftTime);
+        const pixelCurrent = { x: currentPoint.x * width, y: currentPoint.y * height };
+        const pixelPrevious = { x: previousPoint.x * width, y: previousPoint.y * height };
+        if (phase.name === 'morph-in' || phase.name === 'hold') return pixelPrevious;
+        if (phase.name === 'morph-out') return mixPoint(pixelPrevious, pixelCurrent, phase.progress);
+        return pixelCurrent;
+    });
+    return [...constellationPositions, ...retainedPositions];
 };
 
 export const getStarPosition = (
@@ -636,6 +859,16 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     };
 };
 
+/** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth. */
+export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppearance => {
+    const radius = getTravelerAppearance(traveler, progress).radius * UFO_SIZE_MULTIPLIER;
+    return {
+        radius,
+        glowRadius: radius * 2.4,
+        streakLength: Math.max(6, radius * 5),
+    };
+};
+
 export const projectTraveler = (
     traveler: Traveler,
     simulationSeconds: number,
@@ -661,6 +894,106 @@ export const projectTraveler = (
     };
 };
 
+/** Only visible moving-traveler projections may participate in a neural signal. */
+export const isTravelerEligibleForNeuralSignal = (
+    projection: ProjectedTraveler | undefined,
+    width: number,
+    height: number,
+) => Boolean(projection
+    && projection.opacity > 0.08
+    && projection.x >= 0
+    && projection.x <= width
+    && projection.y >= 0
+    && projection.y <= height);
+
+const isSensibleNeuralPair = (
+    left: ProjectedTraveler,
+    right: ProjectedTraveler,
+    width: number,
+    height: number,
+) => {
+    const distance = Math.hypot(right.x - left.x, right.y - left.y);
+    const minimumDistance = Math.min(72, Math.max(36, Math.min(width, height) * 0.09));
+    const maximumDistance = Math.hypot(width, height) * 0.48;
+    return distance >= minimumDistance && distance <= maximumDistance;
+};
+
+/**
+ * Stateless deterministic schedule. Pair indices always address the supplied live traveler
+ * projections, so Canvas endpoints track moving travelers without retaining stale coordinates.
+ */
+export const getNeuralSignals = (
+    sceneSeed: number,
+    elapsedSeconds: number,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+    reducedMotion = false,
+): NeuralSignal[] => {
+    if (reducedMotion
+        || width <= 0
+        || height <= 0
+        || getConstellationPhase(elapsedSeconds).name !== 'ambient') return [];
+
+    const simulationSeconds = getSimulationTime(elapsedSeconds);
+    const slot = Math.floor(simulationSeconds / NEURAL_SIGNAL_SLOT_SECONDS);
+    const isMobile = width < MOBILE_BREAKPOINT;
+    const chance = isMobile ? NEURAL_SIGNAL_MOBILE_CHANCE : NEURAL_SIGNAL_DESKTOP_CHANCE;
+    if (hashRandom(sceneSeed, slot, 301) >= chance) return [];
+
+    const duration = mix(
+        NEURAL_SIGNAL_DURATION_RANGE[0],
+        NEURAL_SIGNAL_DURATION_RANGE[1],
+        hashRandom(sceneSeed, slot, 302),
+    );
+    const slotElapsed = simulationSeconds - slot * NEURAL_SIGNAL_SLOT_SECONDS;
+    const start = 1.25 + hashRandom(sceneSeed, slot, 303)
+        * (NEURAL_SIGNAL_SLOT_SECONDS - duration - 2.5);
+    const signalElapsed = slotElapsed - start;
+    if (signalElapsed < 0 || signalElapsed >= duration) return [];
+
+    let pairCount = 0;
+    for (let from = 0; from < projections.length; from += 1) {
+        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
+        for (let to = from + 1; to < projections.length; to += 1) {
+            if (isTravelerEligibleForNeuralSignal(projections[to], width, height)
+                && isSensibleNeuralPair(projections[from], projections[to], width, height)) pairCount += 1;
+        }
+    }
+    if (pairCount === 0) return [];
+
+    let selectedPair = hashUint(sceneSeed, slot, 304) % pairCount;
+    let fromTravelerIndex = -1;
+    let toTravelerIndex = -1;
+    pairSearch: for (let from = 0; from < projections.length; from += 1) {
+        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
+        for (let to = from + 1; to < projections.length; to += 1) {
+            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
+                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
+            if (selectedPair === 0) {
+                fromTravelerIndex = from;
+                toTravelerIndex = to;
+                break pairSearch;
+            }
+            selectedPair -= 1;
+        }
+    }
+    if (fromTravelerIndex < 0 || toTravelerIndex < 0) return [];
+
+    const fadeIn = smoothstep(signalElapsed / 0.48);
+    const fadeOut = smoothstep((duration - signalElapsed) / 0.68);
+    return [{
+        fromTravelerIndex,
+        toTravelerIndex,
+        opacity: NEURAL_SIGNAL_MAX_OPACITY * Math.min(fadeIn, fadeOut)
+            * clamp01(Math.min(projections[fromTravelerIndex].opacity, projections[toTravelerIndex].opacity) / 0.35),
+        pulseProgress: clamp01(signalElapsed / duration),
+        lineWidth: mix(NEURAL_SIGNAL_WIDTH_RANGE[0], NEURAL_SIGNAL_WIDTH_RANGE[1],
+            hashRandom(sceneSeed, slot, 305)),
+        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.055,
+    }];
+};
+
 export const getPlanetSurfaceDetailLevel = (
     radius: number,
     systemScale: number,
@@ -683,6 +1016,16 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
     return 12;
 };
 
+/** Mutually exclusive per-planet moon bands: 81.5% none and 18.5% moon-bearing. */
+export const chooseMoonCount = (random: RandomSource) => {
+    const outcome = random();
+    if (outcome < 0.815) return 0;
+    if (outcome < 0.915) return 1;
+    if (outcome < 0.965) return 2;
+    if (outcome < 0.99) return 3 + Math.floor(random() * 3);
+    return 5 + Math.floor(random() * 3);
+};
+
 /** Radius-derived periods keep every visible system legible while preserving clear inner/outer speed tiers. */
 export const getPlanetOrbitPeriod = (orbitRadius: number) => Math.min(
     MAX_PLANET_ORBIT_PERIOD_SECONDS,
@@ -693,21 +1036,27 @@ export const getPlanetOrbitPeriod = (orbitRadius: number) => Math.min(
 export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[] => {
     const random = createSeededRandom(hashUint(travelerSeed, cycle, 43));
     const count = chooseWeightedPlanetCount(random);
-    let moonsRemaining = 2;
     let ringsRemaining = 2;
     const atmosphereOffset = hashUint(travelerSeed, cycle, 97) % PLANET_ATMOSPHERE_CLASSES.length;
     return Array.from({ length: count }, (_, index) => {
         const radius = between(random, PLANET_RADIUS_RANGE[0], PLANET_RADIUS_RANGE[1]);
-        const moons: Moon[] = [];
-        if (moonsRemaining > 0 && random() < 0.22) {
-            moons.push({
-                radius: between(random, 0.45, 0.75),
-                orbitRadius: radius + between(random, 1.8, 2.8),
-                phase: between(random, 0, TAU),
-                speed: between(random, 0.7, 1.5),
-            });
-            moonsRemaining -= 1;
-        }
+        const moonCount = chooseMoonCount(random);
+        const moonPhase = between(random, 0, TAU);
+        const maxMoonRadius = radius
+            * PLANET_RENDER_SCALE
+            * MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO;
+        const moons: Moon[] = Array.from({ length: moonCount }, (_, moonIndex) => ({
+            // Relative sizing stays varied without allowing moons to overwhelm smaller parents.
+            radius: between(random, maxMoonRadius * 0.55, maxMoonRadius),
+            // Strict radial tiers and stratified phases keep dense seven-moon systems readable.
+            orbitRadius: radius + 1.8 + moonIndex * 1.2 + between(random, 0, 0.12),
+            phase: moonPhase
+                + moonIndex * TAU / Math.max(1, moonCount)
+                + between(random, -0.1, 0.1),
+            // Non-overlapping speed bands preserve visible relative motion across concentric tracks.
+            speed: (moonIndex % 3 === 2 ? -1 : 1)
+                * (1.5 - moonIndex * 0.12 + between(random, 0, 0.06)),
+        }));
         const hasRing = ringsRemaining > 0 && random() < 0.16;
         if (hasRing) ringsRemaining -= 1;
         const orbitRadius = 6.7 + index * 1.35 + between(random, 0, 0.8);
@@ -750,6 +1099,21 @@ export const getOrbitingPlanet = (
         x: center.x + localX * Math.cos(planet.tilt) - localY * Math.sin(planet.tilt),
         y: center.y + localX * Math.sin(planet.tilt) + localY * Math.cos(planet.tilt),
         z,
+    };
+};
+
+/** A moon is translated by its parent planet's current position, not by the system star. */
+export const getOrbitingMoon = (
+    parent: Pick<OrbitingPlanet, 'x' | 'y'>,
+    moon: Moon,
+    simulationSeconds: number,
+): OrbitingMoon => {
+    const angle = moon.phase + Math.max(0, simulationSeconds) * moon.speed;
+    return {
+        ...moon,
+        angle,
+        x: parent.x + Math.cos(angle) * moon.orbitRadius,
+        y: parent.y + Math.sin(angle) * moon.orbitRadius * 0.55,
     };
 };
 
@@ -906,7 +1270,7 @@ export const createSpaceScene = (seed = createCryptoSeed()): SpaceScene => {
         seed: Math.floor(random() * UINT32_RANGE),
         initialDistance: random() * DEPTH_RANGE,
         speed: between(random, 18, 28),
-        size: between(random, 0.6, 1.1),
+        size: between(random, TRAVELER_RADIUS_RANGE[0], TRAVELER_RADIUS_RANGE[1]),
         alpha: between(random, 0.42, 0.72),
     }));
     return { seed, stars: createAmbientLayout(seed, 0), travelers };
