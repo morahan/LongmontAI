@@ -22,6 +22,7 @@ import {
   GALAXY_SPIRAL_ARM_COUNT,
   MAX_GLYPH_STAR_COUNT,
   MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO,
+  MAX_STAR_TEXT_ANCHOR_COUNT,
   MAX_PLANET_ORBIT_PERIOD_SECONDS,
   MAX_PLANET_ORBIT_RADIUS,
   MIN_GLYPH_STAR_COUNT,
@@ -44,6 +45,9 @@ import {
   RETAINED_AMBIENT_STAR_COUNT,
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
+  STAR_FIELD_SLOT_COUNT,
+  STAR_TEXT_BURST_SECONDS,
+  STAR_TEXT_FIRST_GLYPH_SECONDS,
   SYSTEM_STAR_RADIUS,
   LARGE_TRAVELER_RED_CHANCE,
   SMALL_TRAVELER_RED_CHANCE,
@@ -68,6 +72,7 @@ import {
   createPlanetSystem,
   createSeededRandom,
   createSpaceScene,
+  createStarTextBurstOrigins,
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
   getConstellationGlyphAnchorCounts,
@@ -96,6 +101,7 @@ import {
   getStarFieldPositions,
   getStarFieldStyles,
   getStarRgb,
+  getStarTextIntroProgress,
   getSystemOpacity,
   getSystemOwnerDiscLocalRadius,
   getSystemSafetyMargin,
@@ -201,9 +207,10 @@ test('ambient remains 70 while variable Star Text retains 35 ambient stars', () 
 
   const anchorCount = createConstellationGeometry(1200, 600, 12345, 1).points.length;
   const hold = getStarFieldStyles(12345, 610);
-  assert.equal(hold.length, anchorCount + RETAINED_AMBIENT_STAR_COUNT);
-  const holdBackground = hold.slice(anchorCount);
-  assert.equal(holdBackground.filter(isStarRenderable).length, RETAINED_AMBIENT_STAR_COUNT);
+  assert.equal(hold.length, STAR_FIELD_SLOT_COUNT);
+  const holdBackground = hold.slice(MAX_STAR_TEXT_ANCHOR_COUNT);
+  assert.ok(holdBackground.filter(isStarRenderable).length <= RETAINED_AMBIENT_STAR_COUNT);
+  assert.ok(holdBackground.some(isStarRenderable));
   assert.ok(holdBackground.every(({ strength }) => strength === 0));
   assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 35);
   assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 35);
@@ -310,7 +317,14 @@ test('Easter eggs cycle deterministically through every hidden phrase and never 
   }
 });
 
-test('Easter-egg lifecycle has exact 10s morph, hold, and return phases', () => {
+test('Easter-egg lifecycle has explicit first-glyph/burst timing inside exact 10s in, hold, and fade', () => {
+  assert.equal(STAR_TEXT_FIRST_GLYPH_SECONDS, 4);
+  assert.equal(STAR_TEXT_BURST_SECONDS, 6);
+  assert.deepEqual(getStarTextIntroProgress(0), { stage: 'first-glyph', firstGlyph: 0, burst: 0 });
+  assert.equal(getStarTextIntroProgress(3.999).stage, 'first-glyph');
+  assert.deepEqual(getStarTextIntroProgress(4), { stage: 'burst', firstGlyph: 1, burst: 0 });
+  closeTo(getStarTextIntroProgress(7).burst, 0.5);
+  assert.deepEqual(getStarTextIntroProgress(10), { stage: 'complete', firstGlyph: 1, burst: 1 });
   assert.equal(getEasterEggPhase(0).name, 'morph-in');
   closeTo(getEasterEggPhase(5).progress, 0.5);
   assert.equal(getEasterEggPhase(9.999).name, 'morph-in');
@@ -374,7 +388,7 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   const renderedStylesAtRestart = getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 4.25);
   const nextPhrase = createConstellationGeometryForPhrase(1200, 600, EASTER_EGG_PHRASES[1]);
   assert.ok(nextPhrase.points.length >= MIN_GLYPH_STAR_COUNT);
-  assert.equal(nextPhrase.edges.length, nextPhrase.points.length - 1);
+  assert.equal(nextPhrase.edges.length, nextPhrase.points.length - nextPhrase.glyphs.length);
   assert.deepEqual(
     getEasterEggStarFieldPositions(renderedAtRestart, nextPhrase.points, end, 0),
     renderedAtRestart,
@@ -385,13 +399,55 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   );
 });
 
+test('Easter choreography shares first-glyph origins, exact burst geometry, and fade-only outro', () => {
+  const geometry = createConstellationGeometryForPhrase(1200, 600, 'Attention', 0x51a7, 2);
+  const targetCount = geometry.points.length;
+  const firstGlyphCount = geometry.glyphs[0].indices.length;
+  const total = targetCount + 5;
+  const start = Array.from({ length: total }, (_, index) => ({ x: index * 1.7, y: index * 0.9 }));
+  const end = Array.from({ length: total }, (_, index) => ({ x: 1000 - index, y: 500 - index }));
+  const targets = [...geometry.points, ...start.slice(targetCount)];
+  const style = (opacity) => ({ alpha: opacity, twinkle: 1, strength: opacity,
+    radius: 1.2, opacity });
+  const startStyles = Array.from({ length: total }, () => style(0.5));
+  const targetStyles = [
+    ...Array.from({ length: targetCount }, () => style(1)),
+    ...Array.from({ length: total - targetCount }, () => style(0.5)),
+  ];
+  const endStyles = Array.from({ length: total }, (_, index) =>
+    index < targetCount ? style(0) : style(0.7));
+  const options = { firstGlyphCount, targetCount };
+
+  const firstStage = getEasterEggStarFieldPositions(start, targets, end, 3, [], undefined, options);
+  assert.ok(firstStage.slice(firstGlyphCount, targetCount)
+    .every((point, index) => point === start[firstGlyphCount + index]));
+  const burstStart = getEasterEggStarFieldPositions(start, targets, end, 4, [], undefined, options);
+  const origins = createStarTextBurstOrigins(targets, firstGlyphCount, targetCount);
+  assert.deepEqual(burstStart.slice(firstGlyphCount, targetCount), origins.slice(firstGlyphCount));
+  assert.deepEqual(
+    getEasterEggStarFieldPositions(start, targets, end, 10, [], undefined, options),
+    targets,
+  );
+  const outMiddle = getEasterEggStarFieldPositions(start, targets, end, 25, [], undefined, options);
+  assert.deepEqual(outMiddle.slice(0, targetCount), targets.slice(0, targetCount));
+  const outStyles = getEasterEggStarFieldStyles(
+    startStyles, targetStyles, endStyles, 25, options,
+  );
+  outStyles.slice(0, targetCount).forEach(({ opacity }) => closeTo(opacity, 0.5));
+  assert.deepEqual(
+    getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 30, options),
+    endStyles,
+  );
+});
+
 test('screen-wrapped endpoint sampling rejects a full-screen wrap as physical velocity', () => {
   const width = 1200;
   const height = 600;
   const elapsed = 581.601153;
   const delta = 0.001;
-  const before = getStarFieldPositions(0, elapsed, width, height)[1];
-  const after = getStarFieldPositions(0, elapsed + delta, width, height)[1];
+  const ambientIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 1;
+  const before = getStarFieldPositions(0, elapsed, width, height)[ambientIndex];
+  const after = getStarFieldPositions(0, elapsed + delta, width, height)[ambientIndex];
   assert.ok(after.y - before.y > height * 0.99, 'fixture no longer crosses the y wrap seam');
   const velocity = getScreenWrappedVelocity(before, after, delta, width, height);
   closeTo(velocity.x, 0.6250094093, 0.0001);
@@ -449,7 +505,7 @@ test('seam-aware Easter return attenuates the seed 149 edge derivative without l
   const endpoint = 348.2;
   const sampleDelta = 0.001;
   const seed = 149;
-  const starIndex = 57;
+  const starIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 57;
   const start = getStarFieldPositions(seed, endpoint - 30, width, height);
   const end = getStarFieldPositions(seed, endpoint, width, height);
   const after = getStarFieldPositions(seed, endpoint + sampleDelta, width, height);
@@ -505,7 +561,7 @@ test('broad Easter seam sweep keeps every sampled trajectory finite and in bound
       });
     }
   }
-  assert.equal(checked, 160 * 7 * AMBIENT_STAR_COUNT);
+  assert.equal(checked, 160 * 7 * STAR_FIELD_SLOT_COUNT);
 });
 
 test('Easter target styles retain every constellation anchor and scheduled selection remains unchanged', () => {
@@ -588,7 +644,8 @@ test('every glyph receives deterministic variable density with unique readable a
       assert.ok(points.every(({ x, y }) =>
         x > width * 0.05 && x < width * 0.95 && y > height * minimumY && y < height * 0.58),
       `${phrase} escaped ${width}x${height} safe bounds`);
-      assert.equal(edges.length, points.length - 1);
+      assert.equal(edges.length, points.length - glyphs.length,
+        'lines must connect inside glyphs without bridging future letters');
       assert.ok(edges.every(({ from, to }) =>
         from >= 0 && from < points.length && to >= 0 && to < points.length && from !== to));
 
@@ -597,18 +654,39 @@ test('every glyph receives deterministic variable density with unique readable a
         neighbors[from].push(to);
         neighbors[to].push(from);
       });
-      assert.ok(neighbors.every((entries) => entries.length > 0), `${phrase} has an isolated anchor`);
-      const reached = new Set([0]);
-      const queue = [0];
-      while (queue.length > 0) {
-        neighbors[queue.shift()].forEach((neighbor) => {
-          if (!reached.has(neighbor)) {
-            reached.add(neighbor);
-            queue.push(neighbor);
-          }
-        });
+      for (const glyph of glyphs) {
+        const glyphSet = new Set(glyph.indices);
+        assert.ok(glyph.indices.every((index) => neighbors[index].length > 0));
+        assert.ok(glyph.indices.every((index) => neighbors[index].every((neighbor) => glyphSet.has(neighbor))),
+          `${phrase}/${glyph.character} has a cross-glyph edge`);
+        const reached = new Set([glyph.indices[0]]);
+        const queue = [glyph.indices[0]];
+        while (queue.length > 0) {
+          neighbors[queue.shift()].forEach((neighbor) => {
+            if (!reached.has(neighbor)) { reached.add(neighbor); queue.push(neighbor); }
+          });
+        }
+        assert.equal(reached.size, glyph.indices.length, `${phrase}/${glyph.character} disconnected`);
+
+        const nearest = glyph.indices.map((index) => Math.min(...glyph.indices
+          .filter((candidate) => candidate !== index)
+          .map((candidate) => Math.hypot(
+            points[index].x - points[candidate].x,
+            points[index].y - points[candidate].y,
+          ))));
+        const mean = nearest.reduce((sum, distance) => sum + distance, 0) / nearest.length;
+        const deviation = Math.sqrt(nearest.reduce(
+          (sum, distance) => sum + (distance - mean) ** 2, 0,
+        ) / nearest.length);
+        const xs = glyph.indices.map((index) => points[index].x);
+        const ys = glyph.indices.map((index) => points[index].y);
+        const span = Math.max(1, Math.hypot(Math.max(...xs) - Math.min(...xs),
+          Math.max(...ys) - Math.min(...ys)));
+        assert.ok(Math.min(...nearest) / span > 0.0125,
+          `${phrase}/${glyph.character} contains a duplicate halo`);
+        assert.ok(deviation / mean < 0.34,
+          `${phrase}/${glyph.character} nearest-neighbor spacing is clustered`);
       }
-      assert.equal(reached.size, points.length, `${phrase} line geometry is disconnected`);
     }
   }
 });
@@ -660,10 +738,12 @@ test('constellation strength and pure star styles are continuous at every phase 
     .forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
   atMorphOut.slice(0, anchorCount)
     .forEach((style, index) => closeTo(style.alpha, generation0[index].alpha));
-  assert.equal(atAmbient.length, AMBIENT_STAR_COUNT);
-  atAmbient.forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
+  assert.equal(atAmbient.length, STAR_FIELD_SLOT_COUNT);
+  assert.ok(atAmbient.slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).every(({ opacity }) => opacity === 0));
+  atAmbient.slice(MAX_STAR_TEXT_ANCHOR_COUNT)
+    .forEach((style, index) => closeTo(style.alpha, generation1[index].alpha));
 
-  for (const boundary of [610, 620]) {
+  for (const boundary of [610, 620, 630]) {
     const before = getStarFieldStyles(seed, boundary - 0.000001);
     const at = getStarFieldStyles(seed, boundary);
     before.forEach((style, index) => {
@@ -685,22 +765,26 @@ test('constellation-only stars fade with strength while retained background stay
   const after = getStarFieldStyles(seed, 630);
 
   const anchorCount = createConstellationGeometry(1200, 600, seed, 1).points.length;
-  assert.equal(ambient.length, AMBIENT_STAR_COUNT);
-  assert.equal(after.length, AMBIENT_STAR_COUNT);
-  for (let index = AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT;
-    index < anchorCount; index += 1) {
-    assert.equal(morphStart[index].alpha, 0);
-    assert.ok(morphMiddle[index].alpha > 0 && morphMiddle[index].opacity > 0);
-    assert.ok(hold[index].alpha > morphMiddle[index].alpha);
-    assert.ok(outStart[index].alpha > outMiddle[index].alpha);
-    assert.ok(outMiddle[index].alpha > 0 && outMiddle[index].opacity > 0);
-  }
+  assert.equal(ambient.length, STAR_FIELD_SLOT_COUNT);
+  assert.equal(after.length, STAR_FIELD_SLOT_COUNT);
+  const geometry = createConstellationGeometry(1200, 600, seed, 1);
+  const firstGlyphCount = geometry.glyphs[0].indices.length;
+  assert.ok(morphStart.slice(0, firstGlyphCount).every(({ opacity }) => opacity > 0));
+  assert.ok(morphStart.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity === 0));
+  const firstComplete = getStarFieldStyles(seed, 604);
+  assert.ok(firstComplete.slice(0, firstGlyphCount).every(({ strength }) => strength === 1));
+  assert.ok(firstComplete.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity === 0));
+  assert.ok(morphMiddle.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity > 0));
+  assert.ok(hold.slice(0, anchorCount).every(({ strength }) => strength === 1));
+  assert.ok(outStart.slice(0, anchorCount).every((style, index) =>
+    style.opacity >= outMiddle[index].opacity));
+  assert.ok(outMiddle.slice(0, anchorCount).every(({ opacity }) => opacity > 0));
+  assert.ok(after.slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).every(({ opacity }) => opacity === 0));
 
-  for (let index = anchorCount;
-    index < anchorCount + RETAINED_AMBIENT_STAR_COUNT; index += 1) {
-    assert.ok(hold[index].opacity > 0);
-    assert.equal(hold[index].strength, 0);
-  }
+  const heldAmbient = hold.slice(MAX_STAR_TEXT_ANCHOR_COUNT);
+  assert.ok(heldAmbient.filter(isStarRenderable).length <= RETAINED_AMBIENT_STAR_COUNT);
+  assert.ok(heldAmbient.filter(isStarRenderable).length > 0);
+  assert.ok(heldAmbient.every(({ strength }) => strength === 0));
   assert.ok(RETAINED_AMBIENT_STAR_COUNT < anchorCount / 2,
     'background density overwhelms the letter allocation');
 
@@ -722,6 +806,16 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   );
   assert.equal(createConstellationGeometry(width, height, seed, 1).phrase,
     selectConstellationPhrase(seed, 1));
+  const geometry = createConstellationGeometry(width, height, seed, 1);
+  const firstCount = geometry.glyphs[0].indices.length;
+  const origins = createStarTextBurstOrigins(targets, firstCount);
+  const burstStart = getStarFieldPositions(seed, 604, width, height);
+  burstStart.slice(firstCount, targets.length).forEach((point, offset) =>
+    assert.deepEqual(point, origins[firstCount + offset]));
+  const burstMiddle = getStarFieldPositions(seed, 607, width, height);
+  assert.ok(burstMiddle.slice(firstCount, targets.length).some((point, offset) =>
+    Math.hypot(point.x - origins[firstCount + offset].x,
+      point.y - origins[firstCount + offset].y) > 1));
   const holdPositions = getStarFieldPositions(seed, 610, width, height);
   const lateHoldPositions = getStarFieldPositions(seed, 619.9, width, height);
   for (let index = 0; index < targets.length; index += 1) {
@@ -731,21 +825,23 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   const morphStart = getStarFieldPositions(seed, 600, width, height);
   const beforeMorph = getStarFieldPositions(seed, 599.999999, width, height);
   const afterMorph = getStarFieldPositions(seed, 630, width, height);
+  const firstGlyphCount = createConstellationGeometry(width, height, seed, 1)
+    .glyphs[0].indices.length;
+  for (let index = 0; index < firstGlyphCount; index += 1) {
+    assert.ok(Math.hypot(
+      morphStart[index].x - beforeMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].x,
+      morphStart[index].y - beforeMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].y,
+    ) < 0.001);
+  }
   for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
-    if (index < AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT) {
-      assert.ok(Math.hypot(
-        morphStart[index].x - beforeMorph[index].x,
-        morphStart[index].y - beforeMorph[index].y,
-      ) < 0.001);
-    }
     const regenerated = getDriftedStar(createAmbientLayout(seed, 1)[index], 0);
-    closeTo(afterMorph[index].x, regenerated.x * width);
-    closeTo(afterMorph[index].y, regenerated.y * height);
+    closeTo(afterMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].x, regenerated.x * width);
+    closeTo(afterMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].y, regenerated.y * height);
   }
   assert.notDeepEqual(createAmbientLayout(seed, 0), createAmbientLayout(seed, 1));
 });
 
-test('morph-out follows bounded curves with smooth hold and ambient boundary velocities', () => {
+test('scheduled outro is fade-only for text while ambient crossfades without boundary pops', () => {
   const width = 1200;
   const height = 600;
   const seed = 777;
@@ -771,25 +867,34 @@ test('morph-out follows bounded curves with smooth hold and ambient boundary vel
   closeTo(incomingVelocity.x, ambientVelocity.x, 0.02);
   closeTo(incomingVelocity.y, ambientVelocity.y, 0.02);
 
-  let curved = 0;
-  for (const time of [622.5, 625, 627.5]) {
+  const anchorCount = createConstellationGeometry(width, height, seed, 1).points.length;
+  const outStartStyles = getStarFieldStyles(seed, 620);
+  const outMiddleStyles = getStarFieldStyles(seed, 625);
+  const beforeBoundaryStyles = getStarFieldStyles(seed, 630 - epsilon);
+  const atBoundaryStyles = getStarFieldStyles(seed, 630);
+  for (const time of [622.5, 625, 627.5, 629.999]) {
     const sample = getStarFieldPositions(seed, time, width, height);
+    sample.slice(0, anchorCount).forEach((point, index) => assert.deepEqual(point, atHold[index]));
     sample.forEach(({ x, y }, index) => {
       assert.ok(Number.isFinite(x) && Number.isFinite(y));
       assert.ok(x >= 0 && x <= width && y >= 0 && y <= height,
         `point ${index} escaped at ${time}`);
-      if (index >= atAmbient.length) return;
-      const chordX = atAmbient[index].x - atHold[index].x;
-      const chordY = atAmbient[index].y - atHold[index].y;
-      const sampleX = x - atHold[index].x;
-      const sampleY = y - atHold[index].y;
-      if (Math.abs(chordX * sampleY - chordY * sampleX) > 0.5) curved += 1;
     });
   }
-  assert.ok(curved > 20, `only ${curved} curved trajectory samples observed`);
+  assert.ok(outStartStyles.slice(0, anchorCount).every((style, index) =>
+    style.opacity > outMiddleStyles[index].opacity));
+  assert.ok(beforeBoundaryStyles.slice(0, anchorCount).every(({ opacity }) => opacity < 1e-5));
+  assert.ok(atBoundaryStyles.slice(0, anchorCount).every(({ opacity }) => opacity === 0));
+  assert.equal(atHold.length, atAmbient.length);
+  for (let index = MAX_STAR_TEXT_ANCHOR_COUNT; index < STAR_FIELD_SLOT_COUNT; index += 1) {
+    assert.ok(Math.hypot(
+      justBeforeAmbient[index].x - atAmbient[index].x,
+      justBeforeAmbient[index].y - atAmbient[index].y,
+    ) < 0.01, `ambient slot ${index} popped at boundary`);
+  }
 });
 
-test('scheduled return velocity matches 7,000 wrap and bounce ambient endpoints', () => {
+test('ordinary wrap and bounce behavior resumes exactly after 7,000 fade boundaries', () => {
   const width = 1200;
   const height = 600;
   const epsilon = 0.0001;
@@ -797,19 +902,20 @@ test('scheduled return velocity matches 7,000 wrap and bounce ambient endpoints'
   let wraps = 0;
   let bounces = 0;
   for (let seed = 0; seed < 100; seed += 1) {
-    const before = getStarFieldPositions(seed, 630 - epsilon, width, height);
     const at = getStarFieldPositions(seed, 630, width, height);
+    const after = getStarFieldPositions(seed, 630 + epsilon, width, height);
     const ambient = createAmbientLayout(seed, 1);
     for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
+      const slot = MAX_STAR_TEXT_ANCHOR_COUNT + index;
       const expected = getDriftedStarVelocity(ambient[index], 0, width, height);
-      const incoming = {
-        x: (at[index].x - before[index].x) / epsilon,
-        y: (at[index].y - before[index].y) / epsilon,
+      const resumed = {
+        x: (after[slot].x - at[slot].x) / epsilon,
+        y: (after[slot].y - at[slot].y) / epsilon,
       };
-      closeTo(incoming.x, expected.x, 0.005);
-      closeTo(incoming.y, expected.y, 0.005);
-      assert.ok(before[index].x >= 0 && before[index].x <= width);
-      assert.ok(before[index].y >= 0 && before[index].y <= height);
+      closeTo(resumed.x, expected.x, 0.005);
+      closeTo(resumed.y, expected.y, 0.005);
+      assert.ok(at[slot].x >= 0 && at[slot].x <= width);
+      assert.ok(at[slot].y >= 0 && at[slot].y <= height);
       if (ambient[index].driftMode === 'wrap') wraps += 1;
       else bounces += 1;
       checked += 1;

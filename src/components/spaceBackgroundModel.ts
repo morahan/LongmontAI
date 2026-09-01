@@ -31,6 +31,9 @@ export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
+/** The intro spends four seconds making the first glyph readable, then six seconds bursting. */
+export const STAR_TEXT_FIRST_GLYPH_SECONDS = 4;
+export const STAR_TEXT_BURST_SECONDS = MORPH_SECONDS - STAR_TEXT_FIRST_GLYPH_SECONDS;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
 export const TWINKLE_WINDOW_SECONDS = 120;
 export const FAR_DEPTH = 1000;
@@ -275,6 +278,17 @@ export interface ConstellationPhase {
     eventElapsed: number;
 }
 
+export interface StarTextIntroProgress {
+    stage: 'first-glyph' | 'burst' | 'complete';
+    firstGlyph: number;
+    burst: number;
+}
+
+export interface StarTextTransitionOptions {
+    firstGlyphCount: number;
+    targetCount: number;
+}
+
 type GlyphPoint = Point;
 
 export const createSeededRandom = (seed: number): RandomSource => {
@@ -443,10 +457,6 @@ export const createAmbientLayout = (
     count = AMBIENT_STAR_COUNT,
 ): DistantStar[] => createStarLayout(seed, generation, count, 71);
 
-const createRetainedAmbientLayout = (seed: number, generation: number): DistantStar[] =>
-    createAmbientLayout(seed, generation, AMBIENT_STAR_COUNT)
-        .slice(AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT);
-
 export const getDriftedStar = (star: DistantStar, elapsedSeconds: number): Point => {
     const elapsed = Math.max(0, elapsedSeconds);
     const rawX = star.x + Math.cos(star.driftAngle) * star.driftSpeed * elapsed;
@@ -538,6 +548,28 @@ export const getConstellationStrength = (phase: ConstellationPhase) => {
     return 0;
 };
 
+/** Explicit, shared choreography for scheduled and user-triggered Star Text. */
+export const getStarTextIntroProgress = (eventElapsed: number): StarTextIntroProgress => {
+    const elapsed = Math.max(0, eventElapsed);
+    if (elapsed < STAR_TEXT_FIRST_GLYPH_SECONDS) {
+        return {
+            stage: 'first-glyph',
+            firstGlyph: smoothstep(elapsed / STAR_TEXT_FIRST_GLYPH_SECONDS),
+            burst: 0,
+        };
+    }
+    if (elapsed < MORPH_SECONDS) {
+        return {
+            stage: 'burst',
+            firstGlyph: 1,
+            burst: smoothstep(
+                (elapsed - STAR_TEXT_FIRST_GLYPH_SECONDS) / STAR_TEXT_BURST_SECONDS,
+            ),
+        };
+    }
+    return { stage: 'complete', firstGlyph: 1, burst: 1 };
+};
+
 /** Line strength also starts from the exact rendered frame when a trigger restarts. */
 export const getEasterEggStrength = (
     startStrength: number,
@@ -589,42 +621,83 @@ export const getStarVisualStyle = (
     };
 };
 
+const hiddenStarStyle = (radius = 1): StarVisualStyle => ({
+    alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0,
+});
+
+const ambientVisualStyle = (star: DistantStar, elapsedSeconds: number): StarVisualStyle => {
+    const twinkle = getAmbientTwinkleBrightness(star, elapsedSeconds);
+    return {
+        alpha: star.alpha,
+        twinkle,
+        strength: 0,
+        radius: star.size,
+        opacity: Math.min(1, star.alpha * twinkle),
+    };
+};
+
 export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): StarVisualStyle[] => {
     const phase = getConstellationPhase(elapsedSeconds);
+    const ambient = createAmbientLayout(sceneSeed, phase.event);
     if (phase.name === 'ambient') {
-        return createAmbientLayout(sceneSeed, phase.event).map((star) => {
-            const twinkle = getAmbientTwinkleBrightness(star, elapsedSeconds);
-            return { alpha: star.alpha, twinkle, strength: 0, radius: star.size,
-                opacity: Math.min(1, star.alpha * twinkle) };
-        });
+        const hiddenEvent = Math.max(1, phase.event);
+        const hiddenPhrase = selectConstellationPhrase(sceneSeed, hiddenEvent);
+        const hiddenCount = getConstellationAnchorCount(hiddenPhrase, sceneSeed, hiddenEvent);
+        const hiddenSource = createAmbientLayout(
+            sceneSeed, Math.max(0, hiddenEvent - 1), hiddenCount,
+        );
+        return [
+            ...Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) =>
+                hiddenStarStyle(hiddenSource[index]?.size ? hiddenSource[index].size * 1.18 : 1)),
+            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds)),
+        ];
     }
-    const anchorCount = getConstellationAnchorCount(
-        selectConstellationPhrase(sceneSeed, phase.event), sceneSeed, phase.event,
-    );
+
+    const phrase = selectConstellationPhrase(sceneSeed, phase.event);
+    const counts = getConstellationGlyphAnchorCounts(phrase, sceneSeed, phase.event);
+    const anchorCount = counts.reduce((total, count) => total + count, 0);
+    const firstGlyphCount = counts[0];
     const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), anchorCount);
-    const next = createAmbientLayout(sceneSeed, phase.event, anchorCount);
-    const constellationStyles = next.map((star, index) => {
-        const style = getStarVisualStyle(previous[index], star, elapsedSeconds);
-        if (index < AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT) return style;
-        return { ...style, alpha: style.alpha * style.strength,
-            opacity: style.opacity * style.strength };
+    const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
+    const intro = getStarTextIntroProgress(phase.eventElapsed);
+    const targetStyles = previous.map((star) => ({
+        alpha: star.alpha,
+        twinkle: 1,
+        strength: 1,
+        radius: star.size * 1.18,
+        opacity: Math.min(1, star.alpha * 1.28),
+    }));
+    const textStyles = Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) => {
+        if (index >= anchorCount) return hiddenStarStyle();
+        const target = targetStyles[index];
+        if (phase.name === 'morph-out') {
+            const visible = 1 - phase.progress;
+            return { ...target, alpha: target.alpha * visible, strength: visible,
+                opacity: target.opacity * visible };
+        }
+        if (phase.name === 'hold') return target;
+        const reveal = index < firstGlyphCount ? intro.firstGlyph : intro.burst;
+        const start = index < firstGlyphCount
+            ? ambientVisualStyle(previous[index], eventStart - 0.000001)
+            : hiddenStarStyle(target.radius);
+        const style = mixStarVisualStyle(start, target, reveal);
+        return { ...style, strength: reveal };
     });
 
-    const retainedPrevious = createRetainedAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
-    const retainedNext = createRetainedAmbientLayout(sceneSeed, phase.event);
-    const retainedStyles = retainedNext.map((star, index) => {
-        const progress = phase.name === 'morph-out' ? phase.progress : 0;
-        const alpha = mix(retainedPrevious[index].alpha, star.alpha, progress);
-        const radius = mix(retainedPrevious[index].size, star.size, progress);
-        const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
-        const twinkle = mix(
-            getAmbientTwinkleBrightness(retainedPrevious[index], eventStart - 0.000001),
-            getAmbientTwinkleBrightness(star, eventStart + CONSTELLATION_WINDOW_SECONDS),
-            progress,
-        );
-        return { alpha, twinkle, strength: 0, radius, opacity: Math.min(1, alpha * twinkle) };
+    const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
+    const ambientStyles = ambient.map((star, index) => {
+        const from = ambientVisualStyle(previousAmbient[index], eventStart - 0.000001);
+        const to = ambientVisualStyle(star, eventStart + CONSTELLATION_WINDOW_SECONDS);
+        const held = index >= Math.max(firstGlyphCount, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT)
+            ? from
+            : hiddenStarStyle(from.radius);
+        if (phase.name === 'morph-out') return mixStarVisualStyle(held, to, phase.progress);
+        if (index < firstGlyphCount) return hiddenStarStyle(from.radius);
+        if (index >= AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT) return from;
+        const fade = 1 - intro.firstGlyph;
+        return { ...from, alpha: from.alpha * fade, opacity: from.opacity * fade };
     });
-    return [...constellationStyles, ...retainedStyles];
+    return [...textStyles, ...ambientStyles];
 };
 
 /** Shared by tests and the Canvas loop so ambient draw counts cover the rendered path. */
@@ -650,6 +723,10 @@ export const CONSTELLATION_PHRASES = [
 ] as const;
 export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
 export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(1) as readonly ConstellationPhrase[];
+export const MAX_STAR_TEXT_ANCHOR_COUNT = Math.max(...CONSTELLATION_PHRASES.map((phrase) =>
+    [...phrase].filter((character) => character !== ' ').length * MAX_GLYPH_STAR_COUNT));
+/** Stable slots prevent array churn at the intro/outro lifecycle boundaries. */
+export const STAR_FIELD_SLOT_COUNT = MAX_STAR_TEXT_ANCHOR_COUNT + AMBIENT_STAR_COUNT;
 
 export const EASTER_EGG_CLICK_INTERVAL_MS = 500;
 export const EASTER_EGG_CLICK_DISTANCE_PX = 8;
@@ -766,22 +843,93 @@ export const getConstellationAnchorCount = (
 ) => getConstellationGlyphAnchorCounts(phrase, sceneSeed, event)
     .reduce((total, count) => total + count, 0);
 
-const createDenseGlyphPoints = (
-    candidates: GlyphPoint[],
+type GlyphStroke = readonly GlyphPoint[];
+
+/**
+ * Convert the reviewed bitmap alphabet to a one-dimensional stroke graph. Adjacent lit cells are
+ * joined once; diagonal joins are used only when an endpoint has no orthogonal continuation. This
+ * retains the familiar glyph silhouettes without treating each bitmap cell as a particle cluster.
+ */
+const createGlyphStrokes = (rows: string[]): GlyphStroke[] => {
+    const lit = (x: number, y: number) => rows[y]?.[x] === '1';
+    const orthogonalDegree = (x: number, y: number) => [
+        [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
+    ].filter(([nextX, nextY]) => lit(nextX, nextY)).length;
+    const strokes: GlyphPoint[][] = [];
+    for (let y = 0; y < rows.length; y += 1) {
+        for (let x = 0; x < rows[y].length; x += 1) {
+            if (!lit(x, y)) continue;
+            if (lit(x + 1, y)) strokes.push([{ x, y }, { x: x + 1, y }]);
+            if (lit(x, y + 1)) strokes.push([{ x, y }, { x, y: y + 1 }]);
+            for (const direction of [-1, 1]) {
+                const nextX = x + direction;
+                const nextY = y + 1;
+                if (lit(nextX, nextY)
+                    && (orthogonalDegree(x, y) === 0 || orthogonalDegree(nextX, nextY) === 0)) {
+                    strokes.push([{ x, y }, { x: nextX, y: nextY }]);
+                }
+            }
+        }
+    }
+    // A single lit cell is still a visible, short stroke (used by punctuation safeguards).
+    if (strokes.length === 0) {
+        const point = rows.flatMap((row, y) => [...row].flatMap((cell, x) =>
+            cell === '1' ? [{ x, y }] : []))[0];
+        if (point) strokes.push([
+            { x: point.x - 0.32, y: point.y },
+            { x: point.x + 0.32, y: point.y },
+        ]);
+    }
+    return strokes;
+};
+
+const createUniformGlyphPoints = (
+    strokes: GlyphStroke[],
     count: number,
     sceneSeed: number,
     event: number,
     glyphIndex: number,
-) => Array.from({ length: count }, (_, pointIndex) => {
-    const candidate = candidates[pointIndex % candidates.length];
-    const ring = Math.floor(pointIndex / candidates.length) + 1;
-    const angle = TAU * hashRandom(sceneSeed ^ (glyphIndex + 1), event + ring, pointIndex + 421);
-    const radius = Math.min(0.22, 0.055 * ring);
-    return {
-        x: candidate.x + Math.cos(angle) * radius,
-        y: candidate.y + Math.sin(angle) * radius,
-    };
-});
+): GlyphPoint[] => {
+    const dense = new Map<string, GlyphPoint>();
+    strokes.forEach(([from, to]) => {
+        const length = Math.hypot(to.x - from.x, to.y - from.y);
+        const steps = Math.max(2, Math.ceil(length * 48));
+        for (let step = 0; step <= steps; step += 1) {
+            const amount = step / steps;
+            const point = mixPoint(from, to, amount);
+            dense.set(`${point.x.toFixed(8)},${point.y.toFixed(8)}`, point);
+        }
+    });
+    const candidates = [...dense.values()];
+    if (candidates.length < count) throw new Error('Insufficient unique glyph stroke samples');
+
+    // Farthest-point sampling maximizes the next nearest-neighbor distance. The seeded first
+    // sample changes texture between events without changing spacing quality or adding jitter.
+    const selected: GlyphPoint[] = [];
+    const used = new Set<number>();
+    let selectedIndex = hashUint(sceneSeed ^ (glyphIndex + 1), event, 431) % candidates.length;
+    while (selected.length < count) {
+        used.add(selectedIndex);
+        selected.push(candidates[selectedIndex]);
+        let bestIndex = -1;
+        let bestDistance = -1;
+        for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+            if (used.has(candidateIndex)) continue;
+            const candidate = candidates[candidateIndex];
+            let nearest = Number.POSITIVE_INFINITY;
+            for (const point of selected) {
+                nearest = Math.min(nearest,
+                    (candidate.x - point.x) ** 2 + (candidate.y - point.y) ** 2);
+            }
+            if (nearest > bestDistance + 1e-12) {
+                bestDistance = nearest;
+                bestIndex = candidateIndex;
+            }
+        }
+        selectedIndex = bestIndex;
+    }
+    return selected;
+};
 
 const connectNearestTree = (points: GlyphPoint[]): ConstellationEdge[] => points
     .slice(1)
@@ -800,7 +948,7 @@ const connectNearestTree = (points: GlyphPoint[]): ConstellationEdge[] => points
         return { from, to };
     });
 
-const rawConstellationGeometry = (
+const buildRawConstellationGeometry = (
     phrase: ConstellationPhrase,
     sceneSeed: number,
     event: number,
@@ -809,6 +957,7 @@ const rawConstellationGeometry = (
     let cursor = 0;
     let glyphIndex = 0;
     const points: GlyphPoint[] = [];
+    const edges: ConstellationEdge[] = [];
     const glyphs: ConstellationGlyph[] = [];
     for (const character of phrase) {
         if (character === ' ') {
@@ -817,24 +966,51 @@ const rawConstellationGeometry = (
         }
         const rows = GLYPHS[character.toUpperCase()];
         if (!rows) throw new Error(`Unsupported constellation glyph: ${character}`);
-        const candidates = rows.flatMap((row, y) => [...row].flatMap((cell, x) =>
-            cell === '1' ? [{ x: cursor + x, y }] : []));
+        const strokes = createGlyphStrokes(rows).map((stroke) => stroke.map((point) => ({
+            x: cursor + point.x,
+            y: point.y,
+        })));
         const count = glyphAnchorCount(phrase, sceneSeed, event, glyphIndex);
-        const indices = createDenseGlyphPoints(candidates, count, sceneSeed, event, glyphIndex)
-            .map((point) => {
-                points.push(point);
-                return points.length - 1;
-            });
+        const glyphPoints = createUniformGlyphPoints(
+            strokes, count, sceneSeed, event, glyphIndex,
+        );
+        const glyphStart = points.length;
+        const indices = glyphPoints.map((point) => {
+            points.push(point);
+            return points.length - 1;
+        });
+        if (includeEdges) {
+            connectNearestTree(glyphPoints).forEach(({ from, to }) => edges.push({
+                from: glyphStart + from,
+                to: glyphStart + to,
+            }));
+        }
         glyphs.push({ character, indices });
         glyphIndex += 1;
         cursor += 6;
     }
     return {
         points,
-        edges: includeEdges ? connectNearestTree(points) : [],
+        edges,
         glyphs,
         lineWidth: Math.max(1, cursor - 1),
     };
+};
+
+type RawConstellationGeometry = ReturnType<typeof buildRawConstellationGeometry>;
+const rawGeometryCache = new Map<string, RawConstellationGeometry>();
+const rawConstellationGeometry = (
+    phrase: ConstellationPhrase,
+    sceneSeed: number,
+    event: number,
+    includeEdges: boolean,
+): RawConstellationGeometry => {
+    const key = `${phrase}|${sceneSeed}|${event}|${includeEdges ? 1 : 0}`;
+    const cached = rawGeometryCache.get(key);
+    if (cached) return cached;
+    const geometry = buildRawConstellationGeometry(phrase, sceneSeed, event, includeEdges);
+    rawGeometryCache.set(key, geometry);
+    return geometry;
 };
 
 const projectConstellationGeometry = (
@@ -916,6 +1092,20 @@ const mixPoint = (from: Point, to: Point, amount: number): Point => ({
     x: from.x + (to.x - from.x) * amount,
     y: from.y + (to.y - from.y) * amount,
 });
+
+/** Every post-first-glyph node has a deterministic, visible first-glyph burst origin. */
+export const createStarTextBurstOrigins = (
+    targets: Point[],
+    firstGlyphCount: number,
+    targetCount = targets.length,
+): Point[] => {
+    const safeFirstCount = Math.max(1, Math.min(firstGlyphCount, targetCount, targets.length));
+    return Array.from({ length: targetCount }, (_, index) => {
+        if (index < safeFirstCount) return { ...targets[index] };
+        // A coprime stride fans adjacent destination stars from different first-glyph nodes.
+        return { ...targets[((index - safeFirstCount) * 17 + 7) % safeFirstCount] };
+    });
+};
 
 const quarticPoint = (controls: readonly Point[], amount: number): Point => {
     const t = clamp01(amount);
@@ -999,25 +1189,50 @@ export const getEasterEggStarFieldPositions = (
     targets: Point[],
     end: Point[],
     elapsedSinceTrigger: number,
-    endVelocities: Point[] = [],
-    viewport?: Point,
+    _endVelocities: Point[] = [],
+    _viewport?: Point,
+    options?: StarTextTransitionOptions,
 ): Point[] => {
     const phase = getEasterEggPhase(elapsedSinceTrigger);
+    if (!options) {
+        const targetFor = (point: Point, index: number) => targets[index] ?? point;
+        if (phase.name === 'morph-in') {
+            return start.map((point, index) => mixPoint(point, targetFor(point, index), phase.progress));
+        }
+        if (phase.name === 'hold') return start.map(targetFor);
+        if (phase.name === 'morph-out') {
+            const amount = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
+            const xs = [...start, ...targets, ...end].map(({ x }) => x);
+            const ys = [...start, ...targets, ...end].map(({ y }) => y);
+            const width = Math.max(1, _viewport?.x ?? 0, ...xs);
+            const height = Math.max(1, _viewport?.y ?? 0, ...ys);
+            return start.map((point, index) => curvedReturnPoint(
+                targetFor(point, index), end[index] ?? point, amount,
+                0x51a7e99, index, width, height, _endVelocities[index],
+            ));
+        }
+        return end;
+    }
+    const targetCount = Math.min(options.targetCount, targets.length);
+    const firstGlyphCount = Math.min(options.firstGlyphCount, targetCount);
+    const origins = createStarTextBurstOrigins(targets, firstGlyphCount, targetCount);
     const targetFor = (point: Point, index: number) => targets[index] ?? point;
     if (phase.name === 'morph-in') {
-        return start.map((point, index) => mixPoint(point, targetFor(point, index), phase.progress));
+        const intro = getStarTextIntroProgress(phase.eventElapsed);
+        return start.map((point, index) => {
+            if (index >= targetCount) return point;
+            if (index < firstGlyphCount) {
+                return mixPoint(point, targetFor(point, index), intro.firstGlyph);
+            }
+            if (intro.stage === 'first-glyph') return point;
+            return mixPoint(origins[index], targetFor(point, index), intro.burst);
+        });
     }
     if (phase.name === 'hold') return start.map(targetFor);
     if (phase.name === 'morph-out') {
-        const amount = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
-        const xs = [...start, ...targets, ...end].map(({ x }) => x);
-        const ys = [...start, ...targets, ...end].map(({ y }) => y);
-        const width = Math.max(1, viewport?.x ?? 0, ...xs);
-        const height = Math.max(1, viewport?.y ?? 0, ...ys);
-        return start.map((point, index) => curvedReturnPoint(
-            targetFor(point, index), end[index] ?? point, amount, 0x51a7e99, index, width, height,
-            endVelocities[index],
-        ));
+        return start.map((point, index) => index < targetCount
+            ? targetFor(point, index)
+            : mixPoint(targetFor(point, index), end[index] ?? point, phase.progress));
     }
     return end;
 };
@@ -1039,19 +1254,51 @@ export const getEasterEggStarFieldStyles = (
     targets: StarVisualStyle[],
     end: StarVisualStyle[],
     elapsedSinceTrigger: number,
+    options?: StarTextTransitionOptions,
 ): StarVisualStyle[] => {
     const phase = getEasterEggPhase(elapsedSinceTrigger);
     const targetFor = (style: StarVisualStyle, index: number) => targets[index] ?? style;
+    if (!options) {
+        if (phase.name === 'morph-in') {
+            return start.map((style, index) => mixStarVisualStyle(
+                style, targetFor(style, index), phase.progress,
+            ));
+        }
+        if (phase.name === 'hold') return start.map(targetFor);
+        if (phase.name === 'morph-out') {
+            return start.map((style, index) => mixStarVisualStyle(
+                targetFor(style, index), end[index] ?? style, phase.progress,
+            ));
+        }
+        return end;
+    }
+    const targetCount = Math.min(options.targetCount, targets.length);
+    const firstGlyphCount = Math.min(options.firstGlyphCount, targetCount);
     if (phase.name === 'morph-in') {
-        return start.map((style, index) => mixStarVisualStyle(style, targetFor(style, index), phase.progress));
+        const intro = getStarTextIntroProgress(phase.eventElapsed);
+        return start.map((style, index) => {
+            if (index >= targetCount) return style;
+            if (index < firstGlyphCount) {
+                return mixStarVisualStyle(style, targetFor(style, index), intro.firstGlyph);
+            }
+            const hidden = hiddenStarStyle(targetFor(style, index).radius);
+            if (intro.stage === 'first-glyph') {
+                return mixStarVisualStyle(style, hidden, intro.firstGlyph);
+            }
+            return mixStarVisualStyle(hidden, targetFor(style, index), intro.burst);
+        });
     }
     if (phase.name === 'hold') return start.map(targetFor);
     if (phase.name === 'morph-out') {
-        return start.map((style, index) => mixStarVisualStyle(
-            targetFor(style, index),
-            end[index] ?? style,
-            phase.progress,
-        ));
+        return start.map((style, index) => {
+            if (index >= targetCount) return mixStarVisualStyle(
+                targetFor(style, index), end[index] ?? style, phase.progress,
+            );
+            const target = targetFor(style, index);
+            const visible = 1 - phase.progress;
+            return { ...target, alpha: target.alpha * visible, strength: visible,
+                opacity: target.opacity * visible };
+        });
     }
     return end;
 };
@@ -1078,62 +1325,60 @@ export const getStarFieldPositions = (
     height: number,
 ): Point[] => {
     const phase = getConstellationPhase(elapsedSeconds);
-    if (phase.name === 'ambient') {
-        return createAmbientLayout(sceneSeed, phase.event).map((star) => {
-            const point = getDriftedStar(star, phase.event === 0
-                ? elapsedSeconds
-                : Math.max(0, phase.eventElapsed - CONSTELLATION_WINDOW_SECONDS));
-            return { x: point.x * width, y: point.y * height };
-        });
-    }
-    const targets = createConstellationTargets(width, height, sceneSeed, phase.event);
-    const current = createAmbientLayout(sceneSeed, phase.event, targets.length);
-    const previous = createAmbientLayout(
-        sceneSeed, Math.max(0, phase.event - 1), targets.length,
-    );
+    const ambientLayout = createAmbientLayout(sceneSeed, phase.event);
     const currentDriftTime = phase.event === 0
         ? elapsedSeconds
         : Math.max(0, phase.eventElapsed - CONSTELLATION_WINDOW_SECONDS);
+    const ambientPositions = ambientLayout.map((star) => {
+        const point = getDriftedStar(star, currentDriftTime);
+        return { x: point.x * width, y: point.y * height };
+    });
+
+    if (phase.name === 'ambient') {
+        const hiddenGeometry = createConstellationGeometry(
+            width, height, sceneSeed, Math.max(1, phase.event),
+        );
+        const fallback = hiddenGeometry.points[0] ?? { x: width * 0.5, y: height * 0.5 };
+        return [
+            ...Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) =>
+                ({ ...(hiddenGeometry.points[index] ?? fallback) })),
+            ...ambientPositions,
+        ];
+    }
+
+    const geometry = createConstellationGeometry(width, height, sceneSeed, phase.event);
+    const targets = geometry.points;
+    const firstGlyphCount = geometry.glyphs[0].indices.length;
+    const origins = createStarTextBurstOrigins(targets, firstGlyphCount);
+    const previous = createAmbientLayout(
+        sceneSeed, Math.max(0, phase.event - 1), targets.length,
+    );
+    const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
     const previousDriftTime = phase.event <= 1
         ? CONSTELLATION_INTERVAL_SECONDS
         : CONSTELLATION_INTERVAL_SECONDS - CONSTELLATION_WINDOW_SECONDS;
-
-    const constellationPositions = current.map((star, index) => {
-        const currentPoint = getDriftedStar(star, currentDriftTime);
-        const previousPoint = getDriftedStar(previous[index], previousDriftTime);
-        const pixelCurrent = { x: currentPoint.x * width, y: currentPoint.y * height };
-        const pixelPrevious = { x: previousPoint.x * width, y: previousPoint.y * height };
-        if (phase.name === 'morph-in') return mixPoint(pixelPrevious, targets[index], phase.progress);
-        if (phase.name === 'hold') return targets[index];
-        if (phase.name === 'morph-out') {
-            const rawProgress = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
-            return curvedReturnPoint(
-                targets[index], pixelCurrent, rawProgress, sceneSeed ^ phase.event, index,
-                width, height, getDriftedStarVelocity(star, currentDriftTime, width, height),
+    const intro = getStarTextIntroProgress(phase.eventElapsed);
+    const fallback = targets[0] ?? { x: width * 0.5, y: height * 0.5 };
+    const textPositions = Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) => {
+        if (index >= targets.length) return { ...fallback };
+        if (phase.name === 'hold' || phase.name === 'morph-out') return { ...targets[index] };
+        if (index < firstGlyphCount) {
+            const point = getDriftedStar(previous[index], previousDriftTime);
+            return mixPoint(
+                { x: point.x * width, y: point.y * height },
+                targets[index],
+                intro.firstGlyph,
             );
         }
-        return pixelCurrent;
+        return mixPoint(origins[index], targets[index], intro.burst);
     });
-
-    const retainedCurrent = createRetainedAmbientLayout(sceneSeed, phase.event);
-    const retainedPrevious = createRetainedAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
-    const retainedPositions = retainedCurrent.map((star, index) => {
-        const currentPoint = getDriftedStar(star, currentDriftTime);
-        const previousPoint = getDriftedStar(retainedPrevious[index], previousDriftTime);
-        const pixelCurrent = { x: currentPoint.x * width, y: currentPoint.y * height };
-        const pixelPrevious = { x: previousPoint.x * width, y: previousPoint.y * height };
-        if (phase.name === 'morph-in' || phase.name === 'hold') return pixelPrevious;
-        if (phase.name === 'morph-out') {
-            const rawProgress = (phase.eventElapsed - MORPH_SECONDS - HOLD_SECONDS) / MORPH_SECONDS;
-            return curvedReturnPoint(
-                pixelPrevious, pixelCurrent, rawProgress, sceneSeed ^ phase.event,
-                targets.length + index, width, height,
-                getDriftedStarVelocity(star, currentDriftTime, width, height),
-            );
-        }
-        return pixelCurrent;
+    const backgroundPositions = ambientPositions.map((point, index) => {
+        const previousPoint = getDriftedStar(previousAmbient[index], previousDriftTime);
+        const from = { x: previousPoint.x * width, y: previousPoint.y * height };
+        if (phase.name === 'morph-out') return mixPoint(from, point, phase.progress);
+        return from;
     });
-    return [...constellationPositions, ...retainedPositions];
+    return [...textPositions, ...backgroundPositions];
 };
 
 export const getStarPosition = (
@@ -1142,7 +1387,12 @@ export const getStarPosition = (
     elapsedSeconds: number,
     width: number,
     height: number,
-): Point => getStarFieldPositions(sceneSeed, elapsedSeconds, width, height)[starIndex];
+): Point => {
+    const positions = getStarFieldPositions(sceneSeed, elapsedSeconds, width, height);
+    return positions[getConstellationPhase(elapsedSeconds).name === 'ambient'
+        ? MAX_STAR_TEXT_ANCHOR_COUNT + starIndex
+        : starIndex];
+};
 
 export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) => {
     const distance = traveler.initialDistance + Math.max(0, simulationSeconds) * traveler.speed;

@@ -833,12 +833,20 @@ const SpaceNeuralBackground: React.FC = () => {
                             age,
                             easterEgg.endVelocities,
                             { x: width, y: height },
+                            {
+                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
+                                targetCount: easterEgg.geometry.points.length,
+                            },
                         ),
                         styles: getEasterEggStarFieldStyles(
                             easterEgg.startStyles,
                             easterEgg.targetStyles,
                             easterEgg.endStyles,
                             age,
+                            {
+                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
+                                targetCount: easterEgg.geometry.points.length,
+                            },
                         ),
                     };
                 }
@@ -874,7 +882,12 @@ const SpaceNeuralBackground: React.FC = () => {
                 geometry.edges.forEach(({ from, to }) => {
                     const fromPoint = positions[from];
                     const toPoint = positions[to];
-                    if (!fromPoint || !toPoint) return;
+                    const fromStyle = styles[from];
+                    const toStyle = styles[to];
+                    // Connections follow revealed nodes; hidden burst destinations never leak.
+                    if (!fromPoint || !toPoint || !fromStyle || !toStyle
+                        || fromStyle.opacity <= 0 || toStyle.opacity <= 0
+                        || fromStyle.strength <= 0 || toStyle.strength <= 0) return;
                     ctx.moveTo(fromPoint.x, fromPoint.y);
                     ctx.lineTo(toPoint.x, toPoint.y);
                 });
@@ -1041,17 +1054,14 @@ const SpaceNeuralBackground: React.FC = () => {
                 easterEgg.endGeometry = scaleConstellationGeometry(
                     easterEgg.endGeometry, scaleX, scaleY,
                 );
-                const oldAnchorCount = easterEgg.geometry.points.length;
-                const retainedTargets = scalePoints(
-                    easterEgg.targetPositions.slice(oldAnchorCount),
-                );
+                const scaledTargets = scalePoints(easterEgg.targetPositions);
                 easterEgg.geometry = createConstellationGeometryForPhrase(
                     width, height, easterEgg.phrase, scene.seed, easterEgg.densityEvent,
                 );
-                easterEgg.targetPositions = [
-                    ...easterEgg.geometry.points,
-                    ...retainedTargets,
-                ];
+                easterEgg.geometry.points.forEach((point, index) => {
+                    scaledTargets[index] = { ...point };
+                });
+                easterEgg.targetPositions = scaledTargets;
             }
             drawScene(elapsed, false);
         };
@@ -1142,14 +1152,16 @@ const SpaceNeuralBackground: React.FC = () => {
                 { length: totalCount },
                 (_, index) => ({ ...(velocities[index] ?? { x: 0, y: 0 }) }),
             );
-            const targetPositions = [
-                ...geometry.points,
-                ...retainedPositions,
-            ];
-            const targetStyles = [
-                ...createEasterEggTargetStyles(scene.seed, easterEggTriggerCount, geometry.points.length),
-                ...retainedStyles,
-            ];
+            const targetPositions = fillPoints([]);
+            const targetStyles = fillStyles([]);
+            geometry.points.forEach((point, index) => { targetPositions[index] = { ...point }; });
+            createEasterEggTargetStyles(
+                scene.seed, easterEggTriggerCount, geometry.points.length,
+            ).forEach((style, index) => { targetStyles[index] = { ...style }; });
+            retainedIndices.forEach((sourceIndex, index) => {
+                targetPositions[sourceIndex] = { ...retainedPositions[index] };
+                targetStyles[sourceIndex] = { ...retainedStyles[index] };
+            });
             easterEgg = {
                 startedAt: elapsed,
                 densityEvent,
@@ -1165,11 +1177,11 @@ const SpaceNeuralBackground: React.FC = () => {
                 ),
                 geometry,
                 startPositions: fillPoints(currentFrame.positions),
-                targetPositions: fillPoints(targetPositions),
+                targetPositions,
                 endPositions: fillPoints(rawEndPositions),
                 endVelocities: fillVelocities(rawEndVelocities),
                 startStyles: fillStyles(currentFrame.styles),
-                targetStyles: fillStyles(targetStyles),
+                targetStyles,
                 endStyles: fillStyles(rawEndStyles),
             };
             easterEggTriggerCount += 1;
