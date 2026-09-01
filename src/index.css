@@ -384,34 +384,75 @@ a {
 .group:focus-within .group-focus-within\:translate-x-1 { transform: translateX(0.25rem); }
 .group:hover .group-hover\:scale-110 { transform: scale(1.1); }
 
+/* Every hero ancestor must remain on the document scroll chain. `hidden` on
+   either axis creates a non-scrolling sticky container, so use non-container
+   clipping on the home route instead. */
+html:has(.home-hero),
+body:has(.home-hero),
+#root > .overflow-hidden:has(.home-main) {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
 .home-hero {
-  display: flex;
-  align-items: flex-end;
+  --home-hero-viewport: 100vh;
+  --home-hero-stick-range: min(40vh, 24rem);
+  position: relative;
+  isolation: isolate;
   width: 100vw;
-  height: auto;
-  min-height: max(500px, 60vh);
-  margin-left: calc(50% - 50vw);
+  max-width: none;
+  min-height: calc(var(--home-hero-viewport) + var(--home-hero-stick-range));
   margin-right: calc(50% - 50vw);
-  border: 0;
-  border-radius: 0;
+  margin-bottom: 4rem;
+  margin-left: calc(50% - 50vw);
+  background: #050508;
+}
+
+@supports (height: 100svh) {
+  .home-hero {
+    --home-hero-viewport: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  .home-hero {
+    --home-hero-viewport: 100dvh;
+  }
+}
+
+.home-hero-scene {
+  position: sticky;
+  z-index: 0;
+  top: 0;
+  width: 100%;
+  height: var(--home-hero-viewport);
+  overflow: hidden;
+  pointer-events: none;
+  background: #050508;
 }
 
 .home-hero-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background: linear-gradient(
     to top,
-    rgba(9, 9, 11, 0.62) 0%,
-    rgba(9, 9, 11, 0.18) 34%,
-    rgba(9, 9, 11, 0.03) 62%,
-    transparent 82%
+    rgba(9, 9, 11, 0.76) 0%,
+    rgba(9, 9, 11, 0.3) 36%,
+    rgba(9, 9, 11, 0.06) 66%,
+    transparent 84%
   );
 }
 
 .home-hero-copy {
   position: relative;
-  inset: auto;
+  z-index: 1;
+  box-sizing: border-box;
   width: min(var(--container-width), calc(100% - 3rem));
-  margin-left: auto;
-  margin-right: auto;
+  min-height: calc(var(--home-hero-viewport) + var(--home-hero-stick-range));
+  margin: calc(-1 * var(--home-hero-viewport)) auto 0;
+  padding: clamp(16rem, 48vh, 34rem) 0 3rem;
+  text-shadow: 0 1px 24px rgba(0, 0, 0, 0.72);
 }
 
 .hero-title-visual,
@@ -2340,15 +2381,13 @@ iframe {
   }
 
   .home-hero {
-    height: auto !important;
-    min-height: 500px !important;
-    margin-bottom: 1.75rem !important;
+    --home-hero-stick-range: min(34vh, 16rem);
+    margin-bottom: 1.75rem;
   }
 
   .home-hero-copy {
     width: min(100%, calc(100% - 2rem));
-    padding: 1.2rem !important;
-    bottom: auto;
+    padding: clamp(11rem, 40vh, 22rem) 0 calc(2.25rem + env(safe-area-inset-bottom));
   }
 
   .home-hero-title {
@@ -2441,14 +2480,9 @@ iframe {
 }
 
 @media (max-width: 430px) {
-  .home-hero {
-    height: auto !important;
-    min-height: 500px !important;
-  }
-
   .home-hero-copy {
     width: min(100%, calc(100% - 1.7rem));
-    padding: 1rem !important;
+    padding-top: clamp(10rem, 36vh, 18rem);
   }
 
   .home-hero-title {

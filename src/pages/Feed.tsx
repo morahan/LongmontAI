@@ -85,11 +85,13 @@ const Feed: React.FC = () => {
     return (
         <div className="max-w-5xl mx-auto">
             {/* Hero Section with Space Neural Network Animation */}
-            <section className="home-hero relative h-[60vh] min-h-[500px] rounded-2xl overflow-hidden mb-16 bg-[#050508] border border-white/5 shadow-2xl">
-                <SpaceNeuralBackground />
-                <div className="home-hero-shade absolute inset-0 pointer-events-none" />
-                
-                <div className="home-hero-copy absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10">
+            <section className="home-hero">
+                <div className="home-hero-scene" aria-hidden="true">
+                    <SpaceNeuralBackground />
+                    <div className="home-hero-shade" />
+                </div>
+
+                <div className="home-hero-copy">
                     <div className="flex items-center gap-2 mb-4">
                         <Sparkles size={16} className="text-[var(--accent-cyan)]" />
                         <span className="text-xs font-mono text-[var(--accent-cyan)] uppercase tracking-wider">
