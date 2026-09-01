@@ -384,47 +384,34 @@ a {
 .group:focus-within .group-focus-within\:translate-x-1 { transform: translateX(0.25rem); }
 .group:hover .group-hover\:scale-110 { transform: scale(1.1); }
 
-/* Every hero ancestor must remain on the document scroll chain. `hidden` on
-   either axis creates a non-scrolling sticky container, so use non-container
-   clipping on the home route instead. */
-html:has(.home-hero),
-body:has(.home-hero),
+/* Keep the home starscape viewport-bound for the lifetime of Feed. Route-scoped
+   clipping prevents full-bleed content from creating a horizontal scrollbar. */
+html:has(.home-feed),
+body:has(.home-feed),
 #root > .overflow-hidden:has(.home-main) {
   overflow-x: clip;
-  overflow-y: visible;
 }
 
-.home-hero {
+.home-feed {
   --home-hero-viewport: 100vh;
-  --home-hero-stick-range: min(40vh, 24rem);
-  position: relative;
-  isolation: isolate;
-  width: 100vw;
-  max-width: none;
-  min-height: calc(var(--home-hero-viewport) + var(--home-hero-stick-range));
-  margin-right: calc(50% - 50vw);
-  margin-bottom: 4rem;
-  margin-left: calc(50% - 50vw);
-  background: #050508;
 }
 
 @supports (height: 100svh) {
-  .home-hero {
+  .home-feed {
     --home-hero-viewport: 100svh;
   }
 }
 
 @supports (height: 100dvh) {
-  .home-hero {
+  .home-feed {
     --home-hero-viewport: 100dvh;
   }
 }
 
 .home-hero-scene {
-  position: sticky;
+  position: fixed;
   z-index: 0;
-  top: 0;
-  width: 100%;
+  inset: 0;
   height: var(--home-hero-viewport);
   overflow: hidden;
   pointer-events: none;
@@ -444,15 +431,51 @@ body:has(.home-hero),
   );
 }
 
-.home-hero-copy {
+.home-hero {
   position: relative;
   z-index: 1;
+  display: flex;
+  width: 100vw;
+  max-width: none;
+  height: var(--home-hero-viewport);
+  min-height: var(--home-hero-viewport);
+  align-items: flex-end;
+  margin-right: calc(50% - 50vw);
+  margin-left: calc(50% - 50vw);
+}
+
+.home-hero-copy {
+  position: relative;
   box-sizing: border-box;
   width: min(var(--container-width), calc(100% - 3rem));
-  min-height: calc(var(--home-hero-viewport) + var(--home-hero-stick-range));
-  margin: calc(-1 * var(--home-hero-viewport)) auto 0;
-  padding: clamp(16rem, 48vh, 34rem) 0 3rem;
+  margin: 0 auto;
+  padding: 0 0 clamp(2.5rem, 7vh, 5rem);
   text-shadow: 0 1px 24px rgba(0, 0, 0, 0.72);
+}
+
+.home-feed-content {
+  position: relative;
+  z-index: 1;
+  padding-top: 4rem;
+}
+
+.home-feed-content::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0 calc(50% - 50vw);
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 5, 8, 0.42),
+    rgba(9, 9, 11, 0.68) 22rem,
+    rgba(9, 9, 11, 0.78) 100%
+  );
+}
+
+body:has(.home-feed) .site-footer {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-title-visual,
@@ -2380,14 +2403,13 @@ iframe {
     padding-top: 0 !important;
   }
 
-  .home-hero {
-    --home-hero-stick-range: min(34vh, 16rem);
-    margin-bottom: 1.75rem;
+  .home-feed-content {
+    padding-top: 1.75rem;
   }
 
   .home-hero-copy {
     width: min(100%, calc(100% - 2rem));
-    padding: clamp(11rem, 40vh, 22rem) 0 calc(2.25rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(2.25rem + env(safe-area-inset-bottom));
   }
 
   .home-hero-title {
@@ -2482,7 +2504,6 @@ iframe {
 @media (max-width: 430px) {
   .home-hero-copy {
     width: min(100%, calc(100% - 1.7rem));
-    padding-top: clamp(10rem, 36vh, 18rem);
   }
 
   .home-hero-title {

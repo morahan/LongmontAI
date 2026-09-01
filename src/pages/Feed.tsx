@@ -83,14 +83,14 @@ const Feed: React.FC = () => {
     const hasActiveArchiveFilter = archiveQuery.trim().length > 0 || selectedYear !== 'all';
 
     return (
-        <div className="max-w-5xl mx-auto">
+        <div className="home-feed max-w-5xl mx-auto">
+            <div className="home-hero-scene" aria-hidden="true">
+                <SpaceNeuralBackground />
+                <div className="home-hero-shade" />
+            </div>
+
             {/* Hero Section with Space Neural Network Animation */}
             <section className="home-hero">
-                <div className="home-hero-scene" aria-hidden="true">
-                    <SpaceNeuralBackground />
-                    <div className="home-hero-shade" />
-                </div>
-
                 <div className="home-hero-copy">
                     <div className="flex items-center gap-2 mb-4">
                         <Sparkles size={16} className="text-[var(--accent-cyan)]" />
@@ -123,6 +123,7 @@ const Feed: React.FC = () => {
                 </div>
             </section>
 
+            <div className="home-feed-content">
             <SponsorAcknowledgement placement="home" />
 
             {/* Meetup Banner */}
@@ -280,6 +281,7 @@ const Feed: React.FC = () => {
                     </div>
                 )}
             </section>
+            </div>
         </div>
     );
 };
