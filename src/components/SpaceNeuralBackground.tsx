@@ -33,6 +33,7 @@ import {
     getSystemScale,
     getGalaxyAppearance,
     getTravelerAppearance,
+    getTravelerStarRenderPolicy,
     getTravelerVariant,
     getUfoAppearance,
     hasAtmosphereHalo,
@@ -397,20 +398,24 @@ const drawTravelerStar = (
     ctx: CanvasRenderingContext2D,
     traveler: Traveler,
     projection: ProjectedTraveler,
+    ownsPlanetarySystem: boolean,
 ) => {
     const appearance = getTravelerAppearance(traveler, projection.progress);
+    const renderPolicy = getTravelerStarRenderPolicy(ownsPlanetarySystem);
     const { x, y } = projection;
     const [red, green, blue] = hexToRgb(appearance.color);
-    const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.haloRadius);
-    halo.addColorStop(0, `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`);
-    halo.addColorStop(0.45, `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity * 0.34})`);
-    halo.addColorStop(1, `rgba(${red}, ${green}, ${blue}, 0)`);
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(x, y, appearance.haloRadius, 0, TAU);
-    ctx.fill();
+    if (renderPolicy.renderHalo) {
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.haloRadius);
+        halo.addColorStop(0, `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`);
+        halo.addColorStop(0.45, `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity * 0.34})`);
+        halo.addColorStop(1, `rgba(${red}, ${green}, ${blue}, 0)`);
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(x, y, appearance.haloRadius, 0, TAU);
+        ctx.fill();
+    }
 
-    if (appearance.detailLevel === 3) {
+    if (renderPolicy.renderFlare && appearance.detailLevel === 3) {
         ctx.strokeStyle = `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity * 0.72})`;
         ctx.lineWidth = Math.max(0.35, appearance.radius * 0.08);
         ctx.beginPath();
@@ -429,8 +434,10 @@ const drawTravelerStar = (
         `rgba(${red}, ${green}, ${blue}, ${projection.opacity})`);
     disc.addColorStop(1, `rgba(${Math.round(red * 0.58)}, ${Math.round(green * 0.58)}, ${Math.round(blue * 0.58)}, ${projection.opacity * 0.9})`);
     ctx.save();
-    ctx.shadowColor = `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`;
-    ctx.shadowBlur = appearance.glowBlur;
+    if (renderPolicy.renderShadowGlow) {
+        ctx.shadowColor = `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`;
+        ctx.shadowBlur = appearance.glowBlur;
+    }
     ctx.fillStyle = disc;
     ctx.beginPath();
     ctx.arc(x, y, appearance.radius, 0, TAU);
@@ -928,7 +935,12 @@ const SpaceNeuralBackground: React.FC = () => {
                                 ctx.stroke();
                             }
                         }
-                        drawTravelerStar(ctx, traveler, projection);
+                        drawTravelerStar(
+                            ctx,
+                            traveler,
+                            projection,
+                            index === prominentSystemOwner?.travelerIndex,
+                        );
                     }
                 }
 

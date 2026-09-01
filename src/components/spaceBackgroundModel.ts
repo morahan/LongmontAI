@@ -204,6 +204,12 @@ export interface TravelerAppearance {
     glowOpacity: number;
 }
 
+export interface TravelerStarRenderPolicy {
+    renderHalo: boolean;
+    renderShadowGlow: boolean;
+    renderFlare: boolean;
+}
+
 export interface UfoAppearance {
     radius: number;
     glowRadius: number;
@@ -1201,6 +1207,13 @@ export const getGalaxyAppearance = (traveler: Traveler, progress: number): Galax
         internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
     };
 };
+
+/** System owners keep their resolved disc but defer all luminosity to the system's own sun. */
+export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): TravelerStarRenderPolicy => ({
+    renderHalo: !ownsPlanetarySystem,
+    renderShadowGlow: !ownsPlanetarySystem,
+    renderFlare: !ownsPlanetarySystem,
+});
 
 /** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth. */
 export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppearance => {

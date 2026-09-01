@@ -101,6 +101,7 @@ import {
   getSystemScale,
   getTravelerAppearance,
   getTravelerColorWeights,
+  getTravelerStarRenderPolicy,
   getTravelerDepth,
   getTravelerVariant,
   getTravelerVariantForBasisPoint,
@@ -915,6 +916,19 @@ test('small and large traveler colors follow their weighted palette with coheren
         `${name} frequency ${counts.get(name) / 100000} missed ${expectedOther}`);
     }
   }
+});
+
+test('system-owning traveler stars suppress every glow layer while ordinary stars retain them', () => {
+  assert.deepEqual(getTravelerStarRenderPolicy(true), {
+    renderHalo: false,
+    renderShadowGlow: false,
+    renderFlare: false,
+  });
+  assert.deepEqual(getTravelerStarRenderPolicy(false), {
+    renderHalo: true,
+    renderShadowGlow: true,
+    renderFlare: true,
+  });
 });
 
 test('traveler approach glow grows monotonically while blur and opacity remain subtle and bounded', () => {
