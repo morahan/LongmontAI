@@ -38,6 +38,18 @@ export const NEAR_DEPTH = 56;
 export const SYSTEM_MIN_PROGRESS = 0.34;
 export const SYSTEM_MAX_PROGRESS = 0.84;
 export const TRAVELER_DETAIL_THRESHOLDS = [0.28, 0.5, 0.68] as const;
+export const TRAVELER_PALETTE = [
+    { name: 'red', color: '#e15b64' },
+    { name: 'yellow', color: '#f3cf70' },
+    { name: 'orange', color: '#ee9558' },
+    { name: 'white', color: '#f2f4f5' },
+    { name: 'blue', color: '#70b7df' },
+] as const;
+export const TRAVELER_SURFACE_TEXTURES = ['bands', 'speckles', 'facets', 'swirls', 'mottled'] as const;
+export const SMALL_TRAVELER_RED_CHANCE = 0.06;
+export const LARGE_TRAVELER_RED_CHANCE = 0.7;
+export const TRAVELER_GLOW_BLUR_RANGE = [1.5, 12] as const;
+export const TRAVELER_GLOW_OPACITY_RANGE = [0.06, 0.22] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
 export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const PLANET_RING_LINE_WIDTH = 0.8;
@@ -80,6 +92,8 @@ export interface EasterEggClickSequence {
 }
 export type DriftMode = 'wrap' | 'bounce';
 export type PlanetAtmosphereClass = typeof PLANET_ATMOSPHERE_CLASSES[number];
+export type TravelerColorName = typeof TRAVELER_PALETTE[number]['name'];
+export type TravelerSurfaceTexture = typeof TRAVELER_SURFACE_TEXTURES[number];
 
 export interface Point { x: number; y: number }
 export interface ConstellationEdge { from: number; to: number }
@@ -182,6 +196,12 @@ export interface TravelerAppearance {
     haloRadius: number;
     coreRadius: number;
     flareLength: number;
+    colorName: TravelerColorName;
+    color: string;
+    texture: TravelerSurfaceTexture;
+    surfaceSeed: number;
+    glowBlur: number;
+    glowOpacity: number;
 }
 
 export interface UfoAppearance {
@@ -1123,7 +1143,27 @@ export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) 
     return { depth: FAR_DEPTH - (distance - cycle * DEPTH_RANGE), cycle };
 };
 
-/** Near travelers grow into resolved stellar discs with deterministic detail stages. */
+/** Intrinsically larger travelers trend red; all non-red palette entries share the remainder. */
+export const getTravelerColorWeights = (size: number) => {
+    const sizeProgress = clamp01(
+        (size - TRAVELER_RADIUS_RANGE[0]) / (TRAVELER_RADIUS_RANGE[1] - TRAVELER_RADIUS_RANGE[0]),
+    );
+    const red = mix(SMALL_TRAVELER_RED_CHANCE, LARGE_TRAVELER_RED_CHANCE, smoothstep(sizeProgress));
+    const other = (1 - red) / (TRAVELER_PALETTE.length - 1);
+    return [red, other, other, other, other] as const;
+};
+
+export const chooseTravelerColor = (size: number, roll: number) => {
+    const weights = getTravelerColorWeights(size);
+    let cursor = clamp01(roll);
+    for (let index = 0; index < weights.length; index += 1) {
+        cursor -= weights[index];
+        if (cursor < 0 || index === weights.length - 1) return TRAVELER_PALETTE[index];
+    }
+    return TRAVELER_PALETTE[TRAVELER_PALETTE.length - 1];
+};
+
+/** Near travelers grow into resolved stellar discs with stable seeded color and surface identity. */
 export const getTravelerAppearance = (traveler: Traveler, progress: number): TravelerAppearance => {
     const proximity = smoothstep(progress);
     const radius = traveler.size * (0.55 + proximity * 5.45);
@@ -1132,12 +1172,21 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
         : progress >= TRAVELER_DETAIL_THRESHOLDS[1]
             ? 2
             : progress >= TRAVELER_DETAIL_THRESHOLDS[0] ? 1 : 0;
+    const selectedColor = chooseTravelerColor(traveler.size, hashRandom(traveler.seed, 0, 401));
     return {
         radius,
         detailLevel,
-        haloRadius: radius * (1.8 + detailLevel * 0.24),
-        coreRadius: radius * (detailLevel >= 2 ? 0.48 : 0.34),
+        haloRadius: radius * (1.65 + detailLevel * 0.18),
+        coreRadius: radius * (detailLevel >= 2 ? 0.58 : 0.4),
         flareLength: detailLevel === 3 ? radius * 2.6 : 0,
+        colorName: selectedColor.name,
+        color: selectedColor.color,
+        texture: TRAVELER_SURFACE_TEXTURES[
+            hashUint(traveler.seed, 0, 402) % TRAVELER_SURFACE_TEXTURES.length
+        ],
+        surfaceSeed: hashUint(traveler.seed, 0, 403),
+        glowBlur: mix(TRAVELER_GLOW_BLUR_RANGE[0], TRAVELER_GLOW_BLUR_RANGE[1], proximity),
+        glowOpacity: mix(TRAVELER_GLOW_OPACITY_RANGE[0], TRAVELER_GLOW_OPACITY_RANGE[1], proximity),
     };
 };
 

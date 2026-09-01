@@ -320,6 +320,79 @@ const drawNeuralSignal = (
     ctx.restore();
 };
 
+const hexToRgb = (color: string) => {
+    const value = Number.parseInt(color.slice(1), 16);
+    return [(value >>> 16) & 255, (value >>> 8) & 255, value & 255] as const;
+};
+
+/** Seeded marks are always clipped to the stellar disc and strengthen only as it resolves. */
+const drawTravelerSurface = (
+    ctx: CanvasRenderingContext2D,
+    appearance: ReturnType<typeof getTravelerAppearance>,
+    x: number,
+    y: number,
+    opacity: number,
+) => {
+    if (appearance.detailLevel === 0) return;
+    const radius = appearance.radius;
+    const seed = appearance.surfaceSeed;
+    const textureOpacity = opacity * (0.08 + appearance.detailLevel * 0.055);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, TAU);
+    ctx.clip();
+    ctx.strokeStyle = `rgba(24, 31, 43, ${textureOpacity})`;
+    ctx.fillStyle = `rgba(255, 255, 255, ${textureOpacity * 0.8})`;
+    ctx.lineWidth = Math.max(0.24, radius * 0.075);
+    ctx.lineCap = 'round';
+
+    if (appearance.texture === 'bands') {
+        for (let band = -2; band <= 2; band += 1) {
+            const offset = band * radius * 0.34;
+            ctx.beginPath();
+            ctx.moveTo(x - radius, y + offset);
+            ctx.bezierCurveTo(x - radius * 0.35, y + offset - radius * 0.14,
+                x + radius * 0.35, y + offset + radius * 0.14, x + radius, y + offset);
+            ctx.stroke();
+        }
+    } else if (appearance.texture === 'speckles') {
+        for (let spot = 0; spot < 7; spot += 1) {
+            const angle = surfaceValue(seed, spot) * TAU;
+            const distance = Math.sqrt(surfaceValue(seed, spot + 9)) * radius * 0.72;
+            ctx.beginPath();
+            ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance,
+                radius * (0.045 + surfaceValue(seed, spot + 18) * 0.065), 0, TAU);
+            ctx.fill();
+        }
+    } else if (appearance.texture === 'facets') {
+        for (let facet = 0; facet < 5; facet += 1) {
+            const angle = (facet / 5 + surfaceValue(seed, facet) * 0.08) * TAU;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+            ctx.stroke();
+        }
+    } else if (appearance.texture === 'swirls') {
+        for (let arc = 0; arc < 3; arc += 1) {
+            ctx.beginPath();
+            ctx.arc(x + (arc - 1) * radius * 0.18, y, radius * (0.3 + arc * 0.16),
+                surfaceValue(seed, arc) * TAU, surfaceValue(seed, arc) * TAU + Math.PI * 1.25);
+            ctx.stroke();
+        }
+    } else {
+        for (let patch = 0; patch < 5; patch += 1) {
+            const angle = surfaceValue(seed, patch) * TAU;
+            const distance = surfaceValue(seed, patch + 6) * radius * 0.62;
+            ctx.beginPath();
+            ctx.ellipse(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance,
+                radius * (0.12 + surfaceValue(seed, patch + 12) * 0.16), radius * 0.09,
+                angle, 0, TAU);
+            ctx.fill();
+        }
+    }
+    ctx.restore();
+};
+
 const drawTravelerStar = (
     ctx: CanvasRenderingContext2D,
     traveler: Traveler,
@@ -327,25 +400,18 @@ const drawTravelerStar = (
 ) => {
     const appearance = getTravelerAppearance(traveler, projection.progress);
     const { x, y } = projection;
-    if (appearance.detailLevel === 0) {
-        ctx.fillStyle = `rgba(224, 242, 254, ${projection.opacity})`;
-        ctx.beginPath();
-        ctx.arc(x, y, appearance.radius, 0, TAU);
-        ctx.fill();
-        return;
-    }
-    if (appearance.detailLevel >= 1) {
-        const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.haloRadius);
-        halo.addColorStop(0, `rgba(238, 249, 255, ${projection.opacity * 0.72})`);
-        halo.addColorStop(0.42, `rgba(128, 205, 235, ${projection.opacity * 0.2})`);
-        halo.addColorStop(1, 'rgba(80, 156, 201, 0)');
-        ctx.fillStyle = halo;
-        ctx.beginPath();
-        ctx.arc(x, y, appearance.haloRadius, 0, TAU);
-        ctx.fill();
-    }
+    const [red, green, blue] = hexToRgb(appearance.color);
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.haloRadius);
+    halo.addColorStop(0, `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`);
+    halo.addColorStop(0.45, `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity * 0.34})`);
+    halo.addColorStop(1, `rgba(${red}, ${green}, ${blue}, 0)`);
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, appearance.haloRadius, 0, TAU);
+    ctx.fill();
+
     if (appearance.detailLevel === 3) {
-        ctx.strokeStyle = `rgba(194, 231, 247, ${projection.opacity * 0.24})`;
+        ctx.strokeStyle = `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity * 0.72})`;
         ctx.lineWidth = Math.max(0.35, appearance.radius * 0.08);
         ctx.beginPath();
         ctx.moveTo(x - appearance.flareLength, y);
@@ -355,37 +421,22 @@ const drawTravelerStar = (
         ctx.stroke();
     }
     const disc = ctx.createRadialGradient(
-        x - appearance.radius * 0.22,
-        y - appearance.radius * 0.25,
-        0,
-        x,
-        y,
-        appearance.radius,
+        x - appearance.radius * 0.22, y - appearance.radius * 0.25, 0,
+        x, y, appearance.radius,
     );
     disc.addColorStop(0, `rgba(255, 255, 255, ${projection.opacity})`);
-    disc.addColorStop(appearance.detailLevel >= 2 ? 0.38 : 0.62, `rgba(224, 242, 254, ${projection.opacity})`);
-    disc.addColorStop(1, `rgba(109, 190, 226, ${projection.opacity * 0.78})`);
+    disc.addColorStop(appearance.detailLevel >= 2 ? 0.34 : 0.58,
+        `rgba(${red}, ${green}, ${blue}, ${projection.opacity})`);
+    disc.addColorStop(1, `rgba(${Math.round(red * 0.58)}, ${Math.round(green * 0.58)}, ${Math.round(blue * 0.58)}, ${projection.opacity * 0.9})`);
+    ctx.save();
+    ctx.shadowColor = `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`;
+    ctx.shadowBlur = appearance.glowBlur;
     ctx.fillStyle = disc;
     ctx.beginPath();
     ctx.arc(x, y, appearance.radius, 0, TAU);
     ctx.fill();
-
-    if (appearance.detailLevel >= 2) {
-        ctx.fillStyle = `rgba(117, 185, 215, ${projection.opacity * 0.32})`;
-        for (let spot = 0; spot < 3; spot += 1) {
-            const spotAngle = surfaceValue(traveler.seed, spot) * TAU;
-            const distance = surfaceValue(traveler.seed, spot + 4) * appearance.coreRadius;
-            ctx.beginPath();
-            ctx.arc(
-                x + Math.cos(spotAngle) * distance,
-                y + Math.sin(spotAngle) * distance,
-                appearance.radius * (0.055 + surfaceValue(traveler.seed, spot + 8) * 0.05),
-                0,
-                TAU,
-            );
-            ctx.fill();
-        }
-    }
+    ctx.restore();
+    drawTravelerSurface(ctx, appearance, x, y, projection.opacity);
 };
 
 const drawGalaxy = (

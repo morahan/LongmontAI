@@ -45,13 +45,20 @@ import {
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
   SYSTEM_STAR_RADIUS,
+  LARGE_TRAVELER_RED_CHANCE,
+  SMALL_TRAVELER_RED_CHANCE,
   TRAVELER_DETAIL_THRESHOLDS,
+  TRAVELER_GLOW_BLUR_RANGE,
+  TRAVELER_GLOW_OPACITY_RANGE,
+  TRAVELER_PALETTE,
   TRAVELER_RADIUS_RANGE,
+  TRAVELER_SURFACE_TEXTURES,
   TWINKLE_WINDOW_SECONDS,
   UFO_BASIS_POINTS,
   UFO_SIZE_MULTIPLIER,
   advanceEasterEggClickSequence,
   chooseMoonCount,
+  chooseTravelerColor,
   chooseWeightedPlanetCount,
   createAmbientLayout,
   createConstellationGeometry,
@@ -93,6 +100,7 @@ import {
   getSystemSafetyMargin,
   getSystemScale,
   getTravelerAppearance,
+  getTravelerColorWeights,
   getTravelerDepth,
   getTravelerVariant,
   getTravelerVariantForBasisPoint,
@@ -840,6 +848,96 @@ test('galaxy creation uses the exact 10% half-open threshold', () => {
   const scene = createSpaceScene(0x51a7c0de);
   assert.ok(scene.travelers.every(({ isGalaxy }) => typeof isGalaxy === 'boolean'));
   assert.deepEqual(scene, createSpaceScene(0x51a7c0de));
+});
+
+test('traveler palette and surface textures are seeded, stable, and diverse', () => {
+  assert.deepEqual(TRAVELER_PALETTE.map(({ name }) => name), ['red', 'yellow', 'orange', 'white', 'blue']);
+  assert.deepEqual(TRAVELER_SURFACE_TEXTURES, ['bands', 'speckles', 'facets', 'swirls', 'mottled']);
+  const seenColors = new Set();
+  const seenTextures = new Set();
+  for (let seed = 0; seed < 512; seed += 1) {
+    const traveler = {
+      seed,
+      initialDistance: 0,
+      speed: 20,
+      size: TRAVELER_RADIUS_RANGE[0]
+        + (TRAVELER_RADIUS_RANGE[1] - TRAVELER_RADIUS_RANGE[0]) * (seed % 101) / 100,
+      alpha: 0.6,
+    };
+    const far = getTravelerAppearance(traveler, 0.1);
+    const near = getTravelerAppearance(traveler, 0.9);
+    assert.equal(far.colorName, near.colorName);
+    assert.equal(far.color, near.color);
+    assert.equal(far.texture, near.texture);
+    assert.equal(far.surfaceSeed, near.surfaceSeed);
+    assert.deepEqual(getTravelerAppearance(traveler, 0.9), near);
+    seenColors.add(near.colorName);
+    seenTextures.add(near.texture);
+  }
+  assert.deepEqual([...seenColors].sort(), TRAVELER_PALETTE.map(({ name }) => name).sort());
+  assert.deepEqual([...seenTextures].sort(), [...TRAVELER_SURFACE_TEXTURES].sort());
+});
+
+test('small and large traveler colors follow their weighted palette with coherent interpolation', () => {
+  assert.equal(SMALL_TRAVELER_RED_CHANCE, 0.06);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7);
+  const smallWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[0]);
+  const largeWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[1]);
+  const middleWeights = getTravelerColorWeights(
+    (TRAVELER_RADIUS_RANGE[0] + TRAVELER_RADIUS_RANGE[1]) / 2,
+  );
+  closeTo(smallWeights[0], SMALL_TRAVELER_RED_CHANCE);
+  closeTo(largeWeights[0], LARGE_TRAVELER_RED_CHANCE);
+  closeTo(middleWeights[0], (SMALL_TRAVELER_RED_CHANCE + LARGE_TRAVELER_RED_CHANCE) / 2);
+  for (const weights of [smallWeights, middleWeights, largeWeights]) {
+    closeTo(weights.reduce((sum, weight) => sum + weight, 0), 1);
+    weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
+  }
+
+  const sample = (size, seed) => {
+    const random = createSeededRandom(seed);
+    const counts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
+    for (let index = 0; index < 100000; index += 1) {
+      const { name } = chooseTravelerColor(size, random());
+      counts.set(name, counts.get(name) + 1);
+    }
+    return counts;
+  };
+  for (const [size, redChance, seed] of [
+    [TRAVELER_RADIUS_RANGE[0], SMALL_TRAVELER_RED_CHANCE, 0x51a70001],
+    [TRAVELER_RADIUS_RANGE[1], LARGE_TRAVELER_RED_CHANCE, 0x51a70002],
+  ]) {
+    const counts = sample(size, seed);
+    assert.ok(Math.abs(counts.get('red') / 100000 - redChance) < 0.006);
+    const expectedOther = (1 - redChance) / 4;
+    for (const { name } of TRAVELER_PALETTE.slice(1)) {
+      assert.ok(Math.abs(counts.get(name) / 100000 - expectedOther) < 0.006,
+        `${name} frequency ${counts.get(name) / 100000} missed ${expectedOther}`);
+    }
+  }
+});
+
+test('traveler approach glow grows monotonically while blur and opacity remain subtle and bounded', () => {
+  const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const appearances = Array.from({ length: 101 }, (_, index) =>
+    getTravelerAppearance(traveler, index / 100));
+  assert.deepEqual(TRAVELER_GLOW_BLUR_RANGE, [1.5, 12]);
+  assert.deepEqual(TRAVELER_GLOW_OPACITY_RANGE, [0.06, 0.22]);
+  for (let index = 0; index < appearances.length; index += 1) {
+    const appearance = appearances[index];
+    assert.ok(appearance.glowBlur >= TRAVELER_GLOW_BLUR_RANGE[0]
+      && appearance.glowBlur <= TRAVELER_GLOW_BLUR_RANGE[1]);
+    assert.ok(appearance.glowOpacity >= TRAVELER_GLOW_OPACITY_RANGE[0]
+      && appearance.glowOpacity <= TRAVELER_GLOW_OPACITY_RANGE[1]);
+    if (index > 0) {
+      assert.ok(appearance.glowBlur >= appearances[index - 1].glowBlur);
+      assert.ok(appearance.glowOpacity >= appearances[index - 1].glowOpacity);
+    }
+  }
+  closeTo(appearances[0].glowBlur, TRAVELER_GLOW_BLUR_RANGE[0]);
+  closeTo(appearances.at(-1).glowBlur, TRAVELER_GLOW_BLUR_RANGE[1]);
+  closeTo(appearances[0].glowOpacity, TRAVELER_GLOW_OPACITY_RANGE[0]);
+  closeTo(appearances.at(-1).glowOpacity, TRAVELER_GLOW_OPACITY_RANGE[1]);
 });
 
 test('galaxies compose with traveler variants and stay within seven moving-star radii', () => {
