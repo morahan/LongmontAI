@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,11 +13,15 @@ assert.match(justfile, /^loop-push minutes="2":/m);
 assert.match(justfile, /^loop-merge-push minutes="2": \(loop-push-merge minutes\)/m);
 const loopScript = readFileSync(script, 'utf8');
 assert.match(loopScript, /commit_dirty_work\(\)/);
-assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 codex exec/);
+assert.doesNotMatch(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 codex exec/);
 assert.match(loopScript, /approval_policy="never"/);
-assert.match(loopScript, /--sandbox workspace-write[\s\S]+--add-dir "\$ROOT\/\.git"/);
-assert.match(loopScript, /return only after creating that one reviewed commit/);
+assert.match(loopScript, /git rev-parse --absolute-git-dir/);
+assert.match(loopScript, /--sandbox workspace-write[\s\S]+--add-dir "\$git_dir"/);
+assert.match(loopScript, /--output-last-message "\$message_file"/);
+assert.match(loopScript, /Do not commit, push, deploy/);
+assert.match(loopScript, /COMMIT_MESSAGE: <concise Git commit subject>/);
 assert.match(loopScript, /outer loop immediately repeats until the working tree is clean and the branch is synced/);
+assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 git commit --file "\$message_file"/);
 assert.match(loopScript, /bash scripts\/local-ci\.sh/);
 assert.match(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 git push/);
 assert.match(loopScript, /git push -u origin/);
@@ -45,6 +49,83 @@ try {
   const cleanRun = execFileSync('bash', [script, '0'], { cwd: repository, encoding: 'utf8' });
   assert.match(cleanRun, /Empty check 3\/3: clean and synced\./);
   assert.match(cleanRun, /loop-push complete\./);
+
+  const fakeBin = join(repository, '.git', 'fake-bin');
+  const marker = join(repository, '.git', 'codex-preparation-active');
+  const calls = join(repository, '.git', 'codex-calls');
+  const reviews = join(repository, '.git', 'agent-reviews');
+  mkdirSync(fakeBin);
+  const fakeCodex = join(fakeBin, 'codex');
+  writeFileSync(fakeCodex, `#!/usr/bin/env bash
+set -euo pipefail
+[[ ! -e "$FAKE_CODEX_MARKER" ]]
+call_count=0
+[[ ! -f "$FAKE_CODEX_CALLS" ]] || call_count="$(wc -l < "$FAKE_CODEX_CALLS" | tr -d ' ')"
+printf 'call\\n' >> "$FAKE_CODEX_CALLS"
+if [[ "$call_count" -eq 0 ]]; then
+  [[ "\${SECURITY_COMMIT_AGENT_REVIEW:-0}" != "1" ]]
+  touch "$FAKE_CODEX_MARKER"
+  trap 'rm -f "$FAKE_CODEX_MARKER"' EXIT
+  output=''
+  while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--output-last-message" ]]; then
+      output="$2"
+      shift 2
+      continue
+    fi
+    shift
+  done
+  [[ -n "$output" ]]
+  git add README.md
+  printf 'COMMIT_MESSAGE: test: commit prepared batch\\n' > "$output"
+else
+  [[ "\${SECURITY_COMMIT_AGENT_REVIEW:-0}" == "1" ]]
+  [[ ! -e "$FAKE_CODEX_MARKER" ]]
+  printf 'review\\n' >> "$FAKE_AGENT_REVIEWS"
+fi
+`);
+  chmodSync(fakeCodex, 0o755);
+
+  const hook = join(repository, '.git', 'hooks', 'pre-commit');
+  writeFileSync(hook, `#!/usr/bin/env bash
+set -euo pipefail
+[[ "\${SECURITY_COMMIT_AGENT_REVIEW:-0}" == "1" ]]
+[[ ! -e "$FAKE_CODEX_MARKER" ]]
+codex exec --ephemeral --sandbox read-only 'security review'
+`);
+  chmodSync(hook, 0o755);
+
+  const testEnv = {
+    ...process.env,
+    PATH: `${fakeBin}:${process.env.PATH}`,
+    FAKE_CODEX_MARKER: marker,
+    FAKE_CODEX_CALLS: calls,
+    FAKE_AGENT_REVIEWS: reviews,
+  };
+  delete testEnv.SECURITY_COMMIT_AGENT_REVIEW;
+  writeFileSync(marker, 'active\n');
+  assert.throws(
+    () => execFileSync(hook, {
+      cwd: repository,
+      env: { ...testEnv, SECURITY_COMMIT_AGENT_REVIEW: '1' },
+      stdio: 'pipe',
+    }),
+    /Command failed/,
+  );
+  rmSync(marker, { force: true });
+  rmSync(calls, { force: true });
+  rmSync(reviews, { force: true });
+
+  writeFileSync(join(repository, 'README.md'), '# Prepared Batch\n');
+  const preparedRun = execFileSync('bash', [script, '0'], {
+    cwd: repository,
+    encoding: 'utf8',
+    env: testEnv,
+  });
+  assert.match(preparedRun, /loop-push complete\./);
+  assert.equal(readFileSync(reviews, 'utf8'), 'review\n');
+  assert.equal(execFileSync('git', ['log', '-1', '--pretty=%s'], { cwd: repository, encoding: 'utf8' }).trim(), 'test: commit prepared batch');
+  assert.equal(execFileSync('git', ['rev-list', '--count', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim(), '2');
 } finally {
   rmSync(repository, { recursive: true, force: true });
 }

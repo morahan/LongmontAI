@@ -48,25 +48,60 @@ tree_clean() {
 }
 
 commit_dirty_work() {
-  local before after commit_count
+  local before after commit_count git_dir message_file response
   command -v codex >/dev/null 2>&1 || {
     echo "loop-push requires the Codex CLI to turn changed files into reviewed commits." >&2
     return 1
   }
 
   before="$(git rev-parse HEAD)"
-  SECURITY_COMMIT_AGENT_REVIEW=1 codex exec \
+  git_dir="$(git rev-parse --absolute-git-dir)"
+  message_file="$git_dir/loop-push-commit-message.$$"
+  rm -f "$message_file"
+
+  # The commit must happen after this Codex process exits. Otherwise the hook's
+  # mandatory Codex review would be an unsupported nested Codex invocation.
+  if ! codex exec \
     --ephemeral \
     -c 'approval_policy="never"' \
     --sandbox workspace-write \
-    --add-dir "$ROOT/.git" \
+    --add-dir "$git_dir" \
     --cd "$ROOT" \
-    "Inspect the current LongmontAI working tree and commit exactly one small, coherent batch. This is one drain iteration: return only after creating that one reviewed commit, or after reporting a concrete blocker. Stage only files belonging to that batch and preserve unrelated work for the next iteration; the outer loop immediately repeats until the working tree is clean and the branch is synced. Run focused validation when it helps. Do not push, deploy, change Git configuration, use bypass flags, rewrite history, or weaken any gate. Commit normally so the repository pre-commit hook performs deterministic and agent security review. Stop and explain if the changes cannot be safely separated into a coherent commit."
+    --output-last-message "$message_file" \
+    "Inspect the current LongmontAI working tree and prepare exactly one small, coherent batch for commit. This is one drain iteration: stage only files belonging to that batch, including an already-staged coherent batch when present, and preserve unrelated work for the next iteration; the outer loop immediately repeats until the working tree is clean and the branch is synced. Run focused validation when it helps. Do not commit, push, deploy, change Git configuration, use bypass flags, rewrite history, or weaken any gate. On success, return exactly one line in the form COMMIT_MESSAGE: <concise Git commit subject>, with no Markdown or commentary. If the changes cannot be safely separated into a coherent commit, do not use that prefix; stop and explain the blocker instead."; then
+    rm -f "$message_file"
+    return 1
+  fi
+
+  after="$(git rev-parse HEAD)"
+  if [[ "$after" != "$before" ]]; then
+    rm -f "$message_file"
+    echo "loop-push stopped: the preparation agent created a commit unexpectedly." >&2
+    return 1
+  fi
+  response=""
+  if [[ -s "$message_file" ]]; then
+    IFS= read -r response <"$message_file" || true
+  fi
+  if git diff --cached --quiet || [[ "$response" != "COMMIT_MESSAGE: "?* ]] || [[ -n "$(tail -n +2 "$message_file" 2>/dev/null)" ]]; then
+    rm -f "$message_file"
+    echo "loop-push stopped: the preparation agent must stage one batch and provide exactly one prefixed commit subject." >&2
+    return 1
+  fi
+  printf '%s\n' "${response#COMMIT_MESSAGE: }" >"$message_file"
+
+  # This shell is outside Codex, so the hook can safely launch its mandatory,
+  # read-only Codex security review without nesting Codex inside Codex.
+  if ! SECURITY_COMMIT_AGENT_REVIEW=1 git commit --file "$message_file"; then
+    rm -f "$message_file"
+    return 1
+  fi
+  rm -f "$message_file"
 
   after="$(git rev-parse HEAD)"
   commit_count="$(git rev-list --count "$before".."$after")"
   [[ "$commit_count" -eq 1 ]] || {
-    echo "loop-push stopped: the commit agent must produce exactly one commit; got $commit_count." >&2
+    echo "loop-push stopped: exactly one reviewed commit was required; got $commit_count." >&2
     return 1
   }
 }
