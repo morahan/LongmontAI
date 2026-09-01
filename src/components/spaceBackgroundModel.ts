@@ -9,6 +9,10 @@ export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
 export const DESKTOP_TRAVELER_COUNT = 24;
 export const MOBILE_TRAVELER_COUNT = 15;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
+export const GALAXY_CREATION_CHANCE = 0.1;
+export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
+export const GALAXY_INTERNAL_STAR_COUNT = 36;
+export const GALAXY_SPIRAL_ARM_COUNT = 3;
 export const UFO_BASIS_POINTS = 300;
 export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
@@ -157,6 +161,7 @@ export interface Traveler {
     speed: number;
     size: number;
     alpha: number;
+    isGalaxy?: boolean;
 }
 
 export interface SpaceScene {
@@ -181,7 +186,7 @@ export interface UfoAppearance {
     streakLength: number;
 }
 
-export type TravelerVariant = 'star' | 'ufo' | 'comet';
+export type TravelerVariant = 'star' | 'ufo' | 'comet' | 'galaxy';
 export type CometTrailParticleKind = 'asteroid' | 'stardust';
 
 export interface CometTrailParticle {
@@ -199,6 +204,13 @@ export interface CometAppearance {
     trailLength: number;
     trailWidth: number;
     particles: CometTrailParticle[];
+}
+
+export interface GalaxyAppearance {
+    outerRadius: number;
+    coreRadius: number;
+    armCount: number;
+    internalStarCount: number;
 }
 
 export interface ProjectedTraveler {
@@ -278,9 +290,10 @@ export const isCometBasisPoint = (basisPoint: number) =>
 
 /** Variant identity is stable within one depth lifecycle and intentionally reseeded next cycle. */
 export const getTravelerVariant = (
-    traveler: Pick<Traveler, 'seed'>,
+    traveler: Pick<Traveler, 'seed' | 'isGalaxy'>,
     cycle: number,
 ): TravelerVariant => {
+    if (traveler.isGalaxy) return 'galaxy';
     const stableCycle = Math.max(0, Math.trunc(cycle));
     const acceptedRange = UINT32_RANGE - (UINT32_RANGE % TRAVELER_VARIANT_BASIS_POINT_RANGE);
     let channel = 307;
@@ -292,10 +305,10 @@ export const getTravelerVariant = (
     return getTravelerVariantForBasisPoint(roll % TRAVELER_VARIANT_BASIS_POINT_RANGE);
 };
 
-export const isUfoTraveler = (traveler: Pick<Traveler, 'seed'>, cycle: number) =>
+export const isUfoTraveler = (traveler: Pick<Traveler, 'seed' | 'isGalaxy'>, cycle: number) =>
     getTravelerVariant(traveler, cycle) === 'ufo';
 
-export const isCometTraveler = (traveler: Pick<Traveler, 'seed'>, cycle: number) =>
+export const isCometTraveler = (traveler: Pick<Traveler, 'seed' | 'isGalaxy'>, cycle: number) =>
     getTravelerVariant(traveler, cycle) === 'comet';
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
@@ -325,8 +338,12 @@ export const starCountForWidth = (_width: number) => AMBIENT_STAR_COUNT;
 export const travelerCountForWidth = (width: number) =>
     width < MOBILE_BREAKPOINT ? MOBILE_TRAVELER_COUNT : DESKTOP_TRAVELER_COUNT;
 
+/** The half-open threshold gives every newly created traveler one exact 10% galaxy roll. */
+export const isGalaxyCreationRoll = (roll: number) => roll >= 0 && roll < GALAXY_CREATION_CHANCE;
+
 /** Every sixth moving star is eligible to carry a prominent planetary system. */
-export const isSystemCarrier = (_traveler: Traveler, index: number) => index % 6 === 2;
+export const isSystemCarrier = (traveler: Traveler, index: number) =>
+    !traveler.isGalaxy && index % 6 === 2;
 
 const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPhase => {
     if (eventElapsed < MORPH_SECONDS) {
@@ -944,6 +961,18 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     };
 };
 
+/** Galaxies stay recognizable without ever exceeding seven times the replaced moving-star radius. */
+export const getGalaxyAppearance = (traveler: Traveler, progress: number): GalaxyAppearance => {
+    const starRadius = getTravelerAppearance(traveler, progress).radius;
+    const outerRadius = starRadius * (4.6 + smoothstep(progress) * 2.4);
+    return {
+        outerRadius: Math.min(starRadius * GALAXY_MAX_RADIUS_MULTIPLIER, outerRadius),
+        coreRadius: outerRadius * 0.15,
+        armCount: GALAXY_SPIRAL_ARM_COUNT,
+        internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
+    };
+};
+
 /** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth. */
 export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppearance => {
     const radius = getTravelerAppearance(traveler, progress).radius * UFO_SIZE_MULTIPLIER;
@@ -1433,6 +1462,7 @@ export const createSpaceScene = (seed = createCryptoSeed()): SpaceScene => {
         speed: between(random, 18, 28),
         size: between(random, TRAVELER_RADIUS_RANGE[0], TRAVELER_RADIUS_RANGE[1]),
         alpha: between(random, 0.42, 0.72),
+        isGalaxy: isGalaxyCreationRoll(random()),
     }));
     return { seed, stars: createAmbientLayout(seed, 0), travelers };
 };

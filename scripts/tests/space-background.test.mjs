@@ -16,6 +16,10 @@ import {
   DESKTOP_TRAVELER_COUNT,
   EASTER_EGG_PHRASES,
   FAR_DEPTH,
+  GALAXY_CREATION_CHANCE,
+  GALAXY_INTERNAL_STAR_COUNT,
+  GALAXY_MAX_RADIUS_MULTIPLIER,
+  GALAXY_SPIRAL_ARM_COUNT,
   MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO,
   MAX_PLANET_ORBIT_PERIOD_SECONDS,
   MAX_PLANET_ORBIT_RADIUS,
@@ -61,6 +65,7 @@ import {
   getConstellationStrength,
   getCometAppearance,
   getDriftedStar,
+  getGalaxyAppearance,
   getEasterEggPhase,
   getEasterEggStarFieldPositions,
   getEasterEggStarFieldStyles,
@@ -88,6 +93,7 @@ import {
   getTravelerVariantForBasisPoint,
   getTwinkleBrightness,
   getUfoAppearance,
+  isGalaxyCreationRoll,
   isStarRenderable,
   isSystemCarrier,
   isCometBasisPoint,
@@ -571,6 +577,51 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
 
   const projected = projectTraveler(traveler, 0, 1000, 600);
   closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
+});
+
+test('galaxy creation uses the exact 10% half-open threshold', () => {
+  assert.equal(GALAXY_CREATION_CHANCE, 0.1);
+  assert.equal(isGalaxyCreationRoll(0), true);
+  assert.equal(isGalaxyCreationRoll(0.099999999), true);
+  assert.equal(isGalaxyCreationRoll(0.1), false);
+  assert.equal(isGalaxyCreationRoll(0.999999999), false);
+  assert.equal(isGalaxyCreationRoll(-0.000001), false);
+
+  const outcomes = Array.from({ length: 10000 }, (_, index) =>
+    isGalaxyCreationRoll(index / 10000));
+  assert.equal(outcomes.filter(Boolean).length, 1000);
+
+  const scene = createSpaceScene(0x51a7c0de);
+  assert.ok(scene.travelers.every(({ isGalaxy }) => typeof isGalaxy === 'boolean'));
+  assert.deepEqual(scene, createSpaceScene(0x51a7c0de));
+});
+
+test('galaxies compose with traveler variants and stay within seven moving-star radii', () => {
+  const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1.21, alpha: 0.6, isGalaxy: true };
+  assert.equal(GALAXY_MAX_RADIUS_MULTIPLIER, 7);
+  assert.ok(GALAXY_INTERNAL_STAR_COUNT >= 30);
+  assert.ok(GALAXY_SPIRAL_ARM_COUNT >= 2);
+  assert.equal(getTravelerVariant(traveler, 0), 'galaxy');
+  assert.equal(getTravelerVariant(traveler, 99), 'galaxy');
+  assert.equal(isUfoTraveler(traveler, 0), false);
+  assert.equal(isCometTraveler(traveler, 0), false);
+  assert.equal(isSystemCarrier(traveler, 2), false);
+
+  for (const progress of [0, 0.28, 0.5, 0.68, 1]) {
+    const star = getTravelerAppearance(traveler, progress);
+    const galaxy = getGalaxyAppearance(traveler, progress);
+    assert.deepEqual(galaxy, getGalaxyAppearance(traveler, progress));
+    assert.ok(galaxy.outerRadius <= star.radius * GALAXY_MAX_RADIUS_MULTIPLIER + 1e-12);
+    assert.ok(galaxy.outerRadius > star.radius);
+    assert.ok(galaxy.coreRadius > 0 && galaxy.coreRadius < galaxy.outerRadius);
+    assert.equal(galaxy.armCount, GALAXY_SPIRAL_ARM_COUNT);
+    assert.equal(galaxy.internalStarCount, GALAXY_INTERNAL_STAR_COUNT);
+  }
+
+  const ordinary = { ...traveler, isGalaxy: false };
+  const galaxyProjection = projectTraveler(traveler, 12.5, 1000, 600);
+  assert.deepEqual(galaxyProjection, projectTraveler(ordinary, 12.5, 1000, 600),
+    'galaxy identity must not alter traveler motion or lifecycle');
 });
 
 test('one equiprobable basis-point roll reserves disjoint exact 3% UFO and comet bands', () => {

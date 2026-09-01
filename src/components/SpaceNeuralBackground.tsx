@@ -29,6 +29,7 @@ import {
     getStarRgb,
     getSystemOpacity,
     getSystemScale,
+    getGalaxyAppearance,
     getTravelerAppearance,
     getTravelerVariant,
     getUfoAppearance,
@@ -380,6 +381,81 @@ const drawTravelerStar = (
             ctx.fill();
         }
     }
+};
+
+const drawGalaxy = (
+    ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    simulationSeconds: number,
+) => {
+    const appearance = getGalaxyAppearance(traveler, projection.progress);
+    const { x, y, opacity } = projection;
+    const rotation = surfaceValue(traveler.seed, projection.cycle) * TAU
+        + simulationSeconds * 0.055;
+
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.outerRadius);
+    halo.addColorStop(0, `rgba(245, 226, 198, ${opacity * 0.5})`);
+    halo.addColorStop(0.38, `rgba(126, 177, 221, ${opacity * 0.2})`);
+    halo.addColorStop(1, 'rgba(77, 119, 180, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, appearance.outerRadius, 0, TAU);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.strokeStyle = `rgba(171, 205, 235, ${opacity * 0.23})`;
+    ctx.lineWidth = Math.max(0.25, appearance.outerRadius * 0.045);
+    for (let arm = 0; arm < appearance.armCount; arm += 1) {
+        ctx.beginPath();
+        for (let step = 0; step <= 18; step += 1) {
+            const radialProgress = step / 18;
+            const radius = appearance.coreRadius
+                + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.9;
+            const angle = arm * TAU / appearance.armCount + radialProgress * TAU * 1.45;
+            const armX = Math.cos(angle) * radius;
+            const armY = Math.sin(angle) * radius * 0.58;
+            if (step === 0) ctx.moveTo(armX, armY);
+            else ctx.lineTo(armX, armY);
+        }
+        ctx.stroke();
+    }
+
+    for (let star = 0; star < appearance.internalStarCount; star += 1) {
+        const arm = star % appearance.armCount;
+        const radialProgress = (Math.floor(star / appearance.armCount) + 0.45
+            + surfaceValue(traveler.seed, star + 41) * 0.5)
+            / Math.ceil(appearance.internalStarCount / appearance.armCount);
+        const radius = appearance.coreRadius
+            + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.88;
+        const angle = arm * TAU / appearance.armCount
+            + radialProgress * TAU * 1.45
+            + (surfaceValue(traveler.seed, star + 83) - 0.5) * 0.42;
+        ctx.fillStyle = `rgba(232, 242, 255, ${opacity * (0.55
+            + surfaceValue(traveler.seed, star + 127) * 0.45)})`;
+        ctx.beginPath();
+        ctx.arc(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius * 0.58,
+            Math.max(0.18, Math.min(0.58, appearance.outerRadius * 0.035)),
+            0,
+            TAU,
+        );
+        ctx.fill();
+    }
+
+    ctx.fillStyle = `rgba(2, 3, 8, ${Math.min(1, opacity * 1.3)})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, appearance.coreRadius, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(255, 205, 133, ${opacity * 0.9})`;
+    ctx.lineWidth = Math.max(0.3, appearance.coreRadius * 0.35);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, appearance.coreRadius * 1.75, appearance.coreRadius * 0.52, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
 };
 
 const drawUfo = (
@@ -769,7 +845,9 @@ const SpaceNeuralBackground: React.FC = () => {
                     const deltaX = sameCycle ? projection.x - previous.x : 0;
                     const deltaY = sameCycle ? projection.y - previous.y : 0;
                     const variant = getTravelerVariant(traveler, projection.cycle);
-                    if (variant === 'ufo') {
+                    if (variant === 'galaxy') {
+                        drawGalaxy(ctx, traveler, projection, simulationSeconds);
+                    } else if (variant === 'ufo') {
                         drawUfo(ctx, traveler, projection, deltaX, deltaY);
                     } else if (variant === 'comet') {
                         drawComet(ctx, traveler, projection, deltaX, deltaY, {
