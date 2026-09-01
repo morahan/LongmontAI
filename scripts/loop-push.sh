@@ -47,6 +47,22 @@ tree_clean() {
   [[ -z "$(git status --porcelain=v1 --untracked-files=all)" ]]
 }
 
+restore_generated_buildinfo_only() {
+  local generated_status other_status
+  generated_status="$(git status --porcelain=v1 --untracked-files=all -- \
+    tsconfig.tsbuildinfo tsconfig.node.tsbuildinfo)"
+  [[ -n "$generated_status" ]] || return 1
+
+  other_status="$(git status --porcelain=v1 --untracked-files=all -- . \
+    ':(exclude)tsconfig.tsbuildinfo' \
+    ':(exclude)tsconfig.node.tsbuildinfo')"
+  [[ -z "$other_status" ]] || return 1
+
+  echo "loop-push: restoring generated TypeScript build metadata to HEAD instead of committing cache churn."
+  git restore --source=HEAD --staged --worktree -- \
+    tsconfig.tsbuildinfo tsconfig.node.tsbuildinfo
+}
+
 commit_dirty_work() {
   local before after commit_count git_dir message_file response
   command -v codex >/dev/null 2>&1 || {
@@ -68,7 +84,7 @@ commit_dirty_work() {
     --add-dir "$git_dir" \
     --cd "$ROOT" \
     --output-last-message "$message_file" \
-    "Inspect the current LongmontAI working tree and prepare exactly one small, coherent batch for commit. This is one drain iteration: stage only files belonging to that batch, including an already-staged coherent batch when present, and preserve unrelated work for the next iteration; the outer loop immediately repeats until the working tree is clean and the branch is synced. Run focused validation when it helps. Do not commit, push, deploy, change Git configuration, use bypass flags, rewrite history, or weaken any gate. On success, return exactly one line in the form COMMIT_MESSAGE: <concise Git commit subject>, with no Markdown or commentary. If the changes cannot be safely separated into a coherent commit, do not use that prefix; stop and explain the blocker instead."; then
+    "Inspect the current LongmontAI working tree and prepare exactly one small, coherent batch for commit. This is one drain iteration: stage only files belonging to that batch, including an already-staged coherent batch when present, and preserve unrelated work for the next iteration; the outer loop immediately repeats until the working tree is clean and the branch is synced. Never stage tsconfig.tsbuildinfo or tsconfig.node.tsbuildinfo; they are generated cache metadata that the outer loop restores when no source work remains. Run focused validation when it helps. Do not commit, push, deploy, change Git configuration, use bypass flags, rewrite history, or weaken any gate. On success, return exactly one line in the form COMMIT_MESSAGE: <concise Git commit subject>, with no Markdown or commentary. If the changes cannot be safely separated into a coherent commit, do not use that prefix; stop and explain the blocker instead."; then
     rm -f "$message_file"
     return 1
   fi
@@ -142,6 +158,11 @@ empty_checks=0
 merge_requested=0
 
 while [[ "$empty_checks" -lt "$EMPTY_STOP_COUNT" ]]; do
+  if restore_generated_buildinfo_only; then
+    empty_checks=0
+    continue
+  fi
+
   if ! tree_clean; then
     commit_dirty_work
     empty_checks=0

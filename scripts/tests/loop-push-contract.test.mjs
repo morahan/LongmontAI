@@ -9,10 +9,17 @@ const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const justfile = readFileSync(resolve(root, 'justfile'), 'utf8');
 const script = resolve(root, 'scripts/loop-push.sh');
 
+function gitStatus(cwd) {
+  return execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=all'], { cwd, encoding: 'utf8' }).trim();
+}
+
 assert.match(justfile, /^loop-push minutes="2":/m);
 assert.match(justfile, /^loop-merge-push minutes="2": \(loop-push-merge minutes\)/m);
 const loopScript = readFileSync(script, 'utf8');
 assert.match(loopScript, /commit_dirty_work\(\)/);
+assert.match(loopScript, /restore_generated_buildinfo_only\(\)/);
+assert.match(loopScript, /git restore --source=HEAD --staged --worktree --[\s\\]+tsconfig\.tsbuildinfo tsconfig\.node\.tsbuildinfo/);
+assert.match(loopScript, /Never stage tsconfig\.tsbuildinfo or tsconfig\.node\.tsbuildinfo/);
 assert.doesNotMatch(loopScript, /SECURITY_COMMIT_AGENT_REVIEW=1 codex exec/);
 assert.match(loopScript, /approval_policy="never"/);
 assert.match(loopScript, /git rev-parse --absolute-git-dir/);
@@ -43,12 +50,24 @@ try {
   execFileSync('git', ['config', 'user.email', 'tests@example.com'], { cwd: repository });
   execFileSync('git', ['config', 'user.name', 'Loop Push Test'], { cwd: repository });
   writeFileSync(join(repository, 'README.md'), '# Loop Push Test\n');
-  execFileSync('git', ['add', 'README.md'], { cwd: repository });
+  writeFileSync(join(repository, 'tsconfig.tsbuildinfo'), 'app cache baseline\n');
+  writeFileSync(join(repository, 'tsconfig.node.tsbuildinfo'), 'node cache baseline\n');
+  execFileSync('git', ['add', 'README.md', 'tsconfig.tsbuildinfo', 'tsconfig.node.tsbuildinfo'], { cwd: repository });
   execFileSync('git', ['commit', '-qm', 'initial commit'], { cwd: repository });
 
   const cleanRun = execFileSync('bash', [script, '0'], { cwd: repository, encoding: 'utf8' });
   assert.match(cleanRun, /Empty check 3\/3: clean and synced\./);
   assert.match(cleanRun, /loop-push complete\./);
+
+  writeFileSync(join(repository, 'tsconfig.tsbuildinfo'), 'regenerated app cache\n');
+  writeFileSync(join(repository, 'tsconfig.node.tsbuildinfo'), 'regenerated node cache\n');
+  execFileSync('git', ['add', 'tsconfig.tsbuildinfo'], { cwd: repository });
+  const metadataRun = execFileSync('bash', [script, '0'], { cwd: repository, encoding: 'utf8' });
+  assert.match(metadataRun, /restoring generated TypeScript build metadata to HEAD/);
+  assert.equal(readFileSync(join(repository, 'tsconfig.tsbuildinfo'), 'utf8'), 'app cache baseline\n');
+  assert.equal(readFileSync(join(repository, 'tsconfig.node.tsbuildinfo'), 'utf8'), 'node cache baseline\n');
+  assert.equal(gitStatus(repository), '');
+  assert.equal(execFileSync('git', ['rev-list', '--count', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim(), '1');
 
   const fakeBin = join(repository, '.git', 'fake-bin');
   const marker = join(repository, '.git', 'codex-preparation-active');
