@@ -108,6 +108,7 @@ import {
   getTwinkleBrightness,
   getUfoAppearance,
   isGalaxyCreationRoll,
+  isPlanetBehindSystemStar,
   isStarRenderable,
   isSystemCarrier,
   isCometBasisPoint,
@@ -920,15 +921,20 @@ test('small and large traveler colors follow their weighted palette with coheren
 
 test('system-owning traveler stars suppress every glow layer while ordinary stars retain them', () => {
   assert.deepEqual(getTravelerStarRenderPolicy(true), {
+    renderDisc: true,
     renderHalo: false,
     renderShadowGlow: false,
     renderFlare: false,
   });
   assert.deepEqual(getTravelerStarRenderPolicy(false), {
+    renderDisc: true,
     renderHalo: true,
     renderShadowGlow: true,
     renderFlare: true,
   });
+  assert.equal(isPlanetBehindSystemStar(-Number.EPSILON), true);
+  assert.equal(isPlanetBehindSystemStar(0), false);
+  assert.equal(isPlanetBehindSystemStar(Number.EPSILON), false);
 });
 
 test('traveler approach glow grows monotonically while blur and opacity remain subtle and bounded', () => {

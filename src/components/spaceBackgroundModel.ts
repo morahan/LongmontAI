@@ -205,6 +205,7 @@ export interface TravelerAppearance {
 }
 
 export interface TravelerStarRenderPolicy {
+    renderDisc: boolean;
     renderHalo: boolean;
     renderShadowGlow: boolean;
     renderFlare: boolean;
@@ -1208,8 +1209,9 @@ export const getGalaxyAppearance = (traveler: Traveler, progress: number): Galax
     };
 };
 
-/** System owners keep their resolved disc but defer all luminosity to the system's own sun. */
+/** System owners retain their resolved disc while suppressing every surrounding luminosity layer. */
 export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): TravelerStarRenderPolicy => ({
+    renderDisc: true,
     renderHalo: !ownsPlanetarySystem,
     renderShadowGlow: !ownsPlanetarySystem,
     renderFlare: !ownsPlanetarySystem,
@@ -1548,6 +1550,9 @@ export const getOrbitingMoon = (
         y: parent.y + Math.sin(angle) * moon.orbitRadius * 0.55,
     };
 };
+
+/** The central stellar disc occludes only planets on the negative-z half of their orbit. */
+export const isPlanetBehindSystemStar = (z: number) => z < 0;
 
 /** Computes orbital positions and painter-orders far-side planets before near-side planets. */
 export const getOrbitingPlanets = (

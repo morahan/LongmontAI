@@ -37,6 +37,7 @@ import {
     getTravelerVariant,
     getUfoAppearance,
     hasAtmosphereHalo,
+    isPlanetBehindSystemStar,
     isStarRenderable,
     projectTraveler,
     scaleConstellationGeometry,
@@ -332,10 +333,10 @@ const drawTravelerSurface = (
     appearance: ReturnType<typeof getTravelerAppearance>,
     x: number,
     y: number,
+    radius: number,
     opacity: number,
 ) => {
     if (appearance.detailLevel === 0) return;
-    const radius = appearance.radius;
     const seed = appearance.surfaceSeed;
     const textureOpacity = opacity * (0.08 + appearance.detailLevel * 0.055);
     ctx.save();
@@ -394,14 +395,47 @@ const drawTravelerSurface = (
     ctx.restore();
 };
 
+const drawTravelerDisc = (
+    ctx: CanvasRenderingContext2D,
+    appearance: ReturnType<typeof getTravelerAppearance>,
+    x: number,
+    y: number,
+    radius: number,
+    opacity: number,
+    renderShadowGlow: boolean,
+) => {
+    const [red, green, blue] = hexToRgb(appearance.color);
+    const disc = ctx.createRadialGradient(
+        x - radius * 0.22, y - radius * 0.25, 0,
+        x, y, radius,
+    );
+    disc.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
+    disc.addColorStop(appearance.detailLevel >= 2 ? 0.34 : 0.58,
+        `rgba(${red}, ${green}, ${blue}, ${opacity})`);
+    disc.addColorStop(1, `rgba(${Math.round(red * 0.58)}, ${Math.round(green * 0.58)}, ${Math.round(blue * 0.58)}, ${opacity * 0.9})`);
+    ctx.save();
+    if (renderShadowGlow) {
+        ctx.shadowColor = `rgba(${red}, ${green}, ${blue}, ${opacity * appearance.glowOpacity})`;
+        ctx.shadowBlur = appearance.glowBlur;
+    } else {
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+    }
+    ctx.fillStyle = disc;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    drawTravelerSurface(ctx, appearance, x, y, radius, opacity);
+};
+
 const drawTravelerStar = (
     ctx: CanvasRenderingContext2D,
     traveler: Traveler,
     projection: ProjectedTraveler,
-    ownsPlanetarySystem: boolean,
 ) => {
     const appearance = getTravelerAppearance(traveler, projection.progress);
-    const renderPolicy = getTravelerStarRenderPolicy(ownsPlanetarySystem);
+    const renderPolicy = getTravelerStarRenderPolicy(false);
     const { x, y } = projection;
     const [red, green, blue] = hexToRgb(appearance.color);
     if (renderPolicy.renderHalo) {
@@ -425,25 +459,17 @@ const drawTravelerStar = (
         ctx.lineTo(x, y + appearance.flareLength * 0.62);
         ctx.stroke();
     }
-    const disc = ctx.createRadialGradient(
-        x - appearance.radius * 0.22, y - appearance.radius * 0.25, 0,
-        x, y, appearance.radius,
-    );
-    disc.addColorStop(0, `rgba(255, 255, 255, ${projection.opacity})`);
-    disc.addColorStop(appearance.detailLevel >= 2 ? 0.34 : 0.58,
-        `rgba(${red}, ${green}, ${blue}, ${projection.opacity})`);
-    disc.addColorStop(1, `rgba(${Math.round(red * 0.58)}, ${Math.round(green * 0.58)}, ${Math.round(blue * 0.58)}, ${projection.opacity * 0.9})`);
-    ctx.save();
-    if (renderPolicy.renderShadowGlow) {
-        ctx.shadowColor = `rgba(${red}, ${green}, ${blue}, ${projection.opacity * appearance.glowOpacity})`;
-        ctx.shadowBlur = appearance.glowBlur;
+    if (renderPolicy.renderDisc) {
+        drawTravelerDisc(
+            ctx,
+            appearance,
+            x,
+            y,
+            appearance.radius,
+            projection.opacity,
+            renderPolicy.renderShadowGlow,
+        );
     }
-    ctx.fillStyle = disc;
-    ctx.beginPath();
-    ctx.arc(x, y, appearance.radius, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-    drawTravelerSurface(ctx, appearance, x, y, projection.opacity);
 };
 
 const drawGalaxy = (
@@ -682,39 +708,39 @@ const drawComet = (
     ctx.restore();
 };
 
-const drawSun = (ctx: CanvasRenderingContext2D, opacity: number) => {
-    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, SYSTEM_STAR_RADIUS);
-    glow.addColorStop(0, `rgba(245, 250, 255, ${opacity})`);
-    glow.addColorStop(0.28, `rgba(160, 218, 238, ${opacity * 0.4})`);
-    glow.addColorStop(1, 'rgba(106, 182, 211, 0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(0, 0, SYSTEM_STAR_RADIUS, 0, TAU);
-    ctx.fill();
-};
-
 const drawPlanetarySystem = (
     ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
     projection: ProjectedTraveler,
-    travelerSeed: number,
-    travelerOpacity: number,
     simulationSeconds: number,
 ) => {
-    const opacity = getSystemOpacity(projection, travelerOpacity);
+    const opacity = getSystemOpacity(projection, traveler.alpha);
     if (opacity <= 0) return;
     const scale = getSystemScale(projection);
-    const planets = createPlanetSystem(travelerSeed, projection.cycle);
+    const planets = createPlanetSystem(traveler.seed, projection.cycle);
     const orbiting = getOrbitingPlanets(planets, simulationSeconds);
+    const ownerAppearance = getTravelerAppearance(traveler, projection.progress);
+    const ownerPolicy = getTravelerStarRenderPolicy(true);
 
     ctx.save();
     ctx.translate(projection.x, projection.y);
     ctx.scale(scale, scale);
 
-    // Negative z is behind the sun. Positive z is painted over it.
-    orbiting.filter((planet) => planet.z < 0)
+    // The textured owner disc is the occlusion boundary: negative z behind, non-negative z in front.
+    orbiting.filter((planet) => isPlanetBehindSystemStar(planet.z))
         .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale));
-    drawSun(ctx, opacity);
-    orbiting.filter((planet) => planet.z >= 0)
+    if (ownerPolicy.renderDisc) {
+        drawTravelerDisc(
+            ctx,
+            ownerAppearance,
+            0,
+            0,
+            SYSTEM_STAR_RADIUS,
+            opacity,
+            ownerPolicy.renderShadowGlow,
+        );
+    }
+    orbiting.filter((planet) => !isPlanetBehindSystemStar(planet.z))
         .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale));
     ctx.restore();
 };
@@ -935,17 +961,14 @@ const SpaceNeuralBackground: React.FC = () => {
                                 ctx.stroke();
                             }
                         }
-                        drawTravelerStar(
-                            ctx,
-                            traveler,
-                            projection,
-                            index === prominentSystemOwner?.travelerIndex,
-                        );
+                        if (index !== prominentSystemOwner?.travelerIndex) {
+                            drawTravelerStar(ctx, traveler, projection);
+                        }
                     }
                 }
 
                 if (index === prominentSystemOwner?.travelerIndex) {
-                    drawPlanetarySystem(ctx, projection, traveler.seed, traveler.alpha, simulationSeconds);
+                    drawPlanetarySystem(ctx, traveler, projection, simulationSeconds);
                 }
             }
             ctx.globalAlpha = 1;
