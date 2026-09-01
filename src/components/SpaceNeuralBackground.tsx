@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import {
+    advanceEasterEggClickSequence,
     CONSTELLATION_WINDOW_SECONDS,
     createConstellationGeometry,
     createConstellationGeometryForPhrase,
@@ -38,6 +39,7 @@ import {
     travelerCountForWidth,
     type ConstellationGeometry,
     type ConstellationPhrase,
+    type EasterEggClickSequence,
     type OrbitingMoon,
     type Point,
     type OrbitingPlanet,
@@ -490,6 +492,7 @@ const SpaceNeuralBackground: React.FC = () => {
         let constellationEvent = -1;
         let prominentSystemOwner: ProminentSystemOwner | null = null;
         let easterEgg: EasterEggTransition | null = null;
+        let easterEggClickSequence: EasterEggClickSequence | null = null;
         let easterEggTriggerCount = 0;
 
         const clearEasterEggDataset = () => {
@@ -752,12 +755,21 @@ const SpaceNeuralBackground: React.FC = () => {
                 && event.clientY >= rect.top && event.clientY <= rect.bottom;
             const target = event.target instanceof Element ? event.target : null;
             const isInteractiveTarget = Boolean(target?.closest(INTERACTIVE_TARGET_SELECTOR));
+            easterEggClickSequence = advanceEasterEggClickSequence(
+                easterEggClickSequence,
+                { x: event.clientX, y: event.clientY, timestamp: event.timeStamp },
+                isInsideCanvas,
+                isInteractiveTarget,
+                reducedMotion,
+            );
+            const observedClickDetail = Math.max(event.detail, easterEggClickSequence?.count ?? 0);
             if (!shouldTriggerEasterEgg(
-                event.detail,
+                observedClickDetail,
                 isInsideCanvas,
                 isInteractiveTarget,
                 reducedMotion,
             )) return;
+            easterEggClickSequence = null;
 
             const elapsed = getElapsedSecondsSinceMount(mountedAt, performance.now());
             const currentFrame = getRenderedStarFrame(elapsed);

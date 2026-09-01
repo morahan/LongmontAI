@@ -5,6 +5,8 @@ import {
   AMBIENT_STAR_RADIUS_RANGE,
   AMBIENT_STAR_RGB,
   ATMOSPHERE_HALO_RADIUS_MULTIPLIER,
+  EASTER_EGG_CLICK_DISTANCE_PX,
+  EASTER_EGG_CLICK_INTERVAL_MS,
   CONSTELLATION_INTERVAL_SECONDS,
   CONSTELLATION_PHRASES,
   CONSTELLATION_STAR_COUNT,
@@ -41,6 +43,7 @@ import {
   TWINKLE_WINDOW_SECONDS,
   UFO_BASIS_POINTS,
   UFO_SIZE_MULTIPLIER,
+  advanceEasterEggClickSequence,
   chooseMoonCount,
   chooseWeightedPlanetCount,
   createAmbientLayout,
@@ -236,7 +239,7 @@ test('monotonic elapsed time includes long RAF gaps while reduced motion can ren
   closeTo(getElapsedSecondsSinceMount(2000, 1000), 0);
 });
 
-test('only a native non-interactive in-bounds triple click triggers the Easter egg', () => {
+test('only a non-interactive in-bounds triple click triggers the Easter egg', () => {
   assert.equal(shouldTriggerEasterEgg(1, true, false), false);
   assert.equal(shouldTriggerEasterEgg(2, true, false), false);
   assert.equal(shouldTriggerEasterEgg(3, true, false), true);
@@ -244,6 +247,25 @@ test('only a native non-interactive in-bounds triple click triggers the Easter e
   assert.equal(shouldTriggerEasterEgg(3, true, true), false);
   assert.equal(shouldTriggerEasterEgg(3, true, false, true), false);
   assert.equal(shouldTriggerEasterEgg(4, true, false), false);
+});
+
+test('three separately observed nearby clicks work when native detail remains one', () => {
+  assert.equal(EASTER_EGG_CLICK_INTERVAL_MS, 500);
+  assert.equal(EASTER_EGG_CLICK_DISTANCE_PX, 8);
+  const click = (previous, timestamp, x = 400, y = 220, inside = true, interactive = false, reduced = false) =>
+    advanceEasterEggClickSequence(previous, { timestamp, x, y }, inside, interactive, reduced);
+
+  const first = click(null, 1000);
+  const second = click(first, 1160, 404, 223);
+  const third = click(second, 1325, 400, 220);
+  assert.deepEqual([first.count, second.count, third.count], [1, 2, 3]);
+  assert.equal(shouldTriggerEasterEgg(Math.max(1, third.count), true, false), true);
+
+  assert.equal(click(second, 1325, 400, 220, true, true), null);
+  assert.equal(click(second, 1325, 400, 220, false), null);
+  assert.equal(click(second, 1325, 400, 220, true, false, true), null);
+  assert.equal(click(second, 1160 + EASTER_EGG_CLICK_INTERVAL_MS + 1).count, 1);
+  assert.equal(click(second, 1325, second.x + EASTER_EGG_CLICK_DISTANCE_PX + 1).count, 1);
 });
 
 test('Easter eggs cycle deterministically through every hidden phrase and never select LONGMONT AI', () => {

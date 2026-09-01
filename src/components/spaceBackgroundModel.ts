@@ -63,6 +63,12 @@ const PLANET_COLORS: Record<PlanetAtmosphereClass, readonly string[]> = {
 export type RandomSource = () => number;
 export type ConstellationPhaseName = 'ambient' | 'morph-in' | 'hold' | 'morph-out';
 export type EasterEggState = ConstellationPhaseName;
+export interface EasterEggClickSequence {
+    count: number;
+    x: number;
+    y: number;
+    timestamp: number;
+}
 export type DriftMode = 'wrap' | 'bounce';
 export type PlanetAtmosphereClass = typeof PLANET_ATMOSPHERE_CLASSES[number];
 
@@ -494,7 +500,29 @@ export const CONSTELLATION_PHRASES = [
 export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
 export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(1) as readonly ConstellationPhrase[];
 
-/** Native click detail reaches three only after a browser-recognized quick triple click. */
+export const EASTER_EGG_CLICK_INTERVAL_MS = 500;
+export const EASTER_EGG_CLICK_DISTANCE_PX = 8;
+
+/**
+ * Count a physical click sequence without depending on synthetic/native `detail` bookkeeping.
+ * Interactive, out-of-bounds, and reduced-motion clicks break the sequence rather than joining it.
+ */
+export const advanceEasterEggClickSequence = (
+    previous: EasterEggClickSequence | null,
+    click: Omit<EasterEggClickSequence, 'count'>,
+    isInsideCanvas: boolean,
+    isInteractiveTarget: boolean,
+    prefersReducedMotion = false,
+): EasterEggClickSequence | null => {
+    if (!isInsideCanvas || isInteractiveTarget || prefersReducedMotion) return null;
+    const continuesSequence = previous !== null
+        && click.timestamp >= previous.timestamp
+        && click.timestamp - previous.timestamp <= EASTER_EGG_CLICK_INTERVAL_MS
+        && Math.hypot(click.x - previous.x, click.y - previous.y) <= EASTER_EGG_CLICK_DISTANCE_PX;
+    return { ...click, count: continuesSequence ? previous.count + 1 : 1 };
+};
+
+/** Native detail or the independently observed physical sequence may establish the third click. */
 export const shouldTriggerEasterEgg = (
     clickDetail: number,
     isInsideCanvas: boolean,
