@@ -471,9 +471,11 @@ test('Easter choreography shares first-glyph origins, exact burst geometry, and 
     ...Array.from({ length: targetCount }, () => style(1)),
     ...Array.from({ length: total - targetCount }, () => style(0.5)),
   ];
-  const endStyles = Array.from({ length: total }, (_, index) =>
-    index < targetCount ? style(0) : style(0.7));
-  const options = { firstGlyphCount, targetCount };
+  const endStyles = Array.from({ length: total }, (_, index) => index < targetCount
+    ? { alpha: 0, twinkle: 0.25, strength: 0, radius: 0.37, opacity: 0 }
+    : style(0.7));
+  const options = { firstGlyphCount, targetCount,
+    endpointVisible: endStyles.map(isStarRenderable) };
 
   const firstStage = getEasterEggStarFieldPositions(start, targets, end, 3, [], undefined, options);
   assert.ok(firstStage.slice(firstGlyphCount, targetCount)
@@ -487,14 +489,30 @@ test('Easter choreography shares first-glyph origins, exact burst geometry, and 
   );
   const outMiddle = getEasterEggStarFieldPositions(start, targets, end, 25, [], undefined, options);
   assert.deepEqual(outMiddle.slice(0, targetCount), targets.slice(0, targetCount));
-  const outStyles = getEasterEggStarFieldStyles(
+  for (const age of [20, 22.5, 25, 27.5, 29.999, 30]) {
+    const outStyles = getEasterEggStarFieldStyles(
+      startStyles, targetStyles, endStyles, age, options,
+    );
+    outStyles.slice(0, targetCount).forEach((outStyle) => {
+      closeTo(outStyle.radius, 1.2);
+      closeTo(outStyle.twinkle, 1);
+    });
+  }
+  const outMiddleStyles = getEasterEggStarFieldStyles(
     startStyles, targetStyles, endStyles, 25, options,
   );
-  outStyles.slice(0, targetCount).forEach(({ opacity }) => closeTo(opacity, 0.5));
-  assert.deepEqual(
-    getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 30, options),
-    endStyles,
+  outMiddleStyles.slice(0, targetCount).forEach(({ opacity }) => closeTo(opacity, 0.5));
+  const fadedStyles = getEasterEggStarFieldStyles(
+    startStyles, targetStyles, endStyles, 30, options,
   );
+  fadedStyles.slice(0, targetCount).forEach((fadedStyle) => {
+    assert.equal(fadedStyle.alpha, 0);
+    assert.equal(fadedStyle.opacity, 0);
+    assert.equal(fadedStyle.strength, 0);
+    assert.equal(fadedStyle.radius, 1.2);
+    assert.equal(fadedStyle.twinkle, 1);
+  });
+  assert.deepEqual(fadedStyles.slice(targetCount), endStyles.slice(targetCount));
 });
 
 test('Easter outro converges to scheduled endpoint frames, including trigger wall time 580', () => {
@@ -562,10 +580,10 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
       transition.startStyles, transition.targetStyles, transition.endStyles,
       30, transition.options,
     );
-    assert.deepEqual(atStyles, transition.endStyles);
     transition.options.endpointVisible.forEach((visible, index) => {
       if (!visible) return;
       assert.deepEqual(at[index], transition.endPositions[index]);
+      assert.deepEqual(atStyles[index], transition.endStyles[index]);
       assert.ok(Math.hypot(at[index].x - before[index].x, at[index].y - before[index].y) < 0.01,
         `trigger ${triggerElapsed} visible slot ${index} position popped`);
       for (const property of ['alpha', 'twinkle', 'strength', 'radius', 'opacity']) {
@@ -577,6 +595,16 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
       if (transition.options.endpointVisible[index]) continue;
       assert.deepEqual(before[index], transition.targetPositions[index]);
       assert.deepEqual(at[index], transition.targetPositions[index]);
+      assert.equal(beforeStyles[index].radius, transition.targetStyles[index].radius);
+      assert.equal(atStyles[index].radius, transition.targetStyles[index].radius);
+      assert.equal(beforeStyles[index].twinkle, transition.targetStyles[index].twinkle);
+      assert.equal(atStyles[index].twinkle, transition.targetStyles[index].twinkle);
+      for (const property of ['alpha', 'strength', 'opacity']) {
+        closeTo(atStyles[index][property], transition.endStyles[index][property]);
+      }
+    }
+    for (let index = transition.geometry.points.length; index < atStyles.length; index += 1) {
+      assert.deepEqual(atStyles[index], transition.endStyles[index]);
     }
   }
   assert.ok(checkedVisible > 1000, `only ${checkedVisible} live endpoint slots checked`);

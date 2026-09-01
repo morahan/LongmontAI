@@ -1332,12 +1332,33 @@ export const getEasterEggStarFieldStyles = (
         });
     }
     if (phase.name === 'hold') return start.map(targetFor);
+    const endpointIsVisible = (index: number) => options.endpointVisible?.[index] ?? false;
+    const fadeHiddenTextStyle = (
+        target: StarVisualStyle,
+        endpoint: StarVisualStyle,
+        amount: number,
+    ): StarVisualStyle => ({
+        ...target,
+        alpha: mix(target.alpha, endpoint.alpha, amount),
+        strength: mix(target.strength, endpoint.strength, amount),
+        opacity: mix(target.opacity, endpoint.opacity, amount),
+    });
     if (phase.name === 'morph-out') {
-        return start.map((style, index) => mixStarVisualStyle(
-            targetFor(style, index), end[index] ?? hiddenStarStyle(style.radius), phase.progress,
-        ));
+        return start.map((style, index) => {
+            const target = targetFor(style, index);
+            const endpoint = end[index] ?? hiddenStarStyle(style.radius);
+            return index < targetCount && !endpointIsVisible(index)
+                ? fadeHiddenTextStyle(target, endpoint, phase.progress)
+                : mixStarVisualStyle(target, endpoint, phase.progress);
+        });
     }
-    return end;
+    return start.map((style, index) => {
+        const target = targetFor(style, index);
+        const endpoint = end[index] ?? hiddenStarStyle(style.radius);
+        return index < targetCount && !endpointIsVisible(index)
+            ? fadeHiddenTextStyle(target, endpoint, 1)
+            : endpoint;
+    });
 };
 
 /** Matches the scheduled constellation's cool color, 18% radius, and 28% opacity lift. */
