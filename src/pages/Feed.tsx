@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { editionSummaries, type EditionSummary } from '../articles/editionSummaries';
 import { isEditionPublished } from '../articles/types';
 import { watchScheduledEdition } from '../articles/scheduledEdition';
@@ -27,7 +28,23 @@ function editionMatchesQuery(edition: EditionSummary, query: string): boolean {
     return haystack.includes(query.toLowerCase());
 }
 
+const revealVariants: Variants = {
+    hidden: { opacity: 0, y: 28 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.58, ease: [0.22, 1, 0.36, 1] },
+    },
+};
+
+const staggerVariants: Variants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.11, delayChildren: 0.08 } },
+};
+
 const Feed: React.FC = () => {
+    const prefersReducedMotion = useReducedMotion();
+    const revealInitial = prefersReducedMotion ? false : 'hidden';
     const [archiveQuery, setArchiveQuery] = useState('');
     const [selectedYear, setSelectedYear] = useState('all');
     const [scheduledEdition, setScheduledEdition] = useState<ScheduledEditionResponse | null>(null);
@@ -123,11 +140,44 @@ const Feed: React.FC = () => {
                 </div>
             </section>
 
+            <motion.section
+                className="home-orbit-passage"
+                aria-label="Continue to the latest LongmontAI briefings"
+                initial={revealInitial}
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.2 }}
+                variants={revealVariants}
+            >
+                <div className="home-orbit-track" aria-hidden="true">
+                    <span className="home-orbit-ring home-orbit-ring-outer" />
+                    <span className="home-orbit-ring home-orbit-ring-inner" />
+                    <span className="home-orbit-probe" />
+                </div>
+                <a className="home-scroll-cue" href="#latest">
+                    <span>Enter the briefing</span>
+                    <span className="home-scroll-cue-line" aria-hidden="true" />
+                </a>
+            </motion.section>
+
             <div className="home-feed-content">
-            <SponsorAcknowledgement placement="home" />
+                <motion.div
+                    className="home-reveal home-sponsor-reveal"
+                    initial={revealInitial}
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.2 }}
+                    variants={revealVariants}
+                >
+                    <SponsorAcknowledgement placement="home" />
+                </motion.div>
 
             {/* Meetup Banner */}
-            <div className="home-meetup-banner mb-12 p-4 text-center bg-[var(--accent-cyan)]/10 rounded-lg border border-[var(--accent-cyan)]/20">
+            <motion.div
+                className="home-meetup-banner home-reveal mb-12 p-4 text-center bg-[var(--accent-cyan)]/10 rounded-lg border border-[var(--accent-cyan)]/20"
+                initial={revealInitial}
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.25 }}
+                variants={revealVariants}
+            >
                 <p className="text-[var(--text-primary)]">
                     Welcome to Longmont AI. To join our next meetup in 2026 check out{' '}
                     <a
@@ -139,11 +189,18 @@ const Feed: React.FC = () => {
                         meetup.com/longmontai
                     </a>
                 </p>
-            </div>
+            </motion.div>
 
             {/* Featured Blog Posts Section */}
-            <section id="latest" className="mb-16">
-                <div className="flex items-center justify-between mb-8">
+            <motion.section
+                id="latest"
+                className="home-latest home-reveal mb-16"
+                initial={revealInitial}
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.12 }}
+                variants={staggerVariants}
+            >
+                <motion.div className="home-latest-header flex items-center justify-between mb-8" variants={revealVariants}>
                     <h2 className="text-2xl font-bold">Latest Editions</h2>
                     <a
                         href="#archive"
@@ -151,17 +208,17 @@ const Feed: React.FC = () => {
                     >
                         View all <ArrowRight size={14} />
                     </a>
-                </div>
+                </motion.div>
                 
-                <div className="grid md:grid-cols-3 gap-8">
+                <motion.div className="home-latest-grid grid md:grid-cols-3 gap-8" variants={staggerVariants}>
                     {latestEditions.map((edition) => (
-                        <Link
-                            key={edition.id}
-                            to={`/edition/${edition.id}`}
-                            className="block group"
-                        >
-                            <article className="bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-xl overflow-hidden hover:border-[var(--accent-cyan)]/50 transition-all duration-300">
-                                <div className="p-5">
+                        <motion.div className="home-latest-card-wrap" key={edition.id} variants={revealVariants}>
+                            <Link
+                                to={`/edition/${edition.id}`}
+                                className="home-latest-card-link block group"
+                            >
+                                <article className="home-latest-card bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-xl overflow-hidden hover:border-[var(--accent-cyan)]/50 transition-all duration-300">
+                                    <div className="home-latest-card-body p-5">
                                     <span className="text-xs font-mono text-[var(--accent-cyan)] mb-2 block">
                                         {edition.date}
                                     </span>
@@ -172,18 +229,27 @@ const Feed: React.FC = () => {
                                         {edition.summary}
                                     </p>
                                 </div>
-                                <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between">
-                                    <span className="text-xs text-[var(--accent-cyan)]">Read edition</span>
-                                    <ArrowRight size={14} className="text-[var(--accent-cyan)] latest-card-arrow" />
-                                </div>
-                            </article>
-                        </Link>
+                                    <div className="home-latest-card-footer px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between">
+                                        <span className="text-xs text-[var(--accent-cyan)]">Read edition</span>
+                                        <ArrowRight size={14} className="text-[var(--accent-cyan)] latest-card-arrow" />
+                                    </div>
+                                </article>
+                            </Link>
+                        </motion.div>
                     ))}
-                </div>
-            </section>
+                </motion.div>
+            </motion.section>
 
             {/* All Editions */}
-            <section id="archive" className="home-archive relative pb-20" aria-labelledby="archive-heading">
+            <motion.section
+                id="archive"
+                className="home-archive home-reveal relative pb-20"
+                aria-labelledby="archive-heading"
+                initial={revealInitial}
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.08 }}
+                variants={revealVariants}
+            >
                 <div className="home-archive-header">
                     <div>
                         <span className="home-archive-eyebrow">Archive</span>
@@ -280,7 +346,7 @@ const Feed: React.FC = () => {
                         </button>
                     </div>
                 )}
-            </section>
+            </motion.section>
             </div>
         </div>
     );

@@ -453,6 +453,111 @@ body:has(.home-feed),
   text-shadow: 0 1px 24px rgba(0, 0, 0, 0.72);
 }
 
+.home-orbit-passage {
+  --orbit-travel: 10.5rem;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 44rem);
+  min-height: clamp(18rem, 40vh, 23rem);
+  place-items: center;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 3rem;
+}
+
+.home-orbit-passage::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1), transparent 58%);
+}
+
+.home-orbit-track {
+  position: absolute;
+  top: 1.25rem;
+  bottom: 4.25rem;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(125, 211, 252, 0.68) 26%, rgba(96, 165, 250, 0.28) 76%, transparent);
+}
+
+.home-orbit-ring {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+}
+
+.home-orbit-ring-outer {
+  width: clamp(10rem, 32vw, 17rem);
+  height: clamp(3.25rem, 10vw, 5.5rem);
+}
+
+.home-orbit-ring-inner {
+  width: clamp(5rem, 16vw, 8.5rem);
+  height: clamp(1.75rem, 5vw, 3rem);
+  border-color: rgba(167, 139, 250, 0.32);
+  transform: translate(-50%, -50%) rotate(15deg);
+}
+
+.home-orbit-probe {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid #dbeafe;
+  border-radius: 50%;
+  background: #60a5fa;
+  box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.12), 0 0 24px rgba(125, 211, 252, 0.9);
+  transform: translateX(-50%);
+}
+
+.home-scroll-cue {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.8rem;
+  color: rgba(219, 234, 254, 0.84);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  transition: color 180ms ease;
+}
+
+.home-scroll-cue:hover,
+.home-scroll-cue:focus-visible {
+  color: #ffffff;
+}
+
+.home-scroll-cue-line {
+  width: 1px;
+  height: 1.9rem;
+  background: linear-gradient(to bottom, currentColor, transparent);
+}
+
+@supports (animation-timeline: view()) {
+  .home-orbit-probe {
+    animation: home-orbit-descent linear both;
+    animation-range: entry 10% exit 80%;
+    animation-timeline: view(block);
+  }
+}
+
+@keyframes home-orbit-descent {
+  from { transform: translate(-50%, 0); }
+  to { transform: translate(-50%, var(--orbit-travel)); }
+}
+
 .home-feed-content {
   position: relative;
   z-index: 1;
@@ -2121,6 +2226,37 @@ iframe {
   color: #ffffff;
 }
 
+.home-latest-grid {
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+}
+
+.home-latest-card-wrap,
+.home-latest-card-link,
+.home-latest-card {
+  height: 100%;
+  min-width: 0;
+}
+
+.home-latest-card-wrap,
+.home-latest-card-link {
+  display: block;
+}
+
+.home-latest-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-latest-card-body {
+  flex: 1 1 auto;
+}
+
+.home-latest-card-footer {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
 .latest-card-arrow {
   opacity: 0.85;
   transition: opacity 180ms ease, transform 180ms ease;
@@ -2403,6 +2539,12 @@ iframe {
     padding-top: 0 !important;
   }
 
+  .home-orbit-passage {
+    --orbit-travel: 7.5rem;
+    min-height: 16rem;
+    padding-bottom: 2.5rem;
+  }
+
   .home-feed-content {
     padding-top: 1.75rem;
   }
@@ -2443,12 +2585,18 @@ iframe {
     text-align: left;
   }
 
-  #latest {
+  .home-latest {
     margin-bottom: 3rem !important;
   }
 
-  #latest > div:first-child {
+  .home-latest-header {
     margin-bottom: 1rem !important;
+  }
+
+  .home-latest-card-wrap,
+  .home-latest-card-link,
+  .home-latest-card {
+    height: 100%;
   }
 
   .home-archive-header {
@@ -2498,6 +2646,22 @@ iframe {
   .home-archive-row p {
     font-size: 0.86rem;
     -webkit-line-clamp: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reveal,
+  .home-orbit-passage,
+  .home-latest-card-wrap,
+  .home-orbit-probe {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .home-orbit-probe {
+    transform: translateX(-50%) !important;
   }
 }
 
