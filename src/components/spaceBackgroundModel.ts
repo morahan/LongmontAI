@@ -10,6 +10,7 @@ export const DESKTOP_TRAVELER_COUNT = 24;
 export const MOBILE_TRAVELER_COUNT = 15;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
 export const UFO_BASIS_POINTS = 300;
+export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
 export const MOBILE_BREAKPOINT = 640;
 export const NEURAL_SIGNAL_SLOT_SECONDS = 24;
@@ -90,6 +91,21 @@ export interface StarVisualStyle {
     opacity: number;
 }
 
+export interface PlanetLightingStyle {
+    /** Unit vector across the projected disc toward the system star. */
+    lightDirection: Point;
+    /** Apparent day-side fraction: 0 at inferior conjunction, 0.5 side-on, 1 behind the star. */
+    illuminatedFraction: number;
+    /** Normalized dark-to-light gradient endpoints relative to the planet center. */
+    shadowStart: Point;
+    shadowEnd: Point;
+    /** Canvas gradient stops bracketing the soft terminator. */
+    terminatorStart: number;
+    terminatorEnd: number;
+    /** Normalized center for the day-side radial highlight. */
+    highlightCenter: Point;
+}
+
 export interface DistantStar {
     x: number;
     y: number;
@@ -165,6 +181,26 @@ export interface UfoAppearance {
     streakLength: number;
 }
 
+export type TravelerVariant = 'star' | 'ufo' | 'comet';
+export type CometTrailParticleKind = 'asteroid' | 'stardust';
+
+export interface CometTrailParticle {
+    kind: CometTrailParticleKind;
+    distance: number;
+    lateralOffset: number;
+    radius: number;
+    opacity: number;
+    rotation: number;
+}
+
+export interface CometAppearance {
+    headRadius: number;
+    glowRadius: number;
+    trailLength: number;
+    trailWidth: number;
+    particles: CometTrailParticle[];
+}
+
 export interface ProjectedTraveler {
     x: number;
     y: number;
@@ -222,24 +258,45 @@ const hashUint = (seed: number, cycle: number, channel: number) => {
 const hashRandom = (seed: number, cycle: number, channel: number) =>
     hashUint(seed, cycle, channel) / UINT32_RANGE;
 
-const UFO_BASIS_POINT_RANGE = 10000;
+const TRAVELER_VARIANT_BASIS_POINT_RANGE = 10000;
+
+/** One shared equiprobable roll makes the 3% UFO and 3% comet bands disjoint by construction. */
+export const getTravelerVariantForBasisPoint = (basisPoint: number): TravelerVariant => {
+    const outcome = positiveModulo(Math.trunc(basisPoint), TRAVELER_VARIANT_BASIS_POINT_RANGE);
+    if (outcome < UFO_BASIS_POINTS) return 'ufo';
+    if (outcome < UFO_BASIS_POINTS + COMET_BASIS_POINTS) return 'comet';
+    return 'star';
+};
 
 /** Exactly 300 of 10,000 equiprobable outcomes classify as spacecraft. */
 export const isUfoBasisPoint = (basisPoint: number) =>
-    positiveModulo(Math.trunc(basisPoint), UFO_BASIS_POINT_RANGE) < UFO_BASIS_POINTS;
+    getTravelerVariantForBasisPoint(basisPoint) === 'ufo';
 
-/** Spacecraft identity is stable within a traveler lifecycle and reseeded on its next depth cycle. */
-export const isUfoTraveler = (traveler: Pick<Traveler, 'seed'>, cycle: number) => {
+/** Exactly 300 different outcomes classify as comets. */
+export const isCometBasisPoint = (basisPoint: number) =>
+    getTravelerVariantForBasisPoint(basisPoint) === 'comet';
+
+/** Variant identity is stable within one depth lifecycle and intentionally reseeded next cycle. */
+export const getTravelerVariant = (
+    traveler: Pick<Traveler, 'seed'>,
+    cycle: number,
+): TravelerVariant => {
     const stableCycle = Math.max(0, Math.trunc(cycle));
-    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % UFO_BASIS_POINT_RANGE);
+    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % TRAVELER_VARIANT_BASIS_POINT_RANGE);
     let channel = 307;
     let roll = hashUint(traveler.seed, stableCycle, channel);
     while (roll >= acceptedRange) {
         channel += 1;
         roll = hashUint(traveler.seed, stableCycle, channel);
     }
-    return isUfoBasisPoint(roll % UFO_BASIS_POINT_RANGE);
+    return getTravelerVariantForBasisPoint(roll % TRAVELER_VARIANT_BASIS_POINT_RANGE);
 };
+
+export const isUfoTraveler = (traveler: Pick<Traveler, 'seed'>, cycle: number) =>
+    getTravelerVariant(traveler, cycle) === 'ufo';
+
+export const isCometTraveler = (traveler: Pick<Traveler, 'seed'>, cycle: number) =>
+    getTravelerVariant(traveler, cycle) === 'comet';
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const smoothstep = (value: number) => {
@@ -897,6 +954,48 @@ export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppea
     };
 };
 
+/** Stable local-space trail geometry; Canvas rotates its +distance axis opposite current motion. */
+export const getCometAppearance = (
+    traveler: Traveler,
+    cycle: number,
+    progress: number,
+): CometAppearance => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const headRadius = getTravelerAppearance(traveler, progress).radius * 1.35;
+    const trailLength = Math.max(18, headRadius * 12);
+    const trailWidth = Math.max(3.5, headRadius * 2.8);
+    const random = createSeededRandom(hashUint(traveler.seed, stableCycle, 401));
+    const createParticle = (
+        kind: CometTrailParticleKind,
+        index: number,
+        count: number,
+    ): CometTrailParticle => {
+        const distanceFraction = (index + 0.55 + random() * 0.35) / count;
+        const spread = trailWidth * (0.18 + distanceFraction * 0.82);
+        const asteroid = kind === 'asteroid';
+        return {
+            kind,
+            distance: trailLength * distanceFraction,
+            lateralOffset: (random() * 2 - 1) * spread,
+            radius: asteroid
+                ? Math.max(0.35, headRadius * (0.13 + random() * 0.16))
+                : Math.max(0.1, headRadius * (0.035 + random() * 0.045)),
+            opacity: asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42,
+            rotation: random() * TAU,
+        };
+    };
+    return {
+        headRadius,
+        glowRadius: headRadius * 3.1,
+        trailLength,
+        trailWidth,
+        particles: [
+            ...Array.from({ length: 6 }, (_, index) => createParticle('asteroid', index, 6)),
+            ...Array.from({ length: 18 }, (_, index) => createParticle('stardust', index, 18)),
+        ],
+    };
+};
+
 export const projectTraveler = (
     traveler: Traveler,
     simulationSeconds: number,
@@ -1034,6 +1133,40 @@ export const getPlanetSurfaceDetailLevel = (
 
 export const hasAtmosphereHalo = (atmosphere: PlanetAtmosphereClass) =>
     atmosphere === 'gas-banded' || atmosphere === 'ocean-haze' || atmosphere === 'ice';
+
+/**
+ * Pure projected lighting geometry for a planet orbiting a star at the supplied center.
+ * Positive z is toward the observer, so near-side bodies are crescents while negative-z
+ * bodies expose progressively more of their star-facing hemisphere.
+ */
+export const getPlanetLightingStyle = (
+    planet: Pick<OrbitingPlanet, 'x' | 'y' | 'z'>,
+    starCenter: Point = { x: 0, y: 0 },
+): PlanetLightingStyle => {
+    const toStarX = starCenter.x - planet.x;
+    const toStarY = starCenter.y - planet.y;
+    const projectedDistance = Math.hypot(toStarX, toStarY);
+    // Exact conjunction has no projected starward direction; keep its radially symmetric
+    // phase deterministic with a stable axis rather than introducing frame-to-frame noise.
+    const lightDirection = projectedDistance > 1e-9
+        ? { x: toStarX / projectedDistance, y: toStarY / projectedDistance }
+        : { x: -1, y: 0 };
+    const illuminatedFraction = clamp01((1 - planet.z) * 0.5);
+    const terminator = 1 - illuminatedFraction;
+    const softness = 0.07;
+    return {
+        lightDirection,
+        illuminatedFraction,
+        shadowStart: { x: -lightDirection.x, y: -lightDirection.y },
+        shadowEnd: lightDirection,
+        terminatorStart: clamp01(terminator - softness),
+        terminatorEnd: clamp01(terminator + softness),
+        highlightCenter: {
+            x: lightDirection.x * 0.38,
+            y: lightDirection.y * 0.38,
+        },
+    };
+};
 
 export const chooseWeightedPlanetCount = (random: RandomSource) => {
     let cursor = random() * 10000;

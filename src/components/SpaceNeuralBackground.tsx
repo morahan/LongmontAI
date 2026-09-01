@@ -9,6 +9,7 @@ import {
     createSpaceScene,
     getConstellationPhase,
     getConstellationStrength,
+    getCometAppearance,
     getEasterEggPhase,
     getEasterEggStarFieldPositions,
     getEasterEggStrength,
@@ -17,6 +18,7 @@ import {
     getNeuralSignals,
     getOrbitingMoon,
     getOrbitingPlanets,
+    getPlanetLightingStyle,
     getPlanetSurfaceDetailLevel,
     PLANET_RENDER_SCALE,
     PLANET_RING_LINE_WIDTH,
@@ -28,10 +30,10 @@ import {
     getSystemOpacity,
     getSystemScale,
     getTravelerAppearance,
+    getTravelerVariant,
     getUfoAppearance,
     hasAtmosphereHalo,
     isStarRenderable,
-    isUfoTraveler,
     projectTraveler,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
@@ -236,17 +238,31 @@ const drawPlanet = (
         drawAtmosphereSurface(ctx, renderedPlanet, surfaceDetail);
     }
 
-    const distanceFromSun = Math.hypot(renderedPlanet.x, renderedPlanet.y) || 1;
-    const lightX = renderedPlanet.x - (renderedPlanet.x / distanceFromSun) * renderedPlanet.radius * 0.35;
-    const lightY = renderedPlanet.y - (renderedPlanet.y / distanceFromSun) * renderedPlanet.radius * 0.35;
-    const shading = ctx.createRadialGradient(
-        lightX, lightY, renderedPlanet.radius * 0.05,
-        lightX, lightY, renderedPlanet.radius * 1.5,
+    const lighting = getPlanetLightingStyle(renderedPlanet);
+    const shadowStartX = renderedPlanet.x + lighting.shadowStart.x * renderedPlanet.radius;
+    const shadowStartY = renderedPlanet.y + lighting.shadowStart.y * renderedPlanet.radius;
+    const shadowEndX = renderedPlanet.x + lighting.shadowEnd.x * renderedPlanet.radius;
+    const shadowEndY = renderedPlanet.y + lighting.shadowEnd.y * renderedPlanet.radius;
+    const shadow = ctx.createLinearGradient(shadowStartX, shadowStartY, shadowEndX, shadowEndY);
+    shadow.addColorStop(0, 'rgba(10, 15, 24, 0.68)');
+    shadow.addColorStop(lighting.terminatorStart, 'rgba(10, 15, 24, 0.64)');
+    shadow.addColorStop(lighting.terminatorEnd, 'rgba(10, 15, 24, 0)');
+    shadow.addColorStop(1, 'rgba(10, 15, 24, 0)');
+    ctx.fillStyle = shadow;
+    ctx.beginPath();
+    ctx.arc(renderedPlanet.x, renderedPlanet.y, renderedPlanet.radius, 0, TAU);
+    ctx.fill();
+
+    const highlightX = renderedPlanet.x + lighting.highlightCenter.x * renderedPlanet.radius;
+    const highlightY = renderedPlanet.y + lighting.highlightCenter.y * renderedPlanet.radius;
+    const highlight = ctx.createRadialGradient(
+        highlightX, highlightY, renderedPlanet.radius * 0.04,
+        highlightX, highlightY, renderedPlanet.radius * 1.18,
     );
-    shading.addColorStop(0, 'rgba(242, 251, 251, 0.42)');
-    shading.addColorStop(0.4, 'rgba(255, 255, 255, 0)');
-    shading.addColorStop(1, 'rgba(10, 15, 24, 0.6)');
-    ctx.fillStyle = shading;
+    highlight.addColorStop(0, `rgba(242, 251, 251, ${0.16 + lighting.illuminatedFraction * 0.26})`);
+    highlight.addColorStop(0.42, 'rgba(255, 255, 255, 0)');
+    highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = highlight;
     ctx.beginPath();
     ctx.arc(renderedPlanet.x, renderedPlanet.y, renderedPlanet.radius, 0, TAU);
     ctx.fill();
@@ -429,6 +445,101 @@ const drawUfo = (
     ctx.moveTo(-appearance.radius * 0.72, appearance.radius * 0.08);
     ctx.lineTo(appearance.radius * 0.72, appearance.radius * 0.08);
     ctx.stroke();
+    ctx.restore();
+};
+
+const drawComet = (
+    ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    deltaX: number,
+    deltaY: number,
+    fallbackDirection: Point,
+) => {
+    const appearance = getCometAppearance(traveler, projection.cycle, projection.progress);
+    const motionDistance = Math.hypot(deltaX, deltaY);
+    const fallbackDistance = Math.hypot(fallbackDirection.x, fallbackDirection.y);
+    const directionX = motionDistance > 0
+        ? deltaX / motionDistance
+        : fallbackDistance > 0 ? fallbackDirection.x / fallbackDistance : 1;
+    const directionY = motionDistance > 0
+        ? deltaY / motionDistance
+        : fallbackDistance > 0 ? fallbackDirection.y / fallbackDistance : 0;
+    const perpendicularX = -directionY;
+    const perpendicularY = directionX;
+    const { x, y, opacity } = projection;
+
+    ctx.save();
+    const tail = ctx.createLinearGradient(
+        x - directionX * appearance.trailLength,
+        y - directionY * appearance.trailLength,
+        x,
+        y,
+    );
+    tail.addColorStop(0, 'rgba(105, 174, 205, 0)');
+    tail.addColorStop(0.5, `rgba(142, 211, 234, ${opacity * 0.16})`);
+    tail.addColorStop(1, `rgba(218, 244, 250, ${opacity * 0.68})`);
+    ctx.strokeStyle = tail;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = appearance.trailWidth;
+    ctx.beginPath();
+    ctx.moveTo(x - directionX * appearance.trailLength, y - directionY * appearance.trailLength);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    appearance.particles.forEach((particle) => {
+        const particleX = x - directionX * particle.distance
+            + perpendicularX * particle.lateralOffset;
+        const particleY = y - directionY * particle.distance
+            + perpendicularY * particle.lateralOffset;
+        if (particle.kind === 'asteroid') {
+            ctx.save();
+            ctx.translate(particleX, particleY);
+            ctx.rotate(particle.rotation);
+            ctx.fillStyle = `rgba(143, 132, 126, ${opacity * particle.opacity})`;
+            ctx.strokeStyle = `rgba(221, 211, 199, ${opacity * particle.opacity * 0.72})`;
+            ctx.lineWidth = Math.max(0.2, particle.radius * 0.16);
+            ctx.beginPath();
+            ctx.moveTo(particle.radius, 0);
+            ctx.lineTo(-particle.radius * 0.35, particle.radius * 0.82);
+            ctx.lineTo(-particle.radius, -particle.radius * 0.18);
+            ctx.lineTo(particle.radius * 0.12, -particle.radius * 0.74);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        } else {
+            ctx.fillStyle = `rgba(205, 235, 244, ${opacity * particle.opacity})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particle.radius, 0, TAU);
+            ctx.fill();
+        }
+    });
+
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, appearance.glowRadius);
+    glow.addColorStop(0, `rgba(255, 251, 229, ${opacity})`);
+    glow.addColorStop(0.28, `rgba(177, 226, 242, ${opacity * 0.62})`);
+    glow.addColorStop(1, 'rgba(91, 177, 215, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, appearance.glowRadius, 0, TAU);
+    ctx.fill();
+
+    const head = ctx.createRadialGradient(
+        x - appearance.headRadius * 0.24,
+        y - appearance.headRadius * 0.28,
+        0,
+        x,
+        y,
+        appearance.headRadius,
+    );
+    head.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
+    head.addColorStop(0.48, `rgba(239, 247, 235, ${opacity})`);
+    head.addColorStop(1, `rgba(102, 184, 216, ${opacity * 0.88})`);
+    ctx.fillStyle = head;
+    ctx.beginPath();
+    ctx.arc(x, y, appearance.headRadius, 0, TAU);
+    ctx.fill();
     ctx.restore();
 };
 
@@ -657,8 +768,14 @@ const SpaceNeuralBackground: React.FC = () => {
                     const sameCycle = previous.cycle === projection.cycle;
                     const deltaX = sameCycle ? projection.x - previous.x : 0;
                     const deltaY = sameCycle ? projection.y - previous.y : 0;
-                    if (isUfoTraveler(traveler, projection.cycle)) {
+                    const variant = getTravelerVariant(traveler, projection.cycle);
+                    if (variant === 'ufo') {
                         drawUfo(ctx, traveler, projection, deltaX, deltaY);
+                    } else if (variant === 'comet') {
+                        drawComet(ctx, traveler, projection, deltaX, deltaY, {
+                            x: projection.x - width * 0.5,
+                            y: projection.y - height * 0.45,
+                        });
                     } else {
                         if (sameCycle) {
                             const distance = Math.hypot(deltaX, deltaY);

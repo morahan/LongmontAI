@@ -12,6 +12,7 @@ import {
   CONSTELLATION_STAR_COUNT,
   CONSTELLATION_STAR_RGB,
   CONSTELLATION_WINDOW_SECONDS,
+  COMET_BASIS_POINTS,
   DESKTOP_TRAVELER_COUNT,
   EASTER_EGG_PHRASES,
   FAR_DEPTH,
@@ -58,6 +59,7 @@ import {
   getConstellationPhase,
   getConstellationPhraseForBucket,
   getConstellationStrength,
+  getCometAppearance,
   getDriftedStar,
   getEasterEggPhase,
   getEasterEggStarFieldPositions,
@@ -66,6 +68,7 @@ import {
   getElapsedSecondsSinceMount,
   getOrbitingMoon,
   getOrbitingPlanet,
+  getPlanetLightingStyle,
   getNeuralSignals,
   getOrbitingPlanets,
   getPlanetOrbitPeriod,
@@ -81,10 +84,14 @@ import {
   getSystemScale,
   getTravelerAppearance,
   getTravelerDepth,
+  getTravelerVariant,
+  getTravelerVariantForBasisPoint,
   getTwinkleBrightness,
   getUfoAppearance,
   isStarRenderable,
   isSystemCarrier,
+  isCometBasisPoint,
+  isCometTraveler,
   isUfoBasisPoint,
   isUfoTraveler,
   isTravelerEligibleForNeuralSignal,
@@ -566,31 +573,68 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
   closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
 });
 
-test('UFO classification reserves exactly 3% of deterministic equiprobable outcomes', () => {
+test('one equiprobable basis-point roll reserves disjoint exact 3% UFO and comet bands', () => {
   assert.equal(UFO_BASIS_POINTS, 300);
-  const outcomes = Array.from({ length: 10000 }, (_, basisPoint) => isUfoBasisPoint(basisPoint));
-  assert.equal(outcomes.filter(Boolean).length, 300);
-  assert.ok(outcomes.slice(0, 300).every(Boolean));
-  assert.ok(outcomes.slice(300).every((isUfo) => !isUfo));
+  assert.equal(COMET_BASIS_POINTS, 300);
+  const variants = Array.from({ length: 10000 }, (_, basisPoint) =>
+    getTravelerVariantForBasisPoint(basisPoint));
+  assert.equal(variants.filter((variant) => variant === 'ufo').length, 300);
+  assert.equal(variants.filter((variant) => variant === 'comet').length, 300);
+  assert.equal(variants.filter((variant) => variant === 'star').length, 9400);
+  variants.forEach((variant, basisPoint) => {
+    assert.equal(isUfoBasisPoint(basisPoint), variant === 'ufo');
+    assert.equal(isCometBasisPoint(basisPoint), variant === 'comet');
+    assert.equal(isUfoBasisPoint(basisPoint) && isCometBasisPoint(basisPoint), false);
+  });
+  assert.equal(getTravelerVariantForBasisPoint(-1), 'star');
+  assert.equal(getTravelerVariantForBasisPoint(10000 + UFO_BASIS_POINTS), 'comet');
 });
 
-test('UFO identity is stable per traveler cycle, cycle-seeded, and both outcomes are reachable', () => {
+test('traveler variants are lifecycle-stable, mutually exclusive, cycle-seeded, and reachable', () => {
   const observed = new Set();
   let lifecycleChange = false;
-  for (let seed = 0; seed < 512; seed += 1) {
+  for (let seed = 0; seed < 2048; seed += 1) {
     const traveler = { seed };
-    const firstCycle = isUfoTraveler(traveler, 0);
-    assert.equal(isUfoTraveler(traveler, 0), firstCycle);
+    const firstCycle = getTravelerVariant(traveler, 0);
+    assert.equal(getTravelerVariant(traveler, 0), firstCycle);
+    assert.equal(isUfoTraveler(traveler, 0), firstCycle === 'ufo');
+    assert.equal(isCometTraveler(traveler, 0), firstCycle === 'comet');
+    assert.equal(isUfoTraveler(traveler, 0) && isCometTraveler(traveler, 0), false);
     observed.add(firstCycle);
-    if (isUfoTraveler(traveler, 1) !== firstCycle) lifecycleChange = true;
+    if (getTravelerVariant(traveler, 1) !== firstCycle) lifecycleChange = true;
   }
-  assert.deepEqual(observed, new Set([false, true]));
+  assert.deepEqual(observed, new Set(['star', 'ufo', 'comet']));
   assert.equal(lifecycleChange, true);
 
   const scene = createSpaceScene(0x51a7c0de);
   scene.travelers.forEach((traveler) => {
-    assert.equal(isUfoTraveler(traveler, 4), isUfoTraveler(traveler, 4));
+    assert.equal(getTravelerVariant(traveler, 4), getTravelerVariant(traveler, 4));
   });
+});
+
+test('comet trails have deterministic distinct particles inside bounded motion-opposed geometry', () => {
+  const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const trail = getCometAppearance(traveler, 3, 0.68);
+  assert.deepEqual(trail, getCometAppearance(traveler, 3, 0.68));
+  assert.notDeepEqual(trail, getCometAppearance(traveler, 4, 0.68));
+  assert.ok(trail.headRadius > getTravelerAppearance(traveler, 0.68).radius);
+  assert.ok(trail.glowRadius > trail.headRadius);
+  assert.ok(trail.trailLength >= 18);
+  assert.ok(trail.trailWidth >= 3.5);
+  assert.equal(trail.particles.filter(({ kind }) => kind === 'asteroid').length, 6);
+  assert.equal(trail.particles.filter(({ kind }) => kind === 'stardust').length, 18);
+  trail.particles.forEach((particle) => {
+    assert.ok(particle.distance > 0 && particle.distance <= trail.trailLength);
+    assert.ok(Math.abs(particle.lateralOffset) <= trail.trailWidth);
+    assert.ok(particle.radius >= 0.1 && particle.radius <= Math.max(0.35, trail.headRadius * 0.3));
+    assert.ok(particle.opacity > 0 && particle.opacity <= 1);
+    assert.ok(particle.rotation >= 0 && particle.rotation < Math.PI * 2);
+  });
+  const largestAsteroid = Math.max(...trail.particles
+    .filter(({ kind }) => kind === 'asteroid').map(({ radius }) => radius));
+  const largestDust = Math.max(...trail.particles
+    .filter(({ kind }) => kind === 'stardust').map(({ radius }) => radius));
+  assert.ok(largestAsteroid > largestDust * 1.5, 'fragments are not visibly distinct from stardust');
 });
 
 test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at every depth', () => {
@@ -1053,6 +1097,74 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
     }
     assert.ok(visibleSystemSamples > 0, `${width}x${height} never reveals a near system`);
     assert.ok(selectedCarriers.size > 0, `${width}x${height} has no useful carrier`);
+  }
+});
+
+test('planet lighting faces the local star and exposes canonical orbit phases', () => {
+  const rightSide = getPlanetLightingStyle({ x: 12, y: 0, z: 0 });
+  const leftSide = getPlanetLightingStyle({ x: -12, y: 0, z: 0 });
+  const farSide = getPlanetLightingStyle({ x: 0, y: -4, z: -1 });
+  const nearSide = getPlanetLightingStyle({ x: 0, y: 4, z: 1 });
+
+  assert.deepEqual(rightSide.lightDirection, { x: -1, y: 0 });
+  assert.deepEqual(leftSide.lightDirection, { x: 1, y: 0 });
+  closeTo(rightSide.illuminatedFraction, 0.5);
+  closeTo(leftSide.illuminatedFraction, 0.5);
+  closeTo(farSide.illuminatedFraction, 1);
+  closeTo(nearSide.illuminatedFraction, 0);
+  assert.ok(farSide.illuminatedFraction > rightSide.illuminatedFraction);
+  assert.ok(rightSide.illuminatedFraction > nearSide.illuminatedFraction);
+
+  for (const fixture of [rightSide, leftSide, farSide, nearSide]) {
+    closeTo(fixture.shadowStart.x, -fixture.lightDirection.x);
+    closeTo(fixture.shadowStart.y, -fixture.lightDirection.y);
+    closeTo(fixture.shadowEnd.x, fixture.lightDirection.x);
+    closeTo(fixture.shadowEnd.y, fixture.lightDirection.y);
+    assert.ok(fixture.terminatorStart >= 0 && fixture.terminatorStart <= 1);
+    assert.ok(fixture.terminatorEnd >= 0 && fixture.terminatorEnd <= 1);
+    assert.ok(fixture.terminatorStart <= fixture.terminatorEnd);
+  }
+});
+
+test('planet lighting is continuous, bounded, deterministic, and has a stable center fallback', () => {
+  let previous;
+  for (let index = 0; index <= 1000; index += 1) {
+    const z = -1.2 + index * 2.4 / 1000;
+    const style = getPlanetLightingStyle({ x: 7.5, y: -3.25, z });
+    assert.deepEqual(style, getPlanetLightingStyle({ x: 7.5, y: -3.25, z }));
+    assert.ok(style.illuminatedFraction >= 0 && style.illuminatedFraction <= 1);
+    if (previous) {
+      assert.ok(Math.abs(style.illuminatedFraction - previous.illuminatedFraction) <= 0.00121);
+      assert.ok(Math.abs(style.terminatorStart - previous.terminatorStart) <= 0.00121);
+      assert.ok(Math.abs(style.terminatorEnd - previous.terminatorEnd) <= 0.00121);
+    }
+    previous = style;
+  }
+
+  const fallback = getPlanetLightingStyle({ x: 0, y: 0, z: 0 });
+  assert.deepEqual(fallback.lightDirection, { x: -1, y: 0 });
+  closeTo(fallback.illuminatedFraction, 0.5);
+  assert.ok(Object.values(fallback).flatMap((value) =>
+    typeof value === 'object' ? Object.values(value) : [value]).every(Number.isFinite));
+
+  const planet = {
+    orbitRadius: 14,
+    radius: 2,
+    phase: 0.4,
+    speed: -0.7,
+    inclination: 0.42,
+    tilt: -0.27,
+    color: '#fff',
+    atmosphere: 'ice',
+    surfaceSeed: 3,
+    moons: [],
+    hasRing: false,
+  };
+  for (const time of [0, 0.5, 2, 5]) {
+    const orbiting = getOrbitingPlanet(planet, time);
+    const style = getPlanetLightingStyle(orbiting);
+    closeTo(style.lightDirection.x * orbiting.x + style.lightDirection.y * orbiting.y,
+      -Math.hypot(orbiting.x, orbiting.y));
   }
 });
 
