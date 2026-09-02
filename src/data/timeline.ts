@@ -249,6 +249,27 @@ const westernModelWatch2026Events: TimelineEvent[] = modelWatchModels
 
 const additional2026ReleaseEvents: TimelineEvent[] = [
   {
+    id: 'hy4-preview', date: '2026-08-28', title: 'Hy4 preview', organization: 'Tencent Hunyuan', category: 'Open weight',
+    summary: 'Tencent released an Apache-2.0 770B/49B-active MoE preview with 1M context. Official API $0.834 / $0.042 cache hit / $2.501 per 1M tokens. Internal expert-panel scores are vendor-reported.',
+    source: 'Tencent', sourceUrl: 'https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/', openWeight: true, notable: true,
+  },
+
+  {
+    id: 'timesfm-3', date: '2026-08-31', title: 'TimesFM-3', organization: 'Google Research', category: 'Model release',
+    summary: 'Google Research released TimesFM-3, a 330M zero-shot multivariate time-series foundation model with open weights.',
+    source: 'Google Research', sourceUrl: 'https://research.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/', openWeight: true, notable: true,
+  },
+  {
+    id: 'cohere-parse-v5', date: '2026-08-27', title: 'Cohere Parse (parse-v5.0)', organization: 'Cohere', category: 'Model release',
+    summary: 'Cohere launched Parse, a document vision model that converts pages to Markdown at $1.50 per 1,000 pages.',
+    source: 'Cohere', sourceUrl: 'https://cohere.com/blog/parse', notable: true,
+  },
+  {
+    id: 'ibm-granite-4-2', date: '2026-08-25', title: 'Granite 4.2 and Granite Speech 5.0 Turbo CTC', organization: 'IBM', category: 'Open weight',
+    summary: 'IBM released Apache-2.0 Granite 4.2 language models (3B/8B/30B) and a 470M on-device ASR model without an LLM backbone.',
+    source: 'IBM Research', sourceUrl: 'https://research.ibm.com/blog/introducing-granite-4-2', openWeight: true, notable: true,
+  },
+  {
     id: 'openai-astra-ten-math-advances', date: '2026-08-01', title: 'Astra reports ten advances in mathematics and theoretical computer science', organization: 'OpenAI', category: 'Research breakthrough',
     summary: 'OpenAI reported that an internal Astra model resolved or materially advanced ten open problems, with humans preparing manuscripts and the model formalizing the arguments as Lean certificates. The claims remain subject to mathematical-community review and context.',
     source: 'OpenAI publication', sourceUrl: 'https://openai.com/index/ten-advances-in-mathematics/', notable: true,

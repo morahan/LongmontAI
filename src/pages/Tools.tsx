@@ -78,23 +78,23 @@ const OUTPUTS: OutputType[] = [
 
 const MATRIX: Matrix = {
   Text: {
-    Text: [{ name: 'Claude Opus 5', url: 'https://www.anthropic.com/news/claude-opus-5' }, { name: 'Qwen3.8-Max', url: 'https://www.alibabacloud.com/blog/alibaba-unveils-qwen3-8-max-its-largest-and-most-capable-flagship-model-to-date_603420' }, { name: 'DeepSeek-V4-Flash-0731', url: 'https://api-docs.deepseek.com/updates/' }, { name: 'Grok 4.5', url: 'https://x.ai/grok' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'GPT-5.6 Sol', url: 'https://openai.com/gpt-5-6' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }, { name: 'Ask the Canon', url: 'https://askthecanon.com/' }],
+    Text: [{ name: 'Claude Opus 5', url: 'https://www.anthropic.com/news/claude-opus-5' }, { name: 'Qwen3.8-Max', url: 'https://www.alibabacloud.com/blog/alibaba-unveils-qwen3-8-max-its-largest-and-most-capable-flagship-model-to-date_603420' }, { name: 'DeepSeek-V4-Flash-0731', url: 'https://api-docs.deepseek.com/updates/' }, { name: 'Grok 4.5', url: 'https://x.ai/grok' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'GPT-5.6 Sol', url: 'https://openai.com/gpt-5-6' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }, { name: 'Ask the Canon', url: 'https://askthecanon.com/' }, { name: 'Mistral Agentic Search', url: 'https://mistral.ai/news/agentic-search/' }, { name: 'GLM-5.3-Flash', url: 'https://z.ai/blog/glm-5.3-flash', openWeight: true }, { name: 'Granite 4.2', url: 'https://research.ibm.com/blog/introducing-granite-4-2', openWeight: true }, { name: 'Qwen3.8-Flash-Next', url: 'https://huggingface.co/Qwen/Qwen3.8-Flash-Next', openWeight: true }, { name: 'Hy4 preview', url: 'https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/', openWeight: true }],
     'Image': [{ name: 'FLUX 3 (early access)', url: 'https://bfl.ai/blog/flux-3' }, { name: 'Grok Imagine', url: 'https://x.ai/grok-imagine' }, { name: 'Midjourney v7', url: 'https://midjourney.com' }, { name: 'Nano Banana Pro (Gemini 3 Pro Image)', url: 'https://deepmind.google/gemini' }, { name: 'GPT Image 1', url: 'https://openai.com/index/gpt-image-1/' }, { name: 'Ideogram', url: 'https://ideogram.ai' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Adobe Firefly', url: 'https://adobe.com/firefly' }, { name: 'Mitte (GPT Image 2 / Nano Banana)', url: 'https://mitte.ai/' }],
-    Video: [{ name: 'Grok Imagine Video 1.5', url: 'https://x.ai/news/grok-imagine-video-1-5-references' }, { name: 'FLUX 3 Video (early access)', url: 'https://bfl.ai/blog/flux-3' }, { name: 'MiniMax H3', url: 'https://www.minimax.io/blog/minimax-h3' }, { name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3.1', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora 2', url: 'https://openai.com/sora' }, { name: 'Tap8 (video generation)', url: 'https://sigmaz.io/' }, { name: 'Mitte (Seedance 2)', url: 'https://mitte.ai/' }],
+    Video: [{ name: 'Grok Imagine Video 1.5', url: 'https://x.ai/news/grok-imagine-video-1-5-references' }, { name: 'FLUX 3 Video (early access)', url: 'https://bfl.ai/blog/flux-3' }, { name: 'MiniMax H3', url: 'https://www.minimax.io/blog/minimax-h3' }, { name: 'Runway Gen-5', url: 'https://runwayml.com' }, { name: 'Google Veo 3.1', url: 'https://deepmind.google/veo' }, { name: 'Kling AI', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Sora 2', url: 'https://openai.com/sora' }, { name: 'Gemini Omni 1.1 Flash', url: 'https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/' }, { name: 'Tap8 (video generation)', url: 'https://sigmaz.io/' }, { name: 'Mitte (Seedance 2)', url: 'https://mitte.ai/' }],
     Audio: [{ name: 'ElevenLabs (text-to-speech)', url: 'https://elevenlabs.io' }, { name: 'OpenAI Audio', url: 'https://openai.com/index/introducing-our-next-generation-audio-models/' }, { name: 'Gemini Audio', url: 'https://deepmind.google/gemini' }],
     Music: [{ name: 'Suno v5.5', url: 'https://suno.com' }, { name: 'Udio v1.5', url: 'https://help.udio.com/en/articles/12874375-udio-warner-music-group-wmg-partnership' }, { name: 'Eleven Music v2', url: 'https://elevenlabs.io/docs/eleven-creative/products/music' }, { name: 'MiniMax Music 2.6', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Google Lyria 3.5', url: 'https://blog.google/innovation-and-ai/models-and-research/google-labs/lyria-3-5/' }, { name: 'Stable Audio 2.5', url: 'https://stability.ai/news-updates/stability-ai-introduces-stable-audio-25-the-first-audio-model-built-for-enterprise-sound-production-at-scale' }, { name: 'Mureka V9', url: 'https://platform.mureka.ai/' }, { name: 'Alibaba Fun-Music', url: 'https://www.alibabacloud.com/help/en/model-studio/fun-music/' }, { name: 'Tencent SongGeneration 2', url: 'https://github.com/tencent-ailab/SongGeneration', openWeight: true }, { name: 'ACE-Step 1.5', url: 'https://github.com/ace-step/ACE-Step', openWeight: true }, { name: 'Baidu ERNIE-Music (research)', url: 'https://aclanthology.org/2023.ijcnlp-demo.9.pdf' }],
     '3D Models': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Luma Genie', url: 'https://lumalabs.ai/genie' }, { name: 'Sloyd.ai', url: 'https://sloyd.ai' }],
     '3D Printable': [{ name: 'Meshy.ai (print export)', url: 'https://meshy.ai' }, { name: 'Tripo3D (print export)', url: 'https://tripo3d.ai' }],
     'Laser Cutting': [{ name: 'Recraft.ai', url: 'https://recraft.ai' }, { name: 'SVGMaker', url: 'https://svgmaker.ai' }, { name: 'Vector Witch', url: 'https://vectorwitch.com' }, { name: 'Cuttle.xyz', url: 'https://cuttle.xyz' }],
-    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'GitHub Copilot', url: 'https://github.com/features/copilot' }, { name: 'Claude Code', url: 'https://anthropic.com/claude-code' }, { name: 'Zenith (agent harness)', url: 'https://github.com/Intelligent-Internet/zenith/tree/main/zenith' }, { name: 'Fugu (multi-model orchestration)', url: 'https://sakana.ai/fugu/' }, { name: 'Grok Build Workflows (parallel agent orchestration)', url: 'https://x.ai/news/workflows' }, { name: 'Grok 4.5', url: 'https://x.ai/grok' }],
+    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Cursor Origin', url: 'https://cursor.com/changelog/origin-code-hosting' }, { name: 'Cursor cloud agents (start from scratch)', url: 'https://cursor.com/changelog/start-from-scratch' }, { name: 'GitHub Copilot', url: 'https://github.com/features/copilot' }, { name: 'Claude Code', url: 'https://anthropic.com/claude-code' }, { name: 'Zenith (agent harness)', url: 'https://github.com/Intelligent-Internet/zenith/tree/main/zenith' }, { name: 'Fugu (multi-model orchestration)', url: 'https://sakana.ai/fugu/' }, { name: 'Grok Build Workflows (parallel agent orchestration)', url: 'https://x.ai/news/workflows' }, { name: 'Grok 4.5', url: 'https://x.ai/grok' }],
     'Mobile Apps': [{ name: 'FlutterFlow AI', url: 'https://flutterflow.io' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Bubble + AI', url: 'https://bubble.io' }],
-    Websites: [{ name: 'Framer AI', url: 'https://framer.com/ai' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Hostinger AI Builder', url: 'https://hostinger.com/ai-builder' }, { name: 'v0.dev', url: 'https://v0.dev' }],
+    Websites: [{ name: 'Framer AI', url: 'https://framer.com/ai' }, { name: 'Bolt.new', url: 'https://bolt.new' }, { name: 'Lovable.dev', url: 'https://lovable.dev' }, { name: 'Hostinger AI Builder', url: 'https://hostinger.com/ai-builder' }, { name: 'v0.dev', url: 'https://v0.dev' }, { name: 'Cursor cloud agents (start from scratch)', url: 'https://cursor.com/changelog/start-from-scratch' }],
     'Robotics & Mechanical': [{ name: 'Gemini Robotics ER 2', url: 'https://blog.google/innovation-and-ai/models-and-research/google-deepmind/gemini-robotics-er-2/' }, { name: 'Grok 4.5 / Claude Fable 5 → Python/GPIO scripts', url: 'https://x.ai/grok' }, { name: 'Edge Impulse', url: 'https://edgeimpulse.com' }, { name: 'Balena.io', url: 'https://balena.io' }],
   },
   Image: {
     Text: [{ name: 'GPT-5.6 Sol vision', url: 'https://openai.com/gpt-5-6' }, { name: 'Claude Fable 5', url: 'https://anthropic.com/claude' }, { name: 'Grok 4.5 vision', url: 'https://x.ai/grok' }, { name: 'Gemini 3.1 Pro', url: 'https://deepmind.google/gemini' }],
     'Image': [{ name: 'Stable Diffusion (ComfyUI)', url: 'https://comfy.org', openWeight: true }, { name: 'Midjourney Remix', url: 'https://midjourney.com' }, { name: 'Firefly inpainting', url: 'https://adobe.com/firefly' }, { name: 'Grok Imagine (img2img)', url: 'https://x.ai/grok-imagine' }],
-    Video: [{ name: 'Grok Imagine Video 1.5 (references)', url: 'https://x.ai/news/grok-imagine-video-1-5-references' }, { name: 'FLUX 3 Video (early access)', url: 'https://bfl.ai/blog/flux-3' }, { name: 'Runway Gen-5 (img→vid)', url: 'https://runwayml.com' }, { name: 'Kling', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Mitte (Seedance 2 / Grok Video)', url: 'https://mitte.ai/' }],
+    Video: [{ name: 'Grok Imagine Video 1.5 (references)', url: 'https://x.ai/news/grok-imagine-video-1-5-references' }, { name: 'Gemini Omni 1.1 Flash', url: 'https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/' }, { name: 'FLUX 3 Video (early access)', url: 'https://bfl.ai/blog/flux-3' }, { name: 'Runway Gen-5 (img→vid)', url: 'https://runwayml.com' }, { name: 'Kling', url: 'https://klingai.com' }, { name: 'Luma Dream Machine', url: 'https://lumalabs.ai/dream-machine' }, { name: 'Leonardo.ai', url: 'https://leonardo.ai' }, { name: 'Mitte (Seedance 2 / Grok Video)', url: 'https://mitte.ai/' }],
     '3D Models': [{ name: 'Meshy.ai', url: 'https://meshy.ai' }, { name: 'Tripo3D', url: 'https://tripo3d.ai' }, { name: '3D AI Studio', url: 'https://3daistudio.ai' }, { name: 'Rodin AI', url: 'https://hyper3d.ai' }, { name: 'Hunyuan3D-Swift', url: 'https://github.com/ZimengXiong/Hunyuan3D-Swift', openWeight: true }],
     '3D Printable': [{ name: 'Meshy.ai (print export)', url: 'https://meshy.ai' }, { name: 'Tripo3D (print export)', url: 'https://tripo3d.ai' }, { name: '3D AI Studio (print export)', url: 'https://3daistudio.ai' }],
     'Laser Cutting': [{ name: 'Recraft.ai', url: 'https://recraft.ai' }, { name: 'Vector Witch', url: 'https://vectorwitch.com' }, { name: 'Vectorizer AI', url: 'https://vectorizer.ai' }, { name: 'SVGMaker', url: 'https://svgmaker.ai' }],
@@ -116,7 +116,7 @@ const MATRIX: Matrix = {
     'Robotics & Mechanical': [{ name: 'Edge Impulse (video datasets → edge ML)', url: 'https://edgeimpulse.com' }, { name: 'Balena', url: 'https://balena.io' }],
   },
   Audio: {
-    Text: [{ name: 'Grok Voice Think Fast 2.0', url: 'https://x.ai/news/grok-voice-think-fast-2' }, { name: 'GPT-5.6 Audio', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Audio', url: 'https://ai.google.dev/gemini-api/docs/audio' }, { name: 'Baidu Speech Recognition', url: 'https://cloud.baidu.com/product/speech' }, { name: 'MiniMax Speech', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Alibaba Qwen Audio', url: 'https://modelstudio.alibabacloud.com/' }],
+    Text: [{ name: 'Grok Voice Think Fast 2.0', url: 'https://x.ai/news/grok-voice-think-fast-2' }, { name: 'Gemini 3.5 Transcribe', url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5-transcribe/' }, { name: 'Granite Speech 5.0 Turbo', url: 'https://research.ibm.com/blog/introducing-granite-4-2', openWeight: true }, { name: 'GPT-5.6 Audio', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Audio', url: 'https://ai.google.dev/gemini-api/docs/audio' }, { name: 'Baidu Speech Recognition', url: 'https://cloud.baidu.com/product/speech' }, { name: 'MiniMax Speech', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Alibaba Qwen Audio', url: 'https://modelstudio.alibabacloud.com/' }],
     Image: [{ name: 'Grok Voice + Imagine', url: 'https://x.ai/grok-imagine' }, { name: 'GPT-5.6 Audio + GPT Image', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Audio + Imagen', url: 'https://ai.google.dev/gemini-api/docs/audio' }, { name: 'Alibaba Qwen Audio + Wan', url: 'https://modelstudio.alibabacloud.com/' }],
     Video: [{ name: 'Wan 2.7 (audio-guided video)', url: 'https://help.aliyun.com/en/model-studio/text-to-video-api-reference' }, { name: 'MiniMax Hailuo', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Google Veo', url: 'https://deepmind.google/veo' }, { name: 'Tap8 (audio-to-video)', url: 'https://sigmaz.io/' }],
     Audio: [{ name: 'ElevenLabs Voice Changer', url: 'https://elevenlabs.io/docs/overview/capabilities/voice-changer' }, { name: 'Grok Voice Think Fast 2.0', url: 'https://x.ai/news/grok-voice-think-fast-2' }, { name: 'GPT-5.6 Audio', url: 'https://developers.openai.com/api/docs/guides/audio' }, { name: 'Gemini Live', url: 'https://ai.google.dev/gemini-api/docs/live' }, { name: 'MiniMax Speech', url: 'https://platform.minimax.io/docs/release-notes/models' }, { name: 'Alibaba Qwen Audio', url: 'https://modelstudio.alibabacloud.com/' }],
@@ -170,7 +170,7 @@ const MATRIX: Matrix = {
     '3D Models': [{ name: 'Meshy / Sloyd (code → 3D via Three.js/Blender scripts)', url: 'https://sloyd.ai' }],
     '3D Printable': [{ name: 'Blender Python (printable mesh generation)', url: 'https://blender.org' }],
     'Laser Cutting': [{ name: 'Recraft / SVGMaker (code → SVG)', url: 'https://recraft.ai' }],
-    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Copilot', url: 'https://github.com/features/copilot' }, { name: 'Aider (refactoring)', url: 'https://aider.chat' }],
+    Code: [{ name: 'Cursor', url: 'https://cursor.com' }, { name: 'Cursor Origin', url: 'https://cursor.com/changelog/origin-code-hosting' }, { name: 'Copilot', url: 'https://github.com/features/copilot' }, { name: 'Aider (refactoring)', url: 'https://aider.chat' }],
     'Mobile Apps': [{ name: 'FlutterFlow / Expo + LLM code', url: 'https://flutterflow.io' }, { name: 'Replit Agent', url: 'https://replit.com/agent' }],
     Websites: [{ name: 'v0.dev, Lovable.dev, Bolt.new', url: 'https://v0.dev' }],
     'Interactive Interface': [{ name: 'Gemini (code → interactive interface)', url: 'https://gemini.google.com/' }, { name: 'Codex / GPT (code → interactive interface)', url: 'https://openai.com/codex/' }, { name: 'Claude (code → interactive interface)', url: 'https://claude.ai/' }],
@@ -414,7 +414,7 @@ const ToolsPage: React.FC = () => {
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">
-            Longmont AI · Feb 2026
+            Longmont AI · Sep 2026
           </span>
           <div className="flex-1 h-px bg-gradient-to-r from-cyan-400/40 to-transparent" />
         </div>
@@ -571,7 +571,43 @@ const ToolsPage: React.FC = () => {
 
       </div>
 
+      <section className="moa-panel" aria-labelledby="cheap-access-heading">
+        <div className="moa-panel-intro">
+          <span className="moa-kicker">Cheap access · through 31 Dec 2026</span>
+          <h2 id="cheap-access-heading">Student and promo lanes</h2>
+          <p>
+            Price is a calendar item this fortnight, not a new intelligence score.
+            Eligible US college students can redeem one year of Google AI Pro
+            (stated $19.99/mo value). Many markets outside the US get one year of
+            Google AI Plus (stated $4.99/mo or local equivalent after). It auto-renews
+            unless cancelled. GLM-5.3-Flash list is $0.15 / $0.03 cached / $0.50 per 1M
+            tokens, with 50% off through 9 Sep 2026 24:00 UTC+8.
+          </p>
+        </div>
+        <div className="moa-panel-details">
+          <div className="moa-signals" aria-label="Cheap access reminders">
+            <span>Redeem by 31 Dec 2026</span>
+            <span>Cancel auto-renew</span>
+            <span>Calendar the GLM promo</span>
+          </div>
+          <p className="moa-roster-intro">Official offers</p>
+          <div className="moa-tool-list" aria-label="Cheap access offers">
+            <a href="https://blog.google/innovation-and-ai/products/gemini-app/student-offer-google-ai/" target="_blank" rel="noopener noreferrer" className="moa-tool-row">
+              <span className="moa-tool-name">Google student offer <ExternalLink size={13} aria-hidden="true" /></span>
+              <span className="moa-tool-kind">Gemini app</span>
+              <span className="moa-tool-description">US Pro / international Plus for one year if eligible. Auto-renew warning.</span>
+            </a>
+            <a href="https://docs.z.ai/guides/overview/pricing" target="_blank" rel="noopener noreferrer" className="moa-tool-row">
+              <span className="moa-tool-name">GLM-5.3-Flash promo <ExternalLink size={13} aria-hidden="true" /></span>
+              <span className="moa-tool-kind">API</span>
+              <span className="moa-tool-description">50% off official list through 9 Sep 2026 24:00 UTC+8. MIT weights.</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── Mixture of Agents ──────────────────────────────────────────── */}
+
       <section className="moa-panel" aria-labelledby="moa-heading">
         <div className="moa-panel-intro">
           <span className="moa-kicker">Pattern spotlight · MoA</span>
@@ -613,7 +649,7 @@ const ToolsPage: React.FC = () => {
       {/* Footer */}
       <div className="mt-12 pt-8 border-t border-white/5 text-center">
         <p className="text-sm text-zinc-600">
-          Longmont AI Meetup · February 2026 ·{' '}
+          Longmont AI Meetup · September 2026 ·{' '}
           <Link to="/" className="text-cyan-400 hover:underline">
             ← Back to editions
           </Link>
