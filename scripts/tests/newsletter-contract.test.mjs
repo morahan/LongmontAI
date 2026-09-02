@@ -700,6 +700,32 @@ function successfulFetch(calls = []) {
   };
 }
 
+test('Supabase local config disables unused Auth and seeding without missing seed paths', async () => {
+  const config = await readFile(path.join(root, 'supabase/config.toml'), 'utf8');
+  const section = (name) => {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return config.match(new RegExp(`^\\[${escaped}\\]\\n([\\s\\S]*?)(?=^\\[)`, 'm'))?.[1] ?? '';
+  };
+  const seed = section('db.seed');
+  const auth = section('auth');
+  const authEmail = section('auth.email');
+
+  assert.match(seed, /^enabled = false$/m);
+  assert.match(seed, /^sql_paths = \[\]$/m);
+  assert.match(auth, /^enabled = false$/m);
+  assert.match(auth, /^enable_signup = false$/m);
+  assert.match(authEmail, /^enable_signup = false$/m);
+  assert.doesNotMatch(auth, /^enabled = true$/m);
+  assert.doesNotMatch(auth, /^enable_signup = true$/m);
+  assert.doesNotMatch(authEmail, /^enable_signup = true$/m);
+
+  const configuredSeedPaths = [...seed.matchAll(/["']([^"']+\.sql)["']/g)].map((match) => match[1]);
+  assert.deepEqual(configuredSeedPaths, []);
+  for (const seedPath of configuredSeedPaths) {
+    await assert.doesNotReject(readFile(path.resolve(root, 'supabase', seedPath), 'utf8'));
+  }
+});
+
 test('newsletter migration enables RLS and keeps browser roles without table grants', async () => {
   const migration = await readFile(path.join(root, 'supabase/migrations/20260824085525_newsletter_infrastructure.sql'), 'utf8');
   for (const table of ['newsletter_subscribers', 'newsletter_delivery_events', 'newsletter_sources', 'newsletter_issues', 'newsletter_issue_items']) {
