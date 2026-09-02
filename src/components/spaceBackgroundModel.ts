@@ -359,6 +359,31 @@ export const isCometTraveler = (traveler: Pick<Traveler, 'seed' | 'isGalaxy'>, c
     getTravelerVariant(traveler, cycle) === 'comet';
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
+/**
+ * Exponential speed gain along the ray from the vanishing point to the viewport edge.
+ * Radius is measured against the first rectangular perimeter intersection, so every edge is 2x
+ * on non-square screens while points beyond the viewport remain capped.
+ */
+export const getTravelerRadialSpeedMultiplier = (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+) => {
+    const safeWidth = Math.max(1, width);
+    const safeHeight = Math.max(1, height);
+    const centerX = safeWidth * 0.5;
+    const centerY = safeHeight * 0.45;
+    const offsetX = x - centerX;
+    const offsetY = y - centerY;
+    const normalizedRadius = Math.max(
+        offsetX >= 0 ? offsetX / (safeWidth - centerX) : -offsetX / centerX,
+        offsetY >= 0 ? offsetY / (safeHeight - centerY) : -offsetY / centerY,
+    );
+    return 2 ** clamp01(normalizedRadius);
+};
+
 const smoothstep = (value: number) => {
     const bounded = clamp01(value);
     return bounded * bounded * (3 - 2 * bounded);
@@ -1452,10 +1477,78 @@ export const getStarPosition = (
         : starIndex];
 };
 
+const travelerSpeedMultiplierAtDepth = (seed: number, cycle: number, depth: number) => {
+    const laneX = hashRandom(seed, cycle, 5) * 2 - 1;
+    const laneY = hashRandom(seed, cycle, 6) * 2 - 1;
+    const reciprocalScale = FAR_DEPTH / depth;
+    return getTravelerRadialSpeedMultiplier(
+        0.5 + laneX * 0.39 * reciprocalScale,
+        0.45 + laneY * 0.37 * reciprocalScale,
+        1,
+        1,
+    );
+};
+
+/** Cached deterministic quadrature keeps the position-dependent clock cheap in the RAF loop. */
+const TRAVELER_SPEED_TABLE_STEPS = 256;
+const travelerSpeedTables = new Map<string, Float64Array>();
+const getTravelerSpeedTable = (traveler: Traveler, cycle: number) => {
+    const key = `${traveler.seed}:${cycle}`;
+    const cached = travelerSpeedTables.get(key);
+    if (cached) return cached;
+    const table = new Float64Array(TRAVELER_SPEED_TABLE_STEPS + 1);
+    const step = DEPTH_RANGE / TRAVELER_SPEED_TABLE_STEPS;
+    let previous = 1 / travelerSpeedMultiplierAtDepth(traveler.seed, cycle, FAR_DEPTH);
+    for (let index = 1; index <= TRAVELER_SPEED_TABLE_STEPS; index += 1) {
+        const distance = step * index;
+        const current = 1 / travelerSpeedMultiplierAtDepth(
+            traveler.seed, cycle, FAR_DEPTH - distance,
+        );
+        table[index] = table[index - 1] + (previous + current) * step * 0.5;
+        previous = current;
+    }
+    if (travelerSpeedTables.size >= 4096) travelerSpeedTables.clear();
+    travelerSpeedTables.set(key, table);
+    return table;
+};
+
+const travelerBudgetAtDistance = (table: Float64Array, distance: number) => {
+    const tablePosition = clamp01(distance / DEPTH_RANGE) * TRAVELER_SPEED_TABLE_STEPS;
+    const index = Math.min(TRAVELER_SPEED_TABLE_STEPS - 1, Math.floor(tablePosition));
+    return mix(table[index], table[index + 1], tablePosition - index);
+};
+
 export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) => {
-    const distance = traveler.initialDistance + Math.max(0, simulationSeconds) * traveler.speed;
-    const cycle = Math.floor(distance / DEPTH_RANGE);
-    return { depth: FAR_DEPTH - (distance - cycle * DEPTH_RANGE), cycle };
+    const initialDistance = Math.max(0, traveler.initialDistance);
+    let cycle = Math.floor(initialDistance / DEPTH_RANGE);
+    let localDistance = initialDistance - cycle * DEPTH_RANGE;
+    let distanceBudget = Math.max(0, simulationSeconds) * Math.max(0, traveler.speed);
+    if (traveler.speed <= 0 || distanceBudget === 0) {
+        return { depth: FAR_DEPTH - localDistance, cycle };
+    }
+
+    let table = getTravelerSpeedTable(traveler, cycle);
+    let startingBudget = travelerBudgetAtDistance(table, localDistance);
+    while (distanceBudget >= table[TRAVELER_SPEED_TABLE_STEPS] - startingBudget) {
+        distanceBudget -= table[TRAVELER_SPEED_TABLE_STEPS] - startingBudget;
+        cycle += 1;
+        localDistance = 0;
+        startingBudget = 0;
+        table = getTravelerSpeedTable(traveler, cycle);
+    }
+
+    const targetBudget = startingBudget + distanceBudget;
+    let lower = 0;
+    let upper = TRAVELER_SPEED_TABLE_STEPS;
+    while (lower + 1 < upper) {
+        const middle = Math.floor((lower + upper) * 0.5);
+        if (table[middle] <= targetBudget) lower = middle;
+        else upper = middle;
+    }
+    const budgetSpan = table[upper] - table[lower];
+    const fraction = budgetSpan > 0 ? (targetBudget - table[lower]) / budgetSpan : 0;
+    localDistance = (lower + fraction) * DEPTH_RANGE / TRAVELER_SPEED_TABLE_STEPS;
+    return { depth: FAR_DEPTH - localDistance, cycle };
 };
 
 /** Intrinsically larger travelers trend red; all non-red palette entries share the remainder. */

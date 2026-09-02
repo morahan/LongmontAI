@@ -108,6 +108,7 @@ import {
   getSystemScale,
   getTravelerAppearance,
   getTravelerColorWeights,
+  getTravelerRadialSpeedMultiplier,
   getTravelerStarRenderPolicy,
   getTravelerDepth,
   getTravelerVariant,
@@ -1101,6 +1102,71 @@ test('ordinary wrap and bounce behavior resumes exactly after 7,000 fade boundar
   assert.equal(bounces, 3500);
 });
 
+test('radial traveler speed uses a clamped endpoint-preserving exponential curve', () => {
+  const width = 1200;
+  const height = 600;
+  const center = { x: width * 0.5, y: height * 0.45 };
+  closeTo(getTravelerRadialSpeedMultiplier(center.x, center.y, width, height), 1);
+
+  for (const perimeter of [
+    { x: 0, y: center.y },
+    { x: width, y: center.y },
+    { x: center.x, y: 0 },
+    { x: center.x, y: height },
+    { x: width, y: height },
+  ]) {
+    closeTo(getTravelerRadialSpeedMultiplier(perimeter.x, perimeter.y, width, height), 2);
+  }
+
+  const samples = [0, 0.25, 0.5, 0.75, 1].map((radius) =>
+    getTravelerRadialSpeedMultiplier(
+      center.x + (width - center.x) * radius,
+      center.y,
+      width,
+      height,
+    ));
+  samples.forEach((multiplier, index) => closeTo(multiplier, 2 ** (index / 4)));
+  closeTo(samples[2], Math.sqrt(2));
+  assert.notEqual(samples[2], 1.5, 'half-radius speed must not be linear');
+  assert.ok(samples.every((value, index) => index === 0 || value > samples[index - 1]));
+  closeTo(getTravelerRadialSpeedMultiplier(-500, center.y, width, height), 2);
+  closeTo(getTravelerRadialSpeedMultiplier(width * 2, height * 2, width, height), 2);
+});
+
+test('actual traveler motion gains radial speed without bending or breaking depth cycles', () => {
+  const width = 1200;
+  const height = 600;
+  const center = { x: width * 0.5, y: height * 0.45 };
+  const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const delta = 0.0001;
+  const radialSpeeds = [2, 12, 22].map((time) => {
+    const before = projectTraveler(traveler, time, width, height);
+    const after = projectTraveler(traveler, time + delta, width, height);
+    assert.equal(after.cycle, before.cycle);
+    const beforeOffset = { x: before.x - center.x, y: before.y - center.y };
+    const movement = { x: after.x - before.x, y: after.y - before.y };
+    closeTo(beforeOffset.x * movement.y - beforeOffset.y * movement.x, 0, 1e-7);
+    const normalizedMultiplier = getTravelerRadialSpeedMultiplier(
+      before.x, before.y, width, height,
+    );
+    const measuredDepthSpeed = (before.depth - after.depth) / delta;
+    closeTo(measuredDepthSpeed / traveler.speed, normalizedMultiplier, 0.002);
+    return Math.hypot(movement.x, movement.y) / delta;
+  });
+  assert.ok(radialSpeeds[1] > radialSpeeds[0]);
+  assert.ok(radialSpeeds[2] > radialSpeeds[1]);
+
+  let cycleBoundary = 0;
+  while (projectTraveler(traveler, cycleBoundary, width, height).cycle === 0) cycleBoundary += 0.1;
+  const beforeBoundary = projectTraveler(traveler, cycleBoundary - 0.1, width, height);
+  const afterBoundary = projectTraveler(traveler, cycleBoundary, width, height);
+  assert.equal(beforeBoundary.cycle, 0);
+  assert.equal(afterBoundary.cycle, 1);
+  assert.ok(beforeBoundary.depth >= NEAR_DEPTH && beforeBoundary.depth <= FAR_DEPTH);
+  assert.ok(afterBoundary.depth >= NEAR_DEPTH && afterBoundary.depth <= FAR_DEPTH);
+  assert.deepEqual(afterBoundary, projectTraveler(traveler, cycleBoundary, width, height));
+});
+
 test('travelers grow strongly on approach and reveal detail at exact monotonic thresholds', () => {
   const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
   assert.deepEqual(TRAVELER_DETAIL_THRESHOLDS, [0.28, 0.5, 0.68]);
@@ -1536,9 +1602,21 @@ test('traveler trajectories remain straight and collinear through every reveal t
     (SYSTEM_MIN_PROGRESS + SYSTEM_MAX_PROGRESS) / 2,
     SYSTEM_MAX_PROGRESS,
   ];
+  let firstCycleEnd = 0;
+  while (projectTraveler(traveler, firstCycleEnd, width, height).cycle === 0) firstCycleEnd += 0.1;
+  const elapsedForProgress = (target) => {
+    let lower = 0;
+    let upper = firstCycleEnd - 0.1000001;
+    for (let iteration = 0; iteration < 48; iteration += 1) {
+      const middle = (lower + upper) * 0.5;
+      if (projectTraveler(traveler, middle, width, height).progress < target) lower = middle;
+      else upper = middle;
+    }
+    return (lower + upper) * 0.5;
+  };
   const projections = progresses.map((progress) => projectTraveler(
     traveler,
-    progress * (FAR_DEPTH - NEAR_DEPTH) / traveler.speed,
+    elapsedForProgress(progress),
     width,
     height,
   ));
