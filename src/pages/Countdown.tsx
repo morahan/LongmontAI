@@ -15,8 +15,8 @@ const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
 const JUST_HIT_ZERO_DURATION_MS = 8000;
 // Update these together roughly every third meetup (28 days) when rotating Discord invites.
 // The QR code and its click-through link both derive from this one URL.
-const DISCORD_INVITE_URL = 'https://discord.gg/Av8tU3GFW';
-const DISCORD_INVITE_FIRST_MEETUP = new Date(2026, 6, 22, 12, 0, 0, 0);
+const DISCORD_INVITE_URL = 'https://discord.gg/ctx5rF7q2';
+const DISCORD_INVITE_FIRST_MEETUP = new Date(2026, 8, 2, 12, 0, 0, 0);
 const DISCORD_INVITE_VALID_FOR_MEETUPS = 3;
 const DISCORD_QR_OPENING_WINDOW_MINUTES = 10;
 const DISCORD_QR_POST_MEETUP_WINDOW_MINUTES = 30;
