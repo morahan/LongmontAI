@@ -427,6 +427,82 @@ export async function patchSubscriber(env, id, fields, fetchImpl = fetch) {
   return Array.isArray(rows) ? rows[0] : rows;
 }
 
+const NEWSLETTER_EVENT_PROVIDERS = Object.freeze({
+  subscribe: new Set(['website']),
+  listmonk_sync: new Set(['listmonk']),
+  error: new Set(['listmonk']),
+  draft_generated: new Set(['openai', 'deterministic']),
+});
+const LISTMONK_EVENT_STATUSES = new Set(['submitted', 'already-subscribed']);
+const LISTMONK_EVENT_REASONS = new Set(['listmonk_not_configured', 'listmonk_list_not_configured']);
+const CAMPAIGN_EVENT_STATUSES = new Set(['draft', 'scheduled', 'running', 'paused', 'finished', 'cancelled', 'skipped']);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validUuid(value) {
+  return typeof value === 'string' && UUID_PATTERN.test(value) ? value.toLowerCase() : null;
+}
+
+function invalidNewsletterEvent() {
+  return new NewsletterError('Newsletter event was invalid.', {
+    status: 500,
+    code: 'newsletter_event_invalid',
+  });
+}
+
+function minimizedNewsletterEvent(event) {
+  const eventType = typeof event?.eventType === 'string' ? event.eventType : '';
+  const provider = typeof event?.provider === 'string' ? event.provider : '';
+  if (!NEWSLETTER_EVENT_PROVIDERS[eventType]?.has(provider)) throw invalidNewsletterEvent();
+
+  const subscriberEvent = eventType !== 'draft_generated';
+  const subscriberId = event?.subscriberId == null ? null : validUuid(event.subscriberId);
+  if ((subscriberEvent && !subscriberId) || (!subscriberEvent && event?.subscriberId != null)) {
+    throw invalidNewsletterEvent();
+  }
+  const providerEventId = event?.providerEventId == null ? null : validUuid(event.providerEventId);
+  if (event?.providerEventId != null && !providerEventId) throw invalidNewsletterEvent();
+
+  const input = event?.payload && typeof event.payload === 'object' && !Array.isArray(event.payload)
+    ? event.payload
+    : {};
+  let payload;
+  if (eventType === 'draft_generated') {
+    const issueId = validUuid(input.issueId);
+    if (!issueId || !CADENCES.has(input.cadence)) throw invalidNewsletterEvent();
+    payload = {
+      issueId,
+      cadence: input.cadence,
+      campaignId: Number.isInteger(input.campaignId) && input.campaignId > 0 ? input.campaignId : null,
+      campaignStatus: CAMPAIGN_EVENT_STATUSES.has(input.campaignStatus) ? input.campaignStatus : null,
+      recovered: input.recovered === true,
+    };
+  } else if (eventType === 'listmonk_sync') {
+    payload = {
+      ok: input.ok === true,
+      status: LISTMONK_EVENT_STATUSES.has(input.status) ? input.status : null,
+      skipped: input.skipped === true,
+      reason: LISTMONK_EVENT_REASONS.has(input.reason) ? input.reason : null,
+    };
+  } else if (eventType === 'error') {
+    payload = {
+      code: 'newsletter_provider_operation_failed',
+      message: 'Newsletter provider operation failed.',
+    };
+  } else {
+    // Subscriber identity and preference data belong in the protected
+    // subscriber record, not duplicated in event JSON.
+    payload = {};
+  }
+
+  return {
+    subscriber_id: subscriberId,
+    event_type: eventType,
+    provider,
+    provider_event_id: providerEventId,
+    payload,
+  };
+}
+
 export async function recordNewsletterEvent(env, event, fetchImpl = fetch) {
   const rows = await supabaseRest(
     env,
@@ -436,13 +512,7 @@ export async function recordNewsletterEvent(env, event, fetchImpl = fetch) {
       headers: {
         Prefer: 'return=representation',
       },
-      body: {
-        subscriber_id: event.subscriberId ?? null,
-        event_type: event.eventType,
-        provider: event.provider ?? null,
-        provider_event_id: event.providerEventId ?? null,
-        payload: event.payload ?? {},
-      },
+      body: minimizedNewsletterEvent(event),
     },
     fetchImpl,
   );
@@ -522,14 +592,10 @@ export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetc
     headers = { ...headers, ...listmonkAuthHeaders(config) };
     payload = {
       email: subscriber.email,
-      name: subscriber.name || subscriber.email,
+      name: subscriber.name || '',
       status: 'enabled',
       lists: [list.id],
       preconfirm_subscriptions: false,
-      attribs: {
-        cadence: subscriber.cadence,
-        source: subscriber.source,
-      },
     };
   } else {
     return { ok: false, skipped: true, reason: 'listmonk_list_not_configured' };
@@ -549,7 +615,7 @@ export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetc
   if (!outbound.response.ok) {
     const detail = JSON.stringify(data ?? {});
     if (outbound.response.status === 409 || /already|duplicate|exists/i.test(detail)) {
-      return { ok: true, status: 'already-subscribed', data };
+      return { ok: true, status: 'already-subscribed' };
     }
     throw new NewsletterError('Listmonk subscription failed.', {
       status: 502,
@@ -557,7 +623,7 @@ export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetc
     });
   }
 
-  return { ok: true, status: 'submitted', data };
+  return { ok: true, status: 'submitted' };
 }
 
 export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {

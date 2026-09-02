@@ -164,17 +164,18 @@ export function createNewsletterGenerateHandler({
       }
 
       const issue = await completeNewsletterGeneration(env, claim, campaign, fetchImpl);
+      const issueId = issue?.id ?? claim.issueId;
       await recordNewsletterEvent(
         env,
         {
           eventType: 'draft_generated',
           provider: draft.usedAi ? 'openai' : 'deterministic',
           payload: {
-            issueId: issue?.id ?? claim.issueId,
+            issueId,
             cadence,
-            campaign,
-            campaignIdentity: claim.campaignIdentity,
-            curatorModel: draft.curatorModel,
+            campaignId: campaign.ok ? campaign.campaignId : null,
+            campaignStatus: campaign.ok ? campaign.status : 'skipped',
+            recovered: recoveredCampaign,
           },
         },
         fetchImpl,
@@ -186,12 +187,14 @@ export function createNewsletterGenerateHandler({
         reason: recoveredCampaign ? 'campaign_recovered' : 'not_attempted',
       };
       if (env.NEWSLETTER_NOTIFY_OWNER === '1' && !recoveredCampaign) {
+        const reviewUrl = 'https://longmontai.com/newsletter';
+        const shortSummary = Array.from(String(draft.summary ?? '')).slice(0, 280).join('');
         notification = await sendResendNotification(
           env,
           {
-            subject: `Draft ready: ${draft.subject}`,
-            html: `<p>A LongmontAI newsletter draft is ready.</p><p><strong>${escapeNewsletterHtml(draft.subject)}</strong></p>${draft.html}`,
-            text: `A LongmontAI newsletter draft is ready.\n\n${draft.subject}\n\n${draft.text}`,
+            subject: `Newsletter draft ready: ${issueId}`,
+            html: `<p>Newsletter draft <strong>${escapeNewsletterHtml(issueId)}</strong> is ready for review.</p><p>${escapeNewsletterHtml(shortSummary)}</p><p><a href="${reviewUrl}">Review the newsletter workflow</a></p>`,
+            text: `Newsletter draft ${issueId} is ready for review.\n\n${shortSummary}\n\nReview: ${reviewUrl}`,
           },
           fetchImpl,
         );
@@ -200,7 +203,7 @@ export function createNewsletterGenerateHandler({
       return sendJson(response, 200, {
         ok: true,
         existing: false,
-        issueId: issue?.id ?? claim.issueId,
+        issueId,
         cadence,
         usedAi: draft.usedAi,
         campaign,

@@ -24,6 +24,7 @@ import {
   normalizeEmail,
   readBoundedResponseJson,
   readBoundedResponseText,
+  recordNewsletterEvent,
   sendResendNotification,
   supabaseRest,
   syncSubscriberToListmonk,
@@ -385,7 +386,7 @@ test('provider wrappers accept null success bodies and reject malformed non-null
     cadence: 'weekly',
     source: 'contract-test',
   }, noContent);
-  assert.deepEqual(listmonk, { ok: true, status: 'submitted', data: null });
+  assert.deepEqual(listmonk, { ok: true, status: 'submitted' });
 
   const resend = await sendResendNotification(env({
     RESEND_API_KEY: 'resend-test-key',
@@ -422,6 +423,130 @@ test('provider wrappers accept null success bodies and reject malformed non-null
     }, malformed),
     (error) => error.code === 'newsletter_response_invalid',
   );
+});
+
+test('newsletter event allowlists reject unknown structure and strip every sentinel payload field', async () => {
+  const subscriberId = '00000000-0000-4000-8000-000000000081';
+  const issueId = '00000000-0000-4000-8000-000000000082';
+  const providerEventId = '00000000-0000-4000-8000-000000000083';
+  const sentinels = [
+    'EVENT_CREDENTIAL_SENTINEL',
+    'EVENT_PROVIDER_BODY_SENTINEL',
+    'https://event-sentinel.invalid/private',
+    'event-sentinel@example.com',
+    '203.0.113.241',
+    'EVENT_INTERNAL_METADATA_SENTINEL',
+  ];
+  const poison = Object.fromEntries(sentinels.map((value, index) => [`extra${index}`, value]));
+  const captured = [];
+  const fetchImpl = async (_url, options) => {
+    captured.push(JSON.parse(options.body));
+    return new Response(JSON.stringify([{ id: '00000000-0000-4000-8000-000000000084' }]));
+  };
+  const baseEnv = env();
+
+  await recordNewsletterEvent(baseEnv, {
+    subscriberId,
+    eventType: 'subscribe',
+    provider: 'website',
+    providerEventId,
+    payload: poison,
+    ...poison,
+  }, fetchImpl);
+  await recordNewsletterEvent(baseEnv, {
+    subscriberId,
+    eventType: 'listmonk_sync',
+    provider: 'listmonk',
+    payload: { ok: true, status: 'submitted', skipped: false, reason: null, ...poison },
+    ...poison,
+  }, fetchImpl);
+  await recordNewsletterEvent(baseEnv, {
+    subscriberId,
+    eventType: 'listmonk_sync',
+    provider: 'listmonk',
+    payload: { status: sentinels[0], reason: sentinels[1], ...poison },
+  }, fetchImpl);
+  await recordNewsletterEvent(baseEnv, {
+    subscriberId,
+    eventType: 'error',
+    provider: 'listmonk',
+    payload: { message: sentinels.join(' '), code: sentinels[0], ...poison },
+  }, fetchImpl);
+  await recordNewsletterEvent(baseEnv, {
+    eventType: 'draft_generated',
+    provider: 'openai',
+    payload: { issueId, cadence: 'weekly', campaignId: 91, campaignStatus: 'draft', recovered: false, ...poison },
+    ...poison,
+  }, fetchImpl);
+
+  assert.deepEqual(captured.map((event) => event.payload), [
+    {},
+    { ok: true, status: 'submitted', skipped: false, reason: null },
+    { ok: false, status: null, skipped: false, reason: null },
+    { code: 'newsletter_provider_operation_failed', message: 'Newsletter provider operation failed.' },
+    { issueId, cadence: 'weekly', campaignId: 91, campaignStatus: 'draft', recovered: false },
+  ]);
+  assert.equal(captured[0].provider_event_id, providerEventId);
+  assert.deepEqual(captured.map(({ event_type, provider }) => [event_type, provider]), [
+    ['subscribe', 'website'],
+    ['listmonk_sync', 'listmonk'],
+    ['listmonk_sync', 'listmonk'],
+    ['error', 'listmonk'],
+    ['draft_generated', 'openai'],
+  ]);
+  for (const sentinel of sentinels) assert.doesNotMatch(JSON.stringify(captured), new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+
+  const invalidEvents = [
+    { subscriberId, eventType: sentinels[0], provider: 'website', payload: poison },
+    { subscriberId, eventType: 'subscribe', provider: sentinels[0], payload: poison },
+    { subscriberId, eventType: 'subscribe', provider: 'listmonk', payload: poison },
+    { subscriberId: sentinels[3], eventType: 'subscribe', provider: 'website', payload: poison },
+    { subscriberId, eventType: 'subscribe', provider: 'website', providerEventId: sentinels[2], payload: poison },
+    { eventType: 'draft_generated', provider: 'deterministic', payload: { issueId: sentinels[4], cadence: 'weekly' } },
+  ];
+  const callsBeforeInvalid = captured.length;
+  for (const event of invalidEvents) {
+    await assert.rejects(recordNewsletterEvent(baseEnv, event, fetchImpl), (error) => {
+      assert.equal(error.code, 'newsletter_event_invalid');
+      assert.equal(error.message, 'Newsletter event was invalid.');
+      const rendered = `${String(error)}\n${inspect(error)}\n${JSON.stringify(error)}`;
+      for (const sentinel of sentinels) assert.doesNotMatch(rendered, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+      return true;
+    });
+  }
+  assert.equal(captured.length, callsBeforeInvalid);
+});
+
+test('Listmonk admin subscription sends only identity, required list, and double-opt-in fields', async () => {
+  let captured;
+  const result = await syncSubscriberToListmonk(env({
+    LISTMONK_BASE_URL: 'https://listmonk.example.test',
+    LISTMONK_WEEKLY_LIST_UUID: undefined,
+    LISTMONK_NEWSLETTER_LIST_UUID: undefined,
+    LISTMONK_WEEKLY_LIST_ID: '42',
+    LISTMONK_API_USERNAME: 'api-user',
+    LISTMONK_API_TOKEN: 'api-token',
+  }), {
+    email: 'minimal@example.com',
+    name: 'Minimal Person',
+    cadence: 'weekly',
+    source: 'PRIVATE_SOURCE_METADATA',
+    page: 'PRIVATE_PAGE_METADATA',
+    ip: '203.0.113.99',
+  }, async (_url, options) => {
+    captured = JSON.parse(options.body);
+    return new Response('{}');
+  });
+
+  assert.deepEqual(result, { ok: true, status: 'submitted' });
+  assert.deepEqual(captured, {
+    email: 'minimal@example.com',
+    name: 'Minimal Person',
+    status: 'enabled',
+    lists: [42],
+    preconfirm_subscriptions: false,
+  });
+  assert.doesNotMatch(JSON.stringify(captured), /PRIVATE_|203\.0\.113\.99|cadence|source|attribs/i);
 });
 
 test('setup-check subprocess sanitizes sentinels and does not await stuck body cancellation', async () => {
@@ -970,6 +1095,74 @@ test('newsletter URL validation rejects dangerous, malformed, encoded, and proto
   assert.equal(validatedNewsletterUrl('/edition/edition-2026-08-19'), 'https://longmontai.com/edition/edition-2026-08-19');
 });
 
+test('OpenAI receives only the purpose-built newsletter curation projection', async () => {
+  const credentialSentinel = 'OPENAI_SECRET_NOT_IN_BODY';
+  const pathSentinel = 'src/articles/private-repository-path.md';
+  const errorSentinel = 'INTERNAL_FETCH_ERROR_SENTINEL';
+  const inventorySentinel = 'UNRELATED_MONITORED_INVENTORY_SENTINEL';
+  let requestBody;
+  await createCuratedNewsletterDraft({
+    env: { OPENAI_API_KEY: credentialSentinel, NEWSLETTER_CURATOR_MODEL: 'test-model' },
+    cadence: 'weekly',
+    now: new Date('2026-08-25T12:00:00Z'),
+    collectSignalsImpl: async () => ({
+      collectedAt: 'internal-timestamp',
+      website: {
+        recentArticles: [{
+          id: 'edition-2026-08-19',
+          title: 'Relevant article',
+          summary: 'Relevant summary',
+          path: pathSentinel,
+          headings: ['Internal heading inventory'],
+          sourceUrls: ['https://research.example/relevant'],
+          privateMetadata: 'PRIVATE_ARTICLE_METADATA',
+        }],
+      },
+      modelWatchStatus: {
+        checkedAt: 'internal-check-time',
+        successfulSources: 2,
+        totalSources: 3,
+        detectedModels: ['Relevant Model'],
+        internalMetadata: 'PRIVATE_MODEL_METADATA',
+      },
+      monitoredSources: [{ company: inventorySentinel, url: 'https://inventory.invalid' }],
+      sourceHighlights: [
+        { company: 'Relevant Company', url: 'https://company.example/release', matches: ['Relevant Model v2'], ok: true },
+        { company: 'Failed Company', url: 'https://failed.invalid', matches: [], ok: false, error: errorSentinel },
+      ],
+      sourceUrls: ['https://research.example/relevant'],
+      repositoryMetadata: 'PRIVATE_REPOSITORY_METADATA',
+    }),
+    fetchImpl: async (_url, options) => {
+      requestBody = options.body;
+      return new Response(JSON.stringify({
+        output_text: JSON.stringify({ subject: 'Curated', preheader: 'Preview', summary: 'Summary' }),
+      }), { status: 200 });
+    },
+  });
+
+  const providerPayload = JSON.parse(requestBody);
+  const input = JSON.parse(providerPayload.input);
+  assert.deepEqual(Object.keys(input).sort(), ['context', 'expectedShape']);
+  assert.deepEqual(Object.keys(input.context).sort(), [
+    'cadence', 'modelWatch', 'periodEnd', 'periodStart', 'recentArticles', 'reviewSurfaces', 'sourceHighlights',
+  ]);
+  assert.deepEqual(input.context.recentArticles, [{
+    title: 'Relevant article',
+    summary: 'Relevant summary',
+    publicUrl: 'https://longmontai.com/edition/edition-2026-08-19',
+    sourceUrls: ['https://research.example/relevant'],
+  }]);
+  assert.deepEqual(input.context.sourceHighlights, [{
+    company: 'Relevant Company',
+    sourceUrl: 'https://company.example/release',
+    matches: ['Relevant Model v2'],
+  }]);
+  for (const prohibited of [credentialSentinel, pathSentinel, errorSentinel, inventorySentinel, 'PRIVATE_', 'internal-timestamp', 'internal-check-time']) {
+    assert.doesNotMatch(requestBody, new RegExp(prohibited, 'i'));
+  }
+});
+
 test('public curator API sanitizes malformed OpenAI output errors without causes', async () => {
   const bodySentinel = 'MALFORMED_PROVIDER_BODY_SENTINEL';
   const urlSentinel = 'https://provider.invalid/private-output';
@@ -1090,11 +1283,12 @@ function generationRequest(headers = { authorization: 'Bearer cron-secret' }) {
   return { method: 'POST', query: {}, headers };
 }
 
-test('persisted issue, Listmonk, and owner notification share the server-sanitized representation', async () => {
+test('campaign, event, and owner providers receive only their required newsletter projections', async () => {
   const identity = 'longmontai-weekly-2026-08-19-2026-08-25';
   let persistedDraft;
   let campaignPayload;
   let notificationPayload;
+  let eventPayload;
   const handler = createNewsletterGenerateHandler({
     env: generationEnv({
       NEWSLETTER_NOTIFY_OWNER: '1',
@@ -1131,8 +1325,11 @@ test('persisted issue, Listmonk, and owner notification share the server-sanitiz
         campaignPayload = JSON.parse(options.body);
         return new Response(JSON.stringify({ data: { id: 91 } }));
       }
-      if (url.endsWith('/rpc/newsletter_complete_generation')) return new Response(JSON.stringify({ id: 'issue' }));
-      if (url.endsWith('/newsletter_delivery_events')) return new Response(JSON.stringify([{ id: 'event' }]));
+      if (url.endsWith('/rpc/newsletter_complete_generation')) return new Response(JSON.stringify({ id: '00000000-0000-4000-8000-000000000060' }));
+      if (url.endsWith('/newsletter_delivery_events')) {
+        eventPayload = JSON.parse(options.body);
+        return new Response(JSON.stringify([{ id: 'event' }]));
+      }
       if (url === 'https://api.resend.com/emails') {
         notificationPayload = JSON.parse(options.body);
         return new Response(JSON.stringify({ id: 'notification' }));
@@ -1146,9 +1343,25 @@ test('persisted issue, Listmonk, and owner notification share the server-sanitiz
   assert.equal(response.statusCode, 200);
   assert.equal(campaignPayload.body, persistedDraft.html);
   assert.equal(campaignPayload.altbody, persistedDraft.text);
-  assert.ok(notificationPayload.html.endsWith(persistedDraft.html));
-  assert.match(notificationPayload.html, /<strong>&lt;img src=x onerror=alert\(1\)&gt; Subject<\/strong>/);
-  for (const representation of [persistedDraft.html, campaignPayload.body, notificationPayload.html]) {
+  assert.deepEqual(eventPayload.payload, {
+    issueId: '00000000-0000-4000-8000-000000000060',
+    cadence: 'weekly',
+    campaignId: 91,
+    campaignStatus: 'draft',
+    recovered: false,
+  });
+  assert.deepEqual(notificationPayload, {
+    from: 'news@example.com',
+    to: 'owner@example.com',
+    subject: 'Newsletter draft ready: 00000000-0000-4000-8000-000000000060',
+    html: '<p>Newsletter draft <strong>00000000-0000-4000-8000-000000000060</strong> is ready for review.</p><p>&lt;script&gt;summary&lt;/script&gt;</p><p><a href="https://longmontai.com/newsletter">Review the newsletter workflow</a></p>',
+    text: 'Newsletter draft 00000000-0000-4000-8000-000000000060 is ready for review.\n\n<script>summary</script>\n\nReview: https://longmontai.com/newsletter',
+    tags: [{ name: 'workflow', value: 'longmontai-newsletter' }],
+  });
+  const restrictedPayloads = `${JSON.stringify(eventPayload.payload)}\n${JSON.stringify(notificationPayload)}`;
+  assert.doesNotMatch(restrictedPayloads, /MODEL_RAW_HTML|MODEL_RAW_TEXT|campaignIdentity|curatorModel|api-token|resend-test-key/i);
+  assert.doesNotMatch(notificationPayload.html, /onerror|Item|Unsafe source|data:text|<script/i);
+  for (const representation of [persistedDraft.html, campaignPayload.body]) {
     assert.doesNotMatch(representation, /MODEL_RAW_HTML|<script|<style|<svg|<img/i);
     assert.doesNotMatch(representation, /javascript:|data:text|file:/i);
   }
@@ -1335,7 +1548,7 @@ test('recovered campaigns never forward stored HTML or send owner notification',
       if (url.startsWith('https://listmonk.example.com/api/campaigns?query=')) {
         return new Response(JSON.stringify({ data: { results: [{ id: 94, name: identity, status: 'draft' }] } }));
       }
-      if (url.endsWith('/rpc/newsletter_complete_generation')) return new Response(JSON.stringify({ id: 'issue' }));
+      if (url.endsWith('/rpc/newsletter_complete_generation')) return new Response(JSON.stringify({ id: '00000000-0000-4000-8000-000000000070' }));
       if (url.endsWith('/newsletter_delivery_events')) return new Response(JSON.stringify([{ id: 'event' }]));
       if (url === 'https://api.resend.com/emails') { resendCalls += 1; return new Response('{}'); }
       throw new Error(`unexpected recovered-notification fetch ${url}`);
@@ -1369,7 +1582,7 @@ test('every accepted campaign response shape forwards its validated positive id 
         if (url === 'https://listmonk.example.com/api/campaigns') return new Response(JSON.stringify(payload));
         if (url.endsWith('/rpc/newsletter_complete_generation')) {
           completionId = JSON.parse(options.body).p_campaign_id;
-          return new Response(JSON.stringify({ id: 'completed-issue' }));
+          return new Response(JSON.stringify({ id: `00000000-0000-4000-8000-0000000000${expectedId}` }));
         }
         if (url.endsWith('/newsletter_delivery_events')) return new Response(JSON.stringify([{ id: 'event' }]));
         throw new Error(`unexpected accepted-shape fetch ${url}`);
@@ -1487,7 +1700,23 @@ test('subscribe handler rate limits first, then captures to Supabase and preserv
   const subscriberCall = calls.find((call) => call.url.includes('/rest/v1/newsletter_subscribers?on_conflict=email'));
   assert.equal(JSON.parse(subscriberCall.options.body).email, 'test@example.com');
   const listmonkCall = calls.find((call) => call.url.includes('/api/public/subscription'));
-  assert.deepEqual(JSON.parse(listmonkCall.options.body).list_uuids, ['22222222-2222-4222-8222-222222222222']);
+  assert.deepEqual(JSON.parse(listmonkCall.options.body), {
+    email: 'test@example.com',
+    name: '',
+    list_uuids: ['22222222-2222-4222-8222-222222222222'],
+  });
+  const eventBodies = calls
+    .filter((call) => call.url.includes('/rest/v1/newsletter_delivery_events'))
+    .map((call) => JSON.parse(call.options.body));
+  assert.equal(eventBodies.length, 2);
+  assert.deepEqual(eventBodies[0].payload, {});
+  assert.deepEqual(eventBodies[1].payload, {
+    ok: true,
+    status: 'submitted',
+    skipped: false,
+    reason: null,
+  });
+  assert.doesNotMatch(JSON.stringify(eventBodies.map((event) => event.payload)), /test@example|biweekly|newsletter|203\.0\.113\.10/i);
 });
 
 test('production rejects missing, null, malformed, and foreign origins before downstream calls', async () => {

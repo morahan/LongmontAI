@@ -392,6 +392,42 @@ function normalizeAiDraft(candidate, fallback) {
   }, fallback);
 }
 
+function openAiCurationProjection(signals, { cadence, periodStart, periodEnd }) {
+  const recentArticles = (signals?.website?.recentArticles ?? []).slice(0, 6).map((article) => ({
+    title: normalizePlainText(article?.title, 180),
+    summary: normalizePlainText(article?.summary, 500),
+    publicUrl: validatedNewsletterUrl(article?.id ? `/edition/${article.id}` : null),
+    sourceUrls: (article?.sourceUrls ?? []).map(validatedNewsletterUrl).filter(Boolean).slice(0, 8),
+  }));
+  const sourceHighlights = (signals?.sourceHighlights ?? [])
+    .filter((source) => Array.isArray(source?.matches) && source.matches.length > 0)
+    .slice(0, 8)
+    .map((source) => ({
+      company: normalizePlainText(source.company, 120),
+      sourceUrl: validatedNewsletterUrl(source.url),
+      matches: source.matches.slice(0, 8).map((match) => normalizePlainText(match, 180)),
+    }));
+  return {
+    cadence,
+    periodStart,
+    periodEnd,
+    recentArticles,
+    modelWatch: {
+      successfulSources: Math.max(0, Number(signals?.modelWatchStatus?.successfulSources) || 0),
+      totalSources: Math.max(0, Number(signals?.modelWatchStatus?.totalSources) || 0),
+      detectedModels: (signals?.modelWatchStatus?.detectedModels ?? [])
+        .slice(-12)
+        .map((model) => normalizePlainText(model, 160)),
+    },
+    sourceHighlights,
+    reviewSurfaces: [
+      'https://longmontai.com/model-watch',
+      'https://longmontai.com/leaderboard',
+      'https://longmontai.com/timeline',
+    ],
+  };
+}
+
 export async function createCuratedNewsletterDraft({
   env = process.env,
   cadence = 'weekly',
@@ -432,7 +468,11 @@ export async function createCuratedNewsletterDraft({
           summary: 'plain text string',
           items: [{ category: 'models|benchmarks|breakthroughs|agents|tools|policy|community|watchlist', title: 'string', synthesis: 'string', sourceName: 'string', sourceUrl: 'string', score: 0 }],
         },
-        signals,
+        context: openAiCurationProjection(signals, {
+          cadence,
+          periodStart: fallback.periodStart,
+          periodEnd: fallback.periodEnd,
+        }),
       }),
     }),
   }, NEWSLETTER_OUTBOUND_LIMITS.openai);

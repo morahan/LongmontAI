@@ -98,6 +98,15 @@ The weekly cron runs Mondays at 15:07 UTC. It collects LongmontAI website/articl
 
 By default the system creates a Listmonk draft campaign, not a live send. Keep review-on-draft as the default until source quality and deliverability are proven.
 
+## Provider data disclosures
+
+Outbound payloads are purpose-limited. API keys, service-role keys, Listmonk tokens, cron credentials, request headers, client IPs, and browser metadata are never placed in provider request bodies or newsletter event payloads.
+
+- **OpenAI Responses API:** receives the requested output schema plus a bounded curation projection: cadence and period, recent article title/summary/public URL/source links, aggregate Model Watch health and detected model names, matched live-source highlights, and the three public LongmontAI review surfaces. It does not receive repository paths, collection/provider errors, timestamps and internal metadata, the complete website snapshot, the monitored-source inventory, subscriber data, or credentials.
+- **Listmonk subscriber sync:** receives only normalized email, optional display name, and the required cadence list UUID for the public double-opt-in endpoint. The authenticated fallback receives those identity fields, the required list ID, `status: enabled`, and `preconfirm_subscriptions: false` so confirmation is not bypassed. It does not receive signup source, cadence attributes, page/client metadata, IP addresses, or internal subscriber records. Draft campaign creation separately receives the reviewed newsletter subject, HTML/plain-text bodies, sending identity, selected list ID, and required campaign settings.
+- **Resend HTTP owner notice:** receives the configured sender and owner routing addresses, a workflow tag, issue ID, a short HTML-escaped summary, and the fixed first-party review pointer `https://longmontai.com/newsletter`. It does not receive the complete newsletter HTML/text, item inventory, source snapshot, campaign identity, subscriber data, or credentials. Listmonk's separately configured Resend SMTP transport receives campaign mail only when an operator later sends an approved draft.
+- **Supabase:** stores subscriber consent and newsletter workflow records under the migration's forced-RLS/service-role controls. Delivery-event JSON is limited to operational status identifiers and does not duplicate credentials or subscriber profile metadata.
+
 ## Verification
 
 The newsletter contract suite deliberately includes migrated-Postgres concurrency and privilege checks. Docker Desktop and the local Supabase stack are required; unavailable infrastructure is a test failure rather than a skip. Reset the disposable local database before running it:
