@@ -34,6 +34,16 @@ export function normalizeCadence(value) {
   return CADENCES.has(cadence) ? cadence : DEFAULT_CADENCE;
 }
 
+export function newsletterPeriod(cadence, now) {
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - (cadence === 'biweekly' ? 13 : 6));
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  };
+}
+
 export function headerValue(request, name) {
   const headers = request?.headers;
   if (!headers) return undefined;
@@ -337,6 +347,17 @@ function listmonkListForCadence(config, cadence) {
   };
 }
 
+export function canCreateListmonkCampaign(env, cadence) {
+  const config = listmonkConfig(env);
+  const list = config ? listmonkListForCadence(config, cadence) : null;
+  return Boolean(
+    config?.username
+    && config?.token
+    && Number.isInteger(list?.id)
+    && list.id > 0,
+  );
+}
+
 function listmonkAuthHeaders(config) {
   if (!config.username || !config.token) return {};
   return {
@@ -417,8 +438,11 @@ export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {
     return { ok: false, skipped: true, reason: 'listmonk_campaign_not_configured' };
   }
   const fromEmail = envValue(env, 'NEWSLETTER_FROM_EMAIL');
+  const deterministicName = draft.periodStart && draft.periodEnd
+    ? `longmontai-${draft.cadence}-${draft.periodStart}-${draft.periodEnd}`
+    : draft.name;
   const body = {
-    name: draft.name,
+    name: draft.campaignIdentity ?? deterministicName,
     subject: draft.subject,
     lists: [list.id],
     from_email: fromEmail,
@@ -447,58 +471,111 @@ export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {
       cause: new Error(JSON.stringify(data ?? {})),
     });
   }
-  return { ok: true, status: 'draft', data };
+  const campaignId = data?.data?.id ?? data?.id;
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    throw new NewsletterError('Listmonk campaign response did not include a valid campaign id.', {
+      status: 502,
+      code: 'listmonk_campaign_response_invalid',
+    });
+  }
+  return { ok: true, status: 'draft', campaignId, data };
+}
+
+function campaignRows(data) {
+  const candidates = [data?.data?.results, data?.data, data?.results];
+  return candidates.find(Array.isArray) ?? [];
+}
+
+export async function recoverListmonkCampaign(env, campaignIdentity, fetchImpl = fetch) {
+  const config = listmonkConfig(env);
+  if (!config?.username || !config?.token) {
+    return { ok: false, skipped: true, reason: 'listmonk_campaign_not_configured' };
+  }
+  const response = await fetchImpl(
+    `${config.baseUrl}/api/campaigns?query=${encodeURIComponent(campaignIdentity)}`,
+    {
+      method: 'GET',
+      headers: { ...listmonkAuthHeaders(config), Accept: 'application/json' },
+    },
+  );
+  const data = await providerJson(response);
+  if (!response.ok) {
+    throw new NewsletterError('Listmonk campaign recovery failed.', {
+      status: 502,
+      code: 'listmonk_campaign_recovery_failed',
+      cause: new Error(JSON.stringify(data ?? {})),
+    });
+  }
+  const campaign = campaignRows(data).find((entry) => entry?.name === campaignIdentity);
+  if (!campaign || !Number.isInteger(campaign.id) || campaign.id <= 0) {
+    return { ok: false, skipped: false, reason: 'campaign_recovery_pending', identity: campaignIdentity };
+  }
+  return {
+    ok: true,
+    status: campaign.status ?? 'draft',
+    recovered: true,
+    campaignId: campaign.id,
+    data: { data: campaign },
+  };
+}
+
+async function generationRpc(env, name, body, fetchImpl) {
+  const result = await supabaseRest(
+    env,
+    `rpc/${name}`,
+    { method: 'POST', body },
+    fetchImpl,
+  );
+  return Array.isArray(result) ? result[0] : result;
+}
+
+export async function claimNewsletterGeneration(env, claim, fetchImpl = fetch) {
+  return generationRpc(env, 'newsletter_claim_generation', {
+    p_cadence: claim.cadence,
+    p_period_start: claim.periodStart,
+    p_period_end: claim.periodEnd,
+    p_lease_seconds: 900,
+  }, fetchImpl);
+}
+
+export async function prepareNewsletterGeneration(env, claim, draft, fetchImpl = fetch) {
+  return generationRpc(env, 'newsletter_prepare_generation', {
+    p_issue_id: claim.issueId,
+    p_owner: claim.ownerToken,
+    p_draft: draft,
+    p_items: draft.items ?? [],
+  }, fetchImpl);
+}
+
+export async function markNewsletterCampaignAttempt(env, claim, fetchImpl = fetch) {
+  await generationRpc(env, 'newsletter_mark_campaign_attempt', {
+    p_issue_id: claim.issueId,
+    p_owner: claim.ownerToken,
+  }, fetchImpl);
+}
+
+export async function releaseNewsletterCampaignRecovery(env, claim, error, fetchImpl = fetch) {
+  await generationRpc(env, 'newsletter_release_campaign_recovery', {
+    p_issue_id: claim.issueId,
+    p_owner: claim.ownerToken,
+    p_error: error instanceof Error ? error.message : String(error),
+  }, fetchImpl);
+}
+
+export async function completeNewsletterGeneration(env, claim, campaign, fetchImpl = fetch) {
+  return generationRpc(env, 'newsletter_complete_generation', {
+    p_issue_id: claim.issueId,
+    p_owner: claim.ownerToken,
+    p_campaign_id: campaign.ok ? campaign.campaignId ?? null : null,
+    p_campaign_status: campaign.ok ? campaign.status ?? 'draft' : null,
+  }, fetchImpl);
 }
 
 export async function createNewsletterIssue(env, draft, fetchImpl = fetch) {
-  const issueRows = await supabaseRest(
-    env,
-    'newsletter_issues',
-    {
-      method: 'POST',
-      headers: { Prefer: 'return=representation' },
-      body: {
-        cadence: draft.cadence,
-        period_start: draft.periodStart,
-        period_end: draft.periodEnd,
-        status: draft.status ?? 'draft',
-        subject: draft.subject,
-        preheader: draft.preheader,
-        summary: draft.summary,
-        html_body: draft.html,
-        text_body: draft.text,
-        curator_model: draft.curatorModel ?? null,
-        website_snapshot: draft.websiteSnapshot ?? {},
-        source_urls: draft.sourceUrls ?? [],
-        listmonk_campaign_id: draft.listmonkCampaignId ?? null,
-        listmonk_campaign_status: draft.listmonkCampaignStatus ?? null,
-      },
-    },
-    fetchImpl,
-  );
-  const issue = Array.isArray(issueRows) ? issueRows[0] : issueRows;
-  if (issue?.id && Array.isArray(draft.items) && draft.items.length > 0) {
-    await supabaseRest(
-      env,
-      'newsletter_issue_items',
-      {
-        method: 'POST',
-        body: draft.items.map((item, index) => ({
-          issue_id: issue.id,
-          category: item.category,
-          title: item.title,
-          source_name: item.sourceName ?? null,
-          source_url: item.sourceUrl ?? null,
-          synthesis: item.synthesis,
-          score: item.score ?? 50,
-          sort_order: item.sortOrder ?? index,
-          metadata: item.metadata ?? {},
-        })),
-      },
-      fetchImpl,
-    );
-  }
-  return issue;
+  return generationRpc(env, 'newsletter_create_issue_with_items', {
+    p_draft: draft,
+    p_items: draft.items ?? [],
+  }, fetchImpl);
 }
 
 export async function sendResendNotification(env, message, fetchImpl = fetch) {

@@ -1,8 +1,16 @@
 import {
   NewsletterError,
+  canCreateListmonkCampaign,
+  claimNewsletterGeneration,
+  completeNewsletterGeneration,
   createListmonkCampaign,
-  createNewsletterIssue,
+  markNewsletterCampaignAttempt,
+  newsletterPeriod,
+  normalizeCadence,
+  prepareNewsletterGeneration,
   recordNewsletterEvent,
+  recoverListmonkCampaign,
+  releaseNewsletterCampaignRecovery,
   requireCronAuthorization,
   requireMethod,
   sendJson,
@@ -15,44 +23,149 @@ function queryValue(request, name) {
   return typeof value === 'string' ? value : undefined;
 }
 
-export function createNewsletterGenerateHandler({ env = process.env, fetchImpl = fetch, now = () => new Date() } = {}) {
+function campaignFromIssue(issue) {
+  if (issue?.listmonk_campaign_id) {
+    return {
+      ok: true,
+      status: issue.listmonk_campaign_status ?? 'draft',
+      recovered: true,
+      campaignId: issue.listmonk_campaign_id,
+      data: { data: { id: issue.listmonk_campaign_id, name: issue.campaign_identity } },
+    };
+  }
+  return { ok: false, skipped: true, reason: 'no_campaign', identity: issue?.campaign_identity };
+}
+
+export function createNewsletterGenerateHandler({
+  env = process.env,
+  fetchImpl = fetch,
+  now = () => new Date(),
+  draftImpl = createCuratedNewsletterDraft,
+} = {}) {
   return async function newsletterGenerateHandler(request, response) {
     if (requireMethod(request, response, ['GET', 'POST'])) return;
 
     try {
       requireCronAuthorization(request, env);
-      const cadence = queryValue(request, 'cadence') === 'biweekly' ? 'biweekly' : (env.NEWSLETTER_DEFAULT_CADENCE || 'weekly');
-      const draft = await createCuratedNewsletterDraft({
+      const operationNow = now();
+      const cadence = normalizeCadence(queryValue(request, 'cadence') ?? env.NEWSLETTER_DEFAULT_CADENCE);
+      const period = newsletterPeriod(cadence, operationNow);
+      const claimed = await claimNewsletterGeneration(
         env,
-        cadence,
-        now: now(),
-        fetchImpl,
-      });
-
-      let campaign = { ok: false, skipped: true, reason: 'not_attempted' };
-      if (env.NEWSLETTER_CREATE_LISTMONK_CAMPAIGN !== '0') {
-        campaign = await createListmonkCampaign(env, draft, fetchImpl);
-      }
-
-      const issue = await createNewsletterIssue(
-        env,
-        {
-          ...draft,
-          listmonkCampaignId: campaign.ok ? campaign.data?.data?.id : null,
-          listmonkCampaignStatus: campaign.ok ? 'draft' : null,
-        },
+        { cadence, periodStart: period.start, periodEnd: period.end, now: operationNow },
         fetchImpl,
       );
 
+      if (!claimed?.outcome || !claimed.issue_id || !claimed.deterministic_campaign_identity) {
+        throw new NewsletterError('Newsletter generation claim failed.', {
+          status: 503,
+          code: 'newsletter_generation_claim_failed',
+        });
+      }
+      if (claimed.outcome === 'completed') {
+        const campaign = campaignFromIssue(claimed.issue);
+        return sendJson(response, 200, {
+          ok: true,
+          existing: true,
+          issueId: claimed.issue_id,
+          cadence,
+          usedAi: Boolean(claimed.issue?.curator_model),
+          campaign,
+          notification: { ok: false, skipped: true, reason: 'already_completed' },
+        });
+      }
+      if (claimed.outcome === 'in_progress') {
+        throw new NewsletterError('Newsletter generation is already in progress.', {
+          status: 409,
+          code: 'newsletter_generation_in_progress',
+        });
+      }
+
+      const claim = {
+        issueId: claimed.issue_id,
+        ownerToken: claimed.owner_token,
+        campaignIdentity: claimed.deterministic_campaign_identity,
+      };
+      let draft;
+      let campaign;
+
+      if (claimed.outcome === 'recover_campaign') {
+        try {
+          campaign = await recoverListmonkCampaign(env, claim.campaignIdentity, fetchImpl);
+          if (!campaign.ok) {
+            await releaseNewsletterCampaignRecovery(env, claim, new Error(campaign.reason), fetchImpl);
+            throw new NewsletterError('Newsletter campaign outcome is still being recovered.', {
+              status: 409,
+              code: 'newsletter_campaign_recovery_pending',
+            });
+          }
+        } catch (error) {
+          if (!(error instanceof NewsletterError && error.code === 'newsletter_campaign_recovery_pending')) {
+            await releaseNewsletterCampaignRecovery(env, claim, error, fetchImpl);
+          }
+          throw error;
+        }
+        draft = {
+          cadence,
+          subject: claimed.issue?.subject,
+          html: claimed.issue?.html_body,
+          text: claimed.issue?.text_body,
+          curatorModel: claimed.issue?.curator_model,
+          usedAi: Boolean(claimed.issue?.curator_model),
+        };
+      } else if (claimed.outcome === 'claimed') {
+        draft = await draftImpl({
+          env,
+          cadence,
+          now: operationNow,
+          fetchImpl,
+        });
+        if (draft.periodStart !== period.start || draft.periodEnd !== period.end) {
+          throw new NewsletterError('Newsletter draft period does not match its generation claim.', {
+            status: 500,
+            code: 'newsletter_generation_period_mismatch',
+          });
+        }
+        await prepareNewsletterGeneration(env, claim, draft, fetchImpl);
+        if (env.NEWSLETTER_CREATE_LISTMONK_CAMPAIGN === '0') {
+          campaign = { ok: false, skipped: true, reason: 'campaign_disabled' };
+        } else if (!canCreateListmonkCampaign(env, cadence)) {
+          campaign = await createListmonkCampaign(
+            env,
+            { ...draft, campaignIdentity: claim.campaignIdentity },
+            fetchImpl,
+          );
+        } else {
+          await markNewsletterCampaignAttempt(env, claim, fetchImpl);
+          try {
+            campaign = await createListmonkCampaign(
+              env,
+              { ...draft, campaignIdentity: claim.campaignIdentity },
+              fetchImpl,
+            );
+          } catch (error) {
+            await releaseNewsletterCampaignRecovery(env, claim, error, fetchImpl);
+            throw error;
+          }
+        }
+      } else {
+        throw new NewsletterError('Newsletter generation claim returned an unsupported state.', {
+          status: 503,
+          code: 'newsletter_generation_claim_failed',
+        });
+      }
+
+      const issue = await completeNewsletterGeneration(env, claim, campaign, fetchImpl);
       await recordNewsletterEvent(
         env,
         {
           eventType: 'draft_generated',
           provider: draft.usedAi ? 'openai' : 'deterministic',
           payload: {
-            issueId: issue?.id,
-            cadence: draft.cadence,
+            issueId: issue?.id ?? claim.issueId,
+            cadence,
             campaign,
+            campaignIdentity: claim.campaignIdentity,
             curatorModel: draft.curatorModel,
           },
         },
@@ -74,8 +187,9 @@ export function createNewsletterGenerateHandler({ env = process.env, fetchImpl =
 
       return sendJson(response, 200, {
         ok: true,
-        issueId: issue?.id,
-        cadence: draft.cadence,
+        existing: false,
+        issueId: issue?.id ?? claim.issueId,
+        cadence,
         usedAi: draft.usedAi,
         campaign,
         notification,
