@@ -25,7 +25,7 @@ async function fixture({ nestedMedia = false } = {}) {
   } }));
   await write(root, 'src/articles/index.ts', 'export const editions = [];\n');
   await write(root, 'src/articles/slideshows.ts', 'export const slideshowDecks = {};\n');
-  await write(root, 'src/articles/drafts/release.md', `---\nid: edition-2099-01-01-test\ndate: 2099-01-01\npublishAt: 2099-01-01T12:00:00-07:00\nstatus: scheduled\ntitle: "Private title"\nsummary: "Private summary"\n---\n\n![private](/weekly-screenshots/2099.01.01/${mediaPath})\n`);
+  await write(root, 'src/articles/drafts/release.md', `---\nid: edition-2099-01-01-test\ndate: 2099-01-01\npublishAt: 2099-01-01T12:00:00-07:00\nstatus: scheduled\ntitle: "Private title"\nsummary: "Private summary"\n---\n\nSHARED_PUBLISHED_BODY_MARKER appears in both editions.\n\nSHARED_PUBLIC_SOURCE_MARKER already appears in client data.\n\nPRIVATE_BODY_ONLY_MARKER must never enter a bundle.\n\n![private](/weekly-screenshots/2099.01.01/${mediaPath})\n`);
   if (!nestedMedia) await write(root, `src/articles/drafts/assets/2099.01.01/${mediaPath}`, 'approved-media-bytes');
   const manifest = {
     status: 'scheduled', editionId: 'edition-2099-01-01-test', publishAt: '2099-01-01T12:00:00-07:00',
@@ -87,9 +87,19 @@ try {
 
   const active = await primary.tools.verifyGeneratedRelease();
   const bundlePadding = 'bundle-padding-'.repeat(4096);
+
+  await write(primary.root, 'src/articles/2097.01.01.md', `---\nid: edition-2097-01-01-public\ndate: 2097-01-01\npublishAt: 2097-01-01T12:00:00-07:00\nstatus: published\ntitle: Public title\nsummary: Public summary\n---\n\nSHARED_PUBLISHED_BODY_MARKER appears in both editions.\n`);
+  await write(primary.root, 'src/articles/index.ts', "import published from './2097.01.01.md?raw';\nexport const editions = [published];\n");
+  await write(primary.root, 'src/public-data.ts', "export const publicFact = 'SHARED_PUBLIC_SOURCE_MARKER already appears in client data.';\n");
+  await write(primary.root, 'dist/assets/published-copy.js', `${bundlePadding}SHARED_PUBLISHED_BODY_MARKER appears in both editions.SHARED_PUBLIC_SOURCE_MARKER already appears in client data.${bundlePadding}`);
+  await primary.tools.verifyGeneratedRelease();
+  await rm(path.join(primary.root, 'dist'), { recursive: true });
+  await write(primary.root, 'src/articles/index.ts', 'export const editions = [];\n');
+
   const leakCases = [
     ['Private title', /article title/],
     ['Private summary', /article summary/],
+    ['PRIVATE_BODY_ONLY_MARKER must never enter a bundle.', /article body marker/],
     ['![private](/weekly-screenshots/2099.01.01/pixel.png)', /article body marker|media URL/],
     ['pixel.png', /media filename/],
     ['src/articles/drafts/release.md', /private source path/],

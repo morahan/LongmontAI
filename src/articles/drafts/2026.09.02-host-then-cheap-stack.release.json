@@ -1,0 +1,44 @@
+{
+  "editionId": "edition-2026-09-02-host-then-cheap-stack",
+  "meetingDate": "2026-09-02",
+  "timezone": "America/Denver",
+  "meetupStartsAt": "2026-09-02T12:00:00-06:00",
+  "publishAt": "2026-09-02T11:30:00-06:00",
+  "status": "scheduled",
+  "articlePath": "src/articles/drafts/2026.09.02-host-then-cheap-stack.md",
+  "article": "src/articles/drafts/2026.09.02-host-then-cheap-stack.md",
+  "slideshowId": "host-then-cheap-stack",
+  "assetFolder": "2026.09.02",
+  "assetRoot": "src/articles/drafts/assets/2026.09.02",
+  "slideshow": {
+    "id": "host-then-cheap-stack",
+    "title": "The teammate, then the Flash",
+    "description": "Six educational slides: Grok Bot as the teammate, then GLM-5.3-Flash with a date on the price.",
+    "slides": [
+      {
+        "title": "The teammate, then the Flash",
+        "path": "slide-01.png"
+      },
+      {
+        "title": "Grok Bot is the teammate",
+        "path": "slide-02.png"
+      },
+      {
+        "title": "Keep the names straight",
+        "path": "slide-03.png"
+      },
+      {
+        "title": "GLM-5.3-Flash has a date on the price",
+        "path": "slide-04.png"
+      },
+      {
+        "title": "The rest of the board",
+        "path": "slide-05.png"
+      },
+      {
+        "title": "One teammate. One dated promo.",
+        "path": "slide-06.png"
+      }
+    ]
+  }
+}

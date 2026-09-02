@@ -25,6 +25,22 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    'work-keeps-running': {
+        id: 'work-keeps-running',
+        title: 'The work keeps running',
+        description: 'Nine visual moves from persistent agents through physical AI and the hardware floor.',
+        slides: createSlides('/slideshows/2026.08.19/work-keeps-running', [
+            'The work keeps running',
+            'Five moves',
+            'Grok Bot is a computer',
+            'Local agents get serious',
+            'Route for cost. Then speed.',
+            'A bound moved. The hypothesis did not.',
+            'One more day',
+            'Hardware sets the floor',
+            'Hand it off. Verify it.',
+        ]),
+    },
     'signal-routing': {
         id: 'signal-routing',
         title: 'Signal Routing',
