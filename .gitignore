@@ -20,8 +20,8 @@ output/
 .yarn/cache
 .yarn/install-state.gz
 
-# TypeScript
-tsconfig.tsbuildinfo
+# TypeScript build metadata
+tsconfig*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

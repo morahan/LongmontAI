@@ -24,7 +24,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x, 22.x]
+        # Node 22 is the pinned supported lane; Node 24 is forward-compatibility coverage.
+        node-version: [22.20.0, 24.x]
 
     steps:
       - name: Checkout repository
@@ -37,6 +38,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           package-manager-cache: false
+
+      - name: Pin npm
+        run: npm install --global npm@10.9.3
+
+      - name: Verify pinned npm
+        run: npm --version | grep --fixed-strings --line-regexp '10.9.3'
 
       - name: Install dependencies without lifecycle scripts
         run: npm ci --ignore-scripts
@@ -66,6 +73,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Contract tests
+        run: npm run test:model-watch && npm run test:space-background
 
       - name: Build
         run: npm run build
