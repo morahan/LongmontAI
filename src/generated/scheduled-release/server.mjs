@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-09-02-host-then-cheap-stack",
   "publishAt": "2026-09-02T11:30:00-06:00",
   "publishAtMs": 1788370200000,
-  "releaseRevision": "90540ba7e38094abcaae7422",
+  "releaseRevision": "30a381ef84e360dbeb005ce5",
   "source": {
     "manifest": "src/articles/drafts/2026.09.02-host-then-cheap-stack.release.json",
     "article": "src/articles/drafts/2026.09.02-host-then-cheap-stack.md",
@@ -56,7 +56,7 @@ const release = Object.freeze({
       "file": "media/slide-02.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "4ae253d0217fd737860af3dee513093535b0448693575afae976be2bfd5cff16"
+      "sha256": "2c14814874e5c046c42c2f0c00fdb04b7c436356894da1ad99db5b266098e0d1"
     },
     "slide-03.png": {
       "file": "media/slide-03.png",
