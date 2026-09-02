@@ -2818,10 +2818,11 @@ iframe {
 
 .model-watch-snapshot {
   display: flex;
-  min-height: 12rem;
+  min-height: 15.5rem;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1rem;
+  gap: 0.85rem;
+  padding: 1.15rem 1.1rem 1rem;
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   background:
@@ -2839,36 +2840,71 @@ iframe {
   transform: translateY(-2px);
 }
 
-.model-watch-snapshot div {
+.model-watch-snapshot-identity {
   display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  justify-content: space-between;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.28rem;
 }
 
-.model-watch-snapshot span,
-.model-watch-snapshot strong,
-.model-watch-snapshot p {
-  color: var(--text-muted);
+.model-watch-snapshot-company {
+  color: var(--color-cyan);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  line-height: 1.3;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
-.model-watch-snapshot strong {
-  flex: 0 0 auto;
-  color: var(--accent-cyan);
-  font-weight: 500;
-  text-align: right;
+.model-watch-snapshot-model {
+  display: -webkit-box;
+  margin: 0.1rem 0 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 1.2rem + 1.6vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.08;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
-.model-watch-snapshot h3 {
-  margin: 1.5rem 0;
-  color: var(--text-primary);
-  font-size: 1.05rem;
-  line-height: 1.28;
+.model-watch-snapshot-date {
+  margin-top: 0.18rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.model-watch-snapshot-update {
+  display: -webkit-box;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
   letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: none;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.model-watch-snapshot-lane {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  text-transform: uppercase;
 }
 
 .model-watch-grid {
@@ -3662,7 +3698,11 @@ iframe {
   }
 
   .model-watch-snapshot {
-    min-height: 10rem;
+    min-height: 15.5rem;
+  }
+
+  .model-watch-snapshot-model {
+    font-size: clamp(1.45rem, 6vw, 1.75rem);
   }
 
   .model-watch-pipeline li {

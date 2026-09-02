@@ -31,6 +31,7 @@ export interface ModelWatchPipelineStep {
 
 export interface ModelWatchSnapshot {
   company: string;
+  model: string;
   update: string;
   date: string;
   lane: string;
@@ -476,6 +477,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Z.ai',
+    model: 'GLM-5.3',
     update: 'GLM-5.3 launched through the API and Coding Plan with 1M context, stronger long-horizon coding, and sharply higher vendor-reported cyber scores.',
     date: 'Aug 14, 2026',
     lane: 'Coding and cybersecurity',
@@ -483,6 +485,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Alibaba Qwen',
+    model: 'Qwen3.8-27B',
     update: 'Qwen3.8-27B shipped as an Apache-2.0 dense vision-language model with 262K native context for local multimodal agents.',
     date: 'Aug 14, 2026',
     lane: 'Open-weight multimodal agents',
@@ -490,6 +493,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google',
+    model: 'Gemini 3.7 Flash',
     update: 'Gemini 3.7 Flash became Google\'s lower-cost coding and agent workhorse, with introductory API pricing through year-end.',
     date: 'Aug 13, 2026',
     lane: 'Coding and agentic work',
@@ -497,6 +501,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok 4.6',
     update: 'Grok 4.6 arrived for long-running research, codebase work, and visual artifacts across Cursor, Grok Build, and the API.',
     date: 'Aug 12, 2026',
     lane: 'Frontier agents',
@@ -504,6 +509,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'NVIDIA',
+    model: 'Nemotron 3.5 Lightning',
     update: 'Nemotron 3.5 Lightning paired a fast open execution model with NeMo Switchyard, an open model-routing library for agent workflows.',
     date: 'Aug 11, 2026',
     lane: 'Open model and routing',
@@ -511,6 +517,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Glimmer',
     update: 'Muse Glimmer released as a 30B Apache-2.0 local agent model whose 4-bit build targets a 24–32 GB GPU envelope.',
     date: 'Aug 10, 2026',
     lane: 'Open-weight local agents',
@@ -518,6 +525,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'WeatherNext Cyclones',
     update: 'WeatherNext Cyclones published open weights and a Nature evaluation reporting roughly an extra day of average forecast lead-time advantage.',
     date: 'Aug 6, 2026',
     lane: 'Weather research',
@@ -525,6 +533,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Spark 1.2',
     update: 'Muse Spark 1.2 and Muse Code beta paired a coding-focused hosted model with a restart-safe terminal agent and persistent background subagents.',
     date: 'Aug 5, 2026',
     lane: 'Agentic coding',
@@ -532,6 +541,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Mistral AI',
+    model: 'Shieldstral',
     update: 'Shieldstral shipped as a 3B Apache-2.0 open-weight multimodal safety classifier with natural-language policy controls.',
     date: 'Aug 4, 2026',
     lane: 'Open-weight safety',
@@ -539,6 +549,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Alibaba Qwen',
+    model: 'Qwen3.8-Max',
     update: 'Qwen3.8-Max arrived as Alibaba\'s 2.4T-parameter multimodal flagship, with 95B active parameters and a 1M-token context window.',
     date: 'Aug 3, 2026',
     lane: 'Frontier',
@@ -546,6 +557,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'DeepSeek',
+    model: 'DeepSeek-V4-Flash',
     update: 'DeepSeek-V4-Flash-0731 entered public beta with stronger agent capabilities, Responses API support, and a Codex-specific configuration.',
     date: 'Jul 31, 2026',
     lane: 'Agentic coding',
@@ -553,6 +565,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'MiniMax',
+    model: 'MiniMax H3',
     update: 'MiniMax H3 launched as an omni-modal video model accepting text, image, video, and audio inputs.',
     date: 'Jul 31, 2026',
     lane: 'Multimodal generation',
@@ -560,6 +573,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Imagine Video 1.5',
     update: 'Imagine Video 1.5 added text-to-video, image and voice references, native 1080p output, and API access.',
     date: 'Jul 31, 2026',
     lane: 'Video generation',
@@ -567,6 +581,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'Gemini Robotics ER 2',
     update: 'Gemini Robotics ER 2 became publicly available for continuous-video progress tracking, task orchestration, tool use, and multi-robot collaboration.',
     date: 'Jul 30, 2026',
     lane: 'Robotics',
@@ -574,6 +589,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok Voice Think Fast 2.0',
     update: 'Grok Voice Think Fast 2.0 shipped as xAI\'s next-generation speech-to-speech model with improved transcription, conversation, and tool reliability.',
     date: 'Jul 29, 2026',
     lane: 'Voice',
@@ -581,6 +597,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'Lyria 3.5',
     update: 'Lyria 3.5 rolled out in Google Flow Music with stronger musicality, lyrics, vocals, pronunciation, and creative controls.',
     date: 'Jul 29, 2026',
     lane: 'Music generation',
@@ -588,6 +605,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Moonshot AI',
+    model: 'Kimi K3',
     update: 'Moonshot published the full Kimi K3 model card and open weights for its 2.8T-parameter native multimodal model.',
     date: 'Jul 27, 2026',
     lane: 'Open-weight',
@@ -595,6 +613,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Microsoft',
+    model: 'MAI-Cyber-1-Flash',
     update: 'Microsoft introduced MAI-Cyber-1-Flash inside the MDASH vulnerability-management agent system, with Project Perception entering public preview August 3.',
     date: 'Jul 27, 2026',
     lane: 'Cybersecurity',
@@ -602,6 +621,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Anthropic',
+    model: 'Claude Opus 5',
     update: 'Claude Opus 5 became available across Claude platforms for coding, knowledge work, automation, computer use, and scientific research.',
     date: 'Jul 24, 2026',
     lane: 'Frontier',
@@ -609,6 +629,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Spark 1.1',
     update: 'Muse Spark 1.1 now powers Meta AI features for planning, connected email and calendar work, slide creation, and recurring tasks.',
     date: 'Jul 24, 2026',
     lane: 'Frontier',
@@ -616,6 +637,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Black Forest Labs',
+    model: 'FLUX 3',
     update: 'FLUX 3 entered early access as a unified image, video, audio, and action-prediction foundation model.',
     date: 'Jul 23, 2026',
     lane: 'Multimodal generation',
@@ -623,6 +645,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok Build',
     update: 'Grok Build can now write and run background workflows that fan work across parallel agents and report verified results.',
     date: 'Jul 23, 2026',
     lane: 'Agent tooling',
@@ -630,6 +653,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Spark 1.1',
     update: 'Muse Spark 1.1 is Meta Superintelligence Labs\' latest multimodal reasoning model and is available in Meta AI and the Meta Model API preview.',
     date: 'Jul 9, 2026',
     lane: 'Frontier',
@@ -637,6 +661,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'OpenAI',
+    model: 'GPT-5.6',
     update: 'GPT-5.6 is generally available as Sol, Terra, and Luna across ChatGPT, Codex, and the API.',
     date: 'Jul 9, 2026',
     lane: 'Frontier',
@@ -644,6 +669,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok 4.5',
     update: 'Grok 4.5 is the latest general Grok model, focused on coding, research, and knowledge work.',
     date: 'Jul 8, 2026',
     lane: 'Frontier',
@@ -651,6 +677,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Anthropic',
+    model: 'Claude Fable 5',
     update: 'Claude Fable 5 returned to general availability after its temporary June suspension.',
     date: 'Jul 1, 2026',
     lane: 'Frontier',
@@ -658,6 +685,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'OpenAI',
+    model: 'GPT-5.5',
     update: 'GPT-5.5 release page lists product availability, API follow-up, and agentic coding capabilities.',
     date: 'Apr 23, 2026',
     lane: 'Frontier',
@@ -665,6 +693,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Anthropic',
+    model: 'Claude Opus 4.8',
     update: 'Claude Opus 4.8 appeared in the Anthropic newsroom as an Opus-class model upgrade.',
     date: 'May 28, 2026',
     lane: 'Frontier',
@@ -672,6 +701,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'Gemma 4 12B',
     update: 'Gemma 4 12B was listed as a unified multimodal open model update.',
     date: 'June 2026',
     lane: 'Open-weight',
@@ -679,6 +709,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok 4',
     update: 'Grok 4 release page remains a model-release source, with xAI News tracking model and API updates.',
     date: 'Jul 9, 2025',
     lane: 'Frontier',
@@ -686,6 +717,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Mistral AI',
+    model: 'Mistral OCR 4',
     update: 'Mistral OCR 4 shipped as a document-intelligence model update.',
     date: 'Jun 23, 2026',
     lane: 'Specialist',
@@ -693,6 +725,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Z.ai',
+    model: 'GLM-5.2',
     update: 'GLM-5.2 was published as an MIT-licensed long-horizon model with 1M-token context.',
     date: 'Jun 17, 2026',
     lane: 'Open-weight',
