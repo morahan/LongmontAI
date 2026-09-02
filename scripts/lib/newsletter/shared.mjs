@@ -4,6 +4,17 @@ import { isIP } from 'node:net';
 export const CADENCES = new Set(['weekly', 'biweekly']);
 export const DEFAULT_CADENCE = 'weekly';
 
+// Provider-specific budgets keep cron and request handlers finite without applying one oversized global timeout.
+export const NEWSLETTER_OUTBOUND_LIMITS = Object.freeze({
+  supabase: { timeoutMs: 10_000, maxBytes: 1024 * 1024 },
+  listmonk: { timeoutMs: 12_000, maxBytes: 1024 * 1024 },
+  listmonkCampaign: { timeoutMs: 15_000, maxBytes: 1024 * 1024 },
+  resend: { timeoutMs: 10_000, maxBytes: 256 * 1024 },
+  openai: { timeoutMs: 30_000, maxBytes: 1024 * 1024 },
+  liveSource: { timeoutMs: 9_000, maxBytes: 80_000 },
+  setup: { timeoutMs: 10_000, maxBytes: 1024 * 1024 },
+});
+
 export class NewsletterError extends Error {
   constructor(message, { status = 500, code = 'newsletter_error', cause, retryAfter } = {}) {
     super(message, { cause });
@@ -11,6 +22,126 @@ export class NewsletterError extends Error {
     this.status = status;
     this.code = code;
     this.retryAfter = retryAfter;
+  }
+}
+
+function outboundFailure(message, code) {
+  return new NewsletterError(message, { status: 502, code });
+}
+
+// Cancellation is best-effort. Providers may return a promise that never settles,
+// so cleanup must never delay an error or timeout result.
+export function cancelNewsletterBody(body) {
+  if (!body || typeof body.cancel !== 'function') return;
+  try {
+    void Promise.resolve(body.cancel()).catch(() => undefined);
+  } catch {
+    // Cleanup failures are intentionally ignored.
+  }
+}
+
+function cancelNewsletterReader(reader) {
+  try {
+    void Promise.resolve(reader.cancel()).catch(() => undefined);
+  } catch {
+    // Cleanup failures are intentionally ignored.
+  }
+}
+
+export async function newsletterFetch(fetchImpl, url, options = {}, { timeoutMs }) {
+  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+    throw new TypeError('A finite positive newsletter outbound timeout is required.');
+  }
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeoutSignal])
+    : timeoutSignal;
+  try {
+    const response = await fetchImpl(url, { ...options, signal });
+    return { response, signal };
+  } catch {
+    if (signal.aborted) {
+      throw outboundFailure('Newsletter outbound request was aborted.', 'newsletter_outbound_aborted');
+    }
+    throw outboundFailure('Newsletter outbound request failed.', 'newsletter_outbound_failed');
+  }
+}
+
+function abortReason(signal) {
+  return signal.reason instanceof Error ? signal.reason : new Error('Newsletter outbound request was aborted.');
+}
+
+async function readStreamChunk(reader, signal) {
+  if (signal?.aborted) throw abortReason(signal);
+  if (!signal) return reader.read();
+  let onAbort;
+  const aborted = new Promise((_, reject) => {
+    onAbort = () => reject(abortReason(signal));
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([reader.read(), aborted]);
+  } finally {
+    signal.removeEventListener('abort', onAbort);
+  }
+}
+
+export async function readBoundedResponseText(response, { maxBytes, signal } = {}) {
+  if (!Number.isInteger(maxBytes) || maxBytes <= 0) {
+    throw new TypeError('A finite positive newsletter response-size limit is required.');
+  }
+  // Fetch permits null bodies for responses such as 204 and HEAD. Treat that
+  // legitimate representation exactly like an empty text/JSON payload.
+  if (response?.body === null) return '';
+  if (!response?.body || typeof response.body.getReader !== 'function') {
+    throw outboundFailure('Newsletter provider response was not streamable.', 'newsletter_response_invalid');
+  }
+  let reader;
+  try {
+    reader = response.body.getReader();
+  } catch {
+    throw outboundFailure('Newsletter provider response was not streamable.', 'newsletter_response_invalid');
+  }
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let text = '';
+  let cancel = false;
+  try {
+    while (true) {
+      const { done, value } = await readStreamChunk(reader, signal);
+      if (done) break;
+      bytesRead += value.byteLength;
+      if (bytesRead > maxBytes) {
+        cancel = true;
+        throw outboundFailure('Newsletter provider response exceeded the size limit.', 'newsletter_response_too_large');
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } catch (error) {
+    if (signal?.aborted) {
+      cancel = true;
+      throw outboundFailure('Newsletter outbound response was aborted.', 'newsletter_outbound_aborted');
+    }
+    if (error instanceof NewsletterError) throw error;
+    throw outboundFailure('Newsletter provider response could not be read.', 'newsletter_response_invalid');
+  } finally {
+    if (cancel || signal?.aborted) cancelNewsletterReader(reader);
+    try {
+      reader.releaseLock();
+    } catch {
+      // Releasing a provider lock is also best-effort cleanup.
+    }
+  }
+}
+
+export async function readBoundedResponseJson(response, options) {
+  const text = await readBoundedResponseText(response, options);
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw outboundFailure('Newsletter provider returned invalid JSON.', 'newsletter_response_invalid');
   }
 }
 
@@ -140,11 +271,10 @@ export async function enforceNewsletterSignupRateLimit(env, { ip, email, now }, 
       },
       fetchImpl,
     );
-  } catch (error) {
+  } catch {
     throw new NewsletterError('Newsletter signup is temporarily unavailable.', {
       status: 503,
       code: 'rate_limit_unavailable',
-      cause: error,
     });
   }
   const row = Array.isArray(result) ? result[0] : result;
@@ -228,9 +358,9 @@ export function supabaseConfig(env) {
   return { url: url.replace(/\/+$/, ''), serviceRoleKey };
 }
 
-export async function supabaseRest(env, path, { method = 'GET', body, headers = {} } = {}, fetchImpl = fetch) {
+export async function supabaseRest(env, path, { method = 'GET', body, headers = {}, signal } = {}, fetchImpl = fetch) {
   const { url, serviceRoleKey } = supabaseConfig(env);
-  const response = await fetchImpl(`${url}/rest/v1/${path}`, {
+  const outbound = await newsletterFetch(fetchImpl, `${url}/rest/v1/${path}`, {
     method,
     headers: {
       apikey: serviceRoleKey,
@@ -240,14 +370,16 @@ export async function supabaseRest(env, path, { method = 'GET', body, headers = 
       ...headers,
     },
     body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
+  }, NEWSLETTER_OUTBOUND_LIMITS.supabase);
+  const data = await readBoundedResponseJson(outbound.response, {
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.supabase.maxBytes,
+    signal: outbound.signal,
   });
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!response.ok) {
+  if (!outbound.response.ok) {
     throw new NewsletterError('Supabase request failed.', {
-      status: response.status >= 400 && response.status < 500 ? 502 : response.status,
+      status: outbound.response.status >= 400 && outbound.response.status < 500 ? 502 : outbound.response.status,
       code: 'supabase_request_failed',
-      cause: new Error(typeof data?.message === 'string' ? data.message : text),
     });
   }
   return data;
@@ -365,14 +497,8 @@ function listmonkAuthHeaders(config) {
   };
 }
 
-async function providerJson(response) {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
+async function providerJson(response, { signal, maxBytes }) {
+  return readBoundedResponseJson(response, { signal, maxBytes });
 }
 
 export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetch) {
@@ -409,22 +535,25 @@ export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetc
     return { ok: false, skipped: true, reason: 'listmonk_list_not_configured' };
   }
 
-  const response = await fetchImpl(endpoint, {
+  const outbound = await newsletterFetch(fetchImpl, endpoint, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
+    signal: subscriber.signal,
+  }, NEWSLETTER_OUTBOUND_LIMITS.listmonk);
+  const data = await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonk.maxBytes,
   });
-  const data = await providerJson(response);
 
-  if (!response.ok) {
+  if (!outbound.response.ok) {
     const detail = JSON.stringify(data ?? {});
-    if (response.status === 409 || /already|duplicate|exists/i.test(detail)) {
+    if (outbound.response.status === 409 || /already|duplicate|exists/i.test(detail)) {
       return { ok: true, status: 'already-subscribed', data };
     }
     throw new NewsletterError('Listmonk subscription failed.', {
       status: 502,
       code: 'listmonk_request_failed',
-      cause: new Error(detail),
     });
   }
 
@@ -454,7 +583,7 @@ export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {
     altbody: draft.text,
     ...(Number.isInteger(config.templateId) && config.templateId > 0 ? { template_id: config.templateId } : {}),
   };
-  const response = await fetchImpl(`${config.baseUrl}/api/campaigns`, {
+  const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/campaigns`, {
     method: 'POST',
     headers: {
       ...listmonkAuthHeaders(config),
@@ -462,13 +591,16 @@ export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {
       Accept: 'application/json',
     },
     body: JSON.stringify(body),
+    signal: draft.signal,
+  }, NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign);
+  const data = await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign.maxBytes,
   });
-  const data = await providerJson(response);
-  if (!response.ok) {
+  if (!outbound.response.ok) {
     throw new NewsletterError('Listmonk campaign creation failed.', {
       status: 502,
       code: 'listmonk_campaign_failed',
-      cause: new Error(JSON.stringify(data ?? {})),
     });
   }
   const campaignId = data?.data?.id ?? data?.id;
@@ -491,19 +623,23 @@ export async function recoverListmonkCampaign(env, campaignIdentity, fetchImpl =
   if (!config?.username || !config?.token) {
     return { ok: false, skipped: true, reason: 'listmonk_campaign_not_configured' };
   }
-  const response = await fetchImpl(
+  const outbound = await newsletterFetch(
+    fetchImpl,
     `${config.baseUrl}/api/campaigns?query=${encodeURIComponent(campaignIdentity)}`,
     {
       method: 'GET',
       headers: { ...listmonkAuthHeaders(config), Accept: 'application/json' },
     },
+    NEWSLETTER_OUTBOUND_LIMITS.listmonk,
   );
-  const data = await providerJson(response);
-  if (!response.ok) {
+  const data = await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonk.maxBytes,
+  });
+  if (!outbound.response.ok) {
     throw new NewsletterError('Listmonk campaign recovery failed.', {
       status: 502,
       code: 'listmonk_campaign_recovery_failed',
-      cause: new Error(JSON.stringify(data ?? {})),
     });
   }
   const campaign = campaignRows(data).find((entry) => entry?.name === campaignIdentity);
@@ -584,7 +720,7 @@ export async function sendResendNotification(env, message, fetchImpl = fetch) {
   const to = envValue(env, 'NEWSLETTER_OWNER_EMAIL');
   if (!apiKey || !from || !to) return { ok: false, skipped: true, reason: 'resend_not_configured' };
 
-  const response = await fetchImpl('https://api.resend.com/emails', {
+  const outbound = await newsletterFetch(fetchImpl, 'https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -599,13 +735,16 @@ export async function sendResendNotification(env, message, fetchImpl = fetch) {
       text: message.text,
       tags: [{ name: 'workflow', value: 'longmontai-newsletter' }],
     }),
+    signal: message.signal,
+  }, NEWSLETTER_OUTBOUND_LIMITS.resend);
+  const data = await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.resend.maxBytes,
   });
-  const data = await providerJson(response);
-  if (!response.ok) {
+  if (!outbound.response.ok) {
     throw new NewsletterError('Resend notification failed.', {
       status: 502,
       code: 'resend_request_failed',
-      cause: new Error(JSON.stringify(data ?? {})),
     });
   }
   return { ok: true, data };

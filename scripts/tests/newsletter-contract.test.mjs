@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { inspect } from 'node:util';
 import { createHmac } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -9,12 +10,24 @@ import { fileURLToPath } from 'node:url';
 import { createNewsletterGenerateHandler } from '../../scripts/lib/newsletter/generate-handler.mjs';
 import { createNewsletterSubscribeHandler } from '../../scripts/lib/newsletter/subscribe-handler.mjs';
 import {
+  collectWebsiteSignals,
   createCuratedNewsletterDraft,
   deterministicDraftFromSignals,
   sanitizeNewsletterDraft,
   validatedNewsletterUrl,
 } from '../../scripts/lib/newsletter/curation.mjs';
-import { normalizeEmail } from '../../scripts/lib/newsletter/shared.mjs';
+import {
+  NEWSLETTER_OUTBOUND_LIMITS,
+  cancelNewsletterBody,
+  enforceNewsletterSignupRateLimit,
+  newsletterFetch,
+  normalizeEmail,
+  readBoundedResponseJson,
+  readBoundedResponseText,
+  sendResendNotification,
+  supabaseRest,
+  syncSubscriberToListmonk,
+} from '../../scripts/lib/newsletter/shared.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rateLimitSecret = 'test-only-newsletter-rate-limit-secret-with-32-bytes';
@@ -109,6 +122,412 @@ function responseHarness() {
     json(payload) { this.body = payload; return this; },
   };
 }
+
+test('outbound helper composes caller cancellation while preserving request payloads', async () => {
+  const caller = new AbortController();
+  let observed;
+  const outbound = await newsletterFetch(async (_url, options) => {
+    observed = options;
+    return new Response('{}');
+  }, 'https://provider.example.test/resource', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Contract': 'preserved' },
+    body: JSON.stringify({ compatible: true }),
+    signal: caller.signal,
+  }, { timeoutMs: 1000 });
+
+  assert.equal(observed.method, 'POST');
+  assert.equal(observed.headers['X-Contract'], 'preserved');
+  assert.deepEqual(JSON.parse(observed.body), { compatible: true });
+  assert.notEqual(observed.signal, caller.signal);
+  caller.abort(new Error('caller cancelled'));
+  assert.equal(observed.signal.aborted, true);
+  await outbound.response.body.cancel();
+});
+
+test('outbound helper terminates stalled requests with stable internal errors', async () => {
+  let observedSignal;
+  const keepEventLoopAlive = setTimeout(() => undefined, 50);
+  try {
+    await assert.rejects(
+      newsletterFetch(async (_url, options) => {
+        observedSignal = options.signal;
+        return new Promise((_, reject) => {
+          options.signal.addEventListener('abort', () => reject(new Error('SECRET_PROVIDER_TIMEOUT_BODY')), { once: true });
+        });
+      }, 'https://provider.example.test/stall', {}, { timeoutMs: 5 }),
+      (error) => {
+        assert.equal(error.code, 'newsletter_outbound_aborted');
+        assert.equal(error.message, 'Newsletter outbound request was aborted.');
+        assert.doesNotMatch(error.message, /SECRET|provider\.example/i);
+        return true;
+      },
+    );
+  } finally {
+    clearTimeout(keepEventLoopAlive);
+  }
+  assert.equal(observedSignal.aborted, true);
+});
+
+test('caller abort cancels a stalled streamed response after headers', async () => {
+  const caller = new AbortController();
+  let cancellations = 0;
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode('partial'));
+    },
+    cancel() {
+      cancellations += 1;
+    },
+  });
+  const outbound = await newsletterFetch(
+    async () => new Response(stream),
+    'https://provider.example.test/stream',
+    { signal: caller.signal },
+    { timeoutMs: 1000 },
+  );
+  const reading = readBoundedResponseText(outbound.response, { maxBytes: 100, signal: outbound.signal });
+  setTimeout(() => caller.abort(new Error('caller abort')), 0);
+  await assert.rejects(reading, (error) => {
+    assert.equal(error.code, 'newsletter_outbound_aborted');
+    assert.doesNotMatch(error.message, /partial|provider\.example/i);
+    return true;
+  });
+  assert.equal(cancellations, 1);
+});
+
+test('bounded response cleanup never waits for a provider cancel promise', async () => {
+  let cancellations = 0;
+  const response = {
+    body: {
+      getReader() {
+        return {
+          read: async () => ({ done: false, value: new Uint8Array(6) }),
+          cancel() {
+            cancellations += 1;
+            return new Promise(() => {});
+          },
+          releaseLock() {},
+        };
+      },
+    },
+  };
+  const result = await Promise.race([
+    assert.rejects(
+      readBoundedResponseText(response, { maxBytes: 5 }),
+      (error) => error.code === 'newsletter_response_too_large',
+    ).then(() => 'settled'),
+    new Promise((resolve) => setTimeout(() => resolve('timed_out'), 100)),
+  ]);
+  assert.equal(result, 'settled');
+  assert.equal(cancellations, 1);
+
+  let timeoutCancellations = 0;
+  const timeoutResult = await Promise.race([
+    assert.rejects(
+      readBoundedResponseText({
+        body: {
+          getReader: () => ({
+            read: () => new Promise(() => {}),
+            cancel() {
+              timeoutCancellations += 1;
+              return new Promise(() => {});
+            },
+            releaseLock() {},
+          }),
+        },
+      }, { maxBytes: 5, signal: AbortSignal.timeout(5) }),
+      (error) => error.code === 'newsletter_outbound_aborted',
+    ).then(() => 'settled'),
+    new Promise((resolve) => setTimeout(() => resolve('timed_out'), 100)),
+  ]);
+  assert.equal(timeoutResult, 'settled');
+  assert.equal(timeoutCancellations, 1);
+
+  let bodyCancellations = 0;
+  const start = Date.now();
+  cancelNewsletterBody({
+    cancel() {
+      bodyCancellations += 1;
+      return new Promise(() => {});
+    },
+  });
+  assert.equal(bodyCancellations, 1);
+  assert.ok(Date.now() - start < 100);
+});
+
+test('bounded response reader accepts null bodies as empty text and JSON but rejects malformed bodies', async () => {
+  assert.equal(await readBoundedResponseText({ body: null }, { maxBytes: 5 }), '');
+  assert.equal(await readBoundedResponseJson({ body: null }, { maxBytes: 5 }), null);
+  await assert.rejects(
+    readBoundedResponseText({ body: {} }, { maxBytes: 5 }),
+    (error) => error.code === 'newsletter_response_invalid',
+  );
+});
+
+test('provider failure sentinels never appear in newsletter errors or serialized curation data', async () => {
+  const sentinel = 'PROVIDER_BODY=https://provider.invalid/private?auth=credential-secret';
+  let failure;
+  await assert.rejects(
+    newsletterFetch(async () => { throw new Error(sentinel); }, 'https://provider.invalid/', {}, { timeoutMs: 1000 }),
+    (error) => {
+      failure = error;
+      return error.code === 'newsletter_outbound_failed';
+    },
+  );
+  let readFailure;
+  await assert.rejects(
+    readBoundedResponseText({
+      body: {
+        getReader: () => ({
+          read: async () => { throw new Error(sentinel); },
+          releaseLock() {},
+        }),
+      },
+    }, { maxBytes: 5 }),
+    (error) => {
+      readFailure = error;
+      return error.code === 'newsletter_response_invalid';
+    },
+  );
+  let rateLimitFailure;
+  await assert.rejects(
+    enforceNewsletterSignupRateLimit(env(), {
+      ip: '203.0.113.1',
+      email: 'sentinel@example.com',
+      now: new Date('2026-08-25T12:00:00Z'),
+    }, async () => { throw new Error(sentinel); }),
+    (error) => {
+      rateLimitFailure = error;
+      return error.code === 'rate_limit_unavailable';
+    },
+  );
+  const observable = [failure, readFailure, rateLimitFailure].flatMap((error) => [
+    error.message,
+    String(error),
+    JSON.stringify(error),
+    JSON.stringify({ error }),
+    inspect(error),
+    ...Object.getOwnPropertyNames(error).map((name) => String(error[name])),
+  ]).join('\n');
+  assert.doesNotMatch(observable, /PROVIDER_BODY|provider\.invalid|credential-secret/i);
+
+  const signals = await collectWebsiteSignals({
+    root,
+    now: new Date('2026-08-25T12:00:00Z'),
+    fetchImpl: async () => { throw new Error(sentinel); },
+  });
+  assert.doesNotMatch(JSON.stringify(signals), /PROVIDER_BODY|provider\.invalid|credential-secret/i);
+  assert.ok(signals.sourceHighlights.every((source) => source.error === 'Newsletter live source was unavailable.'));
+});
+
+test('bounded response reader cancels streamed oversize bodies before full buffering', async () => {
+  let pulls = 0;
+  let cancellations = 0;
+  const stream = new ReadableStream({
+    pull(controller) {
+      pulls += 1;
+      controller.enqueue(new TextEncoder().encode(pulls === 1 ? 'abcd' : 'SECRET_PROVIDER_BODY'));
+    },
+    cancel() {
+      cancellations += 1;
+    },
+  }, { highWaterMark: 0 });
+  await assert.rejects(
+    readBoundedResponseText(new Response(stream), { maxBytes: 5 }),
+    (error) => {
+      assert.equal(error.code, 'newsletter_response_too_large');
+      assert.equal(error.message, 'Newsletter provider response exceeded the size limit.');
+      assert.doesNotMatch(error.message, /SECRET_PROVIDER_BODY/);
+      return true;
+    },
+  );
+  assert.equal(pulls, 2);
+  assert.equal(cancellations, 1);
+});
+
+test('live-source collection enforces the streaming 80KB ceiling and cancels each source', async () => {
+  let cancellations = 0;
+  let requests = 0;
+  const signals = await collectWebsiteSignals({
+    root,
+    now: new Date('2026-08-25T12:00:00Z'),
+    fetchImpl: async (_url, options) => {
+      requests += 1;
+      assert.ok(options.signal instanceof AbortSignal);
+      const stream = new ReadableStream({
+        pull(controller) {
+          controller.enqueue(new Uint8Array(NEWSLETTER_OUTBOUND_LIMITS.liveSource.maxBytes + 1));
+        },
+        cancel() {
+          cancellations += 1;
+        },
+      }, { highWaterMark: 0 });
+      return new Response(stream, { status: 200 });
+    },
+  });
+  assert.equal(requests, 8);
+  assert.equal(cancellations, 8);
+  assert.equal(signals.sourceHighlights.length, 8);
+  assert.ok(signals.sourceHighlights.every((source) => source.ok === false));
+  assert.ok(signals.sourceHighlights.every((source) => source.error === 'Newsletter live source was unavailable.'));
+});
+
+test('provider wrappers accept null success bodies and reject malformed non-null bodies', async () => {
+  const noContent = async () => new Response(null, { status: 204 });
+  assert.equal(await supabaseRest(env(), 'newsletter_subscribers?select=id', {}, noContent), null);
+
+  const listmonk = await syncSubscriberToListmonk(env({
+    LISTMONK_BASE_URL: 'https://listmonk.example.test',
+    LISTMONK_WEEKLY_LIST_UUID: '11111111-1111-4111-8111-111111111111',
+  }), {
+    email: 'empty-response@example.com',
+    cadence: 'weekly',
+    source: 'contract-test',
+  }, noContent);
+  assert.deepEqual(listmonk, { ok: true, status: 'submitted', data: null });
+
+  const resend = await sendResendNotification(env({
+    RESEND_API_KEY: 'resend-test-key',
+    NEWSLETTER_FROM_EMAIL: 'news@example.com',
+    NEWSLETTER_OWNER_EMAIL: 'owner@example.com',
+  }), {
+    subject: 'Empty response',
+    html: '<p>Empty response</p>',
+    text: 'Empty response',
+  }, noContent);
+  assert.deepEqual(resend, { ok: true, data: null });
+
+  const malformed = async () => ({ ok: true, status: 200, body: {} });
+  await assert.rejects(
+    supabaseRest(env(), 'newsletter_subscribers?select=id', {}, malformed),
+    (error) => error.code === 'newsletter_response_invalid',
+  );
+  await assert.rejects(
+    syncSubscriberToListmonk(env({
+      LISTMONK_BASE_URL: 'https://listmonk.example.test',
+      LISTMONK_WEEKLY_LIST_UUID: '11111111-1111-4111-8111-111111111111',
+    }), {
+      email: 'malformed-response@example.com', cadence: 'weekly', source: 'contract-test',
+    }, malformed),
+    (error) => error.code === 'newsletter_response_invalid',
+  );
+  await assert.rejects(
+    sendResendNotification(env({
+      RESEND_API_KEY: 'resend-test-key',
+      NEWSLETTER_FROM_EMAIL: 'news@example.com',
+      NEWSLETTER_OWNER_EMAIL: 'owner@example.com',
+    }), {
+      subject: 'Malformed response', html: '<p>Malformed response</p>', text: 'Malformed response',
+    }, malformed),
+    (error) => error.code === 'newsletter_response_invalid',
+  );
+});
+
+test('setup-check subprocess sanitizes sentinels and does not await stuck body cancellation', async () => {
+  const sentinels = {
+    url: 'https://SETUP_SENTINEL_URL.invalid/private',
+    auth: 'SETUP_SENTINEL_AUTH_CREDENTIAL',
+    body: 'SETUP_SENTINEL_PROVIDER_BODY',
+  };
+  const childSource = `
+    const output = [];
+    console.log = (...values) => output.push(values.map(String).join(' '));
+    const stuckBody = { cancel: () => new Promise(() => {}) };
+    globalThis.fetch = async (url, options = {}) => {
+      if (url === process.env.SUPABASE_URL + '/rest/v1/newsletter_subscribers?select=id&limit=1'
+        && options.headers?.Authorization === 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return { ok: true, status: 200, body: null };
+      }
+      if (url === process.env.LISTMONK_BASE_URL + '/api/public/lists') {
+        return { ok: true, status: 200, body: stuckBody };
+      }
+      if (url === 'https://api.resend.com/domains'
+        && options.headers?.Authorization === 'Bearer ' + process.env.RESEND_API_KEY) {
+        return { ok: true, status: 200, body: stuckBody };
+      }
+      throw new Error(process.env.NEWSLETTER_TEST_PROVIDER_BODY);
+    };
+    await import('./scripts/newsletter-setup-check.mjs');
+    process.stdout.write(JSON.stringify({ output }) + '\\n');
+  `;
+  const started = Date.now();
+  const result = await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ['--input-type=module', '--eval', childSource], {
+      cwd: root,
+      env: {
+        PATH: process.env.PATH ?? '',
+        SUPABASE_URL: `${sentinels.url}/supabase`,
+        SUPABASE_SERVICE_ROLE_KEY: sentinels.auth,
+        LISTMONK_BASE_URL: `${sentinels.url}/listmonk`,
+        LISTMONK_API_USERNAME: sentinels.auth,
+        LISTMONK_API_TOKEN: sentinels.auth,
+        RESEND_API_KEY: sentinels.auth,
+        NEWSLETTER_TEST_PROVIDER_BODY: sentinels.body,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('newsletter setup-check subprocess did not terminate'));
+    }, 1000);
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ code, stdout, stderr });
+    });
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.ok(Date.now() - started < 1000, 'newsletter setup-check subprocess did not terminate promptly');
+  const serialized = JSON.stringify(JSON.parse(result.stdout));
+  assert.match(serialized, /ok supabase:|ok listmonk:|ok resend:/);
+  for (const sentinel of Object.values(sentinels)) {
+    assert.doesNotMatch(result.stdout, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.doesNotMatch(result.stderr, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.doesNotMatch(serialized, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+});
+
+test('outbound budgets are finite, provider-specific, and setup check terminates without environment', async () => {
+  for (const budget of Object.values(NEWSLETTER_OUTBOUND_LIMITS)) {
+    assert.ok(Number.isInteger(budget.timeoutMs) && budget.timeoutMs > 0);
+    assert.ok(Number.isInteger(budget.maxBytes) && budget.maxBytes > 0);
+  }
+  assert.notEqual(NEWSLETTER_OUTBOUND_LIMITS.openai.timeoutMs, NEWSLETTER_OUTBOUND_LIMITS.liveSource.timeoutMs);
+
+  const result = await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ['scripts/newsletter-setup-check.mjs'], {
+      cwd: root,
+      env: { PATH: process.env.PATH ?? '' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('newsletter setup check did not terminate'));
+    }, 2000);
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ code, stdout, stderr });
+    });
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(result.stdout, /missing supabase/);
+  assert.match(result.stdout, /missing listmonk/);
+  assert.match(result.stdout, /missing resend/);
+});
 
 function request(body, headers = {}) {
   return {
@@ -551,6 +970,49 @@ test('newsletter URL validation rejects dangerous, malformed, encoded, and proto
   assert.equal(validatedNewsletterUrl('/edition/edition-2026-08-19'), 'https://longmontai.com/edition/edition-2026-08-19');
 });
 
+test('public curator API sanitizes malformed OpenAI output errors without causes', async () => {
+  const bodySentinel = 'MALFORMED_PROVIDER_BODY_SENTINEL';
+  const urlSentinel = 'https://provider.invalid/private-output';
+  const credentialSentinel = 'OPENAI_CREDENTIAL_SENTINEL';
+  let failure;
+
+  await assert.rejects(
+    createCuratedNewsletterDraft({
+      env: { OPENAI_API_KEY: credentialSentinel, NEWSLETTER_CURATOR_MODEL: 'test-model' },
+      now: new Date('2026-08-25T12:00:00Z'),
+      collectSignalsImpl: async () => ({
+        sourceUrls: [],
+        website: { recentArticles: [] },
+        modelWatchStatus: { successfulSources: 0, totalSources: 0, detectedModels: [] },
+        sourceHighlights: [],
+      }),
+      fetchImpl: async () => new Response(JSON.stringify({
+        output_text: `prefix {"body":"${bodySentinel}", invalid} ${urlSentinel}`,
+      }), { status: 200 }),
+    }),
+    (error) => {
+      failure = error;
+      assert.equal(error.message, 'Newsletter curator returned invalid JSON.');
+      assert.equal(Object.hasOwn(error, 'cause'), false);
+      return true;
+    },
+  );
+
+  const rendered = [
+    failure.message,
+    failure.name,
+    failure.stack,
+    String(failure),
+    JSON.stringify(failure),
+    JSON.stringify({ error: failure }),
+    inspect(failure),
+    ...Object.getOwnPropertyNames(failure).map((name) => String(failure[name])),
+  ].join('\n');
+  for (const sentinel of [bodySentinel, urlSentinel, credentialSentinel]) {
+    assert.doesNotMatch(rendered, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+  }
+});
+
 test('mocked OpenAI output cannot restore unsafe signal URLs or model HTML', async () => {
   const unsafeSignals = {
     sourceUrls: [
@@ -830,7 +1292,7 @@ test('ambiguous campaign timeout recovers by deterministic identity without a bl
 
   const timedOut = responseHarness();
   await handler(generationRequest(), timedOut);
-  assert.equal(timedOut.statusCode, 500);
+  assert.equal(timedOut.statusCode, 502);
   const recovered = responseHarness();
   await handler(generationRequest(), recovered);
   assert.equal(recovered.statusCode, 200);

@@ -3,6 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { modelWatchSources } from '../../model-watch-sources.mjs';
+import {
+  NEWSLETTER_OUTBOUND_LIMITS,
+  cancelNewsletterBody,
+  newsletterFetch,
+  readBoundedResponseJson,
+  readBoundedResponseText,
+} from './shared.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const ARTICLE_URL_PATTERN = /https?:\/\/[^\s)"'<>]+/g;
@@ -74,17 +81,23 @@ async function readModelWatchStatus(root) {
   }
 }
 
-async function fetchSourceHighlights(fetchImpl, limit = 8) {
+async function fetchSourceHighlights(fetchImpl, limit = 8, callerSignal) {
   const highlights = [];
   const selectedSources = modelWatchSources.slice(0, limit);
   await Promise.all(selectedSources.map(async (source) => {
     try {
-      const response = await fetchImpl(source.url, {
+      const outbound = await newsletterFetch(fetchImpl, source.url, {
         headers: { 'User-Agent': 'LongmontAI-Newsletter/1.0 (+https://longmontai.com/newsletter)' },
-        signal: AbortSignal.timeout(9000),
+        signal: callerSignal,
+      }, NEWSLETTER_OUTBOUND_LIMITS.liveSource);
+      if (!outbound.response.ok) {
+        cancelNewsletterBody(outbound.response.body);
+        throw new Error('Newsletter live source request failed.');
+      }
+      const body = await readBoundedResponseText(outbound.response, {
+        maxBytes: NEWSLETTER_OUTBOUND_LIMITS.liveSource.maxBytes,
+        signal: outbound.signal,
       });
-      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-      const body = (await response.text()).slice(0, 80_000);
       const matches = new Set();
       for (const pattern of source.patterns ?? []) {
         for (const match of body.matchAll(pattern)) matches.add(match[0].replace(/\s+/g, ' ').trim());
@@ -95,13 +108,15 @@ async function fetchSourceHighlights(fetchImpl, limit = 8) {
         matches: [...matches].slice(0, 8),
         ok: true,
       });
-    } catch (error) {
+    } catch {
       highlights.push({
         company: source.company,
         url: source.url,
         matches: [],
         ok: false,
-        error: error instanceof Error ? error.message : String(error),
+        // This structure is later serialized into the curation prompt; never
+        // retain provider text, URLs, or credentials from caught errors.
+        error: 'Newsletter live source was unavailable.',
       });
     }
   }));
@@ -113,11 +128,12 @@ export async function collectWebsiteSignals({
   now = new Date(),
   fetchImpl = fetch,
   fetchLiveSources = true,
+  signal,
 } = {}) {
   const [articles, modelWatchStatus, sourceHighlights] = await Promise.all([
     readRecentArticles(root, now),
     readModelWatchStatus(root),
-    fetchLiveSources ? fetchSourceHighlights(fetchImpl) : Promise.resolve([]),
+    fetchLiveSources ? fetchSourceHighlights(fetchImpl, 8, signal) : Promise.resolve([]),
   ]);
 
   const ownedSourceUrls = new Set([
@@ -353,8 +369,14 @@ function parseJsonObject(text) {
     return JSON.parse(trimmed);
   } catch {
     const match = trimmed.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI response did not include JSON.');
-    return JSON.parse(match[0]);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        // Fall through to the same sanitized error as every malformed response.
+      }
+    }
+    throw new Error('Newsletter curator returned invalid JSON.');
   }
 }
 
@@ -378,20 +400,22 @@ export async function createCuratedNewsletterDraft({
   root = ROOT,
   fetchLiveSources = true,
   collectSignalsImpl = collectWebsiteSignals,
+  signal,
 } = {}) {
-  const signals = await collectSignalsImpl({ root, now, fetchImpl, fetchLiveSources });
+  const signals = await collectSignalsImpl({ root, now, fetchImpl, fetchLiveSources, signal });
   const fallback = deterministicDraftFromSignals(signals, { cadence, now });
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) return fallback;
 
   const model = env.NEWSLETTER_CURATOR_MODEL || 'gpt-5-mini';
-  const response = await fetchImpl('https://api.openai.com/v1/responses', {
+  const outbound = await newsletterFetch(fetchImpl, 'https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
+    signal,
     body: JSON.stringify({
       model,
       instructions: [
@@ -411,10 +435,13 @@ export async function createCuratedNewsletterDraft({
         signals,
       }),
     }),
+  }, NEWSLETTER_OUTBOUND_LIMITS.openai);
+  const responseJson = await readBoundedResponseJson(outbound.response, {
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.openai.maxBytes,
+    signal: outbound.signal,
   });
-  const responseJson = await response.json();
-  if (!response.ok) {
-    throw new Error(`OpenAI curation failed: ${responseJson?.error?.message ?? response.statusText}`);
+  if (!outbound.response.ok) {
+    throw new Error(`OpenAI curation failed with HTTP ${outbound.response.status}.`);
   }
   const draft = normalizeAiDraft(parseJsonObject(responseText(responseJson)), fallback);
   return sanitizeNewsletterDraft({
