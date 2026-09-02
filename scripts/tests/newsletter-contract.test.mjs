@@ -8,7 +8,12 @@ import { fileURLToPath } from 'node:url';
 
 import { createNewsletterGenerateHandler } from '../../scripts/lib/newsletter/generate-handler.mjs';
 import { createNewsletterSubscribeHandler } from '../../scripts/lib/newsletter/subscribe-handler.mjs';
-import { deterministicDraftFromSignals } from '../../scripts/lib/newsletter/curation.mjs';
+import {
+  createCuratedNewsletterDraft,
+  deterministicDraftFromSignals,
+  sanitizeNewsletterDraft,
+  validatedNewsletterUrl,
+} from '../../scripts/lib/newsletter/curation.mjs';
 import { normalizeEmail } from '../../scripts/lib/newsletter/shared.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -454,6 +459,138 @@ test('migrated Postgres enforces limits, normalization, concurrency, and role is
   `);
 });
 
+test('newsletter HTML is constructed from normalized escaped plain text and validated URLs', () => {
+  const draft = sanitizeNewsletterDraft({
+    cadence: 'weekly',
+    periodStart: '2026-08-19',
+    periodEnd: '2026-08-25',
+    name: 'Unsafe draft',
+    subject: '<script>alert(1)</script>\u0000',
+    preheader: '<style>body{display:none}</style>',
+    summary: '<img src=x onerror=alert(1)>',
+    html: '<svg onload=alert(1)><script>alert(1)</script></svg>',
+    text: '<iframe src=javascript:alert(1)>',
+    items: [
+      {
+        category: 'models',
+        title: '<img src=x onerror=alert(1)>',
+        synthesis: '<svg onload=alert(1)>signal</svg>',
+        sourceName: '<script>source</script>',
+        sourceUrl: 'javascript:alert(1)',
+        score: 50,
+      },
+      {
+        category: 'tools',
+        title: 'Safe link',
+        synthesis: 'Safe synthesis',
+        sourceName: 'Safe source',
+        sourceUrl: 'https://safe.example/path?q=1',
+        score: 60,
+      },
+    ],
+    sourceUrls: ['data:text/html,x', 'https://safe.example/source', '/model-watch'],
+  });
+
+  assert.doesNotMatch(draft.html, /<script|<style|<svg|<img|<iframe/i);
+  assert.doesNotMatch(draft.html, /javascript:|data:text|file:/i);
+  assert.doesNotMatch(draft.html, /<[^>]+\son(?:error|load)=/i);
+  assert.match(draft.html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.equal(draft.items[0].sourceUrl, 'https://longmontai.com/');
+  assert.equal(draft.items[1].sourceUrl, 'https://safe.example/path?q=1');
+  assert.deepEqual(draft.sourceUrls, ['https://safe.example/source', 'https://longmontai.com/model-watch']);
+  assert.doesNotMatch(draft.html, /<svg onload=alert\(1\)>/i);
+});
+
+test('newsletter text normalization removes Unicode format controls before codepoint bounds', () => {
+  const bounded = sanitizeNewsletterDraft({
+    subject: `${'ﬃ'.repeat(100)}\u202E\u2066\u2067\u2068\u2069\u200B`,
+    preheader: `safe\u202Ehidden\u2066isolated\u2069zero\u200Bwidth`,
+    summary: 'summary',
+    items: [{
+      category: 'models',
+      title: `title\u202E\u2066\u2069\u200B`,
+      synthesis: `synthesis\u202E\u2067\u2068\u200B`,
+      sourceName: 'source',
+      sourceUrl: 'https://safe.example/',
+    }],
+    sourceUrls: [],
+  });
+  assert.equal(Array.from(bounded.subject).length, 160);
+  assert.equal(bounded.subject, 'ffi'.repeat(100).slice(0, 160));
+  assert.doesNotMatch(bounded.subject, /ﬃ/u);
+  for (const value of [bounded.subject, bounded.preheader, bounded.items[0].title, bounded.items[0].synthesis]) {
+    assert.doesNotMatch(value, /[\u202E\u2066-\u2069\u200B]/u);
+  }
+});
+
+test('newsletter URL validation rejects dangerous, malformed, encoded, and protocol-relative values', () => {
+  for (const unsafe of [
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'file:///etc/passwd',
+    '//evil.example/path',
+    '%6a%61%76%61%73%63%72%69%70%74%3Aalert(1)',
+    '%252f%252fevil.example/path',
+    '%25256a%252561%252576%252561%252573%252563%252572%252569%252570%252574%25253Aalert(1)',
+    'ｊａｖａｓｃｒｉｐｔ：alert(1)',
+    '／／evil.example/path',
+    'https://user:password@safe.example/path',
+    'https://user%40evil.example@safe.example/path',
+    'https://%2575ser:%2570ass@safe.example/path',
+    '%20%20javascript%3Aalert(1)',
+    'https://safe.example/%',
+    'https://safe.example/path\u0000evil',
+    '\\evil.example\\path',
+    '/not-an-approved-first-party-path',
+    '/model-watch?next=javascript:alert(1)',
+  ]) {
+    assert.equal(validatedNewsletterUrl(unsafe), null, unsafe);
+  }
+  assert.equal(validatedNewsletterUrl('https://safe.example/path?q=signal#section'), 'https://safe.example/path?q=signal#section');
+  assert.equal(validatedNewsletterUrl('/model-watch'), 'https://longmontai.com/model-watch');
+  assert.equal(validatedNewsletterUrl('/edition/edition-2026-08-19'), 'https://longmontai.com/edition/edition-2026-08-19');
+});
+
+test('mocked OpenAI output cannot restore unsafe signal URLs or model HTML', async () => {
+  const unsafeSignals = {
+    sourceUrls: [
+      'javascript:alert(1)',
+      'data:text/html,unsafe',
+      '%252f%252fevil.example/path',
+      '/model-watch',
+      'https://safe.example/source',
+    ],
+    website: { recentArticles: [] },
+    modelWatchStatus: { successfulSources: 1, totalSources: 1, detectedModels: ['Safe Model'] },
+    sourceHighlights: [{ company: 'Unsafe', url: 'javascript:alert(1)', matches: ['Safe Model'], ok: true }],
+  };
+  const draft = await createCuratedNewsletterDraft({
+    env: { OPENAI_API_KEY: 'test-key', NEWSLETTER_CURATOR_MODEL: 'test-model' },
+    now: new Date('2026-08-25T12:00:00Z'),
+    collectSignalsImpl: async () => unsafeSignals,
+    fetchImpl: async () => new Response(JSON.stringify({
+      output_text: JSON.stringify({
+        subject: 'AI <script>alert(1)</script>',
+        preheader: '<style>unsafe</style>',
+        summary: '<svg onload=alert(1)>',
+        html: '<script>MODEL_HTML</script>',
+        items: [{
+          category: 'models',
+          title: '<img src=x onerror=alert(1)>',
+          synthesis: 'Signal',
+          sourceName: 'Source',
+          sourceUrl: 'data:text/html,unsafe',
+          score: 50,
+        }],
+      }),
+    }), { status: 200 }),
+  });
+  assert.deepEqual(draft.sourceUrls, ['https://longmontai.com/model-watch', 'https://safe.example/source']);
+  assert.equal(draft.items[0].sourceUrl, 'https://longmontai.com/model-watch');
+  assert.doesNotMatch(draft.html, /MODEL_HTML|<script|<style|<svg|<img/i);
+  assert.match(draft.html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+});
+
 function generatedDraft() {
   return {
     cadence: 'weekly',
@@ -490,6 +627,71 @@ function generationEnv(overrides = {}) {
 function generationRequest(headers = { authorization: 'Bearer cron-secret' }) {
   return { method: 'POST', query: {}, headers };
 }
+
+test('persisted issue, Listmonk, and owner notification share the server-sanitized representation', async () => {
+  const identity = 'longmontai-weekly-2026-08-19-2026-08-25';
+  let persistedDraft;
+  let campaignPayload;
+  let notificationPayload;
+  const handler = createNewsletterGenerateHandler({
+    env: generationEnv({
+      NEWSLETTER_NOTIFY_OWNER: '1',
+      NEWSLETTER_OWNER_EMAIL: 'owner@example.com',
+      RESEND_API_KEY: 'resend-test-key',
+    }),
+    now: () => new Date('2026-08-25T12:00:00Z'),
+    draftImpl: async () => ({
+      ...generatedDraft(),
+      subject: '<img src=x onerror=alert(1)> Subject',
+      preheader: '<style>unsafe</style>',
+      summary: '<script>summary</script>',
+      html: '<script>MODEL_RAW_HTML</script><svg onload=alert(1)>',
+      text: 'MODEL_RAW_TEXT',
+      items: [{
+        category: 'models',
+        title: '<script>Item</script>',
+        synthesis: '<img src=x onerror=alert(1)>',
+        sourceName: 'Unsafe source',
+        sourceUrl: 'data:text/html,<script>alert(1)</script>',
+        score: 50,
+      }],
+    }),
+    fetchImpl: async (url, options) => {
+      if (url.endsWith('/rpc/newsletter_claim_generation')) {
+        return new Response(JSON.stringify([{ outcome: 'claimed', issue_id: '00000000-0000-4000-8000-000000000060', owner_token: '00000000-0000-4000-8000-000000000061', deterministic_campaign_identity: identity, issue: {} }]));
+      }
+      if (url.endsWith('/rpc/newsletter_prepare_generation')) {
+        persistedDraft = JSON.parse(options.body).p_draft;
+        return new Response('{}');
+      }
+      if (url.endsWith('/rpc/newsletter_mark_campaign_attempt')) return new Response('{}');
+      if (url === 'https://listmonk.example.com/api/campaigns') {
+        campaignPayload = JSON.parse(options.body);
+        return new Response(JSON.stringify({ data: { id: 91 } }));
+      }
+      if (url.endsWith('/rpc/newsletter_complete_generation')) return new Response(JSON.stringify({ id: 'issue' }));
+      if (url.endsWith('/newsletter_delivery_events')) return new Response(JSON.stringify([{ id: 'event' }]));
+      if (url === 'https://api.resend.com/emails') {
+        notificationPayload = JSON.parse(options.body);
+        return new Response(JSON.stringify({ id: 'notification' }));
+      }
+      throw new Error(`unexpected sanitization fetch ${url}`);
+    },
+  });
+  const response = responseHarness();
+  await handler(generationRequest(), response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(campaignPayload.body, persistedDraft.html);
+  assert.equal(campaignPayload.altbody, persistedDraft.text);
+  assert.ok(notificationPayload.html.endsWith(persistedDraft.html));
+  assert.match(notificationPayload.html, /<strong>&lt;img src=x onerror=alert\(1\)&gt; Subject<\/strong>/);
+  for (const representation of [persistedDraft.html, campaignPayload.body, notificationPayload.html]) {
+    assert.doesNotMatch(representation, /MODEL_RAW_HTML|<script|<style|<svg|<img/i);
+    assert.doesNotMatch(representation, /javascript:|data:text|file:/i);
+  }
+  assert.equal(persistedDraft.items[0].sourceUrl, 'https://longmontai.com/');
+});
 
 test('generation claims before work and concurrent invocation creates at most one campaign', async () => {
   const identity = 'longmontai-weekly-2026-08-19-2026-08-25';
@@ -636,6 +838,53 @@ test('ambiguous campaign timeout recovers by deterministic identity without a bl
   assert.equal(campaignPosts, 1);
   assert.equal(recoveryGets, 1);
   assert.equal(draftCalls, 1);
+});
+
+test('recovered campaigns never forward stored HTML or send owner notification', async () => {
+  const identity = 'longmontai-weekly-2026-08-19-2026-08-25';
+  let resendCalls = 0;
+  const outboundBodies = [];
+  const handler = createNewsletterGenerateHandler({
+    env: generationEnv({
+      NEWSLETTER_NOTIFY_OWNER: '1',
+      NEWSLETTER_OWNER_EMAIL: 'owner@example.com',
+      RESEND_API_KEY: 'resend-test-key',
+    }),
+    now: () => new Date('2026-08-25T12:00:00Z'),
+    draftImpl: async () => { throw new Error('recovery must not regenerate'); },
+    fetchImpl: async (url, options = {}) => {
+      if (options.body) outboundBodies.push(String(options.body));
+      if (url.endsWith('/rpc/newsletter_claim_generation')) {
+        return new Response(JSON.stringify([{
+          outcome: 'recover_campaign',
+          issue_id: '00000000-0000-4000-8000-000000000070',
+          owner_token: '00000000-0000-4000-8000-000000000071',
+          deterministic_campaign_identity: identity,
+          issue: {
+            subject: '<script>Stored subject</script>',
+            preheader: '<style>Stored</style>',
+            summary: '<svg onload=alert(1)>',
+            html_body: '<script>STORED_RAW_HTML</script>',
+            text_body: 'STORED_RAW_TEXT',
+            source_urls: ['javascript:alert(1)'],
+          },
+        }]));
+      }
+      if (url.startsWith('https://listmonk.example.com/api/campaigns?query=')) {
+        return new Response(JSON.stringify({ data: { results: [{ id: 94, name: identity, status: 'draft' }] } }));
+      }
+      if (url.endsWith('/rpc/newsletter_complete_generation')) return new Response(JSON.stringify({ id: 'issue' }));
+      if (url.endsWith('/newsletter_delivery_events')) return new Response(JSON.stringify([{ id: 'event' }]));
+      if (url === 'https://api.resend.com/emails') { resendCalls += 1; return new Response('{}'); }
+      throw new Error(`unexpected recovered-notification fetch ${url}`);
+    },
+  });
+  const response = responseHarness();
+  await handler(generationRequest(), response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.notification.reason, 'campaign_recovered');
+  assert.equal(resendCalls, 0);
+  assert.doesNotMatch(outboundBodies.join('\n'), /STORED_RAW_HTML|STORED_RAW_TEXT/);
 });
 
 test('every accepted campaign response shape forwards its validated positive id to completion', async () => {

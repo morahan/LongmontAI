@@ -16,7 +16,11 @@ import {
   sendJson,
   sendResendNotification,
 } from './shared.mjs';
-import { createCuratedNewsletterDraft } from './curation.mjs';
+import {
+  createCuratedNewsletterDraft,
+  escapeNewsletterHtml,
+  sanitizeNewsletterDraft,
+} from './curation.mjs';
 
 function queryValue(request, name) {
   const value = request.query?.[name];
@@ -88,8 +92,10 @@ export function createNewsletterGenerateHandler({
       };
       let draft;
       let campaign;
+      let recoveredCampaign = false;
 
       if (claimed.outcome === 'recover_campaign') {
+        recoveredCampaign = true;
         try {
           campaign = await recoverListmonkCampaign(env, claim.campaignIdentity, fetchImpl);
           if (!campaign.ok) {
@@ -105,21 +111,23 @@ export function createNewsletterGenerateHandler({
           }
           throw error;
         }
-        draft = {
+        draft = sanitizeNewsletterDraft({
           cadence,
           subject: claimed.issue?.subject,
-          html: claimed.issue?.html_body,
-          text: claimed.issue?.text_body,
+          preheader: claimed.issue?.preheader,
+          summary: claimed.issue?.summary,
+          items: [],
+          sourceUrls: claimed.issue?.source_urls ?? [],
           curatorModel: claimed.issue?.curator_model,
           usedAi: Boolean(claimed.issue?.curator_model),
-        };
+        });
       } else if (claimed.outcome === 'claimed') {
-        draft = await draftImpl({
+        draft = sanitizeNewsletterDraft(await draftImpl({
           env,
           cadence,
           now: operationNow,
           fetchImpl,
-        });
+        }));
         if (draft.periodStart !== period.start || draft.periodEnd !== period.end) {
           throw new NewsletterError('Newsletter draft period does not match its generation claim.', {
             status: 500,
@@ -172,13 +180,17 @@ export function createNewsletterGenerateHandler({
         fetchImpl,
       );
 
-      let notification = { ok: false, skipped: true, reason: 'not_attempted' };
-      if (env.NEWSLETTER_NOTIFY_OWNER === '1') {
+      let notification = {
+        ok: false,
+        skipped: true,
+        reason: recoveredCampaign ? 'campaign_recovered' : 'not_attempted',
+      };
+      if (env.NEWSLETTER_NOTIFY_OWNER === '1' && !recoveredCampaign) {
         notification = await sendResendNotification(
           env,
           {
             subject: `Draft ready: ${draft.subject}`,
-            html: `<p>A LongmontAI newsletter draft is ready.</p><p><strong>${draft.subject}</strong></p>${draft.html}`,
+            html: `<p>A LongmontAI newsletter draft is ready.</p><p><strong>${escapeNewsletterHtml(draft.subject)}</strong></p>${draft.html}`,
             text: `A LongmontAI newsletter draft is ready.\n\n${draft.subject}\n\n${draft.text}`,
           },
           fetchImpl,
