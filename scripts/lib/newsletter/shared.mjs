@@ -1,14 +1,16 @@
-import { timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { isIP } from 'node:net';
 
 export const CADENCES = new Set(['weekly', 'biweekly']);
 export const DEFAULT_CADENCE = 'weekly';
 
 export class NewsletterError extends Error {
-  constructor(message, { status = 500, code = 'newsletter_error', cause } = {}) {
+  constructor(message, { status = 500, code = 'newsletter_error', cause, retryAfter } = {}) {
     super(message, { cause });
     this.name = 'NewsletterError';
     this.status = status;
     this.code = code;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -56,19 +58,98 @@ export function requireJsonRequest(request) {
   }
 }
 
+function parsedOrigin(value) {
+  if (typeof value !== 'string' || !value.trim() || value.trim() === 'null') return null;
+  try {
+    const url = new URL(value.trim());
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+      return null;
+    }
+    return url.origin === value.trim().replace(/\/$/, '') ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 export function requireAllowedOrigin(request, env) {
-  const origin = headerValue(request, 'origin');
-  if (!origin) return;
-  const allowedOrigins = new Set(
-    (env.NEWSLETTER_ALLOWED_ORIGINS || 'https://longmontai.com,http://localhost:5173,http://127.0.0.1:5173')
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean),
-  );
-  if (!allowedOrigins.has(origin)) {
+  const originHeader = headerValue(request, 'origin');
+  const allowMissingInDevelopment =
+    env.NEWSLETTER_ALLOW_MISSING_ORIGIN === '1' && env.NODE_ENV === 'development';
+  if ((originHeader === undefined || originHeader === null || originHeader === '') && allowMissingInDevelopment) return;
+
+  const origin = parsedOrigin(originHeader);
+  const configured = typeof env.NEWSLETTER_ALLOWED_ORIGINS === 'string' ? env.NEWSLETTER_ALLOWED_ORIGINS : '';
+  const allowedOrigins = new Set(configured.split(',').map(parsedOrigin).filter(Boolean));
+  if (!origin || !allowedOrigins.has(origin)) {
     throw new NewsletterError('Newsletter signup origin is not allowed.', {
       status: 403,
       code: 'origin_not_allowed',
+    });
+  }
+}
+
+export function trustedClientIp(request) {
+  const value = headerValue(request, 'x-vercel-forwarded-for');
+  if (typeof value !== 'string' || value !== value.trim() || value.includes(',') || !isIP(value)) {
+    throw new NewsletterError('A trusted client identity is required.', {
+      status: 503,
+      code: 'client_identity_unavailable',
+    });
+  }
+  return value;
+}
+
+function rateLimitHash(env, scope, value) {
+  const secret = envValue(env, 'NEWSLETTER_RATE_LIMIT_SECRET');
+  if (!secret || Buffer.byteLength(secret) < 32) {
+    throw new NewsletterError('Newsletter rate limiting is not configured.', {
+      status: 503,
+      code: 'rate_limit_not_configured',
+    });
+  }
+  return `\\x${createHmac('sha256', secret).update(`${scope}\0${value}`).digest('hex')}`;
+}
+
+export async function enforceNewsletterSignupRateLimit(env, { ip, email, now }, fetchImpl = fetch) {
+  const ipHash = rateLimitHash(env, 'ip', ip);
+  const emailHash = rateLimitHash(env, 'email', normalizeEmail(email));
+  supabaseConfig(env);
+
+  let result;
+  try {
+    result = await supabaseRest(
+      env,
+      'rpc/newsletter_enforce_signup_rate_limit',
+      {
+        method: 'POST',
+        body: {
+          p_ip_hash: ipHash,
+          p_email_hash: emailHash,
+          p_now: now.toISOString(),
+        },
+      },
+      fetchImpl,
+    );
+  } catch (error) {
+    throw new NewsletterError('Newsletter signup is temporarily unavailable.', {
+      status: 503,
+      code: 'rate_limit_unavailable',
+      cause: error,
+    });
+  }
+  const row = Array.isArray(result) ? result[0] : result;
+  if (typeof row?.allowed !== 'boolean') {
+    throw new NewsletterError('Newsletter signup is temporarily unavailable.', {
+      status: 503,
+      code: 'rate_limit_unavailable',
+    });
+  }
+  if (!row.allowed) {
+    const retryAfter = Math.max(1, Math.min(3600, Math.ceil(Number(row.retry_after_seconds) || 1)));
+    throw new NewsletterError('Too many newsletter signup attempts. Please try again later.', {
+      status: 429,
+      code: 'rate_limit_exceeded',
+      retryAfter,
     });
   }
 }
