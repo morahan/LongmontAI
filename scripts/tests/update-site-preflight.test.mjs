@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import scheduledRelease from '../../src/generated/scheduled-release/server.mjs';
 
 const execFileAsync = promisify(execFile);
+const scheduledEditionRoute = `/edition/${scheduledRelease.editionId}`;
+const scheduledEditionOwners = [
+  'src/articles/scheduledEdition.ts',
+  scheduledRelease.source.article,
+];
 const { stdout } = await execFileAsync(process.execPath, [
   new URL('../update-site-preflight.mjs', import.meta.url).pathname,
   '--as-of',
@@ -23,12 +29,9 @@ assert.deepEqual(report.surfaces.map(({ route }) => route), [
   '/model-watch',
   '/leaderboard',
   '/timeline',
-  '/edition/edition-2026-08-19-work-keeps-running',
+  scheduledEditionRoute,
 ]);
-assert.deepEqual(report.surfaces.at(-1).owners, [
-  'src/articles/scheduledEdition.ts',
-  'src/articles/drafts/2026.08.19-work-keeps-running.md',
-]);
+assert.deepEqual(report.surfaces.at(-1).owners, scheduledEditionOwners);
 assert.ok(report.excluded.includes('new blog posts'));
 assert.ok(report.sources.editorial.length >= 20);
 assert.ok(report.sources.detector.some(({ company, required }) => company === 'Meta AI' && required));
