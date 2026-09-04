@@ -15,7 +15,9 @@ export const MOBILE_TRAVELER_COUNT = 15;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
 export const GALAXY_CREATION_CHANCE = 0.1;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
-export const GALAXY_INTERNAL_STAR_COUNT = 36;
+export const GALAXY_INTERNAL_STAR_COUNT = 72;
+export const GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE = [2, 3] as const;
+export const GALAXY_EMBEDDED_PLANET_COUNT_RANGE = [1, 2] as const;
 /** Historical/default spiral arm count; individual formations deliberately vary this. */
 export const GALAXY_SPIRAL_ARM_COUNT = 3;
 export const GALAXY_FORMATIONS = [
@@ -23,7 +25,6 @@ export const GALAXY_FORMATIONS = [
     'barred-spiral',
     'elliptical',
     'irregular',
-    'ring',
 ] as const;
 export const GALAXY_ROTATION_RATE_RANGE = [0.09, 0.15] as const;
 export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> = {
@@ -31,7 +32,6 @@ export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> 
     'barred-spiral': 0.92,
     elliptical: 0.78,
     irregular: 1.12,
-    ring: 0.86,
 };
 export const UFO_BASIS_POINTS = 300;
 export const COMET_BASIS_POINTS = 300;
@@ -265,9 +265,35 @@ export interface GalaxyAppearance {
     armCount: number;
     flattening: number;
     barLength: number;
-    ringRadius: number;
     rotationRate: number;
     internalStarCount: number;
+}
+
+export interface EmbeddedGalaxyPlanet {
+    orbitRadius: number;
+    radius: number;
+    phase: number;
+    speed: number;
+    color: string;
+}
+
+export interface EmbeddedGalaxySystem {
+    orbitRadius: number;
+    phase: number;
+    speed: number;
+    hostRadius: number;
+    hostColor: string;
+    planets: EmbeddedGalaxyPlanet[];
+}
+
+export interface EmbeddedGalaxyPlanetState extends EmbeddedGalaxyPlanet, Point {
+    angle: number;
+    z: number;
+}
+
+export interface EmbeddedGalaxySystemState {
+    host: Point;
+    planets: EmbeddedGalaxyPlanetState[];
 }
 
 export interface GalaxyAnimationState {
@@ -1638,7 +1664,6 @@ const GALAXY_DUST_DRIFT_MULTIPLIERS: Record<GalaxyFormation, number> = {
     'barred-spiral': -0.22,
     elliptical: 0.12,
     irregular: -0.16,
-    ring: 0.28,
 };
 
 /** Formation identity is stable for one traveler lifecycle and every class is equiprobable. */
@@ -1671,18 +1696,16 @@ export const getGalaxyAppearance = (
         starRadius * (4.6 + smoothstep(progress) * 2.4),
     );
     const profiles: Record<GalaxyFormation, Pick<GalaxyAppearance,
-        'coreRadius' | 'armCount' | 'flattening' | 'barLength' | 'ringRadius'>> = {
+        'coreRadius' | 'armCount' | 'flattening' | 'barLength'>> = {
         spiral: { coreRadius: 0.14, armCount: 3 + hashUint(traveler.seed, stableCycle, 522) % 2,
-            flattening: 0.62, barLength: 0, ringRadius: 0 },
+            flattening: 0.62, barLength: 0 },
         'barred-spiral': { coreRadius: 0.13, armCount: 2,
-            flattening: 0.54, barLength: 0.48, ringRadius: 0 },
+            flattening: 0.54, barLength: 0.48 },
         elliptical: { coreRadius: 0.3, armCount: 0,
             flattening: 0.7 + hashRandom(traveler.seed, stableCycle, 523) * 0.16,
-            barLength: 0, ringRadius: 0 },
+            barLength: 0 },
         irregular: { coreRadius: 0.11, armCount: 0,
-            flattening: 0.82, barLength: 0, ringRadius: 0 },
-        ring: { coreRadius: 0.1, armCount: 0,
-            flattening: 0.6, barLength: 0, ringRadius: 0.66 },
+            flattening: 0.82, barLength: 0 },
     };
     const profile = profiles[formation];
     return {
@@ -1692,7 +1715,6 @@ export const getGalaxyAppearance = (
         armCount: profile.armCount,
         flattening: profile.flattening,
         barLength: outerRadius * profile.barLength,
-        ringRadius: outerRadius * profile.ringRadius,
         rotationRate: getGalaxyRotationRate(traveler.seed, stableCycle),
         internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
     };
@@ -1756,11 +1778,6 @@ export const getGalaxyParticleState = (
         radial = 0.08 + unit ** 0.72 * 0.82;
         angle += elapsed * appearance.rotationRate * (0.38 - radial * 0.12);
         kind = particleIndex % 11 === 0 ? 'dust' : 'star';
-    } else if (appearance.formation === 'ring') {
-        radial = 0.57 + unit * 0.2 + jitter * 0.04;
-        angle += elapsed * appearance.rotationRate * (0.46 - radial * 0.14);
-        kind = particleIndex % 6 === 0 ? 'gas-knot'
-            : particleIndex % 5 === 0 ? 'young-star' : 'star';
     } else {
         const clump = particleIndex % 4;
         const clumpAngle = hashRandom(traveler.seed, stableCycle, 610 + clump) * TAU;
@@ -1786,6 +1803,86 @@ export const getGalaxyParticleState = (
         kind,
     };
 };
+
+const EMBEDDED_GALAXY_HOST_COLORS = ['#fff3cf', '#d9efff', '#ffd7a8'] as const;
+const EMBEDDED_GALAXY_PLANET_COLORS = ['#79b8d8', '#d2946f', '#9fc88c', '#b59bd6'] as const;
+
+/** Stable miniature systems remain comfortably inside the galaxy's seven-star-radius silhouette. */
+export const createEmbeddedGalaxySystems = (
+    traveler: Pick<Traveler, 'seed'>,
+    cycle: number,
+    appearance: Pick<GalaxyAppearance, 'outerRadius' | 'flattening'>,
+): EmbeddedGalaxySystem[] => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const outerRadius = Number.isFinite(appearance.outerRadius)
+        ? Math.max(0, appearance.outerRadius) : 0;
+    const flattening = Number.isFinite(appearance.flattening)
+        ? Math.max(0.45, Math.min(1, appearance.flattening)) : 0.45;
+    const systemCount = GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[0]
+        + hashUint(traveler.seed, stableCycle, 701)
+        % (GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[1] - GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[0] + 1);
+    return Array.from({ length: systemCount }, (_, systemIndex) => {
+        const channel = 710 + systemIndex * 31;
+        const direction = hashUint(traveler.seed, stableCycle, channel + 3) % 2 === 0 ? -1 : 1;
+        const planetCount = GALAXY_EMBEDDED_PLANET_COUNT_RANGE[0]
+            + hashUint(traveler.seed, stableCycle, channel + 4)
+            % (GALAXY_EMBEDDED_PLANET_COUNT_RANGE[1] - GALAXY_EMBEDDED_PLANET_COUNT_RANGE[0] + 1);
+        return {
+            orbitRadius: outerRadius * flattening
+                * (0.27 + hashRandom(traveler.seed, stableCycle, channel) * 0.24),
+            phase: hashRandom(traveler.seed, stableCycle, channel + 1) * TAU,
+            speed: direction * (0.2 + hashRandom(traveler.seed, stableCycle, channel + 2) * 0.11),
+            hostRadius: Math.min(outerRadius * 0.04, Math.max(0.22, outerRadius * 0.03)),
+            hostColor: EMBEDDED_GALAXY_HOST_COLORS[
+                hashUint(traveler.seed, stableCycle, channel + 5) % EMBEDDED_GALAXY_HOST_COLORS.length
+            ],
+            planets: Array.from({ length: planetCount }, (_, planetIndex) => ({
+                orbitRadius: outerRadius * flattening
+                    * (0.052 + planetIndex * 0.035
+                        + hashRandom(traveler.seed, stableCycle, channel + 6 + planetIndex * 5) * 0.014),
+                radius: Math.min(outerRadius * 0.025, Math.max(0.13, outerRadius * (0.012
+                    + hashRandom(traveler.seed, stableCycle, channel + 7 + planetIndex * 5) * 0.006))),
+                phase: hashRandom(traveler.seed, stableCycle, channel + 8 + planetIndex * 5) * TAU,
+                speed: (planetIndex % 2 === 0 ? 1 : -1)
+                    * (1.35 + hashRandom(traveler.seed, stableCycle, channel + 9 + planetIndex * 5) * 1.1),
+                color: EMBEDDED_GALAXY_PLANET_COLORS[
+                    hashUint(traveler.seed, stableCycle, channel + 10 + planetIndex * 5)
+                    % EMBEDDED_GALAXY_PLANET_COLORS.length
+                ],
+            })),
+        } satisfies EmbeddedGalaxySystem;
+    });
+};
+
+/** Planet coordinates are host-relative, so moving hosts and their bound orbits share one clock. */
+export const getEmbeddedGalaxySystemState = (
+    system: EmbeddedGalaxySystem,
+    simulationSeconds: number,
+): EmbeddedGalaxySystemState => {
+    const elapsed = Number.isFinite(simulationSeconds) ? Math.max(0, simulationSeconds) : 0;
+    const hostAngle = system.phase + elapsed * system.speed;
+    const host = {
+        x: Math.cos(hostAngle) * system.orbitRadius,
+        y: Math.sin(hostAngle) * system.orbitRadius,
+    };
+    return {
+        host,
+        planets: system.planets.map((planet) => {
+            const angle = planet.phase + elapsed * planet.speed;
+            return {
+                ...planet,
+                angle,
+                z: Math.sin(angle),
+                x: host.x + Math.cos(angle) * planet.orbitRadius,
+                y: host.y + Math.sin(angle) * planet.orbitRadius,
+            };
+        }),
+    };
+};
+
+/** Miniature systems fade in only once their sub-pixel planets can resolve as distinct points. */
+export const getEmbeddedGalaxySystemOpacity = (outerRadius: number) =>
+    clamp01(((Number.isFinite(outerRadius) ? Math.max(0, outerRadius) : 0) - 4) / 5);
 
 /** System owners retain their resolved disc while suppressing every surrounding luminosity layer. */
 export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): TravelerStarRenderPolicy => ({

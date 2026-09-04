@@ -5,6 +5,7 @@ import {
     createConstellationGeometry,
     createConstellationGeometryForPhrase,
     createEasterEggTargetStyles,
+    createEmbeddedGalaxySystems,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
@@ -15,6 +16,8 @@ import {
     getEasterEggStrength,
     getEasterEggStarFieldStyles,
     getElapsedSecondsSinceMount,
+    getEmbeddedGalaxySystemOpacity,
+    getEmbeddedGalaxySystemState,
     getNeuralSignals,
     getOrbitingMoon,
     getOrbitingPlanets,
@@ -530,13 +533,6 @@ const drawGalaxy = (
         ctx.moveTo(-appearance.barLength, 0);
         ctx.lineTo(appearance.barLength, 0);
         ctx.stroke();
-    } else if (appearance.formation === 'ring') {
-        ctx.strokeStyle = `rgba(142, 204, 235, ${opacity * 0.34})`;
-        ctx.lineWidth = Math.max(0.45, appearance.outerRadius * 0.12);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, appearance.ringRadius, appearance.ringRadius * appearance.flattening,
-            animation.dustDrift, 0, TAU);
-        ctx.stroke();
     } else if (appearance.formation === 'elliptical') {
         for (let shell = 3; shell >= 1; shell -= 1) {
             ctx.fillStyle = `rgba(239, 220, 190, ${opacity * (0.025 + shell * 0.022)})`;
@@ -574,8 +570,7 @@ const drawGalaxy = (
         const coreOpacity = opacity * animation.corePulse;
         const core = ctx.createRadialGradient(0, 0, 0, 0, 0, appearance.coreRadius * 1.8);
         core.addColorStop(0, `rgba(255, 238, 204, ${coreOpacity})`);
-        core.addColorStop(appearance.formation === 'ring' ? 0.22 : 0.48,
-            `rgba(229, 184, 126, ${coreOpacity * 0.52})`);
+        core.addColorStop(0.48, `rgba(229, 184, 126, ${coreOpacity * 0.52})`);
         core.addColorStop(1, 'rgba(185, 136, 95, 0)');
         ctx.fillStyle = core;
         ctx.beginPath();
@@ -588,6 +583,40 @@ const drawGalaxy = (
             ctx.fill();
         }
     }
+
+    // A few seeded miniature systems orbit with the galaxy. Their planets are drawn directly
+    // around each moving host; deliberately no orbital guide paths are rendered.
+    const embeddedSystemOpacity = opacity * getEmbeddedGalaxySystemOpacity(appearance.outerRadius);
+    createEmbeddedGalaxySystems(traveler, projection.cycle, appearance).forEach((system) => {
+        if (embeddedSystemOpacity <= 0) return;
+        const state = getEmbeddedGalaxySystemState(system, simulationSeconds);
+        ctx.save();
+        ctx.globalAlpha = embeddedSystemOpacity;
+        const drawEmbeddedPlanet = (planet: typeof state.planets[number]) => {
+            ctx.fillStyle = planet.color;
+            ctx.beginPath();
+            ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+            ctx.fill();
+        };
+        state.planets.filter(({ z }) => z < 0).forEach(drawEmbeddedPlanet);
+        const hostGlow = ctx.createRadialGradient(
+            state.host.x, state.host.y, 0,
+            state.host.x, state.host.y, system.hostRadius * 3.2,
+        );
+        hostGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        hostGlow.addColorStop(0.3, 'rgba(213, 235, 255, 0.72)');
+        hostGlow.addColorStop(1, 'rgba(160, 210, 246, 0)');
+        ctx.fillStyle = hostGlow;
+        ctx.beginPath();
+        ctx.arc(state.host.x, state.host.y, system.hostRadius * 3.2, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = system.hostColor;
+        ctx.beginPath();
+        ctx.arc(state.host.x, state.host.y, system.hostRadius, 0, TAU);
+        ctx.fill();
+        state.planets.filter(({ z }) => z >= 0).forEach(drawEmbeddedPlanet);
+        ctx.restore();
+    });
     ctx.restore();
 };
 

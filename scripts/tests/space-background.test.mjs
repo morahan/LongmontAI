@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   AMBIENT_STAR_COUNT,
@@ -17,6 +18,8 @@ import {
   EASTER_EGG_PHRASES,
   FAR_DEPTH,
   GALAXY_CREATION_CHANCE,
+  GALAXY_EMBEDDED_PLANET_COUNT_RANGE,
+  GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE,
   GALAXY_FORMATIONS,
   GALAXY_FORMATION_RATE_MULTIPLIERS,
   GALAXY_INTERNAL_STAR_COUNT,
@@ -72,6 +75,7 @@ import {
   createConstellationGeometryForPhrase,
   createCryptoSeed,
   createEasterEggTargetStyles,
+  createEmbeddedGalaxySystems,
   createPlanetSystem,
   createSeededRandom,
   createSpaceScene,
@@ -94,6 +98,8 @@ import {
   getEasterEggStarFieldStyles,
   getEasterEggStrength,
   getElapsedSecondsSinceMount,
+  getEmbeddedGalaxySystemOpacity,
+  getEmbeddedGalaxySystemState,
   getOrbitingMoon,
   getOrbitingPlanet,
   getPlanetLightingStyle,
@@ -1332,7 +1338,8 @@ test('traveler approach glow grows monotonically while blur and opacity remain s
 test('galaxies compose with traveler variants and stay within seven moving-star radii', () => {
   const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1.21, alpha: 0.6, isGalaxy: true };
   assert.equal(GALAXY_MAX_RADIUS_MULTIPLIER, 7);
-  assert.ok(GALAXY_INTERNAL_STAR_COUNT >= 30);
+  assert.equal(GALAXY_INTERNAL_STAR_COUNT, 72);
+  assert.ok(GALAXY_INTERNAL_STAR_COUNT > 36);
   assert.ok(GALAXY_SPIRAL_ARM_COUNT >= 2);
   assert.equal(getTravelerVariant(traveler, 0), 'galaxy');
   assert.equal(getTravelerVariant(traveler, 99), 'galaxy');
@@ -1359,14 +1366,13 @@ test('galaxies compose with traveler variants and stay within seven moving-star 
 
 test('reality-inspired galaxy formations are deterministic, distinct, and all reachable', () => {
   assert.deepEqual(GALAXY_FORMATIONS,
-    ['spiral', 'barred-spiral', 'elliptical', 'irregular', 'ring']);
+    ['spiral', 'barred-spiral', 'elliptical', 'irregular']);
   assert.deepEqual(GALAXY_ROTATION_RATE_RANGE, [0.09, 0.15]);
   assert.deepEqual(GALAXY_FORMATION_RATE_MULTIPLIERS, {
     spiral: 1,
     'barred-spiral': 0.92,
     elliptical: 0.78,
     irregular: 1.12,
-    ring: 0.86,
   });
   const seedByFormation = new Map();
   for (let seed = 0; seed < 1024; seed += 1) {
@@ -1382,6 +1388,11 @@ test('reality-inspired galaxy formations are deterministic, distinct, and all re
       speed: 20, size: 1, alpha: 0.6, isGalaxy: true };
     const appearance = getGalaxyAppearance(traveler, 0.8, 0);
     assert.equal(appearance.formation, formation);
+    const pointLikeMatter = Array.from({ length: appearance.internalStarCount }, (_, index) =>
+      getGalaxyParticleState(traveler, 0, 0.8, 0, index, appearance))
+      .filter(({ kind }) => kind !== 'dust');
+    assert.ok(pointLikeMatter.length > 36,
+      `${formation} has only ${pointLikeMatter.length} visible point-like stars`);
     profiles.set(formation, appearance);
   }
   assert.ok(profiles.get('spiral').armCount >= 3);
@@ -1389,8 +1400,97 @@ test('reality-inspired galaxy formations are deterministic, distinct, and all re
   assert.ok(profiles.get('barred-spiral').barLength > 0);
   assert.ok(profiles.get('elliptical').coreRadius > profiles.get('spiral').coreRadius);
   assert.equal(profiles.get('irregular').armCount, 0);
-  assert.ok(profiles.get('ring').ringRadius > profiles.get('ring').coreRadius * 4);
   assert.notEqual(profiles.get('elliptical').flattening, profiles.get('barred-spiral').flattening);
+  assert.ok([...profiles.values()].every((appearance) => !('ringRadius' in appearance)));
+
+  const modelSource = readFileSync(new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8');
+  const canvasSource = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  assert.equal(modelSource.includes('ringRadius'), false);
+  assert.equal(canvasSource.includes("appearance.formation === 'ring'"), false);
+  assert.equal(canvasSource.includes('appearance.ringRadius'), false);
+  const embeddedDraw = canvasSource.slice(
+    canvasSource.indexOf('// A few seeded miniature systems'),
+    canvasSource.indexOf('const drawUfo ='),
+  );
+  assert.equal(embeddedDraw.includes('.stroke()'), false, 'embedded systems draw orbital guides');
+  assert.ok(canvasSource.includes('drawPlanetRing'), 'ordinary planet-ring behavior was removed');
+});
+
+test('embedded galaxy systems are deterministic, bounded, orbiting, and host-relative', () => {
+  assert.deepEqual(GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE, [2, 3]);
+  assert.deepEqual(GALAXY_EMBEDDED_PLANET_COUNT_RANGE, [1, 2]);
+  assert.equal(getEmbeddedGalaxySystemOpacity(Number.NaN), 0);
+  assert.equal(getEmbeddedGalaxySystemOpacity(4), 0);
+  assert.equal(getEmbeddedGalaxySystemOpacity(9), 1);
+  assert.ok(getEmbeddedGalaxySystemOpacity(6) > 0 && getEmbeddedGalaxySystemOpacity(6) < 1);
+
+  const observedSystemCounts = new Set();
+  const observedPlanetCounts = new Set();
+  for (let seed = 0; seed < 128; seed += 1) {
+    const traveler = { seed, initialDistance: 0, speed: 20, size: 1.1,
+      alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.82, 2);
+    const systems = createEmbeddedGalaxySystems(traveler, 2, appearance);
+    assert.deepEqual(systems, createEmbeddedGalaxySystems(traveler, 2, appearance));
+    const zeroSized = createEmbeddedGalaxySystems(traveler, 2,
+      { outerRadius: 0, flattening: Number.NaN });
+    assert.ok(zeroSized.every((system) => system.orbitRadius === 0 && system.hostRadius === 0
+      && system.planets.every((planet) => planet.orbitRadius === 0 && planet.radius === 0)));
+    observedSystemCounts.add(systems.length);
+    assert.ok(systems.length >= 2 && systems.length <= 3);
+
+    systems.forEach((system) => {
+      observedPlanetCounts.add(system.planets.length);
+      assert.ok(system.planets.length >= 1 && system.planets.length <= 2);
+      assert.ok(system.orbitRadius > 0);
+      assert.ok(system.orbitRadius + system.hostRadius < appearance.outerRadius);
+      const atZero = getEmbeddedGalaxySystemState(system, 0);
+      const later = getEmbeddedGalaxySystemState(system, 4);
+      closeTo(Math.hypot(atZero.host.x, atZero.host.y), system.orbitRadius);
+      closeTo(Math.hypot(later.host.x, later.host.y), system.orbitRadius);
+      assert.ok(Math.hypot(later.host.x - atZero.host.x, later.host.y - atZero.host.y)
+        > system.hostRadius, 'host star did not visibly move around galaxy center');
+
+      const hostPeriod = Math.PI * 2 / Math.abs(system.speed);
+      const returnedHost = getEmbeddedGalaxySystemState(system, hostPeriod).host;
+      closeTo(returnedHost.x, atZero.host.x);
+      closeTo(returnedHost.y, atZero.host.y);
+      system.planets.forEach((planet, planetIndex) => {
+        const stateAtZero = atZero.planets[planetIndex];
+        const stateLater = later.planets[planetIndex];
+        assert.ok(stateAtZero.z >= -1 && stateAtZero.z <= 1);
+        assert.ok(stateLater.z >= -1 && stateLater.z <= 1);
+        closeTo(Math.hypot(stateAtZero.x - atZero.host.x, stateAtZero.y - atZero.host.y),
+          planet.orbitRadius);
+        closeTo(Math.hypot(stateLater.x - later.host.x, stateLater.y - later.host.y),
+          planet.orbitRadius);
+        assert.ok(Math.hypot(stateLater.x - stateAtZero.x, stateLater.y - stateAtZero.y) > 0.01);
+        assert.ok(Math.hypot(stateLater.x, stateLater.y) + planet.radius < appearance.outerRadius);
+
+        const planetPeriod = Math.PI * 2 / Math.abs(planet.speed);
+        const periodStart = getEmbeddedGalaxySystemState(system, 0);
+        const periodEnd = getEmbeddedGalaxySystemState(system, planetPeriod);
+        closeTo(periodEnd.planets[planetIndex].x - periodEnd.host.x,
+          periodStart.planets[planetIndex].x - periodStart.host.x);
+        closeTo(periodEnd.planets[planetIndex].y - periodEnd.host.y,
+          periodStart.planets[planetIndex].y - periodStart.host.y);
+      });
+    });
+  }
+  assert.deepEqual([...observedSystemCounts].sort(), [2, 3]);
+  assert.deepEqual([...observedPlanetCounts].sort(), [1, 2]);
+
+  const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1.1,
+    alpha: 0.6, isGalaxy: true };
+  const appearance = getGalaxyAppearance(traveler, 0.82, 0);
+  const system = createEmbeddedGalaxySystems(traveler, 0, appearance)[0];
+  assert.deepEqual(
+    getEmbeddedGalaxySystemState(system, getSimulationTime(620)),
+    getEmbeddedGalaxySystemState(system, getSimulationTime(600)),
+    'embedded system did not freeze with the shared simulation clock',
+  );
+  assert.deepEqual(getEmbeddedGalaxySystemState(system, 0), getEmbeddedGalaxySystemState(system, 0),
+    'reduced-motion time zero must be deterministic');
 });
 
 test('every galaxy formation turns meaningfully in five seconds with visible differential matter motion', () => {
