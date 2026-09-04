@@ -18,6 +18,7 @@ import {
   FAR_DEPTH,
   GALAXY_CREATION_CHANCE,
   GALAXY_FORMATIONS,
+  GALAXY_FORMATION_RATE_MULTIPLIERS,
   GALAXY_INTERNAL_STAR_COUNT,
   GALAXY_MAX_RADIUS_MULTIPLIER,
   GALAXY_ROTATION_RATE_RANGE,
@@ -87,6 +88,7 @@ import {
   getGalaxyAppearance,
   getGalaxyFormation,
   getGalaxyParticleState,
+  getGalaxyRotationRate,
   getEasterEggPhase,
   getEasterEggStarFieldPositions,
   getEasterEggStarFieldStyles,
@@ -149,6 +151,11 @@ const closeTo = (actual, expected, epsilon = 1e-8) =>
 const circularDistance = (left, right) => {
   const direct = Math.abs(left - right);
   return Math.min(direct, 1 - direct);
+};
+
+const angularDistance = (left, right) => {
+  const direct = Math.abs(left - right) % (Math.PI * 2);
+  return Math.min(direct, Math.PI * 2 - direct);
 };
 
 test('crypto seeding is preferred, falls back exactly once, and explicit scene seeds remain deterministic', () => {
@@ -1353,7 +1360,14 @@ test('galaxies compose with traveler variants and stay within seven moving-star 
 test('reality-inspired galaxy formations are deterministic, distinct, and all reachable', () => {
   assert.deepEqual(GALAXY_FORMATIONS,
     ['spiral', 'barred-spiral', 'elliptical', 'irregular', 'ring']);
-  assert.deepEqual(GALAXY_ROTATION_RATE_RANGE, [0.012, 0.038]);
+  assert.deepEqual(GALAXY_ROTATION_RATE_RANGE, [0.09, 0.15]);
+  assert.deepEqual(GALAXY_FORMATION_RATE_MULTIPLIERS, {
+    spiral: 1,
+    'barred-spiral': 0.92,
+    elliptical: 0.78,
+    irregular: 1.12,
+    ring: 0.86,
+  });
   const seedByFormation = new Map();
   for (let seed = 0; seed < 1024; seed += 1) {
     const formation = getGalaxyFormation(seed, 0);
@@ -1377,6 +1391,41 @@ test('reality-inspired galaxy formations are deterministic, distinct, and all re
   assert.equal(profiles.get('irregular').armCount, 0);
   assert.ok(profiles.get('ring').ringRadius > profiles.get('ring').coreRadius * 4);
   assert.notEqual(profiles.get('elliptical').flattening, profiles.get('barred-spiral').flattening);
+});
+
+test('every galaxy formation turns meaningfully in five seconds with visible differential matter motion', () => {
+  const seedByFormation = new Map();
+  const directionsByFormation = new Map(GALAXY_FORMATIONS.map((formation) => [formation, new Set()]));
+  for (let seed = 0; seed < 4096; seed += 1) {
+    const formation = getGalaxyFormation(seed, 0);
+    if (!seedByFormation.has(formation)) seedByFormation.set(formation, seed);
+    directionsByFormation.get(formation).add(Math.sign(getGalaxyRotationRate(seed, 0)));
+  }
+
+  for (const formation of GALAXY_FORMATIONS) {
+    assert.deepEqual([...directionsByFormation.get(formation)].sort(), [-1, 1],
+      `${formation} does not vary rotation direction`);
+    const traveler = { seed: seedByFormation.get(formation), initialDistance: 0,
+      speed: 20, size: 1.1, alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.75, 0);
+    const atZero = getGalaxyAnimationState(traveler, 0, 0);
+    const atFive = getGalaxyAnimationState(traveler, 0, 5);
+    const formationDisplacement = Math.abs(atFive.rotation - atZero.rotation);
+    assert.ok(formationDisplacement >= 0.35,
+      `${formation} turns only ${formationDisplacement} radians in five seconds`);
+    closeTo(formationDisplacement, Math.abs(appearance.rotationRate) * 5);
+
+    let visiblyDifferential = 0;
+    for (let index = 0; index < appearance.internalStarCount; index += 1) {
+      const before = getGalaxyParticleState(traveler, 0, 0.75, 0, index, appearance);
+      const after = getGalaxyParticleState(traveler, 0, 0.75, 5, index, appearance);
+      const beforeAngle = Math.atan2(before.y / appearance.flattening, before.x);
+      const afterAngle = Math.atan2(after.y / appearance.flattening, after.x);
+      if (angularDistance(beforeAngle, afterAngle) >= 0.07) visiblyDifferential += 1;
+    }
+    assert.ok(visiblyDifferential >= appearance.internalStarCount / 2,
+      `${formation} has differential motion in only ${visiblyDifferential} particles`);
+  }
 });
 
 test('galaxy matter is deterministic, bounded, gently animated, and frozen by simulation time', () => {

@@ -797,8 +797,17 @@ const SpaceNeuralBackground: React.FC = () => {
         const ctx = canvas?.getContext('2d');
         if (!canvas || !ctx) return;
 
-        // The refresh seed prefers Web Crypto and has a one-sample legacy fallback.
-        const scene = createSpaceScene();
+        // The refresh seed prefers Web Crypto. A development-only query override makes Canvas
+        // motion reviews repeatable without changing production randomness or the simulation clock.
+        const requestedSeedValue = import.meta.env.DEV
+            ? new URLSearchParams(window.location.search).get('spaceSeed')
+            : null;
+        const requestedSeed = requestedSeedValue === null ? Number.NaN : Number(requestedSeedValue);
+        const scene = createSpaceScene(
+            Number.isInteger(requestedSeed) && requestedSeed >= 0 && requestedSeed <= 0xffffffff
+                ? requestedSeed
+                : undefined,
+        );
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         const mountedAt = performance.now();
         let width = 0;

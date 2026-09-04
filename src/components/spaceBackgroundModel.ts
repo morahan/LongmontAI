@@ -25,7 +25,14 @@ export const GALAXY_FORMATIONS = [
     'irregular',
     'ring',
 ] as const;
-export const GALAXY_ROTATION_RATE_RANGE = [0.012, 0.038] as const;
+export const GALAXY_ROTATION_RATE_RANGE = [0.09, 0.15] as const;
+export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> = {
+    spiral: 1,
+    'barred-spiral': 0.92,
+    elliptical: 0.78,
+    irregular: 1.12,
+    ring: 0.86,
+};
 export const UFO_BASIS_POINTS = 300;
 export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
@@ -1626,9 +1633,29 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     };
 };
 
+const GALAXY_DUST_DRIFT_MULTIPLIERS: Record<GalaxyFormation, number> = {
+    spiral: 0.32,
+    'barred-spiral': -0.22,
+    elliptical: 0.12,
+    irregular: -0.16,
+    ring: 0.28,
+};
+
 /** Formation identity is stable for one traveler lifecycle and every class is equiprobable. */
 export const getGalaxyFormation = (seed: number, cycle = 0): GalaxyFormation =>
     GALAXY_FORMATIONS[hashUint(seed, Math.max(0, Math.trunc(cycle)), 521) % GALAXY_FORMATIONS.length];
+
+/** Formation-specific magnitudes and seeded direction keep the population varied but legible. */
+export const getGalaxyRotationRate = (seed: number, cycle = 0) => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const formation = getGalaxyFormation(seed, stableCycle);
+    const magnitude = mix(
+        GALAXY_ROTATION_RATE_RANGE[0],
+        GALAXY_ROTATION_RATE_RANGE[1],
+        hashRandom(seed, stableCycle, 524),
+    ) * GALAXY_FORMATION_RATE_MULTIPLIERS[formation];
+    return magnitude * (hashUint(seed, stableCycle, 525) % 2 === 0 ? -1 : 1);
+};
 
 /** Galaxies stay recognizable without ever exceeding seven times the replaced moving-star radius. */
 export const getGalaxyAppearance = (
@@ -1666,16 +1693,12 @@ export const getGalaxyAppearance = (
         flattening: profile.flattening,
         barLength: outerRadius * profile.barLength,
         ringRadius: outerRadius * profile.ringRadius,
-        rotationRate: mix(
-            GALAXY_ROTATION_RATE_RANGE[0],
-            GALAXY_ROTATION_RATE_RANGE[1],
-            hashRandom(traveler.seed, stableCycle, 524),
-        ) * (hashUint(traveler.seed, stableCycle, 525) % 2 === 0 ? -1 : 1),
+        rotationRate: getGalaxyRotationRate(traveler.seed, stableCycle),
         internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
     };
 };
 
-/** Slow whole-formation motion plus independent core and dust rhythms, all on simulation time. */
+/** Visible whole-formation motion plus independent core and dust rhythms, all on simulation time. */
 export const getGalaxyAnimationState = (
     traveler: Pick<Traveler, 'seed'>,
     cycle: number,
@@ -1683,18 +1706,15 @@ export const getGalaxyAnimationState = (
 ): GalaxyAnimationState => {
     const stableCycle = Math.max(0, Math.trunc(cycle));
     const elapsed = Math.max(0, simulationSeconds);
-    const rotationRate = mix(
-        GALAXY_ROTATION_RATE_RANGE[0],
-        GALAXY_ROTATION_RATE_RANGE[1],
-        hashRandom(traveler.seed, stableCycle, 524),
-    ) * (hashUint(traveler.seed, stableCycle, 525) % 2 === 0 ? -1 : 1);
+    const formation = getGalaxyFormation(traveler.seed, stableCycle);
+    const rotationRate = getGalaxyRotationRate(traveler.seed, stableCycle);
     return {
         rotation: hashRandom(traveler.seed, stableCycle, 526) * TAU + elapsed * rotationRate,
         corePulse: 0.92 + 0.08 * Math.sin(
             elapsed * (0.34 + hashRandom(traveler.seed, stableCycle, 527) * 0.18)
             + hashRandom(traveler.seed, stableCycle, 528) * TAU,
         ),
-        dustDrift: elapsed * rotationRate * 0.42,
+        dustDrift: elapsed * rotationRate * GALAXY_DUST_DRIFT_MULTIPLIERS[formation],
     };
 };
 
@@ -1726,18 +1746,19 @@ export const getGalaxyParticleState = (
         radial = 0.16 + Math.sqrt(unit) * 0.76;
         const arm = particleIndex % appearance.armCount;
         angle = arm * TAU / appearance.armCount + radial * TAU * 1.35 + jitter * 0.46
-            + elapsed * appearance.rotationRate * (0.32 - radial * 0.18);
+            + elapsed * appearance.rotationRate * (0.72 - radial * 0.34);
         if (particleIndex % 7 === 1) kind = 'young-star';
         if (appearance.formation === 'barred-spiral' && radial < 0.38) {
-            angle = (particleIndex & 1) * Math.PI + jitter * 0.22;
+            angle = (particleIndex & 1) * Math.PI + jitter * 0.22
+                - elapsed * appearance.rotationRate * 0.16;
         }
     } else if (appearance.formation === 'elliptical') {
         radial = 0.08 + unit ** 0.72 * 0.82;
-        angle += elapsed * appearance.rotationRate * (0.18 - radial * 0.06);
+        angle += elapsed * appearance.rotationRate * (0.38 - radial * 0.12);
         kind = particleIndex % 11 === 0 ? 'dust' : 'star';
     } else if (appearance.formation === 'ring') {
         radial = 0.57 + unit * 0.2 + jitter * 0.04;
-        angle += elapsed * appearance.rotationRate * (0.28 - radial * 0.08);
+        angle += elapsed * appearance.rotationRate * (0.46 - radial * 0.14);
         kind = particleIndex % 6 === 0 ? 'gas-knot'
             : particleIndex % 5 === 0 ? 'young-star' : 'star';
     } else {
@@ -1745,7 +1766,7 @@ export const getGalaxyParticleState = (
         const clumpAngle = hashRandom(traveler.seed, stableCycle, 610 + clump) * TAU;
         const clumpRadius = 0.18 + hashRandom(traveler.seed, stableCycle, 620 + clump) * 0.42;
         const localRadius = 0.04 + unit * 0.15;
-        const localAngle = phase + elapsed * appearance.rotationRate * (0.42 + clump * 0.06);
+        const localAngle = phase + elapsed * appearance.rotationRate * (0.72 + clump * 0.1);
         const rawX = Math.cos(clumpAngle) * clumpRadius + Math.cos(localAngle) * localRadius;
         const rawY = Math.sin(clumpAngle) * clumpRadius + Math.sin(localAngle) * localRadius;
         radial = Math.min(0.82, Math.hypot(rawX, rawY));
