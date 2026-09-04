@@ -44,6 +44,9 @@ export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.32;
 export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.2;
 export const NEURAL_SIGNAL_MAX_OPACITY = 0.12;
 export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
+export const NEURAL_CONTAGION_OPPORTUNITIES = 3;
+export const NEURAL_CONTAGION_AFFINITY_BOOST = 4;
+export const NEURAL_CONTAGION_MAX_ENTRIES = 8;
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
@@ -327,6 +330,25 @@ export interface NeuralSignal {
     pulseProgress: number;
     lineWidth: number;
     bend: number;
+}
+
+export interface NeuralContagionEntry {
+    travelerIndex: number;
+    cycle: number;
+    remainingOpportunities: number;
+    lastStruckSlot: number;
+}
+
+export interface NeuralContagionState {
+    entries: NeuralContagionEntry[];
+    lastSignalSlot: number | null;
+    lastSignalPair: readonly [number, number] | null;
+    lastSignalCycles: readonly [number, number] | null;
+}
+
+export interface NeuralSignalPair {
+    fromTravelerIndex: number;
+    toTravelerIndex: number;
 }
 
 export interface ConstellationPhase {
@@ -1983,9 +2005,176 @@ const isSensibleNeuralPair = (
     return distance >= minimumDistance && distance <= maximumDistance;
 };
 
+/** A small value object keeps recent traveler affinity bounded and independent from React. */
+export const createNeuralContagionState = (): NeuralContagionState => ({
+    entries: [],
+    lastSignalSlot: null,
+    lastSignalPair: null,
+    lastSignalCycles: null,
+});
+
+const isCurrentContagionEntry = (
+    entry: NeuralContagionEntry,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+) => entry.remainingOpportunities > 0
+    && projections[entry.travelerIndex]?.cycle === entry.cycle
+    && isTravelerEligibleForNeuralSignal(projections[entry.travelerIndex], width, height);
+
+/** Remove hidden or recycled travelers immediately instead of retaining stale index identities. */
+export const syncNeuralContagionState = (
+    state: NeuralContagionState,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+): NeuralContagionState => {
+    const entries = state.entries.filter((entry) =>
+        isCurrentContagionEntry(entry, projections, width, height));
+    return entries.length === state.entries.length
+        ? state
+        : { ...state, entries };
+};
+
+const getContagionAffinity = (
+    state: NeuralContagionState | undefined,
+    travelerIndex: number,
+    projection: ProjectedTraveler,
+) => {
+    const entry = state?.entries.find((candidate) =>
+        candidate.travelerIndex === travelerIndex && candidate.cycle === projection.cycle);
+    return entry ? entry.remainingOpportunities / NEURAL_CONTAGION_OPPORTUNITIES : 0;
+};
+
+const isLockedNeuralPairCurrent = (
+    state: NeuralContagionState,
+    slot: number,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+) => {
+    if (state.lastSignalSlot !== slot || !state.lastSignalPair || !state.lastSignalCycles) return false;
+    const [from, to] = state.lastSignalPair;
+    return projections[from]?.cycle === state.lastSignalCycles[0]
+        && projections[to]?.cycle === state.lastSignalCycles[1]
+        && isTravelerEligibleForNeuralSignal(projections[from], width, height)
+        && isTravelerEligibleForNeuralSignal(projections[to], width, height)
+        && isSensibleNeuralPair(projections[from], projections[to], width, height);
+};
+
 /**
- * Stateless deterministic schedule. Pair indices always address the supplied live traveler
- * projections, so Canvas endpoints track moving travelers without retaining stale coordinates.
+ * Select from every sensible pair with baseline weight one. Recent endpoints add a temporary
+ * weight, so ordinary pairs always retain a non-zero chance and contagion cannot hard-lock.
+ */
+export const selectNeuralSignalPair = (
+    sceneSeed: number,
+    slot: number,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+    contagionState?: NeuralContagionState,
+): NeuralSignalPair | null => {
+    if (contagionState && isLockedNeuralPairCurrent(
+        contagionState, slot, projections, width, height,
+    )) {
+        return {
+            fromTravelerIndex: contagionState.lastSignalPair![0],
+            toTravelerIndex: contagionState.lastSignalPair![1],
+        };
+    }
+    // An event whose locked endpoint went stale disappears rather than jumping to a new pair.
+    if (contagionState?.lastSignalSlot === slot) return null;
+
+    const pairs: Array<NeuralSignalPair & { weight: number }> = [];
+    let totalWeight = 0;
+    for (let from = 0; from < projections.length; from += 1) {
+        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
+        for (let to = from + 1; to < projections.length; to += 1) {
+            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
+                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
+            const weight = 1 + NEURAL_CONTAGION_AFFINITY_BOOST * (
+                getContagionAffinity(contagionState, from, projections[from])
+                + getContagionAffinity(contagionState, to, projections[to])
+            );
+            pairs.push({ fromTravelerIndex: from, toTravelerIndex: to, weight });
+            totalWeight += weight;
+        }
+    }
+    if (pairs.length === 0) return null;
+
+    let cursor = hashRandom(sceneSeed, Math.max(0, Math.trunc(slot)), 304) * totalWeight;
+    for (const pair of pairs) {
+        cursor -= pair.weight;
+        if (cursor < 0) return {
+            fromTravelerIndex: pair.fromTravelerIndex,
+            toTravelerIndex: pair.toTravelerIndex,
+        };
+    }
+    const fallback = pairs[pairs.length - 1];
+    return { fromTravelerIndex: fallback.fromTravelerIndex, toTravelerIndex: fallback.toTravelerIndex };
+};
+
+/**
+ * Decay one opportunity and reinforce both endpoints exactly once per logical signal slot.
+ * Oldest/weakest entries are discarded first if a chain spreads beyond the small fixed cap.
+ */
+export const updateNeuralContagionForSignal = (
+    state: NeuralContagionState,
+    slot: number,
+    signal: Pick<NeuralSignal, 'fromTravelerIndex' | 'toTravelerIndex'>,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+): NeuralContagionState => {
+    const stableSlot = Math.max(0, Math.trunc(slot));
+    if (state.lastSignalSlot === stableSlot) return state;
+
+    const eligibleEndpoints = [signal.fromTravelerIndex, signal.toTravelerIndex]
+        .filter((travelerIndex, index, values) => values.indexOf(travelerIndex) === index)
+        .filter((travelerIndex) =>
+            isTravelerEligibleForNeuralSignal(projections[travelerIndex], width, height));
+    if (eligibleEndpoints.length !== 2) return syncNeuralContagionState(
+        state, projections, width, height,
+    );
+
+    const entries = state.entries
+        .filter((entry) => isCurrentContagionEntry(entry, projections, width, height))
+        .map((entry) => ({ ...entry, remainingOpportunities: entry.remainingOpportunities - 1 }))
+        .filter((entry) => entry.remainingOpportunities > 0);
+    for (const travelerIndex of eligibleEndpoints) {
+        const projection = projections[travelerIndex];
+        const existing = entries.findIndex((entry) =>
+            entry.travelerIndex === travelerIndex && entry.cycle === projection.cycle);
+        const reinforced: NeuralContagionEntry = {
+            travelerIndex,
+            cycle: projection.cycle,
+            remainingOpportunities: NEURAL_CONTAGION_OPPORTUNITIES,
+            lastStruckSlot: stableSlot,
+        };
+        if (existing >= 0) entries[existing] = reinforced;
+        else entries.push(reinforced);
+    }
+    entries.sort((left, right) => right.remainingOpportunities - left.remainingOpportunities
+        || right.lastStruckSlot - left.lastStruckSlot
+        || left.travelerIndex - right.travelerIndex);
+
+    return {
+        entries: entries.slice(0, NEURAL_CONTAGION_MAX_ENTRIES),
+        lastSignalSlot: stableSlot,
+        lastSignalPair: [signal.fromTravelerIndex, signal.toTravelerIndex],
+        lastSignalCycles: [
+            projections[signal.fromTravelerIndex].cycle,
+            projections[signal.toTravelerIndex].cycle,
+        ],
+    };
+};
+
+export const getNeuralSignalSlot = (elapsedSeconds: number) =>
+    Math.floor(getSimulationTime(elapsedSeconds) / NEURAL_SIGNAL_SLOT_SECONDS);
+
+/**
+ * Deterministic sparse schedule with optional bounded endpoint affinity. Pair indices always
+ * address current traveler projections, while a recorded event keeps its pair stable across RAFs.
  */
 export const getNeuralSignals = (
     sceneSeed: number,
@@ -1994,6 +2183,7 @@ export const getNeuralSignals = (
     width: number,
     height: number,
     reducedMotion = false,
+    contagionState?: NeuralContagionState,
 ): NeuralSignal[] => {
     if (reducedMotion
         || width <= 0
@@ -2001,7 +2191,7 @@ export const getNeuralSignals = (
         || getConstellationPhase(elapsedSeconds).name !== 'ambient') return [];
 
     const simulationSeconds = getSimulationTime(elapsedSeconds);
-    const slot = Math.floor(simulationSeconds / NEURAL_SIGNAL_SLOT_SECONDS);
+    const slot = getNeuralSignalSlot(elapsedSeconds);
     const isMobile = width < MOBILE_BREAKPOINT;
     const chance = isMobile ? NEURAL_SIGNAL_MOBILE_CHANCE : NEURAL_SIGNAL_DESKTOP_CHANCE;
     if (hashRandom(sceneSeed, slot, 301) >= chance) return [];
@@ -2017,33 +2207,11 @@ export const getNeuralSignals = (
     const signalElapsed = slotElapsed - start;
     if (signalElapsed < 0 || signalElapsed >= duration) return [];
 
-    let pairCount = 0;
-    for (let from = 0; from < projections.length; from += 1) {
-        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
-        for (let to = from + 1; to < projections.length; to += 1) {
-            if (isTravelerEligibleForNeuralSignal(projections[to], width, height)
-                && isSensibleNeuralPair(projections[from], projections[to], width, height)) pairCount += 1;
-        }
-    }
-    if (pairCount === 0) return [];
-
-    let selectedPair = hashUint(sceneSeed, slot, 304) % pairCount;
-    let fromTravelerIndex = -1;
-    let toTravelerIndex = -1;
-    pairSearch: for (let from = 0; from < projections.length; from += 1) {
-        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
-        for (let to = from + 1; to < projections.length; to += 1) {
-            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
-                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
-            if (selectedPair === 0) {
-                fromTravelerIndex = from;
-                toTravelerIndex = to;
-                break pairSearch;
-            }
-            selectedPair -= 1;
-        }
-    }
-    if (fromTravelerIndex < 0 || toTravelerIndex < 0) return [];
+    const pair = selectNeuralSignalPair(
+        sceneSeed, slot, projections, width, height, contagionState,
+    );
+    if (!pair) return [];
+    const { fromTravelerIndex, toTravelerIndex } = pair;
 
     const fadeIn = smoothstep(signalElapsed / 0.48);
     const fadeOut = smoothstep((duration - signalElapsed) / 0.68);

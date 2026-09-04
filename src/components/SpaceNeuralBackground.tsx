@@ -6,6 +6,7 @@ import {
     createConstellationGeometryForPhrase,
     createEasterEggTargetStyles,
     createEmbeddedGalaxySystems,
+    createNeuralContagionState,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
@@ -18,6 +19,7 @@ import {
     getElapsedSecondsSinceMount,
     getEmbeddedGalaxySystemOpacity,
     getEmbeddedGalaxySystemState,
+    getNeuralSignalSlot,
     getNeuralSignals,
     getOrbitingMoon,
     getOrbitingPlanets,
@@ -50,7 +52,9 @@ import {
     selectEasterEggPhrase,
     selectProminentSystemOwner,
     shouldTriggerEasterEgg,
+    syncNeuralContagionState,
     travelerCountForWidth,
+    updateNeuralContagionForSignal,
     type ConstellationGeometry,
     type ConstellationPhrase,
     type EasterEggClickSequence,
@@ -778,6 +782,7 @@ const SpaceNeuralBackground: React.FC = () => {
         let easterEgg: EasterEggTransition | null = null;
         let easterEggClickSequence: EasterEggClickSequence | null = null;
         let easterEggTriggerCount = 0;
+        let neuralContagion = createNeuralContagionState();
 
         const clearEasterEggDataset = () => {
             delete canvas.dataset.constellationPhrase;
@@ -935,16 +940,31 @@ const SpaceNeuralBackground: React.FC = () => {
             );
 
             // Filaments sit below traveler stars; their endpoints are always current projections.
-            getNeuralSignals(scene.seed, elapsed, projections, width, height, reducedMotion)
-                .forEach((signal) => drawNeuralSignal(
-                    ctx,
-                    projections[signal.fromTravelerIndex],
-                    projections[signal.toTravelerIndex],
-                    signal.opacity,
-                    signal.pulseProgress,
-                    signal.lineWidth,
-                    signal.bend,
-                ));
+            neuralContagion = syncNeuralContagionState(
+                neuralContagion, projections, width, height,
+            );
+            const neuralSignals = getNeuralSignals(
+                scene.seed, elapsed, projections, width, height, reducedMotion, neuralContagion,
+            );
+            if (neuralSignals[0]) {
+                neuralContagion = updateNeuralContagionForSignal(
+                    neuralContagion,
+                    getNeuralSignalSlot(elapsed),
+                    neuralSignals[0],
+                    projections,
+                    width,
+                    height,
+                );
+            }
+            neuralSignals.forEach((signal) => drawNeuralSignal(
+                ctx,
+                projections[signal.fromTravelerIndex],
+                projections[signal.toTravelerIndex],
+                signal.opacity,
+                signal.pulseProgress,
+                signal.lineWidth,
+                signal.bend,
+            ));
 
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
@@ -1078,6 +1098,7 @@ const SpaceNeuralBackground: React.FC = () => {
             reducedMotion = event.matches;
             if (reducedMotion) {
                 easterEgg = null;
+                neuralContagion = createNeuralContagionState();
                 clearEasterEggDataset();
             }
             syncAnimation();

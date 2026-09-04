@@ -35,6 +35,9 @@ import {
   MIN_PLANET_ORBIT_PERIOD_SECONDS,
   MOBILE_TRAVELER_COUNT,
   NEAR_DEPTH,
+  NEURAL_CONTAGION_AFFINITY_BOOST,
+  NEURAL_CONTAGION_MAX_ENTRIES,
+  NEURAL_CONTAGION_OPPORTUNITIES,
   NEURAL_SIGNAL_DESKTOP_CHANCE,
   NEURAL_SIGNAL_DURATION_RANGE,
   NEURAL_SIGNAL_MAX_CONCURRENT,
@@ -74,6 +77,7 @@ import {
   createCryptoSeed,
   createEasterEggTargetStyles,
   createEmbeddedGalaxySystems,
+  createNeuralContagionState,
   createPlanetSystem,
   createSeededRandom,
   createSpaceScene,
@@ -101,6 +105,7 @@ import {
   getOrbitingMoon,
   getOrbitingPlanet,
   getPlanetLightingStyle,
+  getNeuralSignalSlot,
   getNeuralSignals,
   getOrbitingPlanets,
   getPlanetOrbitPeriod,
@@ -141,11 +146,14 @@ import {
   remapAmbientStarsToTextSlots,
   scaleConstellationGeometry,
   selectConstellationPhrase,
+  selectNeuralSignalPair,
   selectEasterEggPhrase,
   selectProminentSystem,
   selectProminentSystemOwner,
   shouldTriggerEasterEgg,
   starCountForWidth,
+  syncNeuralContagionState,
+  updateNeuralContagionForSignal,
   travelerCountForWidth,
 } from '../../src/components/spaceBackgroundModel.ts';
 
@@ -1885,6 +1893,104 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
   assert.ok(observedOpacities.some((opacity) => opacity > 0 && opacity < NEURAL_SIGNAL_MAX_OPACITY * 0.7),
     'fade ramps were not observed');
   assert.ok(mobileActive <= desktopActive, `${mobileActive} mobile samples exceeded ${desktopActive} desktop`);
+});
+
+test('recent neural endpoints receive bounded decaying affinity without excluding ordinary pairs', () => {
+  const width = 1000;
+  const height = 600;
+  const projections = [
+    { x: 140, y: 170 }, { x: 360, y: 170 }, { x: 140, y: 390 }, { x: 360, y: 390 },
+  ].map((point) => ({ ...point, depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 0 }));
+  const empty = createNeuralContagionState();
+  const struck = updateNeuralContagionForSignal(
+    empty, 0, { fromTravelerIndex: 0, toTravelerIndex: 1 }, projections, width, height,
+  );
+
+  assert.equal(NEURAL_CONTAGION_AFFINITY_BOOST, 4);
+  assert.equal(NEURAL_CONTAGION_OPPORTUNITIES, 3);
+  assert.equal(NEURAL_CONTAGION_MAX_ENTRIES, 8);
+  assert.deepEqual(struck.entries.map(({ travelerIndex }) => travelerIndex), [0, 1]);
+  assert.ok(struck.entries.every(({ remainingOpportunities }) =>
+    remainingOpportunities === NEURAL_CONTAGION_OPPORTUNITIES));
+
+  let unbiasedParticipation = 0;
+  let contagiousParticipation = 0;
+  let ordinaryAlternative = 0;
+  const samples = 4096;
+  for (let sample = 0; sample < samples; sample += 1) {
+    const seed = sample * 7919;
+    const slot = 1 + sample % 97;
+    const unbiased = selectNeuralSignalPair(seed, slot, projections, width, height, empty);
+    const contagious = selectNeuralSignalPair(seed, slot, projections, width, height, struck);
+    if (unbiased.fromTravelerIndex === 0 || unbiased.toTravelerIndex === 0) unbiasedParticipation += 1;
+    if (contagious.fromTravelerIndex === 0 || contagious.toTravelerIndex === 0) contagiousParticipation += 1;
+    if (![contagious.fromTravelerIndex, contagious.toTravelerIndex].includes(0)
+      && ![contagious.fromTravelerIndex, contagious.toTravelerIndex].includes(1)) {
+      ordinaryAlternative += 1;
+    }
+  }
+  assert.ok(contagiousParticipation > unbiasedParticipation * 1.2,
+    `${contagiousParticipation} affinity samples vs ${unbiasedParticipation} baseline`);
+  assert.ok(ordinaryAlternative > 0, 'baseline-weight alternative pairs became impossible');
+
+  const repeated = updateNeuralContagionForSignal(
+    struck, 0, { fromTravelerIndex: 0, toTravelerIndex: 1 }, projections, width, height,
+  );
+  assert.equal(repeated, struck, 'one RAF-visible event reinforced more than once');
+
+  let decayed = struck;
+  for (let slot = 1; slot <= NEURAL_CONTAGION_OPPORTUNITIES; slot += 1) {
+    decayed = updateNeuralContagionForSignal(
+      decayed, slot, { fromTravelerIndex: 2, toTravelerIndex: 3 }, projections, width, height,
+    );
+  }
+  assert.ok(decayed.entries.every(({ travelerIndex }) => travelerIndex !== 0 && travelerIndex !== 1),
+    'old affinity survived its opportunity limit');
+
+  const many = Array.from({ length: 14 }, (_, index) => ({
+    x: 80 + (index % 7) * 125,
+    y: 120 + Math.floor(index / 7) * 220,
+    depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 0,
+  }));
+  let bounded = createNeuralContagionState();
+  for (let slot = 0; slot < 7; slot += 1) {
+    bounded = updateNeuralContagionForSignal(
+      bounded, slot, { fromTravelerIndex: slot * 2, toTravelerIndex: slot * 2 + 1 },
+      many, width, height,
+    );
+    assert.ok(bounded.entries.length <= NEURAL_CONTAGION_MAX_ENTRIES);
+  }
+});
+
+test('neural contagion resets recycled and stale travelers and locks one logical event across RAFs', () => {
+  const width = 1000;
+  const height = 600;
+  const projections = [
+    { x: 100, y: 150 }, { x: 300, y: 150 }, { x: 500, y: 150 }, { x: 700, y: 150 },
+  ].map((point) => ({ ...point, depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 2 }));
+  const state = updateNeuralContagionForSignal(
+    createNeuralContagionState(), 9,
+    { fromTravelerIndex: 0, toTravelerIndex: 1 }, projections, width, height,
+  );
+  const locked = selectNeuralSignalPair(0x51a7, 9, projections, width, height, state);
+  assert.deepEqual(locked, { fromTravelerIndex: 0, toTravelerIndex: 1 });
+  assert.deepEqual(selectNeuralSignalPair(0xdeadbeef, 9, projections, width, height, state), locked,
+    'same logical event changed endpoints with a different RAF call');
+
+  const recycled = projections.map((projection) => ({ ...projection }));
+  recycled[0].cycle += 1;
+  const afterCycle = syncNeuralContagionState(state, recycled, width, height);
+  assert.ok(afterCycle.entries.every(({ travelerIndex }) => travelerIndex !== 0));
+  assert.equal(selectNeuralSignalPair(0x51a7, 9, recycled, width, height, afterCycle), null,
+    'a recycled locked endpoint caused a replacement jump');
+
+  const stale = recycled.map((projection) => ({ ...projection }));
+  stale[1].opacity = 0.08;
+  const afterStale = syncNeuralContagionState(afterCycle, stale, width, height);
+  assert.equal(afterStale.entries.length, 0);
+
+  assert.equal(getNeuralSignalSlot(48.1), 2);
+  assert.equal(getNeuralSignalSlot(605), 25, 'frozen simulation advanced the signal slot');
 });
 
 test('neural endpoints are exclusively live eligible travelers and constellation/reduced-motion states suppress them', () => {
