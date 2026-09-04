@@ -771,7 +771,6 @@ const SpaceNeuralBackground: React.FC = () => {
         let isOnscreen = typeof IntersectionObserver === 'undefined';
         let pageIsVisible = !document.hidden;
         let reducedMotion = motionQuery.matches;
-        let backdropGlow: CanvasGradient | null = null;
         let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
         let constellationEvent = -1;
         let prominentSystemOwner: ProminentSystemOwner | null = null;
@@ -867,13 +866,9 @@ const SpaceNeuralBackground: React.FC = () => {
         const drawScene = (elapsed: number, renderDetails = true) => {
             if (width <= 0 || height <= 0) return;
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#050508';
+            // The canvas owns an opaque, unmodulated black backdrop on every frame.
+            ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, width, height);
-
-            if (backdropGlow) {
-                ctx.fillStyle = backdropGlow;
-                ctx.fillRect(0, 0, width, height);
-            }
 
             const frame = getRenderedStarFrame(elapsed);
             const { phase, positions, styles, lineLayers } = frame;
@@ -1029,13 +1024,6 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.width = Math.max(1, Math.round(width * dpr));
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            backdropGlow = ctx.createRadialGradient(
-                width * 0.5, height * 0.42, 0,
-                width * 0.5, height * 0.42, Math.max(width, height) * 0.62,
-            );
-            backdropGlow.addColorStop(0, 'rgba(19, 49, 68, 0.1)');
-            backdropGlow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
-            backdropGlow.addColorStop(1, 'rgba(5, 5, 8, 0)');
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
             const resizePhase = getConstellationPhase(elapsed);
             constellationEvent = resizePhase.event;

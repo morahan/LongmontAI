@@ -1386,6 +1386,48 @@ test('galaxy creation uses the exact 10% half-open threshold', () => {
   assert.deepEqual(scene, createSpaceScene(0x51a7c0de));
 });
 
+test('starscape source contracts an opaque black backdrop and disc-clipped star patterns', () => {
+  const componentSource = readFileSync(
+    new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8',
+  );
+  const cssSource = readFileSync(new URL('../../src/index.css', import.meta.url), 'utf8');
+  const drawScene = componentSource.slice(
+    componentSource.indexOf('const drawScene ='),
+    componentSource.indexOf('// RAF may pause while hidden'),
+  );
+  const travelerSurface = componentSource.slice(
+    componentSource.indexOf('const drawTravelerSurface ='),
+    componentSource.indexOf('const drawTravelerDisc ='),
+  );
+  const homeScene = cssSource.slice(
+    cssSource.indexOf('.home-hero-scene'),
+    cssSource.indexOf('.home-hero {'),
+  );
+  const planetarySystem = componentSource.slice(
+    componentSource.indexOf('const drawPlanetarySystem ='),
+    componentSource.indexOf('const SpaceNeuralBackground'),
+  );
+
+  assert.match(drawScene, /ctx\.globalAlpha = 1;\s*\/\/ The canvas owns[\s\S]*?ctx\.fillStyle = '#000000';\s*ctx\.fillRect\(0, 0, width, height\);/);
+  assert.doesNotMatch(componentSource, /backdropGlow/);
+  assert.doesNotMatch(homeScene, /gradient|radial-gradient|rgba\(/i);
+  assert.match(homeScene, /\.home-hero-scene[\s\S]*?background: #000000;/);
+
+  assert.match(travelerSurface, /ctx\.save\(\);\s*ctx\.beginPath\(\);\s*ctx\.arc\(x, y, radius, 0, TAU\);\s*ctx\.clip\(\);/);
+  assert.match(componentSource, /drawTravelerSurface\(ctx, appearance, x, y, radius, opacity\);/);
+  assert.match(planetarySystem, /drawTravelerDisc\(\s*ctx,\s*ownerAppearance,/);
+
+  const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const resolving = getTravelerAppearance(traveler, 0.5);
+  const resolved = getTravelerAppearance(traveler, 0.9);
+  assert.equal(resolving.texture, resolved.texture);
+  assert.equal(resolving.surfaceSeed, resolved.surfaceSeed);
+  assert.ok(resolved.detailLevel > 0);
+  assert.deepEqual(getTravelerStarRenderPolicy(true), {
+    renderDisc: true, renderHalo: false, renderShadowGlow: false, renderFlare: false,
+  });
+});
+
 test('traveler palette and surface textures are seeded, stable, and diverse', () => {
   assert.deepEqual(TRAVELER_PALETTE.map(({ name }) => name), ['red', 'yellow', 'orange', 'white', 'blue']);
   assert.deepEqual(TRAVELER_SURFACE_TEXTURES, ['bands', 'speckles', 'facets', 'swirls', 'mottled']);
