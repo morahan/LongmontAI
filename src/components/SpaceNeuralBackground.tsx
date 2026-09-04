@@ -31,7 +31,9 @@ import {
     getSystemOpacity,
     getSystemOwnerDiscLocalRadius,
     getSystemScale,
+    getGalaxyAnimationState,
     getGalaxyAppearance,
+    getGalaxyParticleState,
     getTravelerAppearance,
     getTravelerStarRenderPolicy,
     getTravelerVariant,
@@ -480,72 +482,112 @@ const drawGalaxy = (
     projection: ProjectedTraveler,
     simulationSeconds: number,
 ) => {
-    const appearance = getGalaxyAppearance(traveler, projection.progress);
+    const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
+    const animation = getGalaxyAnimationState(traveler, projection.cycle, simulationSeconds);
     const { x, y, opacity } = projection;
-    const rotation = surfaceValue(traveler.seed, projection.cycle) * TAU
-        + simulationSeconds * 0.055;
-
-    const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.outerRadius);
-    halo.addColorStop(0, `rgba(245, 226, 198, ${opacity * 0.5})`);
-    halo.addColorStop(0.38, `rgba(126, 177, 221, ${opacity * 0.2})`);
-    halo.addColorStop(1, 'rgba(77, 119, 180, 0)');
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(x, y, appearance.outerRadius, 0, TAU);
-    ctx.fill();
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(rotation);
-    ctx.strokeStyle = `rgba(171, 205, 235, ${opacity * 0.23})`;
-    ctx.lineWidth = Math.max(0.25, appearance.outerRadius * 0.045);
-    for (let arm = 0; arm < appearance.armCount; arm += 1) {
-        ctx.beginPath();
-        for (let step = 0; step <= 18; step += 1) {
-            const radialProgress = step / 18;
-            const radius = appearance.coreRadius
-                + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.9;
-            const angle = arm * TAU / appearance.armCount + radialProgress * TAU * 1.45;
-            const armX = Math.cos(angle) * radius;
-            const armY = Math.sin(angle) * radius * 0.58;
-            if (step === 0) ctx.moveTo(armX, armY);
-            else ctx.lineTo(armX, armY);
+    ctx.rotate(animation.rotation);
+
+    // A flattened, formation-colored halo establishes the disc without expanding its bounds.
+    const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, appearance.outerRadius);
+    halo.addColorStop(0, `rgba(245, 226, 198, ${opacity * (appearance.formation === 'elliptical' ? 0.55 : 0.38)})`);
+    halo.addColorStop(0.42, `rgba(126, 177, 221, ${opacity * 0.18})`);
+    halo.addColorStop(1, 'rgba(77, 119, 180, 0)');
+    ctx.save();
+    ctx.scale(1, appearance.flattening);
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, appearance.outerRadius, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.lineCap = 'round';
+    ctx.lineWidth = Math.max(0.24, appearance.outerRadius * 0.042);
+    if (appearance.armCount > 0) {
+        for (let arm = 0; arm < appearance.armCount; arm += 1) {
+            ctx.strokeStyle = `rgba(151, 195, 229, ${opacity * 0.21})`;
+            ctx.beginPath();
+            for (let step = 0; step <= 16; step += 1) {
+                const radialProgress = step / 16;
+                const radius = appearance.coreRadius
+                    + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.9;
+                const angle = arm * TAU / appearance.armCount
+                    + radialProgress * TAU * 1.35 + animation.dustDrift;
+                const armX = Math.cos(angle) * radius;
+                const armY = Math.sin(angle) * radius * appearance.flattening;
+                if (step === 0) ctx.moveTo(armX, armY);
+                else ctx.lineTo(armX, armY);
+            }
+            ctx.stroke();
         }
+    }
+    if (appearance.formation === 'barred-spiral') {
+        ctx.strokeStyle = `rgba(255, 218, 166, ${opacity * 0.48})`;
+        ctx.lineWidth = Math.max(0.35, appearance.coreRadius * 0.7);
+        ctx.beginPath();
+        ctx.moveTo(-appearance.barLength, 0);
+        ctx.lineTo(appearance.barLength, 0);
         ctx.stroke();
+    } else if (appearance.formation === 'ring') {
+        ctx.strokeStyle = `rgba(142, 204, 235, ${opacity * 0.34})`;
+        ctx.lineWidth = Math.max(0.45, appearance.outerRadius * 0.12);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, appearance.ringRadius, appearance.ringRadius * appearance.flattening,
+            animation.dustDrift, 0, TAU);
+        ctx.stroke();
+    } else if (appearance.formation === 'elliptical') {
+        for (let shell = 3; shell >= 1; shell -= 1) {
+            ctx.fillStyle = `rgba(239, 220, 190, ${opacity * (0.025 + shell * 0.022)})`;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, appearance.outerRadius * shell / 3,
+                appearance.outerRadius * appearance.flattening * shell / 3, 0, 0, TAU);
+            ctx.fill();
+        }
+    } else if (appearance.formation === 'irregular') {
+        for (let knot = 0; knot < 4; knot += 1) {
+            const knotAngle = surfaceValue(traveler.seed, projection.cycle + knot * 5) * TAU;
+            const knotDistance = appearance.outerRadius * (0.16 + knot * 0.1);
+            ctx.fillStyle = `rgba(${knot & 1 ? '117, 181, 219' : '190, 132, 184'}, ${opacity * 0.1})`;
+            ctx.beginPath();
+            ctx.arc(Math.cos(knotAngle) * knotDistance, Math.sin(knotAngle) * knotDistance,
+                appearance.outerRadius * (0.13 + knot * 0.012), 0, TAU);
+            ctx.fill();
+        }
     }
 
     for (let star = 0; star < appearance.internalStarCount; star += 1) {
-        const arm = star % appearance.armCount;
-        const radialProgress = (Math.floor(star / appearance.armCount) + 0.45
-            + surfaceValue(traveler.seed, star + 41) * 0.5)
-            / Math.ceil(appearance.internalStarCount / appearance.armCount);
-        const radius = appearance.coreRadius
-            + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.88;
-        const angle = arm * TAU / appearance.armCount
-            + radialProgress * TAU * 1.45
-            + (surfaceValue(traveler.seed, star + 83) - 0.5) * 0.42;
-        ctx.fillStyle = `rgba(232, 242, 255, ${opacity * (0.55
-            + surfaceValue(traveler.seed, star + 127) * 0.45)})`;
-        ctx.beginPath();
-        ctx.arc(
-            Math.cos(angle) * radius,
-            Math.sin(angle) * radius * 0.58,
-            Math.max(0.18, Math.min(0.58, appearance.outerRadius * 0.035)),
-            0,
-            TAU,
+        const particle = getGalaxyParticleState(
+            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
         );
+        const color = particle.kind === 'dust' ? '69, 47, 46'
+            : particle.kind === 'young-star' ? '151, 211, 255'
+                : particle.kind === 'gas-knot' ? '218, 143, 208' : '238, 242, 247';
+        ctx.fillStyle = `rgba(${color}, ${opacity * particle.opacity})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
         ctx.fill();
     }
 
-    ctx.fillStyle = `rgba(2, 3, 8, ${Math.min(1, opacity * 1.3)})`;
-    ctx.beginPath();
-    ctx.arc(0, 0, appearance.coreRadius, 0, TAU);
-    ctx.fill();
-    ctx.strokeStyle = `rgba(255, 205, 133, ${opacity * 0.9})`;
-    ctx.lineWidth = Math.max(0.3, appearance.coreRadius * 0.35);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, appearance.coreRadius * 1.75, appearance.coreRadius * 0.52, 0, 0, TAU);
-    ctx.stroke();
+    if (appearance.formation !== 'irregular') {
+        const coreOpacity = opacity * animation.corePulse;
+        const core = ctx.createRadialGradient(0, 0, 0, 0, 0, appearance.coreRadius * 1.8);
+        core.addColorStop(0, `rgba(255, 238, 204, ${coreOpacity})`);
+        core.addColorStop(appearance.formation === 'ring' ? 0.22 : 0.48,
+            `rgba(229, 184, 126, ${coreOpacity * 0.52})`);
+        core.addColorStop(1, 'rgba(185, 136, 95, 0)');
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(0, 0, appearance.coreRadius * 1.8, 0, TAU);
+        ctx.fill();
+        if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
+            ctx.fillStyle = `rgba(3, 4, 9, ${Math.min(1, opacity * 0.85)})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, appearance.coreRadius * 0.36, 0, TAU);
+            ctx.fill();
+        }
+    }
     ctx.restore();
 };
 

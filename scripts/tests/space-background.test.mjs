@@ -17,8 +17,10 @@ import {
   EASTER_EGG_PHRASES,
   FAR_DEPTH,
   GALAXY_CREATION_CHANCE,
+  GALAXY_FORMATIONS,
   GALAXY_INTERNAL_STAR_COUNT,
   GALAXY_MAX_RADIUS_MULTIPLIER,
+  GALAXY_ROTATION_RATE_RANGE,
   GALAXY_SPIRAL_ARM_COUNT,
   MAX_GLYPH_STAR_COUNT,
   MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO,
@@ -81,7 +83,10 @@ import {
   getCometAppearance,
   getDriftedStar,
   getDriftedStarVelocity,
+  getGalaxyAnimationState,
   getGalaxyAppearance,
+  getGalaxyFormation,
+  getGalaxyParticleState,
   getEasterEggPhase,
   getEasterEggStarFieldPositions,
   getEasterEggStarFieldStyles,
@@ -1330,12 +1335,12 @@ test('galaxies compose with traveler variants and stay within seven moving-star 
 
   for (const progress of [0, 0.28, 0.5, 0.68, 1]) {
     const star = getTravelerAppearance(traveler, progress);
-    const galaxy = getGalaxyAppearance(traveler, progress);
-    assert.deepEqual(galaxy, getGalaxyAppearance(traveler, progress));
+    const galaxy = getGalaxyAppearance(traveler, progress, 2);
+    assert.deepEqual(galaxy, getGalaxyAppearance(traveler, progress, 2));
     assert.ok(galaxy.outerRadius <= star.radius * GALAXY_MAX_RADIUS_MULTIPLIER + 1e-12);
     assert.ok(galaxy.outerRadius > star.radius);
     assert.ok(galaxy.coreRadius > 0 && galaxy.coreRadius < galaxy.outerRadius);
-    assert.equal(galaxy.armCount, GALAXY_SPIRAL_ARM_COUNT);
+    assert.ok(galaxy.flattening > 0 && galaxy.flattening <= 1);
     assert.equal(galaxy.internalStarCount, GALAXY_INTERNAL_STAR_COUNT);
   }
 
@@ -1343,6 +1348,67 @@ test('galaxies compose with traveler variants and stay within seven moving-star 
   const galaxyProjection = projectTraveler(traveler, 12.5, 1000, 600);
   assert.deepEqual(galaxyProjection, projectTraveler(ordinary, 12.5, 1000, 600),
     'galaxy identity must not alter traveler motion or lifecycle');
+});
+
+test('reality-inspired galaxy formations are deterministic, distinct, and all reachable', () => {
+  assert.deepEqual(GALAXY_FORMATIONS,
+    ['spiral', 'barred-spiral', 'elliptical', 'irregular', 'ring']);
+  assert.deepEqual(GALAXY_ROTATION_RATE_RANGE, [0.012, 0.038]);
+  const seedByFormation = new Map();
+  for (let seed = 0; seed < 1024; seed += 1) {
+    const formation = getGalaxyFormation(seed, 0);
+    assert.equal(getGalaxyFormation(seed, 0), formation);
+    if (!seedByFormation.has(formation)) seedByFormation.set(formation, seed);
+  }
+  assert.deepEqual([...seedByFormation.keys()].sort(), [...GALAXY_FORMATIONS].sort());
+
+  const profiles = new Map();
+  for (const formation of GALAXY_FORMATIONS) {
+    const traveler = { seed: seedByFormation.get(formation), initialDistance: 0,
+      speed: 20, size: 1, alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.8, 0);
+    assert.equal(appearance.formation, formation);
+    profiles.set(formation, appearance);
+  }
+  assert.ok(profiles.get('spiral').armCount >= 3);
+  assert.equal(profiles.get('barred-spiral').armCount, 2);
+  assert.ok(profiles.get('barred-spiral').barLength > 0);
+  assert.ok(profiles.get('elliptical').coreRadius > profiles.get('spiral').coreRadius);
+  assert.equal(profiles.get('irregular').armCount, 0);
+  assert.ok(profiles.get('ring').ringRadius > profiles.get('ring').coreRadius * 4);
+  assert.notEqual(profiles.get('elliptical').flattening, profiles.get('barred-spiral').flattening);
+});
+
+test('galaxy matter is deterministic, bounded, gently animated, and frozen by simulation time', () => {
+  let movingParticles = 0;
+  for (let seed = 0; seed < 128; seed += 1) {
+    const traveler = { seed, initialDistance: 0, speed: 20, size: 1.1, alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.75, 1);
+    for (let index = 0; index < appearance.internalStarCount; index += 1) {
+      const atZero = getGalaxyParticleState(traveler, 1, 0.75, 0, index);
+      const later = getGalaxyParticleState(traveler, 1, 0.75, 12, index);
+      assert.deepEqual(atZero, getGalaxyParticleState(traveler, 1, 0.75, 0, index));
+      assert.ok(Number.isFinite(atZero.x) && Number.isFinite(atZero.y));
+      assert.ok(Math.hypot(atZero.x, atZero.y) <= appearance.outerRadius + 1e-12);
+      assert.ok(atZero.radius > 0 && atZero.radius < appearance.outerRadius * 0.1);
+      assert.ok(atZero.opacity > 0 && atZero.opacity <= 1);
+      if (Math.hypot(later.x - atZero.x, later.y - atZero.y) > 1e-5
+        || Math.abs(later.opacity - atZero.opacity) > 1e-5) movingParticles += 1;
+    }
+  }
+  assert.ok(movingParticles > 4000, `only ${movingParticles} particles animated`);
+
+  const traveler = { seed: 99, initialDistance: 0, speed: 20, size: 1, alpha: 0.6, isGalaxy: true };
+  const beforeFreeze = getGalaxyAnimationState(traveler, 0, getSimulationTime(600));
+  const duringFreeze = getGalaxyAnimationState(traveler, 0, getSimulationTime(620));
+  assert.deepEqual(duringFreeze, beforeFreeze, 'constellation simulation clock did not freeze galaxy');
+  assert.deepEqual(
+    getGalaxyParticleState(traveler, 0, 0.7, getSimulationTime(620), 3),
+    getGalaxyParticleState(traveler, 0, 0.7, getSimulationTime(600), 3),
+  );
+  assert.deepEqual(getGalaxyAnimationState(traveler, 0, 0), getGalaxyAnimationState(traveler, 0, 0),
+    'reduced-motion time zero must be stable');
+  assert.notDeepEqual(getGalaxyAnimationState(traveler, 0, 20), getGalaxyAnimationState(traveler, 0, 0));
 });
 
 test('one equiprobable basis-point roll reserves disjoint exact 3% UFO and comet bands', () => {

@@ -16,7 +16,16 @@ export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
 export const GALAXY_CREATION_CHANCE = 0.1;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
 export const GALAXY_INTERNAL_STAR_COUNT = 36;
+/** Historical/default spiral arm count; individual formations deliberately vary this. */
 export const GALAXY_SPIRAL_ARM_COUNT = 3;
+export const GALAXY_FORMATIONS = [
+    'spiral',
+    'barred-spiral',
+    'elliptical',
+    'irregular',
+    'ring',
+] as const;
+export const GALAXY_ROTATION_RATE_RANGE = [0.012, 0.038] as const;
 export const UFO_BASIS_POINTS = 300;
 export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
@@ -221,6 +230,8 @@ export interface UfoAppearance {
 }
 
 export type TravelerVariant = 'star' | 'ufo' | 'comet' | 'galaxy';
+export type GalaxyFormation = typeof GALAXY_FORMATIONS[number];
+export type GalaxyMatterKind = 'star' | 'young-star' | 'dust' | 'gas-knot';
 export type CometTrailParticleKind = 'asteroid' | 'stardust';
 
 export interface CometTrailParticle {
@@ -241,10 +252,27 @@ export interface CometAppearance {
 }
 
 export interface GalaxyAppearance {
+    formation: GalaxyFormation;
     outerRadius: number;
     coreRadius: number;
     armCount: number;
+    flattening: number;
+    barLength: number;
+    ringRadius: number;
+    rotationRate: number;
     internalStarCount: number;
+}
+
+export interface GalaxyAnimationState {
+    rotation: number;
+    corePulse: number;
+    dustDrift: number;
+}
+
+export interface GalaxyParticleState extends Point {
+    radius: number;
+    opacity: number;
+    kind: GalaxyMatterKind;
 }
 
 export interface ProjectedTraveler {
@@ -1598,15 +1626,143 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     };
 };
 
+/** Formation identity is stable for one traveler lifecycle and every class is equiprobable. */
+export const getGalaxyFormation = (seed: number, cycle = 0): GalaxyFormation =>
+    GALAXY_FORMATIONS[hashUint(seed, Math.max(0, Math.trunc(cycle)), 521) % GALAXY_FORMATIONS.length];
+
 /** Galaxies stay recognizable without ever exceeding seven times the replaced moving-star radius. */
-export const getGalaxyAppearance = (traveler: Traveler, progress: number): GalaxyAppearance => {
+export const getGalaxyAppearance = (
+    traveler: Traveler,
+    progress: number,
+    cycle = 0,
+): GalaxyAppearance => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const formation = getGalaxyFormation(traveler.seed, stableCycle);
     const starRadius = getTravelerAppearance(traveler, progress).radius;
-    const outerRadius = starRadius * (4.6 + smoothstep(progress) * 2.4);
+    const outerRadius = Math.min(
+        starRadius * GALAXY_MAX_RADIUS_MULTIPLIER,
+        starRadius * (4.6 + smoothstep(progress) * 2.4),
+    );
+    const profiles: Record<GalaxyFormation, Pick<GalaxyAppearance,
+        'coreRadius' | 'armCount' | 'flattening' | 'barLength' | 'ringRadius'>> = {
+        spiral: { coreRadius: 0.14, armCount: 3 + hashUint(traveler.seed, stableCycle, 522) % 2,
+            flattening: 0.62, barLength: 0, ringRadius: 0 },
+        'barred-spiral': { coreRadius: 0.13, armCount: 2,
+            flattening: 0.54, barLength: 0.48, ringRadius: 0 },
+        elliptical: { coreRadius: 0.3, armCount: 0,
+            flattening: 0.7 + hashRandom(traveler.seed, stableCycle, 523) * 0.16,
+            barLength: 0, ringRadius: 0 },
+        irregular: { coreRadius: 0.11, armCount: 0,
+            flattening: 0.82, barLength: 0, ringRadius: 0 },
+        ring: { coreRadius: 0.1, armCount: 0,
+            flattening: 0.6, barLength: 0, ringRadius: 0.66 },
+    };
+    const profile = profiles[formation];
     return {
-        outerRadius: Math.min(starRadius * GALAXY_MAX_RADIUS_MULTIPLIER, outerRadius),
-        coreRadius: outerRadius * 0.15,
-        armCount: GALAXY_SPIRAL_ARM_COUNT,
+        formation,
+        outerRadius,
+        coreRadius: outerRadius * profile.coreRadius,
+        armCount: profile.armCount,
+        flattening: profile.flattening,
+        barLength: outerRadius * profile.barLength,
+        ringRadius: outerRadius * profile.ringRadius,
+        rotationRate: mix(
+            GALAXY_ROTATION_RATE_RANGE[0],
+            GALAXY_ROTATION_RATE_RANGE[1],
+            hashRandom(traveler.seed, stableCycle, 524),
+        ) * (hashUint(traveler.seed, stableCycle, 525) % 2 === 0 ? -1 : 1),
         internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
+    };
+};
+
+/** Slow whole-formation motion plus independent core and dust rhythms, all on simulation time. */
+export const getGalaxyAnimationState = (
+    traveler: Pick<Traveler, 'seed'>,
+    cycle: number,
+    simulationSeconds: number,
+): GalaxyAnimationState => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const elapsed = Math.max(0, simulationSeconds);
+    const rotationRate = mix(
+        GALAXY_ROTATION_RATE_RANGE[0],
+        GALAXY_ROTATION_RATE_RANGE[1],
+        hashRandom(traveler.seed, stableCycle, 524),
+    ) * (hashUint(traveler.seed, stableCycle, 525) % 2 === 0 ? -1 : 1);
+    return {
+        rotation: hashRandom(traveler.seed, stableCycle, 526) * TAU + elapsed * rotationRate,
+        corePulse: 0.92 + 0.08 * Math.sin(
+            elapsed * (0.34 + hashRandom(traveler.seed, stableCycle, 527) * 0.18)
+            + hashRandom(traveler.seed, stableCycle, 528) * TAU,
+        ),
+        dustDrift: elapsed * rotationRate * 0.42,
+    };
+};
+
+/**
+ * Bounded local-space matter for Canvas rendering. Differential angular speeds make the interior
+ * lively without allocating random generators or particle objects outside this small fixed set.
+ */
+export const getGalaxyParticleState = (
+    traveler: Traveler,
+    cycle: number,
+    progress: number,
+    simulationSeconds: number,
+    index: number,
+    resolvedAppearance?: GalaxyAppearance,
+): GalaxyParticleState => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const particleIndex = positiveModulo(Math.trunc(index), GALAXY_INTERNAL_STAR_COUNT);
+    const appearance = resolvedAppearance ?? getGalaxyAppearance(traveler, progress, stableCycle);
+    const elapsed = Math.max(0, simulationSeconds);
+    const unit = hashRandom(traveler.seed, stableCycle, 540 + particleIndex * 4);
+    const jitter = hashRandom(traveler.seed, stableCycle, 541 + particleIndex * 4) - 0.5;
+    const phase = hashRandom(traveler.seed, stableCycle, 542 + particleIndex * 4) * TAU;
+    const twinklePhase = hashRandom(traveler.seed, stableCycle, 543 + particleIndex * 4) * TAU;
+    let radial = 0;
+    let angle = phase;
+    let kind: GalaxyMatterKind = particleIndex % 9 === 0 ? 'dust' : 'star';
+
+    if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
+        radial = 0.16 + Math.sqrt(unit) * 0.76;
+        const arm = particleIndex % appearance.armCount;
+        angle = arm * TAU / appearance.armCount + radial * TAU * 1.35 + jitter * 0.46
+            + elapsed * appearance.rotationRate * (0.32 - radial * 0.18);
+        if (particleIndex % 7 === 1) kind = 'young-star';
+        if (appearance.formation === 'barred-spiral' && radial < 0.38) {
+            angle = (particleIndex & 1) * Math.PI + jitter * 0.22;
+        }
+    } else if (appearance.formation === 'elliptical') {
+        radial = 0.08 + unit ** 0.72 * 0.82;
+        angle += elapsed * appearance.rotationRate * (0.18 - radial * 0.06);
+        kind = particleIndex % 11 === 0 ? 'dust' : 'star';
+    } else if (appearance.formation === 'ring') {
+        radial = 0.57 + unit * 0.2 + jitter * 0.04;
+        angle += elapsed * appearance.rotationRate * (0.28 - radial * 0.08);
+        kind = particleIndex % 6 === 0 ? 'gas-knot'
+            : particleIndex % 5 === 0 ? 'young-star' : 'star';
+    } else {
+        const clump = particleIndex % 4;
+        const clumpAngle = hashRandom(traveler.seed, stableCycle, 610 + clump) * TAU;
+        const clumpRadius = 0.18 + hashRandom(traveler.seed, stableCycle, 620 + clump) * 0.42;
+        const localRadius = 0.04 + unit * 0.15;
+        const localAngle = phase + elapsed * appearance.rotationRate * (0.42 + clump * 0.06);
+        const rawX = Math.cos(clumpAngle) * clumpRadius + Math.cos(localAngle) * localRadius;
+        const rawY = Math.sin(clumpAngle) * clumpRadius + Math.sin(localAngle) * localRadius;
+        radial = Math.min(0.82, Math.hypot(rawX, rawY));
+        angle = Math.atan2(rawY, rawX)
+            + Math.sin(elapsed * 0.11 + clumpAngle) * 0.025;
+        kind = particleIndex % 5 === 0 ? 'gas-knot'
+            : particleIndex % 4 === 0 ? 'young-star' : 'star';
+    }
+
+    const normalizedRadius = Math.min(0.94, Math.max(0.025, radial));
+    const pulse = 0.84 + 0.16 * Math.sin(elapsed * (0.55 + unit * 0.38) + twinklePhase);
+    return {
+        x: Math.cos(angle) * normalizedRadius * appearance.outerRadius,
+        y: Math.sin(angle) * normalizedRadius * appearance.outerRadius * appearance.flattening,
+        radius: Math.max(0.16, appearance.outerRadius * (kind === 'gas-knot' ? 0.055 : 0.028)),
+        opacity: (kind === 'dust' ? 0.28 : kind === 'gas-knot' ? 0.5 : 0.58) * pulse,
+        kind,
     };
 };
 
