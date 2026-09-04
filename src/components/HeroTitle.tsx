@@ -169,7 +169,6 @@ const HeroTitle: React.FC = () => {
                         focusable="false"
                     >
                         <circle className="hero-title-map-start" cx="5" cy="21" r="1.5" />
-                        <path d="M7.5 20C10.5 20 11 15.5 14 15.5S17.5 11 20.5 11" pathLength="1" />
                         <circle className="hero-title-map-destination" cx="23" cy="8" r="3" />
                     </svg>
                     <svg
