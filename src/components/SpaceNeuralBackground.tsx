@@ -45,7 +45,7 @@ import {
     isPlanetBehindSystemStar,
     isStarRenderable,
     projectTraveler,
-    remapAmbientStarsToFirstGlyphSlots,
+    remapAmbientStarsToTextSlots,
     scaleConstellationGeometry,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
@@ -842,7 +842,6 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endVelocities,
                             { x: width, y: height },
                             {
-                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
                                 endpointVisible: easterEgg.endVisibility,
                             },
@@ -853,7 +852,6 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endStyles,
                             age,
                             {
-                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
                                 endpointVisible: easterEgg.endVisibility,
                             },
@@ -894,7 +892,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     const toPoint = positions[to];
                     const fromStyle = styles[from];
                     const toStyle = styles[to];
-                    // Connections follow revealed nodes; hidden burst destinations never leak.
+                    // Connections follow revealed nodes; hidden target destinations never leak.
                     if (!fromPoint || !toPoint || !fromStyle || !toStyle
                         || fromStyle.opacity <= 0 || toStyle.opacity <= 0
                         || fromStyle.strength <= 0 || toStyle.strength <= 0) return;
@@ -1176,17 +1174,14 @@ const SpaceNeuralBackground: React.FC = () => {
             let startStyles = fillStyles(currentFrame.styles);
             const endStyles = fillStyles(rawEndStyles);
             if (currentFrame.phase.name === 'ambient') {
-                const remapped = remapAmbientStarsToFirstGlyphSlots(
-                    startPositions,
-                    startStyles,
-                    geometry.glyphs[0].indices.length,
+                const remapped = remapAmbientStarsToTextSlots(
+                    startPositions, startStyles, geometry.points.length,
                 );
                 startPositions = remapped.positions;
                 startStyles = remapped.styles;
-                remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
-                    .forEach((sourceIndex) => {
-                        targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
-                    });
+                remapped.sourceIndices.forEach((sourceIndex) => {
+                    targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
+                });
             }
             easterEgg = {
                 startedAt: elapsed,
