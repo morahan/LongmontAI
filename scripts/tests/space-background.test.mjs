@@ -1408,11 +1408,21 @@ test('reality-inspired galaxy formations are deterministic, distinct, and all re
   assert.equal(modelSource.includes('ringRadius'), false);
   assert.equal(canvasSource.includes("appearance.formation === 'ring'"), false);
   assert.equal(canvasSource.includes('appearance.ringRadius'), false);
-  const embeddedDraw = canvasSource.slice(
-    canvasSource.indexOf('// A few seeded miniature systems'),
+  const drawGalaxySource = canvasSource.slice(
+    canvasSource.indexOf('const drawGalaxy ='),
     canvasSource.indexOf('const drawUfo ='),
   );
-  assert.equal(embeddedDraw.includes('.stroke()'), false, 'embedded systems draw orbital guides');
+  for (const forbiddenMorphology of [
+    'createRadialGradient', 'createLinearGradient', '.ellipse(', '.stroke()',
+    '.moveTo(', '.lineTo(', '.bezierCurveTo(', '.quadraticCurveTo(',
+  ]) {
+    assert.equal(drawGalaxySource.includes(forbiddenMorphology), false,
+      `drawGalaxy retained ring-like morphology: ${forbiddenMorphology}`);
+  }
+  assert.equal(drawGalaxySource.includes('.filter('), false,
+    'embedded system depth ordering allocates filter arrays each frame');
+  assert.equal(drawGalaxySource.includes('hostGlow'), false,
+    'embedded host retained a per-frame glow gradient');
   assert.ok(canvasSource.includes('drawPlanetRing'), 'ordinary planet-ring behavior was removed');
 });
 
@@ -1539,7 +1549,10 @@ test('galaxy matter is deterministic, bounded, gently animated, and frozen by si
       assert.deepEqual(atZero, getGalaxyParticleState(traveler, 1, 0.75, 0, index));
       assert.ok(Number.isFinite(atZero.x) && Number.isFinite(atZero.y));
       assert.ok(Math.hypot(atZero.x, atZero.y) <= appearance.outerRadius + 1e-12);
-      assert.ok(atZero.radius > 0 && atZero.radius < appearance.outerRadius * 0.1);
+      assert.ok(['star', 'young-star', 'dust'].includes(atZero.kind));
+      assert.ok(atZero.radius >= 0.12 && atZero.radius <= 0.68,
+        `galaxy point radius ${atZero.radius} is not tightly bounded`);
+      assert.ok(atZero.radius < appearance.outerRadius * 0.1);
       assert.ok(atZero.opacity > 0 && atZero.opacity <= 1);
       if (Math.hypot(later.x - atZero.x, later.y - atZero.y) > 1e-5
         || Math.abs(later.opacity - atZero.opacity) > 1e-5) movingParticles += 1;

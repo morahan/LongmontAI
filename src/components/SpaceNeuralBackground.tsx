@@ -493,130 +493,56 @@ const drawGalaxy = (
     ctx.translate(x, y);
     ctx.rotate(animation.rotation);
 
-    // A flattened, formation-colored halo establishes the disc without expanding its bounds.
-    const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, appearance.outerRadius);
-    halo.addColorStop(0, `rgba(245, 226, 198, ${opacity * (appearance.formation === 'elliptical' ? 0.55 : 0.38)})`);
-    halo.addColorStop(0.42, `rgba(126, 177, 221, ${opacity * 0.18})`);
-    halo.addColorStop(1, 'rgba(77, 119, 180, 0)');
-    ctx.save();
-    ctx.scale(1, appearance.flattening);
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(0, 0, appearance.outerRadius, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.lineCap = 'round';
-    ctx.lineWidth = Math.max(0.24, appearance.outerRadius * 0.042);
-    if (appearance.armCount > 0) {
-        for (let arm = 0; arm < appearance.armCount; arm += 1) {
-            ctx.strokeStyle = `rgba(151, 195, 229, ${opacity * 0.21})`;
-            ctx.beginPath();
-            for (let step = 0; step <= 16; step += 1) {
-                const radialProgress = step / 16;
-                const radius = appearance.coreRadius
-                    + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.9;
-                const angle = arm * TAU / appearance.armCount
-                    + radialProgress * TAU * 1.35 + animation.dustDrift;
-                const armX = Math.cos(angle) * radius;
-                const armY = Math.sin(angle) * radius * appearance.flattening;
-                if (step === 0) ctx.moveTo(armX, armY);
-                else ctx.lineTo(armX, armY);
-            }
-            ctx.stroke();
-        }
-    }
-    if (appearance.formation === 'barred-spiral') {
-        ctx.strokeStyle = `rgba(255, 218, 166, ${opacity * 0.48})`;
-        ctx.lineWidth = Math.max(0.35, appearance.coreRadius * 0.7);
-        ctx.beginPath();
-        ctx.moveTo(-appearance.barLength, 0);
-        ctx.lineTo(appearance.barLength, 0);
-        ctx.stroke();
-    } else if (appearance.formation === 'elliptical') {
-        for (let shell = 3; shell >= 1; shell -= 1) {
-            ctx.fillStyle = `rgba(239, 220, 190, ${opacity * (0.025 + shell * 0.022)})`;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, appearance.outerRadius * shell / 3,
-                appearance.outerRadius * appearance.flattening * shell / 3, 0, 0, TAU);
-            ctx.fill();
-        }
-    } else if (appearance.formation === 'irregular') {
-        for (let knot = 0; knot < 4; knot += 1) {
-            const knotAngle = surfaceValue(traveler.seed, projection.cycle + knot * 5) * TAU;
-            const knotDistance = appearance.outerRadius * (0.16 + knot * 0.1);
-            ctx.fillStyle = `rgba(${knot & 1 ? '117, 181, 219' : '190, 132, 184'}, ${opacity * 0.1})`;
-            ctx.beginPath();
-            ctx.arc(Math.cos(knotAngle) * knotDistance, Math.sin(knotAngle) * knotDistance,
-                appearance.outerRadius * (0.13 + knot * 0.012), 0, TAU);
-            ctx.fill();
-        }
-    }
-
+    // Formation identity comes entirely from seeded point positions, colors, and density.
     for (let star = 0; star < appearance.internalStarCount; star += 1) {
         const particle = getGalaxyParticleState(
             traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
         );
-        const color = particle.kind === 'dust' ? '69, 47, 46'
-            : particle.kind === 'young-star' ? '151, 211, 255'
-                : particle.kind === 'gas-knot' ? '218, 143, 208' : '238, 242, 247';
+        const color = particle.kind === 'dust' ? '111, 86, 83'
+            : particle.kind === 'young-star' ? '151, 211, 255' : '238, 242, 247';
         ctx.fillStyle = `rgba(${color}, ${opacity * particle.opacity})`;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
         ctx.fill();
     }
 
-    if (appearance.formation !== 'irregular') {
-        const coreOpacity = opacity * animation.corePulse;
-        const core = ctx.createRadialGradient(0, 0, 0, 0, 0, appearance.coreRadius * 1.8);
-        core.addColorStop(0, `rgba(255, 238, 204, ${coreOpacity})`);
-        core.addColorStop(0.48, `rgba(229, 184, 126, ${coreOpacity * 0.52})`);
-        core.addColorStop(1, 'rgba(185, 136, 95, 0)');
-        ctx.fillStyle = core;
+    if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
+        ctx.fillStyle = `rgba(2, 3, 7, ${Math.min(1, opacity * 0.9)})`;
         ctx.beginPath();
-        ctx.arc(0, 0, appearance.coreRadius * 1.8, 0, TAU);
+        ctx.arc(0, 0, Math.min(0.72, appearance.coreRadius * 0.2), 0, TAU);
         ctx.fill();
-        if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
-            ctx.fillStyle = `rgba(3, 4, 9, ${Math.min(1, opacity * 0.85)})`;
-            ctx.beginPath();
-            ctx.arc(0, 0, appearance.coreRadius * 0.36, 0, TAU);
-            ctx.fill();
-        }
     }
 
-    // A few seeded miniature systems orbit with the galaxy. Their planets are drawn directly
-    // around each moving host; deliberately no orbital guide paths are rendered.
+    // Miniature systems use only filled points. Planets are ordered around their moving host.
     const embeddedSystemOpacity = opacity * getEmbeddedGalaxySystemOpacity(appearance.outerRadius);
-    createEmbeddedGalaxySystems(traveler, projection.cycle, appearance).forEach((system) => {
-        if (embeddedSystemOpacity <= 0) return;
-        const state = getEmbeddedGalaxySystemState(system, simulationSeconds);
-        ctx.save();
+    if (embeddedSystemOpacity > 0) {
+        const systems = createEmbeddedGalaxySystems(traveler, projection.cycle, appearance);
         ctx.globalAlpha = embeddedSystemOpacity;
-        const drawEmbeddedPlanet = (planet: typeof state.planets[number]) => {
-            ctx.fillStyle = planet.color;
+        for (let systemIndex = 0; systemIndex < systems.length; systemIndex += 1) {
+            const system = systems[systemIndex];
+            const state = getEmbeddedGalaxySystemState(system, simulationSeconds);
+            for (let planetIndex = 0; planetIndex < state.planets.length; planetIndex += 1) {
+                const planet = state.planets[planetIndex];
+                if (planet.z >= 0) continue;
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+                ctx.fill();
+            }
+            ctx.fillStyle = system.hostColor;
             ctx.beginPath();
-            ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+            ctx.arc(state.host.x, state.host.y, system.hostRadius, 0, TAU);
             ctx.fill();
-        };
-        state.planets.filter(({ z }) => z < 0).forEach(drawEmbeddedPlanet);
-        const hostGlow = ctx.createRadialGradient(
-            state.host.x, state.host.y, 0,
-            state.host.x, state.host.y, system.hostRadius * 3.2,
-        );
-        hostGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        hostGlow.addColorStop(0.3, 'rgba(213, 235, 255, 0.72)');
-        hostGlow.addColorStop(1, 'rgba(160, 210, 246, 0)');
-        ctx.fillStyle = hostGlow;
-        ctx.beginPath();
-        ctx.arc(state.host.x, state.host.y, system.hostRadius * 3.2, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = system.hostColor;
-        ctx.beginPath();
-        ctx.arc(state.host.x, state.host.y, system.hostRadius, 0, TAU);
-        ctx.fill();
-        state.planets.filter(({ z }) => z >= 0).forEach(drawEmbeddedPlanet);
-        ctx.restore();
-    });
+            for (let planetIndex = 0; planetIndex < state.planets.length; planetIndex += 1) {
+                const planet = state.planets[planetIndex];
+                if (planet.z < 0) continue;
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+                ctx.fill();
+            }
+        }
+    }
     ctx.restore();
 };
 

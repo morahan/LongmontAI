@@ -238,7 +238,7 @@ export interface UfoAppearance {
 
 export type TravelerVariant = 'star' | 'ufo' | 'comet' | 'galaxy';
 export type GalaxyFormation = typeof GALAXY_FORMATIONS[number];
-export type GalaxyMatterKind = 'star' | 'young-star' | 'dust' | 'gas-knot';
+export type GalaxyMatterKind = 'star' | 'young-star' | 'dust';
 export type CometTrailParticleKind = 'asteroid' | 'stardust';
 
 export interface CometTrailParticle {
@@ -1789,7 +1789,7 @@ export const getGalaxyParticleState = (
         radial = Math.min(0.82, Math.hypot(rawX, rawY));
         angle = Math.atan2(rawY, rawX)
             + Math.sin(elapsed * 0.11 + clumpAngle) * 0.025;
-        kind = particleIndex % 5 === 0 ? 'gas-knot'
+        kind = particleIndex % 9 === 0 ? 'dust'
             : particleIndex % 4 === 0 ? 'young-star' : 'star';
     }
 
@@ -1798,8 +1798,11 @@ export const getGalaxyParticleState = (
     return {
         x: Math.cos(angle) * normalizedRadius * appearance.outerRadius,
         y: Math.sin(angle) * normalizedRadius * appearance.outerRadius * appearance.flattening,
-        radius: Math.max(0.16, appearance.outerRadius * (kind === 'gas-knot' ? 0.055 : 0.028)),
-        opacity: (kind === 'dust' ? 0.28 : kind === 'gas-knot' ? 0.5 : 0.58) * pulse,
+        radius: Math.min(0.68, Math.max(
+            0.12,
+            appearance.outerRadius * (kind === 'dust' ? 0.009 : 0.011),
+        )),
+        opacity: (kind === 'dust' ? 0.32 : 0.58) * pulse,
         kind,
     };
 };
