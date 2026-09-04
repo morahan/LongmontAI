@@ -46,8 +46,6 @@ import {
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
   STAR_FIELD_SLOT_COUNT,
-  STAR_TEXT_BURST_SECONDS,
-  STAR_TEXT_FIRST_GLYPH_SECONDS,
   SYSTEM_STAR_RADIUS,
   LARGE_TRAVELER_RED_CHANCE,
   SMALL_TRAVELER_RED_CHANCE,
@@ -72,7 +70,7 @@ import {
   createPlanetSystem,
   createSeededRandom,
   createSpaceScene,
-  createStarTextBurstOrigins,
+  createStarTextAmbientOrigins,
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
   getConstellationGlyphAnchorCounts,
@@ -127,7 +125,7 @@ import {
   isSystemInViewport,
   isSystemOverlappingViewport,
   projectTraveler,
-  remapAmbientStarsToFirstGlyphSlots,
+  remapAmbientStarsToTextSlots,
   scaleConstellationGeometry,
   selectConstellationPhrase,
   selectEasterEggPhrase,
@@ -235,7 +233,7 @@ test('ambient remains 70 while variable Star Text retains 35 ambient stars', () 
   closeTo(getDriftedStarVelocity({ ...bounce, x: 0, driftAngle: Math.PI }, 0, 1200, 600).x, 1.2);
 });
 
-test('production ambient slots transfer into Easter first-glyph slots without hidden starts or duplicates', () => {
+test('production ambient stars transfer into deterministic origins distributed across every glyph', () => {
   const seed = 0x51a7;
   const elapsed = 180;
   const width = 1200;
@@ -243,22 +241,9 @@ test('production ambient slots transfer into Easter first-glyph slots without hi
   const positions = getStarFieldPositions(seed, elapsed, width, height);
   const styles = getStarFieldStyles(seed, elapsed);
   const geometry = createConstellationGeometryForPhrase(width, height, 'Attention', seed, 1);
-  const firstGlyphCount = geometry.glyphs[0].indices.length;
-  const remapped = remapAmbientStarsToFirstGlyphSlots(
-    positions, styles, firstGlyphCount,
-  );
-  assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT);
+  const remapped = remapAmbientStarsToTextSlots(positions, styles);
+  assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT);
   assert.ok(remapped.sourceIndices.every((index) => index >= MAX_STAR_TEXT_ANCHOR_COUNT));
-
-  const transferredCount = Math.min(firstGlyphCount, AMBIENT_STAR_COUNT);
-  for (let index = 0; index < transferredCount; index += 1) {
-    const sourceIndex = remapped.sourceIndices[index];
-    assert.deepEqual(remapped.positions[index], positions[sourceIndex]);
-    assert.deepEqual(remapped.styles[index], styles[sourceIndex]);
-    assert.equal(remapped.styles[sourceIndex].opacity, 0);
-  }
-  assert.ok(remapped.styles.slice(transferredCount, firstGlyphCount)
-    .every(({ opacity }) => opacity === 0));
 
   const visibleFrame = (framePositions, frameStyles) => frameStyles
     .map((style, index) => ({ style, point: framePositions[index] }))
@@ -271,24 +256,32 @@ test('production ambient slots transfer into Easter first-glyph slots without hi
     'slot transfer changed the rendered trigger frame',
   );
 
+  const targetCount = geometry.points.length;
   const targetPositions = positions.map((point, index) =>
     ({ ...(geometry.points[index] ?? point) }));
-  const targetStyles = styles.map((style, index) => index < geometry.points.length
-    ? createEasterEggTargetStyles(seed, 0, geometry.points.length)[index]
+  const targetStyles = styles.map((style, index) => index < targetCount
+    ? createEasterEggTargetStyles(seed, 0, targetCount)[index]
     : style);
-  const options = { firstGlyphCount, targetCount: geometry.points.length };
-  const firstStage = getEasterEggStarFieldPositions(
-    remapped.positions, targetPositions, positions, 2, [], undefined, options,
+  const options = { firstGlyphCount: geometry.glyphs[0].indices.length, targetCount };
+  const atStart = getEasterEggStarFieldPositions(
+    remapped.positions, targetPositions, positions, 0, [], undefined, options,
   );
-  const firstStageStyles = getEasterEggStarFieldStyles(
-    remapped.styles, targetStyles, styles, 2, options,
+  const atStartStyles = getEasterEggStarFieldStyles(
+    remapped.styles, targetStyles, styles, 0, options,
   );
-  assert.ok(firstStageStyles.slice(0, firstGlyphCount).every(isStarRenderable));
-  assert.ok(firstStageStyles.slice(firstGlyphCount, geometry.points.length)
-    .every(({ opacity }) => opacity === 0));
-  assert.ok(firstStage.slice(0, firstGlyphCount).some((point, index) =>
-    Math.hypot(point.x - remapped.positions[index].x,
-      point.y - remapped.positions[index].y) > 1));
+  assert.deepEqual(
+    visibleFrame(atStart, atStartStyles),
+    visibleFrame(positions, styles),
+    'all-glyph distribution changed the trigger boundary frame',
+  );
+  const ambientPositionKeys = new Set(positions.slice(MAX_STAR_TEXT_ANCHOR_COUNT)
+    .map(({ x, y }) => `${x},${y}`));
+  assert.ok(atStart.slice(0, targetCount)
+    .every(({ x, y }) => ambientPositionKeys.has(`${x},${y}`)));
+  geometry.glyphs.forEach((glyph) => {
+    assert.ok(glyph.indices.some((index) => isStarRenderable(atStartStyles[index])),
+      `${glyph.character} received no existing ambient star`);
+  });
 });
 
 test('twinkles are independent random events with 40-60% minima in every <=120s cycle', () => {
@@ -375,14 +368,16 @@ test('Easter eggs cycle deterministically through every hidden phrase and never 
   }
 });
 
-test('Easter-egg lifecycle has explicit first-glyph/burst timing inside exact 10s in, hold, and fade', () => {
-  assert.equal(STAR_TEXT_FIRST_GLYPH_SECONDS, 4);
-  assert.equal(STAR_TEXT_BURST_SECONDS, 6);
-  assert.deepEqual(getStarTextIntroProgress(0), { stage: 'first-glyph', firstGlyph: 0, burst: 0 });
-  assert.equal(getStarTextIntroProgress(3.999).stage, 'first-glyph');
-  assert.deepEqual(getStarTextIntroProgress(4), { stage: 'burst', firstGlyph: 1, burst: 0 });
-  closeTo(getStarTextIntroProgress(7).burst, 0.5);
-  assert.deepEqual(getStarTextIntroProgress(10), { stage: 'complete', firstGlyph: 1, burst: 1 });
+test('Easter-egg lifecycle gives every glyph one shared exact 10s morph, hold, and fade', () => {
+  assert.deepEqual(getStarTextIntroProgress(0), {
+    stage: 'morph-in', progress: 0, firstGlyph: 0, burst: 0,
+  });
+  assert.equal(getStarTextIntroProgress(3.999).stage, 'morph-in');
+  closeTo(getStarTextIntroProgress(5).progress, 0.5);
+  assert.equal(getStarTextIntroProgress(5).firstGlyph, getStarTextIntroProgress(5).burst);
+  assert.deepEqual(getStarTextIntroProgress(10), {
+    stage: 'complete', progress: 1, firstGlyph: 1, burst: 1,
+  });
   assert.equal(getEasterEggPhase(0).name, 'morph-in');
   closeTo(getEasterEggPhase(5).progress, 0.5);
   assert.equal(getEasterEggPhase(9.999).name, 'morph-in');
@@ -398,6 +393,46 @@ test('Easter-egg lifecycle has explicit first-glyph/burst timing inside exact 10
   closeTo(getEasterEggStrength(0.37, 0.22, 20), 1);
   closeTo(getEasterEggStrength(0.37, 0.22, 25), 0.61);
   closeTo(getEasterEggStrength(0.37, 0.22, 30), 0.22);
+});
+
+test('scheduled and Easter intros share all-glyph progress and exact morph boundaries', () => {
+  const seed = 777;
+  const width = 1200;
+  const height = 600;
+  const geometry = createConstellationGeometry(width, height, seed, 1);
+  const targetCount = geometry.points.length;
+  const ambientPositions = getStarFieldPositions(seed, 120, width, height);
+  const ambientStyles = getStarFieldStyles(seed, 120);
+  const remapped = remapAmbientStarsToTextSlots(ambientPositions, ambientStyles);
+  const targetPositions = remapped.positions.map((point, index) =>
+    ({ ...(geometry.points[index] ?? point) }));
+  const scheduledHoldStyles = getStarFieldStyles(seed, 610);
+  const targetStyles = remapped.styles.map((style, index) =>
+    ({ ...(scheduledHoldStyles[index] ?? style) }));
+  const options = { targetCount, firstGlyphCount: geometry.glyphs[0].indices.length };
+
+  for (const age of [0, 0.001, 2.5, 5, 7.5, 9.999, 10]) {
+    const scheduledStyles = getStarFieldStyles(seed, 600 + age);
+    const easterStyles = getEasterEggStarFieldStyles(
+      remapped.styles, targetStyles, ambientStyles, age, options,
+    );
+    const expected = age < 10 ? getConstellationPhase(600 + age).progress : 1;
+    geometry.glyphs.forEach((glyph) => glyph.indices.forEach((index) => {
+      closeTo(scheduledStyles[index].strength, expected);
+      closeTo(easterStyles[index].strength, expected);
+    }));
+  }
+
+  assert.deepEqual(
+    getEasterEggStarFieldPositions(
+      remapped.positions, targetPositions, ambientPositions, 10, [], undefined, options,
+    ).slice(0, targetCount),
+    geometry.points,
+  );
+  assert.deepEqual(
+    getStarFieldPositions(seed, 610, width, height).slice(0, targetCount),
+    geometry.points,
+  );
 });
 
 test('Easter-egg endpoints and active-transition restarts preserve exact rendered frames', () => {
@@ -457,17 +492,23 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   );
 });
 
-test('Easter choreography shares first-glyph origins, exact burst geometry, and fade-only outro', () => {
+test('Easter choreography moves every glyph concurrently and keeps a fade-only outro', () => {
   const geometry = createConstellationGeometryForPhrase(1200, 600, 'Attention', 0x51a7, 2);
   const targetCount = geometry.points.length;
   const firstGlyphCount = geometry.glyphs[0].indices.length;
   const total = targetCount + 5;
-  const start = Array.from({ length: total }, (_, index) => ({ x: index * 1.7, y: index * 0.9 }));
+  const ambient = Array.from({ length: AMBIENT_STAR_COUNT }, (_, index) =>
+    ({ x: 20 + index * 13, y: 30 + (index * 29) % 500 }));
+  const origins = createStarTextAmbientOrigins(ambient, targetCount);
+  const start = [...origins, ...Array.from({ length: 5 }, (_, index) => ({ x: index, y: index }))];
   const end = Array.from({ length: total }, (_, index) => ({ x: 1000 - index, y: 500 - index }));
   const targets = [...geometry.points, ...start.slice(targetCount)];
   const style = (opacity) => ({ alpha: opacity, twinkle: 1, strength: opacity,
     radius: 1.2, opacity });
-  const startStyles = Array.from({ length: total }, () => style(0.5));
+  const startStyles = [
+    ...Array.from({ length: targetCount }, () => style(0)),
+    ...Array.from({ length: total - targetCount }, () => style(0.5)),
+  ];
   const targetStyles = [
     ...Array.from({ length: targetCount }, () => style(1)),
     ...Array.from({ length: total - targetCount }, () => style(0.5)),
@@ -478,12 +519,18 @@ test('Easter choreography shares first-glyph origins, exact burst geometry, and 
   const options = { firstGlyphCount, targetCount,
     endpointVisible: endStyles.map(isStarRenderable) };
 
-  const firstStage = getEasterEggStarFieldPositions(start, targets, end, 3, [], undefined, options);
-  assert.ok(firstStage.slice(firstGlyphCount, targetCount)
-    .every((point, index) => point === start[firstGlyphCount + index]));
-  const burstStart = getEasterEggStarFieldPositions(start, targets, end, 4, [], undefined, options);
-  const origins = createStarTextBurstOrigins(targets, firstGlyphCount, targetCount);
-  assert.deepEqual(burstStart.slice(firstGlyphCount, targetCount), origins.slice(firstGlyphCount));
+  const early = getEasterEggStarFieldPositions(start, targets, end, 2, [], undefined, options);
+  const earlyStyles = getEasterEggStarFieldStyles(
+    startStyles, targetStyles, endStyles, 2, options,
+  );
+  const sharedProgress = getEasterEggPhase(2).progress;
+  geometry.glyphs.forEach((glyph) => {
+    assert.ok(glyph.indices.every((index) => earlyStyles[index].strength > 0));
+    assert.ok(glyph.indices.some((index) => Math.hypot(
+      early[index].x - start[index].x, early[index].y - start[index].y,
+    ) > 1));
+    glyph.indices.forEach((index) => closeTo(earlyStyles[index].strength, sharedProgress));
+  });
   assert.deepEqual(
     getEasterEggStarFieldPositions(start, targets, end, 10, [], undefined, options),
     targets,
@@ -542,9 +589,7 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
     let startPositions = rawStartPositions;
     let startStyles = rawStartStyles;
     if (getConstellationPhase(triggerElapsed).name === 'ambient') {
-      const remapped = remapAmbientStarsToFirstGlyphSlots(
-        rawStartPositions, rawStartStyles, geometry.glyphs[0].indices.length,
-      );
+      const remapped = remapAmbientStarsToTextSlots(rawStartPositions, rawStartStyles);
       startPositions = remapped.positions;
       startStyles = remapped.styles;
       remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
@@ -944,13 +989,22 @@ test('constellation-only stars fade with strength while retained background stay
   assert.equal(ambient.length, STAR_FIELD_SLOT_COUNT);
   assert.equal(after.length, STAR_FIELD_SLOT_COUNT);
   const geometry = createConstellationGeometry(1200, 600, seed, 1);
-  const firstGlyphCount = geometry.glyphs[0].indices.length;
-  assert.ok(morphStart.slice(0, firstGlyphCount).every(({ opacity }) => opacity > 0));
-  assert.ok(morphStart.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity === 0));
-  const firstComplete = getStarFieldStyles(seed, 604);
-  assert.ok(firstComplete.slice(0, firstGlyphCount).every(({ strength }) => strength === 1));
-  assert.ok(firstComplete.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity === 0));
-  assert.ok(morphMiddle.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity > 0));
+  const boundaryProgresses = geometry.glyphs.map((glyph) =>
+    new Set(glyph.indices.map((index) => morphStart[index].strength)));
+  assert.ok(boundaryProgresses.every((progresses) =>
+    progresses.size === 1 && progresses.has(0)));
+  assert.ok(geometry.glyphs.every((glyph) =>
+    glyph.indices.some((index) => morphStart[index].opacity > 0)),
+  'existing ambient stars were not distributed across every glyph');
+  const early = getStarFieldStyles(seed, 604);
+  const expectedEarlyProgress = getConstellationPhase(604).progress;
+  geometry.glyphs.forEach((glyph) => {
+    assert.ok(glyph.indices.every((index) => early[index].opacity > 0));
+    glyph.indices.forEach((index) => closeTo(early[index].strength, expectedEarlyProgress));
+  });
+  const expectedMiddleProgress = getConstellationPhase(605).progress;
+  assert.ok(morphMiddle.slice(0, anchorCount)
+    .every(({ opacity, strength }) => opacity > 0 && Math.abs(strength - expectedMiddleProgress) < 1e-8));
   assert.ok(hold.slice(0, anchorCount).every(({ strength }) => strength === 1));
   assert.ok(outStart.slice(0, anchorCount).every((style, index) =>
     style.opacity >= outMiddle[index].opacity));
@@ -983,15 +1037,18 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   assert.equal(createConstellationGeometry(width, height, seed, 1).phrase,
     selectConstellationPhrase(seed, 1));
   const geometry = createConstellationGeometry(width, height, seed, 1);
-  const firstCount = geometry.glyphs[0].indices.length;
-  const origins = createStarTextBurstOrigins(targets, firstCount);
-  const burstStart = getStarFieldPositions(seed, 604, width, height);
-  burstStart.slice(firstCount, targets.length).forEach((point, offset) =>
-    assert.deepEqual(point, origins[firstCount + offset]));
-  const burstMiddle = getStarFieldPositions(seed, 607, width, height);
-  assert.ok(burstMiddle.slice(firstCount, targets.length).some((point, offset) =>
-    Math.hypot(point.x - origins[firstCount + offset].x,
-      point.y - origins[firstCount + offset].y) > 1));
+  const ambientAtBoundary = createAmbientLayout(seed, 0).map((star) => {
+    const point = getDriftedStar(star, CONSTELLATION_INTERVAL_SECONDS);
+    return { x: point.x * width, y: point.y * height };
+  });
+  const origins = createStarTextAmbientOrigins(ambientAtBoundary, targets.length);
+  const morphStartAll = getStarFieldPositions(seed, 600, width, height);
+  assert.deepEqual(morphStartAll.slice(0, targets.length), origins);
+  for (const time of [600.001, 604, 607, 609.999]) {
+    const sample = getStarFieldPositions(seed, time, width, height);
+    geometry.glyphs.forEach((glyph) => assert.ok(glyph.indices.some((index) =>
+      Math.hypot(sample[index].x - origins[index].x, sample[index].y - origins[index].y) > 0)));
+  }
   const holdPositions = getStarFieldPositions(seed, 610, width, height);
   const lateHoldPositions = getStarFieldPositions(seed, 619.9, width, height);
   for (let index = 0; index < targets.length; index += 1) {
@@ -1001,14 +1058,11 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   const morphStart = getStarFieldPositions(seed, 600, width, height);
   const beforeMorph = getStarFieldPositions(seed, 599.999999, width, height);
   const afterMorph = getStarFieldPositions(seed, 630, width, height);
-  const firstGlyphCount = createConstellationGeometry(width, height, seed, 1)
-    .glyphs[0].indices.length;
-  for (let index = 0; index < firstGlyphCount; index += 1) {
-    assert.ok(Math.hypot(
-      morphStart[index].x - beforeMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].x,
-      morphStart[index].y - beforeMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].y,
-    ) < 0.001);
-  }
+  const beforePositionKeys = new Set(beforeMorph.slice(MAX_STAR_TEXT_ANCHOR_COUNT)
+    .map(({ x, y }) => `${x.toFixed(3)},${y.toFixed(3)}`));
+  morphStart.slice(0, targets.length).forEach(({ x, y }) => {
+    assert.ok(beforePositionKeys.has(`${x.toFixed(3)},${y.toFixed(3)}`));
+  });
   for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
     const regenerated = getDriftedStar(createAmbientLayout(seed, 1)[index], 0);
     closeTo(afterMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].x, regenerated.x * width);
