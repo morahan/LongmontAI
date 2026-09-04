@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { chmod, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -69,6 +69,9 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   assert.match(browserRunner, /--browser chrome --headed/);
   assert.match(browserRunner, /--session "\$SESSION" run-code --filename scripts\/mobile-playwright-audit\.js/);
   assert.match(browserRunner, /--session "\$SESSION" close/);
+  for (const [, template] of browserRunner.matchAll(/mktemp "([^"]+)"/g)) {
+    assert.match(template, /X+$/, `mktemp template must end in X for BSD and GNU portability: ${template}`);
+  }
   assert.match(audit, /__longmont_mobile_audit_routes/);
   assert.doesNotMatch(audit, /process\.env\.MOBILE_AUDIT_ROUTES/);
   assert.match(audit, /mediaLayoutFailures/);
@@ -95,6 +98,7 @@ case " $* " in
       echo 'Browser chromium_headless_shell is not installed' >&2
       exit 1
     fi
+    if [[ "\${MOBILE_AUDIT_TEST_OPEN_DELAY:-0}" == 1 ]]; then sleep 0.2; fi
     ;;
   *" run-code "*)
     if [[ "\${MOBILE_AUDIT_TEST_FAIL:-0}" == 1 ]]; then exit 17; fi
@@ -145,6 +149,28 @@ esac
   assert.match(missingBrowser.stderr, /requires Playwright's bundled Chromium headless shell/);
   assert.match(missingBrowser.stderr, /install-browser chromium --only-shell/);
   assert.match((await commands()).at(-1), / close$/);
+
+  await writeFile(logPath, '');
+  const auditTmp = path.join(directory, 'audit-tmp');
+  await mkdir(auditTmp);
+  const runConcurrent = () => new Promise((resolve) => {
+    const child = spawn('bash', [path.join(root, 'scripts/run-mobile-browser-audit.sh')], {
+      cwd: directory,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...baseEnv, TMPDIR: auditTmp, MOBILE_AUDIT_TEST_OPEN_DELAY: '1' },
+    });
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('close', (status) => resolve({ status, stderr }));
+  });
+  const concurrent = await Promise.all([runConcurrent(), runConcurrent()]);
+  for (const result of concurrent) assert.equal(result.status, 0, result.stderr);
+  const configPaths = (await commands())
+    .filter((command) => command.includes(' open '))
+    .map((command) => command.match(/ --config (\S+)/)?.[1]);
+  assert.equal(new Set(configPaths).size, 2, 'concurrent audits must use distinct config files');
+  assert.deepEqual(await readdir(auditTmp), [], 'audit temporary files must be cleaned up');
 
   const invalidMode = run({ MOBILE_AUDIT_HEADED: 'sometimes' });
   assert.equal(invalidMode.status, 2);
