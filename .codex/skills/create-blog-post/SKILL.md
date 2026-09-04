@@ -49,7 +49,9 @@ node .codex/skills/create-blog-post/scripts/prepare-visual-briefing.mjs \
 ```
 
 2. Follow the LongmontAI reference for draft paths, article registration, assets, deck registration, and scheduled-release isolation. Keep the release draft private until the requested publish workflow has passed its review.
-3. Run the applicable checks after implementation:
+3. During drafting and again before promotion, review `/model-watch`, `/leaderboard`, `/timeline`, and the hidden header/Star Text. Run `npm run model-watch:update`; for each surface record an individual updated or no-change-needed result, its reason, and primary-source evidence. Check `latestBriefingModelIds`; compare leaderboard results only when benchmarks are comparable and retain their notes; identify timeline provider auto-generation versus an explicit event; rotate Star Text alternatives and remove stale phrases.
+4. For each edition's recurring hidden-header/Star Text workflow, use a bounded read-only subagent to propose 10–25 timely words or short phrases grounded only in that edition's verified primary-source ledger. The parent/editor independently verifies every proposal against that ledger, then selects and stores 10–25; concrete model names (for example, DEEPSEEK V5) are included only when genuinely current and primary-source-supported, never as speculative examples.
+5. Run the applicable checks after implementation:
 
 ```bash
 npm run content:check-assets
@@ -57,8 +59,8 @@ npm run build
 npm run test:mobile
 ```
 
-4. Start the local site when needed and use Browser Harness to inspect the actual article and every slideshow slide at 360 px, 390 px, and 430 px. Fix clipping, overflow, unreadable labels, missing media, and broken source links before calling the draft ready.
-5. Run `npm run security:review` before any publication commit. Treat scanner errors or unavailable required scanners as a failure.
+6. Start the local site when needed and use Browser Harness to inspect the actual article and every slideshow slide at 360 px, 390 px, and 430 px. Fix clipping, overflow, unreadable labels, missing media, and broken source links before calling the draft ready.
+7. Run `npm run security:review` before any publication commit. Treat scanner errors or unavailable required scanners as a failure.
 
 ## Completion Boundary
 

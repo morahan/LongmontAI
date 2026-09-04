@@ -1,3 +1,9 @@
+import {
+    STAR_TEXT_ALTERNATIVES,
+    STAR_TEXT_BRAND_PHRASE,
+    type StarTextPhrase,
+} from '../data/starText.ts';
+
 export const AMBIENT_STAR_COUNT = 70;
 // Kept as the historical density reference for consumers that use the exported constant.
 // Actual Star Text anchor totals are phrase/event dependent.
@@ -727,14 +733,9 @@ export const getStarRgb = (strength: number): readonly [number, number, number] 
 };
 
 export const CONSTELLATION_PHRASES = [
-    'LONGMONT AI',
-    '1023.Digital',
-    'Nerual Networks',
-    'Attention',
-    'Transformer',
-    'Context',
-    'Harness',
-] as const;
+    STAR_TEXT_BRAND_PHRASE,
+    ...STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase),
+] as const satisfies readonly StarTextPhrase[];
 export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
 export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(1) as readonly ConstellationPhrase[];
 export const MAX_STAR_TEXT_ANCHOR_COUNT = Math.max(...CONSTELLATION_PHRASES.map((phrase) =>
@@ -772,7 +773,7 @@ export const shouldTriggerEasterEgg = (
     prefersReducedMotion = false,
 ) => clickDetail === 3 && isInsideCanvas && !isInteractiveTarget && !prefersReducedMotion;
 
-/** Seed chooses the first hidden phrase; subsequent triggers cycle all six without repeats. */
+/** Seed chooses the first hidden phrase; subsequent triggers cycle every alternative without repeats. */
 export const selectEasterEggPhrase = (sceneSeed: number, triggerIndex: number): ConstellationPhrase => {
     const firstIndex = hashUint(sceneSeed, 0, 313) % EASTER_EGG_PHRASES.length;
     return EASTER_EGG_PHRASES[
@@ -780,33 +781,36 @@ export const selectEasterEggPhrase = (sceneSeed: number, triggerIndex: number): 
     ];
 };
 
-const CONSTELLATION_BUCKET_COUNT = 12;
+/** Half the slots are the stable brand; the other half gives every live alternative one slot. */
+export const CONSTELLATION_BUCKET_COUNT = STAR_TEXT_ALTERNATIVES.length * 2;
 
-/** Six of twelve equiprobable buckets are the brand; every alternative owns one bucket. */
 export const getConstellationPhraseForBucket = (bucket: number): ConstellationPhrase => {
     const normalized = positiveModulo(Math.trunc(bucket), CONSTELLATION_BUCKET_COUNT);
-    return normalized < 6 ? CONSTELLATION_PHRASES[0] : CONSTELLATION_PHRASES[normalized - 5];
+    return normalized < STAR_TEXT_ALTERNATIVES.length
+        ? CONSTELLATION_PHRASES[0]
+        : CONSTELLATION_PHRASES[1 + normalized - STAR_TEXT_ALTERNATIVES.length];
 };
 
-/** Phrase choice is stable for an event and changes only with scene seed/event identity. */
+/** Phrase choice is stable for an event: brand is exactly 50%; alternatives are evenly divided. */
 export const selectConstellationPhrase = (sceneSeed: number, event: number): ConstellationPhrase => {
     const stableEvent = Math.max(0, Math.trunc(event));
     // The uint32 midpoint is an exact half split, without modulo bias.
     if (hashUint(sceneSeed, stableEvent, 211) < UINT32_RANGE / 2) return CONSTELLATION_PHRASES[0];
-    // Rejection sampling gives all six alternatives an exactly equal uint32 domain.
-    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % 6);
+    const alternativeCount = STAR_TEXT_ALTERNATIVES.length;
+    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % alternativeCount);
     let channel = 212;
     let alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
     while (alternativeRoll >= acceptedRange) {
         channel += 1;
         alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
     }
-    return CONSTELLATION_PHRASES[1 + alternativeRoll % 6];
+    return CONSTELLATION_PHRASES[1 + alternativeRoll % alternativeCount];
 };
 
 // A shared 5x7 pixel alphabet provides consistent proportions and much fuller letterforms.
 const GLYPHS: Record<string, string[]> = {
     A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+    B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
     C: ['01111', '10000', '10000', '10000', '10000', '10000', '01111'],
     D: ['11110', '10001', '10001', '10001', '10001', '10001', '11110'],
     E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
@@ -815,21 +819,29 @@ const GLYPHS: Record<string, string[]> = {
     H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
     I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
     K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
-    L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+    L: ['11000', '11000', '11000', '11000', '11000', '11111', '11111'],
     M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
     N: ['10001', '11001', '11001', '10101', '10011', '10011', '10001'],
     O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+    P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
+    Q: ['01110', '10001', '10001', '10001', '10101', '10010', '01101'],
     R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
-    S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
-    T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+    S: ['01111', '11111', '11000', '11110', '01111', '00011', '11110'],
+    T: ['11111', '11111', '00100', '00100', '00100', '00100', '00100'],
     U: ['10001', '10001', '10001', '10001', '10001', '10001', '01110'],
+    V: ['10001', '10001', '10001', '10001', '10001', '01010', '00100'],
     W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
     X: ['10001', '10001', '01010', '00100', '01010', '10001', '10001'],
+    Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
     '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
     '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
     '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
     '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
-    '.': ['00000', '00000', '00000', '00000', '00000', '00110', '00110'],
+    '4': ['10010', '10010', '10010', '11111', '00010', '00010', '00010'],
+    '5': ['11111', '10000', '10000', '11110', '00001', '00001', '11110'],
+    '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
+    '.': ['00000', '00000', '00000', '00000', '01110', '01110', '01110'],
+    '-': ['00000', '00000', '11111', '11111', '11111', '00000', '00000'],
 };
 
 const glyphAnchorCount = (

@@ -56,16 +56,33 @@ Use this guide for every Longmont AI meetup edition.
   `npm run test:mobile`; that explicit mode may use headed Chrome. Headless and
   headed runs enforce the same audit failures and retain the same screenshots.
 
-## Model Watch cadence
+## Living-surface review cadence
 
 - GitHub Actions checks the fixed official sources every Monday and opens or
   refreshes a reviewable Model Watch pull request. It does not publish an
   unreviewed release claim. A Meta or Moonshot source failure fails the check
   rather than producing a stale success.
-- Every blog-editing session runs `npm run model-watch:update` before the
-  edition is promoted. Add a curated entry only when the primary announcement
-  confirms a named model, date, and availability; label vendor benchmark claims
-  as vendor-reported.
+- Before promotion, and while drafting when the evidence changes, review all
+  four living surfaces: `/model-watch`, `/leaderboard`, `/timeline`, and the
+  hidden header/Star Text. Run `npm run model-watch:update`, review its official
+  signals. For each surface, record an individual updated or no-change-needed
+  result, its reason, and primary-source evidence in the edition review.
+- Add a Model Watch entry only when a primary announcement confirms a named
+  model, date, and availability. Check `latestBriefingModelIds` rather than
+  assuming the latest briefing list is current. Label vendor benchmark claims
+  as vendor-reported; compare leaderboard results only when the harnesses are
+  comparable and preserve their notes.
+- Determine whether timeline coverage is provider auto-generation from Model
+  Watch or needs an explicit event; do not duplicate either. Rotate Star Text
+  alternatives from the current source ledger and remove stale phrases. For
+  each edition's recurring hidden-header/Star Text workflow, use a bounded
+  read-only subagent to propose 10–25 timely words or short phrases grounded
+  only in that edition's verified primary-source ledger. The parent/editor
+  independently verifies every proposal against that ledger, then selects and
+  stores 10–25; concrete model names (for example, DEEPSEEK V5) are included
+  only when genuinely current and primary-source-supported, never as
+  speculative examples. The hidden header/Star Text must be reviewed during
+  drafting and again before promotion.
 - The source configuration is shared by the scheduled updater and the live
   status endpoint in `scripts/model-watch-sources.mjs`. Add a provider there,
   rather than changing only the source-map UI.

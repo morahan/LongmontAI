@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import {
+  STAR_TEXT_ALTERNATIVES,
+  STAR_TEXT_BRAND_PHRASE,
+  STAR_TEXT_EDITION,
+  STAR_TEXT_EXCLUDED_CANDIDATES,
+} from '../../src/data/starText.ts';
 import {
   AMBIENT_STAR_COUNT,
   AMBIENT_STAR_RADIUS_RANGE,
@@ -8,6 +15,7 @@ import {
   EASTER_EGG_CLICK_DISTANCE_PX,
   EASTER_EGG_CLICK_INTERVAL_MS,
   CONSTELLATION_INTERVAL_SECONDS,
+  CONSTELLATION_BUCKET_COUNT,
   CONSTELLATION_PHRASES,
   CONSTELLATION_STAR_COUNT,
   CONSTELLATION_STAR_RGB,
@@ -74,6 +82,7 @@ import {
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
   getConstellationGlyphAnchorCounts,
+  getConstellationAnchorCount,
   getConstellationPhraseForBucket,
   getConstellationStrength,
   getCometAppearance,
@@ -240,7 +249,7 @@ test('production ambient stars transfer into deterministic origins distributed a
   const height = 600;
   const positions = getStarFieldPositions(seed, elapsed, width, height);
   const styles = getStarFieldStyles(seed, elapsed);
-  const geometry = createConstellationGeometryForPhrase(width, height, 'Attention', seed, 1);
+  const geometry = createConstellationGeometryForPhrase(width, height, EASTER_EGG_PHRASES[0], seed, 1);
   const remapped = remapAmbientStarsToTextSlots(positions, styles);
   assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT);
   assert.ok(remapped.sourceIndices.every((index) => index >= MAX_STAR_TEXT_ANCHOR_COUNT));
@@ -357,12 +366,14 @@ test('three separately observed nearby clicks work when native detail remains on
 test('Easter eggs cycle deterministically through every hidden phrase and never select LONGMONT AI', () => {
   assert.deepEqual(EASTER_EGG_PHRASES, CONSTELLATION_PHRASES.slice(1));
   for (const seed of [0, 1, 0x51a7, 0xffffffff]) {
-    const firstCycle = Array.from({ length: 6 }, (_, trigger) => selectEasterEggPhrase(seed, trigger));
-    assert.equal(new Set(firstCycle).size, 6);
+    const firstCycle = Array.from({ length: EASTER_EGG_PHRASES.length }, (_, trigger) =>
+      selectEasterEggPhrase(seed, trigger));
+    assert.equal(new Set(firstCycle).size, EASTER_EGG_PHRASES.length);
     assert.deepEqual([...firstCycle].sort(), [...EASTER_EGG_PHRASES].sort());
-    assert.ok(firstCycle.every((phrase) => phrase !== 'LONGMONT AI'));
+    assert.ok(firstCycle.every((phrase) => phrase !== STAR_TEXT_BRAND_PHRASE));
     assert.deepEqual(
-      Array.from({ length: 6 }, (_, trigger) => selectEasterEggPhrase(seed, trigger + 6)),
+      Array.from({ length: EASTER_EGG_PHRASES.length }, (_, trigger) =>
+        selectEasterEggPhrase(seed, trigger + EASTER_EGG_PHRASES.length)),
       firstCycle,
     );
   }
@@ -493,7 +504,7 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
 });
 
 test('Easter choreography moves every glyph concurrently and keeps a fade-only outro', () => {
-  const geometry = createConstellationGeometryForPhrase(1200, 600, 'Attention', 0x51a7, 2);
+  const geometry = createConstellationGeometryForPhrase(1200, 600, EASTER_EGG_PHRASES[0], 0x51a7, 2);
   const targetCount = geometry.points.length;
   const firstGlyphCount = geometry.glyphs[0].indices.length;
   const total = targetCount + 5;
@@ -570,7 +581,7 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
   const hidden = { alpha: 0, twinkle: 1, strength: 0, radius: 1, opacity: 0 };
   const createProductionTransition = (triggerElapsed) => {
     const geometry = createConstellationGeometryForPhrase(
-      width, height, 'Attention', seed, 1,
+      width, height, EASTER_EGG_PHRASES[0], seed, 1,
     );
     const rawStartPositions = getStarFieldPositions(seed, triggerElapsed, width, height);
     const rawStartStyles = getStarFieldStyles(seed, triggerElapsed);
@@ -801,23 +812,61 @@ test('Easter target styles retain every constellation anchor and scheduled selec
   }
 });
 
-test('constellation phrase buckets preserve spelling and exact 50/50 then equal-alternative semantics', () => {
-  assert.deepEqual(CONSTELLATION_PHRASES, [
-    'LONGMONT AI',
-    '1023.Digital',
-    'Nerual Networks',
-    'Attention',
-    'Transformer',
-    'Context',
-    'Harness',
+test('editorial Star Text registry is current, source-backed, unique, and excludes unsupported releases', () => {
+  const scheduledEdition = readFileSync(
+    new URL('../../src/articles/drafts/2026.09.02-host-then-cheap-stack.md', import.meta.url),
+    'utf8',
+  );
+  assert.deepEqual(STAR_TEXT_EDITION, {
+    id: 'edition-2026-09-02-host-then-cheap-stack',
+    window: { startsOn: '2026-08-20', endsOn: '2026-09-02' },
+    reviewedOn: '2026-09-02',
+  });
+  assert.ok(STAR_TEXT_ALTERNATIVES.length >= 10 && STAR_TEXT_ALTERNATIVES.length <= 25);
+  assert.deepEqual(CONSTELLATION_PHRASES, [STAR_TEXT_BRAND_PHRASE,
+    ...STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase)]);
+  const normalized = STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase.replace(/[^A-Z0-9]/g, ''));
+  assert.equal(new Set(normalized).size, normalized.length, 'normalized alternatives must be unique');
+  STAR_TEXT_ALTERNATIVES.forEach(({ phrase, topic, primarySourceUrl }) => {
+    assert.ok(phrase.length > 0 && topic.length > 0);
+    assert.match(primarySourceUrl, /^https:\/\//);
+    assert.ok(scheduledEdition.includes(primarySourceUrl), `${phrase} source is absent from the scheduled ledger`);
+  });
+  assert.deepEqual(STAR_TEXT_EXCLUDED_CANDIDATES.map(({ phrase }) => phrase), [
+    'DEEPSEEK V5', 'GPT-6', 'ASTRA', 'CLAUDE FABLE 5.1',
   ]);
-  const buckets = Array.from({ length: 12 }, (_, bucket) => getConstellationPhraseForBucket(bucket));
-  assert.equal(buckets.filter((phrase) => phrase === 'LONGMONT AI').length, 6);
-  CONSTELLATION_PHRASES.slice(1).forEach((phrase) => {
+  STAR_TEXT_EXCLUDED_CANDIDATES.forEach(({ phrase, reason }) => {
+    assert.ok(reason.length > 0);
+    assert.equal(CONSTELLATION_PHRASES.includes(phrase), false, `${phrase} must remain excluded`);
+  });
+});
+
+test('dynamic Star Text slots cover every configured phrase anchor maximum', () => {
+  const theoreticalMaximum = Math.max(...CONSTELLATION_PHRASES.map((phrase) =>
+    [...phrase].filter((character) => character !== ' ').length * MAX_GLYPH_STAR_COUNT));
+  assert.equal(MAX_STAR_TEXT_ANCHOR_COUNT, theoreticalMaximum);
+  assert.equal(STAR_FIELD_SLOT_COUNT, MAX_STAR_TEXT_ANCHOR_COUNT + AMBIENT_STAR_COUNT);
+  for (const phrase of CONSTELLATION_PHRASES) {
+    for (const sceneSeed of [0, 0x51a7, 0xffffffff]) {
+      for (const event of [0, 1, 18, 97, 1024]) {
+        assert.ok(getConstellationAnchorCount(phrase, sceneSeed, event) <= MAX_STAR_TEXT_ANCHOR_COUNT,
+          `${phrase} exceeds the stable Star Text slot maximum`);
+      }
+    }
+  }
+});
+
+test('constellation phrase buckets preserve exact dynamic 50/50 and equal-alternative semantics', () => {
+  const buckets = Array.from({ length: CONSTELLATION_BUCKET_COUNT }, (_, bucket) =>
+    getConstellationPhraseForBucket(bucket));
+  assert.equal(CONSTELLATION_BUCKET_COUNT, STAR_TEXT_ALTERNATIVES.length * 2);
+  assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_BRAND_PHRASE).length,
+    STAR_TEXT_ALTERNATIVES.length);
+  EASTER_EGG_PHRASES.forEach((phrase) => {
     assert.equal(buckets.filter((candidate) => candidate === phrase).length, 1, phrase);
   });
-  assert.equal(getConstellationPhraseForBucket(12), 'LONGMONT AI');
-  assert.equal(getConstellationPhraseForBucket(-1), 'Harness');
+  assert.equal(getConstellationPhraseForBucket(CONSTELLATION_BUCKET_COUNT), STAR_TEXT_BRAND_PHRASE);
+  assert.equal(getConstellationPhraseForBucket(-1), EASTER_EGG_PHRASES.at(-1));
 });
 
 test('event selection is stable and every phrase is reachable from deterministic seed/event identity', () => {

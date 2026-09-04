@@ -19,7 +19,9 @@ The existing scheduled-edition API is a deliberately isolated, single-edition im
 
 1. Inspect every asset for private information and visual quality before copying it into a public path.
 2. Confirm every Markdown image, slideshow, video, PDF, and source link resolves.
-3. Run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`.
-4. Use Browser Harness to view the rendered article and slides at 360 px, 390 px, and 430 px. Check the first and last slide as well as each individual slide.
-5. Run `npm run security:review` before publication. A scanner error or unavailable scanner blocks publication.
-6. Stop at review-ready status unless the user separately requests the normal commit and push workflow.
+3. During drafting and again before promotion, review `/model-watch`, `/leaderboard`, `/timeline`, and the hidden header/Star Text. Run `npm run model-watch:update`; for each surface record an individual updated or no-change-needed result, its reason, and primary-source evidence. Verify `latestBriefingModelIds`; compare leaderboard results only when benchmarks are comparable and retain their notes; determine timeline provider auto-generation versus an explicit event; rotate Star Text alternatives and remove stale phrases.
+4. For each edition's recurring hidden-header/Star Text workflow, use a bounded read-only subagent to propose 10–25 timely words or short phrases grounded only in that edition's verified primary-source ledger. The parent/editor independently verifies every proposal against that ledger, then selects and stores 10–25; concrete model names (for example, DEEPSEEK V5) are included only when genuinely current and primary-source-supported, never as speculative examples.
+5. Run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`.
+6. Use Browser Harness to view the rendered article and slides at 360 px, 390 px, and 430 px. Check the first and last slide as well as each individual slide.
+7. Run `npm run security:review` before publication. A scanner error or unavailable scanner blocks publication.
+8. Stop at review-ready status unless the user separately requests the normal commit and push workflow.
