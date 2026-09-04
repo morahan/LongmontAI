@@ -74,6 +74,10 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   }
   assert.match(audit, /__longmont_mobile_audit_routes/);
   assert.doesNotMatch(audit, /process\.env\.MOBILE_AUDIT_ROUTES/);
+  assert.match(audit, /waitUntil: 'domcontentloaded'/);
+  assert.doesNotMatch(audit, /waitUntil: 'networkidle'/);
+  assert.match(audit, /document\.readyState === 'complete'/);
+  assert.match(audit, /response\.ok\(\)/);
   assert.match(audit, /mediaLayoutFailures/);
   for (const route of FULL_ROUTES) assert.ok(audit.includes(`'${route}'`), `full audit is missing ${route}`);
   assert.match(audit, /latestEditionRoute/);
@@ -183,6 +187,7 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   const routes = ['/', '/edition/edition-2099-01-01-target'];
   const encoded = Buffer.from(JSON.stringify(routes)).toString('base64url');
   const navigations = [];
+  const navigationWaits = [];
   let evaluateCount = 0;
   const page = {
     url: () => `http://audit.test/?__longmont_mobile_audit_routes=${encoded}`,
@@ -198,7 +203,12 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
         overflowingElements: [], brokenImages: [], mediaLayoutFailures: [], unreadableReleaseTables: [],
       };
     },
-    goto: async (url) => { navigations.push(url); },
+    goto: async (url, options) => {
+      if (options?.waitUntil === 'networkidle') throw new Error('simulated page with ongoing network activity');
+      navigations.push(url);
+      navigationWaits.push(options?.waitUntil);
+      return { ok: () => true, status: () => 200 };
+    },
     setViewportSize: async () => {},
     waitForFunction: async () => {},
     waitForTimeout: async () => {},
@@ -209,6 +219,7 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   assert.deepEqual([...result.routes], routes);
   assert.deepEqual([...new Set(navigations)], ['http://audit.test/', ...routes.slice(1).map((route) => `http://audit.test${route}`)]);
   assert.ok(!navigations.some((url) => url.includes('/tools')));
+  assert.deepEqual([...new Set(navigationWaits)], ['domcontentloaded']);
 
   const invalidPage = { ...page, url: () => 'http://audit.test/?__longmont_mobile_audit_routes=not_json' };
   await assert.rejects(() => audit(invalidPage), /Invalid targeted mobile audit route transport/);
