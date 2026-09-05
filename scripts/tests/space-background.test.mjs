@@ -1369,17 +1369,22 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
   closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
 });
 
-test('galaxy creation uses the exact 10% half-open threshold', () => {
-  assert.equal(GALAXY_CREATION_CHANCE, 0.1);
+test('galaxy creation uses the exact 20% half-open threshold', () => {
+  assert.equal(GALAXY_CREATION_CHANCE, 0.2);
   assert.equal(isGalaxyCreationRoll(0), true);
-  assert.equal(isGalaxyCreationRoll(0.099999999), true);
-  assert.equal(isGalaxyCreationRoll(0.1), false);
+  assert.equal(isGalaxyCreationRoll(0.1), true);
+  assert.equal(isGalaxyCreationRoll(0.199999999), true);
+  assert.equal(isGalaxyCreationRoll(0.2), false);
+  assert.equal(isGalaxyCreationRoll(0.200000001), false);
   assert.equal(isGalaxyCreationRoll(0.999999999), false);
+  assert.equal(isGalaxyCreationRoll(1), false);
   assert.equal(isGalaxyCreationRoll(-0.000001), false);
 
   const outcomes = Array.from({ length: 10000 }, (_, index) =>
     isGalaxyCreationRoll(index / 10000));
-  assert.equal(outcomes.filter(Boolean).length, 1000);
+  assert.equal(outcomes.filter(Boolean).length, 2000);
+  assert.ok(outcomes.slice(0, 2000).every((outcome) => outcome === true));
+  assert.ok(outcomes.slice(2000).every((outcome) => outcome === false));
 
   const scene = createSpaceScene(0x51a7c0de);
   assert.ok(scene.travelers.every(({ isGalaxy }) => typeof isGalaxy === 'boolean'));
@@ -1817,14 +1822,14 @@ test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at 
   }
 });
 
-test('moving star radii and traveler counts rise exactly 10% from their reviewed baselines', () => {
+test('20% galaxy probability preserves moving star radii and desktop/mobile traveler counts', () => {
   const scene = createSpaceScene(9876);
   assert.equal(AMBIENT_STAR_COUNT, 70);
   assert.deepEqual(TRAVELER_RADIUS_RANGE, [0.66, 1.21]);
   assert.ok(scene.travelers.every((traveler) =>
     traveler.size >= TRAVELER_RADIUS_RANGE[0] && traveler.size <= TRAVELER_RADIUS_RANGE[1]));
-  assert.equal(DESKTOP_TRAVELER_COUNT, Math.round(22 * 1.1));
-  assert.equal(MOBILE_TRAVELER_COUNT, Math.round(14 * 1.1));
+  assert.equal(DESKTOP_TRAVELER_COUNT, 24);
+  assert.equal(MOBILE_TRAVELER_COUNT, 15);
   assert.equal(scene.travelers.length, 24);
   assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 15);
   assert.equal(travelerCountForWidth(639), 15);
@@ -2034,10 +2039,12 @@ test('the expanded deterministic carrier minority still selects one nearest usef
   const scene = createSpaceScene(9876);
   const carrierIndices = scene.travelers.map((traveler, index) =>
     isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0);
-  assert.deepEqual(carrierIndices, [2, 8, 14, 20]);
+  // The 20% roll makes slot 14 a galaxy; galaxies remain excluded from carriers.
+  assert.equal(scene.travelers[14].isGalaxy, true);
+  assert.deepEqual(carrierIndices, [2, 8, 20]);
   const mobileTravelers = scene.travelers.slice(0, MOBILE_TRAVELER_COUNT);
   assert.deepEqual(mobileTravelers.map((traveler, index) =>
-    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8, 14]);
+    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8]);
 
   const projections = scene.travelers.map((_, index) => ({
     x: 400,
@@ -2054,7 +2061,7 @@ test('the expanded deterministic carrier minority still selects one nearest usef
     projections.slice(0, MOBILE_TRAVELER_COUNT),
     1000,
     600,
-  ), 14);
+  ), 8);
 });
 
 test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', () => {
