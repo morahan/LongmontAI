@@ -65,7 +65,7 @@ export function createNewsletterGenerateHandler({ env = process.env, fetchImpl =
           env,
           {
             subject: `Draft ready: ${draft.subject}`,
-            html: `<p>A LongmontAI newsletter draft is ready.</p><p><strong>${draft.subject}</strong></p>${draft.html}`,
+            html: `<p>A LongmontAI newsletter draft is ready.</p>${draft.html}`,
             text: `A LongmontAI newsletter draft is ready.\n\n${draft.subject}\n\n${draft.text}`,
           },
           fetchImpl,

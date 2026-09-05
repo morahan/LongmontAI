@@ -76,6 +76,7 @@ assert.match(prePushHook, /security-commit-review\.sh push <"\$PUSH_REFS"/, 'sec
 assert.match(prePushHook, /run-targeted-mobile-audit\.mjs push <"\$PUSH_REFS"/, 'mobile selection must receive the same ref updates')
 assert.match(prePushHook, /chmod 600 "\$PUSH_REFS"/, 'preserved ref updates must remain private')
 assert.match(script, /failed_gates_begin/, 'evidence must name failed gates')
+assert.match(script, /git rev-parse --absolute-git-dir/, 'Git must resolve the per-worktree metadata directory')
 assert.match(script, /SECURITY_COMMIT_FIX_ATTEMPTS must be 1 or 2/, 'fix retries must be bounded')
 assert.equal(packageJson.scripts['security:remediate'], 'SECURITY_COMMIT_AUTO_FIX=1 scripts/security-commit-review.sh all')
 assert.equal(packageJson.scripts['verify:local'], 'bash scripts/local-ci.sh')
@@ -90,7 +91,7 @@ const repo = join(fixture, 'repo')
 const reviewScript = join(repo, 'scripts/security-commit-review.sh')
 const scannerLog = join(fixture, 'scanner.log')
 const isolatedEnv = Object.fromEntries(Object.entries(process.env).filter(
-  ([name]) => !name.startsWith('GIT_') && !name.startsWith('SECURITY_COMMIT_'),
+  ([name]) => !name.startsWith('GIT_') && !name.startsWith('SECURITY_COMMIT_') && !name.startsWith('SECURITY_REVIEW_'),
 ))
 Object.assign(isolatedEnv, {
   HOME: home,
@@ -105,8 +106,8 @@ const run = (file, args = [], options = {}) => execFileAsync(file, args, {
   timeout: 120_000,
   ...options,
 })
-const runReview = (mode, input = '') => new Promise((resolvePromise, reject) => {
-  const child = spawn(reviewScript, [mode], { cwd: repo, env: isolatedEnv, stdio: ['pipe', 'pipe', 'pipe'] })
+const runReview = (mode, input = '', { cwd = repo, env = isolatedEnv } = {}) => new Promise((resolvePromise, reject) => {
+  const child = spawn(reviewScript, [mode], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] })
   let stdout = ''
   let stderr = ''
   const timer = setTimeout(() => child.kill('SIGTERM'), 120_000)
@@ -224,6 +225,68 @@ printf 'node:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
   await clearLog()
   await runReview('push', `(delete) ${zero} refs/heads/obsolete ${base}\n`)
   assert.deepEqual(await scannerLines(), [], 'deletions introduce no snapshot or history to scan')
+
+  // All Git mutations below belong to this disposable repository, never the caller.
+  const linked = join(fixture, 'linked')
+  await git(['worktree', 'add', '--detach', linked, 'HEAD'])
+  try {
+    const linkedGit = (await run('git', ['rev-parse', '--absolute-git-dir'], { cwd: linked })).stdout.trim()
+    assert.ok((await lstat(join(linked, '.git'))).isFile(), 'fixture must be a real linked worktree')
+    const violationPath = '.github/workflows/fixture.yml'
+    await mkdir(join(linked, '.github/workflows'), { recursive: true })
+    const privateMarker = 'fixture-private-content-must-not-enter-evidence'
+    await writeFile(join(linked, violationPath), [
+      '# ' + privateMarker,
+      'jobs:', '  fixture:', '    steps:', '      - uses: actions/checkout@fixture',
+      '        with:', '          persist-credentials: ' + String(true), '',
+    ].join('\n'))
+    await run('git', ['add', violationPath], { cwd: linked })
+
+    async function assertPrivateFailure(evidenceDirectory, env = isolatedEnv) {
+      let failure
+      await assert.rejects(runReview('staged', '', { cwd: linked, env }), (error) => {
+        failure = error
+        return error.code === 1
+      })
+      assert.match(failure.stdout + failure.stderr, /FAIL.*Agent control-plane policy scan/)
+      assert.doesNotMatch(failure.stdout + failure.stderr, /Not a directory/)
+      assert.match(failure.stdout, /Redacted evidence packet:/)
+      const files = (await readdir(evidenceDirectory)).filter((name) => name.startsWith('evidence-'))
+      assert.equal(files.length, 1)
+      const evidencePath = join(evidenceDirectory, files[0])
+      assert.equal((await lstat(evidenceDirectory)).mode & 0o777, 0o700)
+      assert.equal((await lstat(evidencePath)).mode & 0o777, 0o600)
+      const evidence = await readFile(evidencePath, 'utf8')
+      assert.ok(evidence.length < 1024, 'evidence is bounded metadata, not scanner output')
+      assert.equal(evidence.includes(privateMarker), false)
+      assert.equal(evidence.includes('uses:'), false)
+      assert.match(evidence, new RegExp(`^security-review-evidence-v1\\nmode=staged\\ncommit=${sideTip}\\ncreated_utc=[^\\n]+\\nfailed_gates_begin\\nAgent control-plane policy scan\\nfailed_gates_end\\nfiles_in_scope_begin\\n\\.github/workflows/fixture\\.yml\\nfiles_in_scope_end\\n$`))
+    }
+    await assertPrivateFailure(join(linkedGit, 'security-review'))
+    const customEvidence = join(fixture, 'custom-private-evidence')
+    await assertPrivateFailure(customEvidence, { ...isolatedEnv, SECURITY_REVIEW_EVIDENCE_DIR: customEvidence })
+
+    // Local emergency-path testing is confined to this disposable fixture.
+    const emergencyEnv = {
+      ...isolatedEnv, CI: '', SECURITY_COMMIT_BREAK_GLASS: '1', SECURITY_COMMIT_BREAK_GLASS_TICKET: 'TEST-1234',
+    }
+    await runReview('staged', '', { cwd: linked, env: emergencyEnv })
+    const logPath = join(linkedGit, 'security-review/break-glass.log')
+    assert.equal((await lstat(logPath)).mode & 0o777, 0o600)
+    const log = await readFile(logPath, 'utf8')
+    assert.match(log, /mode=staged commit=[a-f0-9]+ ticket=TEST-1234/)
+    await assert.rejects(runReview('staged', '', { cwd: linked, env: { ...emergencyEnv, CI: 'true' } }), (error) => {
+      assert.match(error.stderr, /break-glass is forbidden in CI/)
+      return error.code === 1
+    })
+    assert.equal(await readFile(logPath, 'utf8'), log, 'CI refusal must not append an emergency log')
+  } finally {
+    await git(['worktree', 'remove', '--force', linked])
+  }
+  await assert.rejects(runReview('staged', '', { cwd: home }), (error) => {
+    assert.match(error.stderr, /cannot determine repository Git directory/)
+    return error.code === 1
+  })
 
   for (const input of [
     '',

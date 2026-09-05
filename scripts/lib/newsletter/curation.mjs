@@ -230,7 +230,8 @@ function escapeHtml(value) {
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function responseText(responseJson) {
@@ -244,43 +245,104 @@ function responseText(responseJson) {
   return textParts.join('\n');
 }
 
-function parseJsonObject(text) {
-  const trimmed = text.trim();
+const MAX_AI_RESPONSE_BYTES = 64 * 1024;
+const AI_RESPONSE_TIMEOUT_MS = 15_000;
+
+async function boundedResponseJson(response) {
+  const reader = response.body?.getReader();
+  let timer;
   try {
-    return JSON.parse(trimmed);
-  } catch {
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI response did not include JSON.');
-    return JSON.parse(match[0]);
+    const length = response.headers.get('content-length');
+    if (length !== null && (!/^\d+$/.test(length) || Number(length) > MAX_AI_RESPONSE_BYTES)) {
+      throw new Error('Invalid AI response size');
+    }
+    if (!reader) throw new Error('Missing AI response body');
+    const read = async () => {
+      const chunks = [];
+      let bytes = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > MAX_AI_RESPONSE_BYTES) throw new Error('AI response too large');
+        if (value.byteLength > 0) chunks.push(value);
+      }
+      const text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+      return JSON.parse(text);
+    };
+    return await Promise.race([
+      read(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('AI response deadline exceeded')), AI_RESPONSE_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    // Do not await cancellation: an untrusted stalled stream must not extend the deadline.
+    if (reader) void reader.cancel().catch(() => {});
   }
 }
 
-function normalizeAiDraft(candidate, fallback) {
-  if (!candidate || typeof candidate !== 'object') return fallback;
-  const categories = ['models', 'benchmarks', 'breakthroughs', 'agents', 'tools', 'policy', 'community', 'watchlist'];
-  const items = Array.isArray(candidate.items) && candidate.items.length > 0
-    ? candidate.items.slice(0, 8).map((entry, index) => ({
-      category: categories.includes(entry.category)
-        ? entry.category
-        : fallback.items[index % fallback.items.length].category,
-      title: String(entry.title ?? fallback.items[index % fallback.items.length].title).slice(0, 180),
-      synthesis: String(entry.synthesis ?? fallback.items[index % fallback.items.length].synthesis).slice(0, 600),
-      sourceName: String(entry.sourceName ?? entry.source_name ?? fallback.items[index % fallback.items.length].sourceName).slice(0, 140),
-      sourceUrl: String(entry.sourceUrl ?? entry.source_url ?? fallback.items[index % fallback.items.length].sourceUrl).slice(0, 500),
-      score: Number.isInteger(entry.score) ? Math.max(0, Math.min(100, entry.score)) : fallback.items[index % fallback.items.length].score,
-      sortOrder: index,
-    }))
-    : fallback.items;
+function requireShape(value, keys) {
+  if (!value || Object.getPrototypeOf(value) !== Object.prototype
+    || Object.keys(value).length !== keys.length
+    || !keys.every((key) => Object.hasOwn(value, key))) throw new Error('Invalid AI object shape');
+}
 
+function validatedText(value, maxLength) {
+  if (typeof value !== 'string' || value.length > maxLength || /[\p{Cc}\p{Cs}]/u.test(value)) {
+    throw new Error('Invalid AI text');
+  }
+  const normalized = value.normalize('NFC').replace(/\s+/g, ' ').trim();
+  if (!normalized || normalized.length > maxLength) throw new Error('Invalid AI text length');
+  return normalized;
+}
+
+function safeSourceUrl(value) {
+  if (typeof value !== 'string' || value.length > 500 || /[\s\p{Cc}\p{Cs}]/u.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeAiDraft(candidate, fallback, model) {
+  requireShape(candidate, ['subject', 'preheader', 'summary', 'items']);
+  const categories = ['models', 'benchmarks', 'breakthroughs', 'agents', 'tools', 'policy', 'community', 'watchlist'];
+  const allowedUrls = new Set([...fallback.sourceUrls, ...fallback.items.map((entry) => entry.sourceUrl)].filter(safeSourceUrl));
+  const subject = validatedText(candidate.subject, 160);
+  const preheader = validatedText(candidate.preheader, 180);
+  const summary = validatedText(candidate.summary, 900);
+  if (!Array.isArray(candidate.items) || candidate.items.length < 1 || candidate.items.length > 8) {
+    throw new Error('Invalid AI items');
+  }
+  const items = candidate.items.map((entry, index) => {
+    requireShape(entry, ['category', 'title', 'synthesis', 'sourceName', 'sourceUrl', 'score']);
+    if (!categories.includes(entry.category) || !Number.isInteger(entry.score) || entry.score < 0 || entry.score > 100
+      || !safeSourceUrl(entry.sourceUrl) || !allowedUrls.has(entry.sourceUrl)) throw new Error('Invalid AI item');
+    return {
+      category: entry.category,
+      title: validatedText(entry.title, 180),
+      synthesis: validatedText(entry.synthesis, 600),
+      sourceName: validatedText(entry.sourceName, 140),
+      sourceUrl: entry.sourceUrl,
+      score: entry.score,
+      sortOrder: index,
+    };
+  });
+  const htmlItems = items.map((entry) => (
+    `<li><strong>${escapeHtml(entry.title)}</strong><br>${escapeHtml(entry.synthesis)} <a href="${escapeHtml(entry.sourceUrl)}">${escapeHtml(entry.sourceName)}</a></li>`
+  )).join('');
+  const textItems = items.map((entry) => `- ${entry.title}: ${entry.synthesis} (${entry.sourceName}: ${entry.sourceUrl})`).join('\n');
   return {
     ...fallback,
-    subject: String(candidate.subject ?? fallback.subject).slice(0, 160),
-    preheader: String(candidate.preheader ?? fallback.preheader).slice(0, 180),
-    summary: String(candidate.summary ?? fallback.summary).slice(0, 900),
-    html: String(candidate.html ?? fallback.html),
-    text: String(candidate.text ?? fallback.text),
-    items,
+    subject, preheader, summary, items,
+    html: `<h1>${escapeHtml(subject)}</h1><p>${escapeHtml(preheader)}</p><p>${escapeHtml(summary)}</p><ul>${htmlItems}</ul><p>Read more at <a href="https://longmontai.com/">LongmontAI.com</a>.</p>`,
+    text: `${subject}\n\n${preheader}\n\n${summary}\n\n${textItems}\n\nRead more: https://longmontai.com/`,
     usedAi: true,
+    curatorModel: model,
   };
 }
 
@@ -300,6 +362,7 @@ export async function createCuratedNewsletterDraft({
   const model = env.NEWSLETTER_CURATOR_MODEL || 'gpt-5-mini';
   const response = await fetchImpl('https://api.openai.com/v1/responses', {
     method: 'POST',
+    signal: AbortSignal.timeout(AI_RESPONSE_TIMEOUT_MS),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
@@ -310,7 +373,7 @@ export async function createCuratedNewsletterDraft({
       instructions: [
         'You are the LongmontAI newsletter curator.',
         'Use the supplied LongmontAI website data as an owned source and blend it with monitored AI model/research sources.',
-        'Return only JSON with subject, preheader, summary, html, text, and items.',
+        'Return only JSON with subject, preheader, summary, and items; no HTML or plain text blob fields.',
         'Promote model releases, frontier/benchmark movement, breakthroughs, agents/tools, and community relevance.',
         'Do not invent benchmark numbers or unsupported release claims.',
       ].join(' '),
@@ -319,23 +382,21 @@ export async function createCuratedNewsletterDraft({
           subject: 'string',
           preheader: 'string',
           summary: 'string',
-          html: 'HTML string',
-          text: 'plain text string',
           items: [{ category: 'models|benchmarks|breakthroughs|agents|tools|policy|community|watchlist', title: 'string', synthesis: 'string', sourceName: 'string', sourceUrl: 'string', score: 0 }],
         },
         signals,
       }),
     }),
   });
-  const responseJson = await response.json();
   if (!response.ok) {
-    throw new Error(`OpenAI curation failed: ${responseJson?.error?.message ?? response.statusText}`);
+    if (response.body) void response.body.cancel().catch(() => {});
+    throw new Error('OpenAI curation request failed.');
   }
-  const draft = normalizeAiDraft(parseJsonObject(responseText(responseJson)), fallback);
-  return {
-    ...draft,
-    curatorModel: model,
-    websiteSnapshot: signals,
-    sourceUrls: signals.sourceUrls,
-  };
+  try {
+    const responseJson = await boundedResponseJson(response);
+    return normalizeAiDraft(JSON.parse(responseText(responseJson)), fallback, model);
+  } catch {
+    // Reject the entire candidate, including its attribution, without logging untrusted content.
+    return fallback;
+  }
 }

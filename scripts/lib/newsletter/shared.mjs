@@ -169,7 +169,7 @@ export async function upsertSubscriber(env, subscriber, fetchImpl = fetch) {
     {
       method: 'POST',
       headers: {
-        Prefer: 'resolution=merge-duplicates,return=representation',
+        Prefer: 'resolution=ignore-duplicates,return=representation',
       },
       body: {
         email: subscriber.email,

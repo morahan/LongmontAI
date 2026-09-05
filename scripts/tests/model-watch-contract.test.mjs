@@ -44,7 +44,24 @@ assert.deepEqual(
   `model watch snapshots must not repeat a company/date/source event: ${duplicateSnapshotIdentities.join(', ')}`,
 );
 
-assert.match(workflow, /cron: "17 13 \* \* 1"/);
+assert.match(workflow, /cron: "17 13 \* \* \*"/);
+assert.doesNotMatch(workflow, /cron: "17 13 \* \* 1"/);
+assert.match(workflow, /workflow_dispatch:/);
+assert.match(workflow, /permissions: \{\}/);
+assert.match(workflow, /needs: generate/);
+assert.match(workflow, /contents: read/);
+assert.match(workflow, /npm run lint\s+npm run build/);
+assert.match(workflow, /add-paths: src\/data\/modelWatch.generated.json/);
+assert.match(workflow, /peter-evans\/create-pull-request@/);
+const workflowSteps = workflow.match(/^ {6}- [^\n]*(?:\n(?: {7,}[^\n]*|[ \t]*))*/gm) || [];
+const checkoutSteps = workflowSteps.filter((step) => /\buses: actions\/checkout@/.test(step));
+assert.ok(checkoutSteps.length > 0, 'workflow must contain checkout steps');
+for (const step of checkoutSteps) {
+  assert.match(step, /^ {8}uses: actions\/checkout@[a-f0-9]{40}(?:\s+#.*)?$/m, 'checkout must be pinned');
+  const settings = [...step.matchAll(/^\s+persist-credentials:\s*([^\n]*)$/gm)];
+  assert.equal(settings.length, 1, 'each checkout must explicitly define credential persistence once');
+  assert.equal(settings[0][1].trim(), 'false', 'each checkout must disable credential persistence');
+}
 for (const [name, guide] of [
   ['docs/blog-editor.md', editorGuide],
   ['.claude blog-editor skill', claudeEditorGuide],
@@ -70,5 +87,59 @@ for (const [name, guide] of [
   assert.match(guide, /selects\s+and\s+stores\s+10[–-]25/i, `${name} must require parent/editor selection and storage of 10–25 Star Text entries`);
 }
 assert.match(updater, /Required Model Watch sources failed/);
+
+const apiSource = await readFile(new URL('../../api/model-watch.mjs', import.meta.url), 'utf8');
+assert.match(apiSource, /import snapshot from '\.\.\/src\/data\/modelWatch\.generated\.json' with \{ type: 'json' \}/);
+assert.equal((apiSource.match(/\bimport\b/g) || []).length, 1, 'snapshot must be the only API import');
+assert.doesNotMatch(apiSource, /model-watch-sources|\bfetch\s*\(|readFile|new Date/);
+const expectedSnapshot = JSON.parse(await readFile(new URL('../../src/data/modelWatch.generated.json', import.meta.url), 'utf8'));
+assert.deepEqual(Object.keys(expectedSnapshot).sort(), ['checkedAt', 'detectedModels', 'successfulSources', 'totalSources']);
+assert.equal(typeof expectedSnapshot.checkedAt, 'string');
+assert.ok(Number.isFinite(Date.parse(expectedSnapshot.checkedAt)));
+assert.equal(typeof expectedSnapshot.successfulSources, 'number');
+assert.equal(typeof expectedSnapshot.totalSources, 'number');
+assert.ok(Array.isArray(expectedSnapshot.detectedModels));
+assert.ok(expectedSnapshot.detectedModels.every((model) => typeof model === 'string'));
+
+// Install before importing the API, covering module initialization as well as invocation.
+const originalFetch = globalThis.fetch;
+let upstreamCalls = 0;
+globalThis.fetch = () => {
+  upstreamCalls += 1;
+  throw new Error('Model Watch API must not perform upstream requests');
+};
+try {
+  const { default: handler } = await import('../../api/model-watch.mjs');
+  for (const method of ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE', 'CONNECT', 'get', undefined]) {
+    for (const url of ['/api/model-watch', '/api/model-watch?cacheBust=1', '/api/model-watch?source=https%3A%2F%2Funtrusted.example&refresh=true']) {
+      const response = {
+        statusCode: null, headers: {}, body: undefined, ended: false,
+        setHeader(name, value) { this.headers[name.toLowerCase()] = value; },
+        status(code) { this.statusCode = code; return this; },
+        json(body) { this.body = body; this.ended = true; return this; },
+        end() { this.ended = true; return this; },
+      };
+      const request = { method, url, get body() { assert.fail('API must not inspect a request body'); } };
+      await handler(request, response);
+      assert.equal(response.ended, true);
+      assert.equal(response.headers['content-type'], 'application/json; charset=utf-8');
+      if (method === 'GET' || method === 'HEAD') {
+        assert.equal(response.statusCode, 200);
+        assert.equal(response.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=604800');
+        assert.equal(response.headers.allow, undefined);
+        if (method === 'HEAD') assert.equal(response.body, undefined);
+        else assert.deepEqual(response.body, expectedSnapshot, 'must preserve tracked snapshot including actual checkedAt');
+      } else {
+        assert.equal(response.statusCode, 405);
+        assert.equal(response.headers.allow, 'GET, HEAD');
+        assert.equal(response.headers['cache-control'], 'no-store');
+        assert.deepEqual(response.body, { ok: false, error: 'method_not_allowed' });
+      }
+      assert.equal(upstreamCalls, 0);
+    }
+  }
+} finally {
+  globalThis.fetch = originalFetch;
+}
 
 console.log('model watch contract: PASS');

@@ -16,6 +16,10 @@ fi
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
+if ! REVIEW_GIT_DIR="$(git rev-parse --absolute-git-dir 2>/dev/null)" || [[ "$REVIEW_GIT_DIR" != /* || ! -d "$REVIEW_GIT_DIR" ]]; then
+  echo "security-commit-review: cannot determine repository Git directory." >&2
+  exit 1
+fi
 
 if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
   if [[ -n "${CI:-}" ]]; then
@@ -27,7 +31,7 @@ if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
     echo "security-commit-review: SECURITY_COMMIT_BREAK_GLASS_TICKET must contain a ticket or incident reference." >&2
     exit 1
   fi
-  break_glass_log="$ROOT/.git/security-review/break-glass.log"
+  break_glass_log="$REVIEW_GIT_DIR/security-review/break-glass.log"
   mkdir -p "$(dirname "$break_glass_log")"
   chmod 700 "$(dirname "$break_glass_log")" 2>/dev/null || true
   printf '%s mode=%s commit=%s ticket=%s\n' \
@@ -63,7 +67,7 @@ failed_gates=""
 gate_count=0
 gate_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/security-review.XXXXXXXXXX")"
 chmod 700 "$gate_temp_dir"
-evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$ROOT/.git/security-review}"
+evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$REVIEW_GIT_DIR/security-review}"
 evidence_file=""
 
 cleanup() {
