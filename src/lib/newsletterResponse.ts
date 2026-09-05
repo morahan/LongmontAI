@@ -33,7 +33,7 @@ export async function readNewsletterSubscribeResponse(response: Response): Promi
 
   if (!response.ok || payload?.ok !== true) {
     const safeMessage = response.status < 500 && typeof payload?.error === 'string'
-      && Object.hasOwn(SAFE_ERROR_MESSAGES, payload.error)
+      && Object.prototype.hasOwnProperty.call(SAFE_ERROR_MESSAGES, payload.error)
       ? SAFE_ERROR_MESSAGES[payload.error]
       : undefined;
     throw new NewsletterResponseError(safeMessage ?? UNAVAILABLE_MESSAGE);
