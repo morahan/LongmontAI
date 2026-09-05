@@ -1859,6 +1859,10 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
   assert.equal(NEURAL_SIGNAL_SLOT_SECONDS, 24);
   assert.deepEqual(NEURAL_SIGNAL_DURATION_RANGE, [2.4, 3.2]);
   assert.equal(NEURAL_SIGNAL_MAX_CONCURRENT, 1);
+  assert.equal(NEURAL_SIGNAL_DESKTOP_CHANCE, 0.48);
+  assert.equal(NEURAL_SIGNAL_MOBILE_CHANCE, 0.30);
+  closeTo(NEURAL_SIGNAL_DESKTOP_CHANCE / 0.32, 1.5);
+  closeTo(NEURAL_SIGNAL_MOBILE_CHANCE / 0.20, 1.5);
   assert.ok(NEURAL_SIGNAL_MOBILE_CHANCE < NEURAL_SIGNAL_DESKTOP_CHANCE);
   assert.deepEqual(NEURAL_SIGNAL_WIDTH_RANGE, [0.5, 0.72]);
 
