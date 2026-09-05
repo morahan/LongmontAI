@@ -1386,6 +1386,48 @@ test('galaxy creation uses the exact 10% half-open threshold', () => {
   assert.deepEqual(scene, createSpaceScene(0x51a7c0de));
 });
 
+test('starscape source contracts an opaque black backdrop and disc-clipped star patterns', () => {
+  const componentSource = readFileSync(
+    new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8',
+  );
+  const cssSource = readFileSync(new URL('../../src/index.css', import.meta.url), 'utf8');
+  const drawScene = componentSource.slice(
+    componentSource.indexOf('const drawScene ='),
+    componentSource.indexOf('// RAF may pause while hidden'),
+  );
+  const travelerSurface = componentSource.slice(
+    componentSource.indexOf('const drawTravelerSurface ='),
+    componentSource.indexOf('const drawTravelerDisc ='),
+  );
+  const homeScene = cssSource.slice(
+    cssSource.indexOf('.home-hero-scene'),
+    cssSource.indexOf('.home-hero {'),
+  );
+  const planetarySystem = componentSource.slice(
+    componentSource.indexOf('const drawPlanetarySystem ='),
+    componentSource.indexOf('const SpaceNeuralBackground'),
+  );
+
+  assert.match(drawScene, /ctx\.globalAlpha = 1;\s*\/\/ The canvas owns[\s\S]*?ctx\.fillStyle = '#000000';\s*ctx\.fillRect\(0, 0, width, height\);/);
+  assert.doesNotMatch(componentSource, /backdropGlow/);
+  assert.doesNotMatch(homeScene, /gradient|radial-gradient|rgba\(/i);
+  assert.match(homeScene, /\.home-hero-scene[\s\S]*?background: #000000;/);
+
+  assert.match(travelerSurface, /ctx\.save\(\);\s*ctx\.beginPath\(\);\s*ctx\.arc\(x, y, radius, 0, TAU\);\s*ctx\.clip\(\);/);
+  assert.match(componentSource, /drawTravelerSurface\(ctx, appearance, x, y, radius, opacity\);/);
+  assert.match(planetarySystem, /drawTravelerDisc\(\s*ctx,\s*ownerAppearance,/);
+
+  const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const resolving = getTravelerAppearance(traveler, 0.5);
+  const resolved = getTravelerAppearance(traveler, 0.9);
+  assert.equal(resolving.texture, resolved.texture);
+  assert.equal(resolving.surfaceSeed, resolved.surfaceSeed);
+  assert.ok(resolved.detailLevel > 0);
+  assert.deepEqual(getTravelerStarRenderPolicy(true), {
+    renderDisc: true, renderHalo: false, renderShadowGlow: false, renderFlare: false,
+  });
+});
+
 test('traveler palette and surface textures are seeded, stable, and diverse', () => {
   assert.deepEqual(TRAVELER_PALETTE.map(({ name }) => name), ['red', 'yellow', 'orange', 'white', 'blue']);
   assert.deepEqual(TRAVELER_SURFACE_TEXTURES, ['bands', 'speckles', 'facets', 'swirls', 'mottled']);
@@ -1416,7 +1458,8 @@ test('traveler palette and surface textures are seeded, stable, and diverse', ()
 
 test('small and large traveler colors follow their weighted palette with coherent interpolation', () => {
   assert.equal(SMALL_TRAVELER_RED_CHANCE, 0.06);
-  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.35);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7 / 2);
   const smallWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[0]);
   const largeWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[1]);
   const middleWeights = getTravelerColorWeights(
@@ -1430,6 +1473,24 @@ test('small and large traveler colors follow their weighted palette with coheren
     weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
   }
 
+  for (const progress of [0.25, 0.75]) {
+    const size = TRAVELER_RADIUS_RANGE[0]
+      + (TRAVELER_RADIUS_RANGE[1] - TRAVELER_RADIUS_RANGE[0]) * progress;
+    const weights = getTravelerColorWeights(size);
+    closeTo(weights[0], 0.06 + (0.35 - 0.06) * progress ** 2 * (3 - 2 * progress));
+    weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
+  }
+
+  const largeSize = TRAVELER_RADIUS_RANGE[1];
+  assert.equal(chooseTravelerColor(largeSize, 0.35 - Number.EPSILON).name, 'red');
+  assert.equal(chooseTravelerColor(largeSize, 0.35).name, 'yellow');
+  const exactCounts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
+  for (let index = 0; index < 10000; index += 1) {
+    const { name } = chooseTravelerColor(largeSize, (index + 0.5) / 10000);
+    exactCounts.set(name, exactCounts.get(name) + 1);
+  }
+  assert.deepEqual([...exactCounts.values()], [3500, 1625, 1625, 1625, 1625]);
+
   const sample = (size, seed) => {
     const random = createSeededRandom(seed);
     const counts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
@@ -1440,8 +1501,8 @@ test('small and large traveler colors follow their weighted palette with coheren
     return counts;
   };
   for (const [size, redChance, seed] of [
-    [TRAVELER_RADIUS_RANGE[0], SMALL_TRAVELER_RED_CHANCE, 0x51a70001],
-    [TRAVELER_RADIUS_RANGE[1], LARGE_TRAVELER_RED_CHANCE, 0x51a70002],
+    [TRAVELER_RADIUS_RANGE[0], 0.06, 0x51a70001],
+    [TRAVELER_RADIUS_RANGE[1], 0.35, 0x51a70002],
   ]) {
     const counts = sample(size, seed);
     assert.ok(Math.abs(counts.get('red') / 100000 - redChance) < 0.006);

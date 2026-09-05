@@ -37,7 +37,7 @@ fi
 
 case "${MOBILE_AUDIT_HEADED:-0}" in
   0|"")
-    CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmont-mobile-audit-playwright.XXXXXXXX.json")"
+    CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmont-mobile-audit-playwright.XXXXXXXX")"
     cat >"$CONFIG_FILE" <<'JSON'
 {"browser":{"browserName":"chromium","launchOptions":{"headless":true}}}
 JSON
