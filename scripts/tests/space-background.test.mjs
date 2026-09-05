@@ -1458,7 +1458,8 @@ test('traveler palette and surface textures are seeded, stable, and diverse', ()
 
 test('small and large traveler colors follow their weighted palette with coherent interpolation', () => {
   assert.equal(SMALL_TRAVELER_RED_CHANCE, 0.06);
-  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.35);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7 / 2);
   const smallWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[0]);
   const largeWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[1]);
   const middleWeights = getTravelerColorWeights(
@@ -1472,6 +1473,24 @@ test('small and large traveler colors follow their weighted palette with coheren
     weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
   }
 
+  for (const progress of [0.25, 0.75]) {
+    const size = TRAVELER_RADIUS_RANGE[0]
+      + (TRAVELER_RADIUS_RANGE[1] - TRAVELER_RADIUS_RANGE[0]) * progress;
+    const weights = getTravelerColorWeights(size);
+    closeTo(weights[0], 0.06 + (0.35 - 0.06) * progress ** 2 * (3 - 2 * progress));
+    weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
+  }
+
+  const largeSize = TRAVELER_RADIUS_RANGE[1];
+  assert.equal(chooseTravelerColor(largeSize, 0.35 - Number.EPSILON).name, 'red');
+  assert.equal(chooseTravelerColor(largeSize, 0.35).name, 'yellow');
+  const exactCounts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
+  for (let index = 0; index < 10000; index += 1) {
+    const { name } = chooseTravelerColor(largeSize, (index + 0.5) / 10000);
+    exactCounts.set(name, exactCounts.get(name) + 1);
+  }
+  assert.deepEqual([...exactCounts.values()], [3500, 1625, 1625, 1625, 1625]);
+
   const sample = (size, seed) => {
     const random = createSeededRandom(seed);
     const counts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
@@ -1482,8 +1501,8 @@ test('small and large traveler colors follow their weighted palette with coheren
     return counts;
   };
   for (const [size, redChance, seed] of [
-    [TRAVELER_RADIUS_RANGE[0], SMALL_TRAVELER_RED_CHANCE, 0x51a70001],
-    [TRAVELER_RADIUS_RANGE[1], LARGE_TRAVELER_RED_CHANCE, 0x51a70002],
+    [TRAVELER_RADIUS_RANGE[0], 0.06, 0x51a70001],
+    [TRAVELER_RADIUS_RANGE[1], 0.35, 0x51a70002],
   ]) {
     const counts = sample(size, seed);
     assert.ok(Math.abs(counts.get('red') / 100000 - redChance) < 0.006);

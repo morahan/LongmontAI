@@ -63,7 +63,7 @@ export const TRAVELER_PALETTE = [
 ] as const;
 export const TRAVELER_SURFACE_TEXTURES = ['bands', 'speckles', 'facets', 'swirls', 'mottled'] as const;
 export const SMALL_TRAVELER_RED_CHANCE = 0.06;
-export const LARGE_TRAVELER_RED_CHANCE = 0.7;
+export const LARGE_TRAVELER_RED_CHANCE = 0.35;
 export const TRAVELER_GLOW_BLUR_RANGE = [1.5, 12] as const;
 export const TRAVELER_GLOW_OPACITY_RANGE = [0.06, 0.22] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
