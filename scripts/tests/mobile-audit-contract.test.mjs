@@ -11,6 +11,11 @@ import { FULL_ROUTES, selectMobileAudit } from '../mobile-audit-selector.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const runnerPath = path.join(root, 'scripts/run-targeted-mobile-audit.mjs');
 
+function isolatedMobileAuditEnvironment(environment = process.env) {
+  return Object.fromEntries(Object.entries(environment)
+    .filter(([name]) => !name.startsWith('MOBILE_AUDIT_')));
+}
+
 function git(cwd, args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 }
@@ -28,7 +33,7 @@ function runSelection(cwd, mode, input = '') {
     cwd,
     input,
     encoding: 'utf8',
-    env: { ...process.env, MOBILE_AUDIT_DRY_RUN: '1' },
+    env: { ...isolatedMobileAuditEnvironment(), MOBILE_AUDIT_DRY_RUN: '1' },
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   return JSON.parse(result.stdout.trim().split('\n').at(-1));
@@ -112,7 +117,7 @@ esac
   await chmod(cliPath, 0o755);
 
   const baseEnv = {
-    ...process.env,
+    ...isolatedMobileAuditEnvironment(),
     CODEX_HOME: codexHome,
     MOBILE_AUDIT_BASE_URL: 'http://audit.test',
     MOBILE_AUDIT_TEST_LOG: logPath,
@@ -175,6 +180,29 @@ esac
   assert.equal(nonExecutableOverride.status, 1);
   assert.match(nonExecutableOverride.stderr, /must name an existing executable Playwright CLI launcher/);
 });
+
+if (process.env.MOBILE_AUDIT_CONTRACT_HOSTILE_CHILD !== '1') {
+  test('contract fixtures ignore hostile inherited mobile audit controls', () => {
+    const result = spawnSync(process.execPath, ['--test', fileURLToPath(import.meta.url)], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        MOBILE_AUDIT_CONTRACT_HOSTILE_CHILD: '1',
+        MOBILE_AUDIT_PLAYWRIGHT_CLI: '/definitely/not/an/executable',
+        MOBILE_AUDIT_BASE_URL: 'http://hostile.invalid',
+        MOBILE_AUDIT_ROUTES: 'not-json',
+        MOBILE_AUDIT_PORT: 'invalid',
+        MOBILE_AUDIT_RUN_ID: 'invalid inherited run id',
+        MOBILE_AUDIT_HEADED: 'invalid',
+        MOBILE_AUDIT_TEST_FAIL: '1',
+        MOBILE_AUDIT_TEST_MISSING_BROWSER: '1',
+        MOBILE_AUDIT_TEST_LOG: '/unwritable/inherited.log',
+      },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+  });
+}
 
 test('encoded targeted routes reach audit code before navigation and invalid transport fails closed', async () => {
   const source = await readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8');
@@ -297,7 +325,11 @@ fi
   const run = () => new Promise((resolve, reject) => {
     const child = spawn('bash', [path.join(root, 'scripts/run-mobile-audit.sh')], {
       cwd: directory,
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, MOBILE_AUDIT_TEST_LOG: log },
+      env: {
+        ...isolatedMobileAuditEnvironment(),
+        PATH: `${bin}:${process.env.PATH}`,
+        MOBILE_AUDIT_TEST_LOG: log,
+      },
       stdio: 'ignore',
     });
     child.on('error', reject);
