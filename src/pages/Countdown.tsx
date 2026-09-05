@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Calendar, Clock } from 'lucide-react';
+import {
+  denverCalendarDate,
+  mountainTimeLabel,
+  nextDenverMeetup,
+  type CalendarDate,
+} from '../lib/meetupSchedule';
 
 // ─── LongmontAI Meetup Schedule ─────────────────────────────────────────────
 // Every other Wednesday at noon (America/Denver / MDT)
@@ -8,7 +14,6 @@ import { MapPin, Calendar, Clock } from 'lucide-react';
 const MEETUP_YEAR = 2026;
 const MEETUP_MONTH = 5; // 1-indexed
 const MEETUP_DAY = 27;
-const MEETUP_HOUR = 12; // noon local
 const MEETUP_DURATION_HOURS = 1;
 const INTERVAL_DAYS = 14;
 const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
@@ -16,22 +21,25 @@ const JUST_HIT_ZERO_DURATION_MS = 8000;
 // Update these together roughly every third meetup (28 days) when rotating Discord invites.
 // The QR code and its click-through link both derive from this one URL.
 const DISCORD_INVITE_URL = 'https://discord.gg/ctx5rF7q2';
-const DISCORD_INVITE_FIRST_MEETUP = new Date(2026, 8, 2, 12, 0, 0, 0);
+const DISCORD_INVITE_FIRST_MEETUP: CalendarDate = { year: 2026, month: 9, day: 2 };
 const DISCORD_INVITE_VALID_FOR_MEETUPS = 3;
 const DISCORD_QR_OPENING_WINDOW_MINUTES = 10;
 const DISCORD_QR_POST_MEETUP_WINDOW_MINUTES = 30;
 
-// Stable reference: May 27, 2026 noon = upcoming meetup
-const REFERENCE_MEETUP = new Date(MEETUP_YEAR, MEETUP_MONTH - 1, MEETUP_DAY, MEETUP_HOUR, 0, 0, 0);
+// Stable reference: May 27, 2026 at noon in America/Denver.
+const REFERENCE_MEETUP: CalendarDate = {
+  year: MEETUP_YEAR,
+  month: MEETUP_MONTH,
+  day: MEETUP_DAY,
+};
 
-function getNextMeetup(localNow: Date): Date {
-  // Advance from reference in 14-day steps until we find a meetup that hasn't ended yet
-  let next = new Date(REFERENCE_MEETUP);
-  const durationMs = MEETUP_DURATION_HOURS * 60 * 60 * 1000;
-  while (next.getTime() + durationMs <= localNow.getTime()) {
-    next = new Date(next.getTime() + INTERVAL_DAYS * 24 * 60 * 60 * 1000);
-  }
-  return next;
+function getNextMeetup(now: Date): Date {
+  return nextDenverMeetup(
+    now,
+    REFERENCE_MEETUP,
+    INTERVAL_DAYS,
+    MEETUP_DURATION_HOURS * 60 * 60 * 1000,
+  );
 }
 
 function getEndTime(meetup: Date): Date {
@@ -47,22 +55,23 @@ function shouldShowDiscordInvite(now: Date, meetup: Date): boolean {
   return (now >= meetup && now < openingWindowEnds) || (now >= getEndTime(meetup) && now < postMeetupWindowEnds);
 }
 
-function getMeetupWithActiveInviteWindow(localNow: Date): Date {
-  let meetup = new Date(REFERENCE_MEETUP);
+function getMeetupWithActiveInviteWindow(now: Date): Date {
   const inviteWindowMs = (MEETUP_DURATION_HOURS * 60 + DISCORD_QR_POST_MEETUP_WINDOW_MINUTES) * 60 * 1000;
+  return nextDenverMeetup(now, REFERENCE_MEETUP, INTERVAL_DAYS, inviteWindowMs);
+}
 
-  while (meetup.getTime() + inviteWindowMs <= localNow.getTime()) {
-    meetup = new Date(meetup.getTime() + INTERVAL_DAYS * 24 * 60 * 60 * 1000);
-  }
-  return meetup;
+function meetupIndex(date: CalendarDate): number {
+  const referenceDay = Date.UTC(REFERENCE_MEETUP.year, REFERENCE_MEETUP.month - 1, REFERENCE_MEETUP.day);
+  const meetupDay = Date.UTC(date.year, date.month - 1, date.day);
+  return Math.round((meetupDay - referenceDay) / (INTERVAL_DAYS * 24 * 60 * 60 * 1000));
 }
 
 function isDiscordInviteCurrent(meetup: Date): boolean {
-  const intervalMs = INTERVAL_DAYS * 24 * 60 * 60 * 1000;
-  const firstInviteMeetupIndex = Math.round((DISCORD_INVITE_FIRST_MEETUP.getTime() - REFERENCE_MEETUP.getTime()) / intervalMs);
-  const meetupIndex = Math.round((meetup.getTime() - REFERENCE_MEETUP.getTime()) / intervalMs);
+  const firstInviteMeetupIndex = meetupIndex(DISCORD_INVITE_FIRST_MEETUP);
+  const currentMeetupIndex = meetupIndex(denverCalendarDate(meetup));
 
-  return meetupIndex >= firstInviteMeetupIndex && meetupIndex < firstInviteMeetupIndex + DISCORD_INVITE_VALID_FOR_MEETUPS;
+  return currentMeetupIndex >= firstInviteMeetupIndex
+    && currentMeetupIndex < firstInviteMeetupIndex + DISCORD_INVITE_VALID_FOR_MEETUPS;
 }
 
 interface TimeLeft {
@@ -472,10 +481,12 @@ const Countdown: React.FC = () => {
   const isPostMeetupInvite = !isLiveEvent && isDiscordInviteVisible;
 
   const meetupDateStr = nextMeetup.toLocaleDateString('en-US', {
+    timeZone: 'America/Denver',
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
+  const meetupTimeZone = mountainTimeLabel(nextMeetup);
 
   return (
     <div className="relative min-h-[80vh] flex flex-col items-center justify-center text-center">
@@ -599,14 +610,14 @@ const Countdown: React.FC = () => {
         <span className="hidden sm:block text-white/20">·</span>
         <div className="flex items-center gap-2">
           <Clock size={14} className="text-[var(--accent-cyan)]" />
-          <span>12:00 PM MDT</span>
+          <span>12:00 PM {meetupTimeZone}</span>
         </div>
       </div>
 
       {/* Next meetup date */}
       {!isLiveEvent && !isFinalCountdownEffective && (
         <p className="mt-3 text-sm text-[var(--text-muted)] animate-fade-in-late">
-          Next Meetup — {meetupDateStr} at Noon MDT
+          Next Meetup — {meetupDateStr} at Noon {meetupTimeZone}
         </p>
       )}
 

@@ -1,19 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar } from 'lucide-react';
 import { ScheduledEditionResponse } from '../articles/types';
 import { watchScheduledEdition } from '../articles/scheduledEdition';
+import type { ScheduledEditionPhase } from '../lib/scheduledEditionState';
+import { useDocumentTitle } from '../lib/documentTitle';
 import ContentBlock from '../components/ContentBlock';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
+import EditionShare from '../components/EditionShare';
 
 const ScheduledEdition: React.FC = () => {
     const [result, setResult] = useState<ScheduledEditionResponse | undefined>(undefined);
+    const [phase, setPhase] = useState<ScheduledEditionPhase>('checking');
 
-    useEffect(() => watchScheduledEdition(setResult), []);
+    useEffect(() => watchScheduledEdition(setResult, setPhase), []);
+    useDocumentTitle(result?.edition.title ?? 'Edition');
 
     if (result === undefined) {
-        return null;
+        const waiting = phase === 'waiting';
+        return (
+            <section className="article-layout text-center py-20" aria-labelledby="scheduled-edition-status-title">
+                <div role="status" aria-live="polite">
+                    <h1 id="scheduled-edition-status-title" className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        {waiting ? 'Edition not available yet' : 'Checking edition availability'}
+                    </h1>
+                    <p className="text-[var(--text-secondary)] mb-8">
+                        {waiting
+                            ? 'This edition has not been released. Please check back later.'
+                            : 'The edition is temporarily unavailable. We will keep checking.'}
+                    </p>
+                </div>
+                <Link to="/" className="inline-block px-6 py-3 rounded-full border border-[var(--glass-border)] hover:bg-[var(--accent-cyan)] hover:text-black hover:border-[var(--accent-cyan)] transition-all duration-300 font-medium">
+                    Back to editions
+                </Link>
+            </section>
+        );
     }
 
     const { edition, slideshows } = result;
@@ -29,9 +51,7 @@ const ScheduledEdition: React.FC = () => {
                             <Calendar size={16} />
                             <time dateTime={edition.date}>{new Date(`${edition.date}T00:00:00`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
                         </div>
-                        <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--glass-border)] bg-white/5 text-[var(--text-secondary)] hover:text-white transition-colors" aria-label="Share this edition">
-                            <Share2 size={20} />
-                        </button>
+                        <EditionShare editionId={edition.id} title={edition.title} />
                     </div>
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">{edition.title}</h1>
                     <div className="h-1 w-20 bg-[var(--accent-cyan)] mb-8 rounded-full" />

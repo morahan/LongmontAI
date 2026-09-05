@@ -7,9 +7,14 @@ import {
   modelWatchModels,
   modelWatchSnapshots,
 } from '../data/modelWatch';
+import {
+  countDistinctModels,
+  isModelWatchSnapshotStatus,
+  type ModelWatchSnapshotStatus,
+} from '../lib/modelWatchPresentation';
 
 const ModelWatch: React.FC = () => {
-  const [liveStatus, setLiveStatus] = useState(modelWatchStatus);
+  const [snapshotStatus, setSnapshotStatus] = useState<ModelWatchSnapshotStatus>(modelWatchStatus);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -17,11 +22,13 @@ const ModelWatch: React.FC = () => {
     fetch('/api/model-watch', { signal: controller.signal })
       .then((response) => {
         if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
-          throw new Error('Live Model Watch status is unavailable.');
+          throw new Error('Model Watch snapshot is unavailable.');
         }
         return response.json();
       })
-      .then((status: typeof modelWatchStatus) => setLiveStatus(status))
+      .then((status: unknown) => {
+        if (isModelWatchSnapshotStatus(status)) setSnapshotStatus(status);
+      })
       .catch(() => undefined);
 
     return () => controller.abort();
@@ -35,11 +42,11 @@ const ModelWatch: React.FC = () => {
     .filter((model) => model.releaseDateSort && !briefingModelIds.has(model.id))
     .sort((a, b) => (b.releaseDateSort ?? '').localeCompare(a.releaseDateSort ?? ''))
     .slice(0, 8);
-  const detectedModelCount = new Set([
-    ...liveStatus.detectedModels,
+  const detectedModelCount = countDistinctModels([
+    ...snapshotStatus.detectedModels,
     ...modelWatchModels.map((model) => model.name),
-  ]).size;
-  const checkedAt = new Date(liveStatus.checkedAt);
+  ]);
+  const checkedAt = new Date(snapshotStatus.checkedAt);
   const checkedLabel = Number.isNaN(checkedAt.getTime())
     ? 'Awaiting first check'
     : checkedAt.toLocaleString('en-US', {
@@ -78,12 +85,12 @@ const ModelWatch: React.FC = () => {
           <p>models detected</p>
         </div>
         <div>
-          <span>{liveStatus.successfulSources}/{liveStatus.totalSources}</span>
-          <p>sources healthy</p>
+          <span>{snapshotStatus.successfulSources}/{snapshotStatus.totalSources}</span>
+          <p>sources captured</p>
         </div>
         <div>
-          <span>Daily</span>
-          <p>autonomous check</p>
+          <span>Reviewed</span>
+          <p>snapshot publication</p>
         </div>
         <div>
           <span>0</span>
@@ -96,7 +103,7 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Clock3 size={16} />
-              Last checked {checkedLabel}
+              Reviewed snapshot {checkedLabel}
             </div>
             <h2 id="snapshot-heading">Latest Signals</h2>
           </div>
