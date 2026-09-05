@@ -3,12 +3,53 @@ async (page) => {
   const baseUrl = currentUrl && currentUrl !== 'about:blank'
     ? await page.evaluate(() => window.location.origin)
     : 'http://localhost:5173';
-  const outputDir = 'output/playwright/mobile-audit';
+  const runId = currentUrl.match(/[?&]__longmont_mobile_audit_run=([A-Za-z0-9_-]+)(?:[&#]|$)/)?.[1] || 'manual';
+  if (!/^[A-Za-z0-9_-]{1,80}$/.test(runId)) throw new Error('Invalid mobile audit run id.');
+  const outputDir = `output/playwright/mobile-audit/${runId}`;
   const viewports = [
     { name: 'narrow-phone', width: 360, height: 740 },
     { name: 'iphone-12', width: 390, height: 844 },
     { name: 'large-phone', width: 430, height: 932 },
+    { name: 'desktop-smoke', width: 1280, height: 800, smoke: true },
   ];
+  const runtimeFailures = [];
+  const runtimeChecks = [];
+  let activeRoute = 'bootstrap';
+  const optionalApiPaths = new Set(['/api/model-watch', '/api/scheduled-edition', '/api/newsletter/subscribe']);
+  page.on?.('pageerror', (error) => runtimeFailures.push({ route: activeRoute, type: 'pageerror', message: error.message }));
+  page.on?.('console', (message) => {
+    const text = message.text();
+    // HTTP failures are classified with their URL by the response listener below.
+    if (message.type() === 'error' && !/^Failed to load resource: the server responded with a status of \d{3}/.test(text)) {
+      runtimeFailures.push({ route: activeRoute, type: 'console', message: text });
+    }
+  });
+  const sameOriginPath = (value) => value.startsWith(`${baseUrl}/`)
+    ? value.slice(baseUrl.length).split(/[?#]/, 1)[0]
+    : null;
+  page.on?.('requestfailed', (request) => {
+    const url = request.url();
+    const path = sameOriginPath(url);
+    const error = request.failure()?.errorText ?? 'request failed';
+    if (path && !optionalApiPaths.has(path) && !/ERR_ABORTED/.test(error)) {
+      runtimeFailures.push({ route: activeRoute, type: 'requestfailed', url, message: error });
+    }
+  });
+  page.on?.('response', (response) => {
+    const routeAtResponse = activeRoute;
+    runtimeChecks.push((async () => {
+      const url = response.url();
+      const path = sameOriginPath(url);
+      const status = response.status();
+      const controlledOptional4xx = optionalApiPaths.has(path) && status >= 400 && status < 500;
+      const controlledNewsletterFallback = path === '/api/newsletter/subscribe'
+        && status === 502
+        && await response.headerValue('x-longmont-audit-expected') === 'newsletter-fallback';
+      if (path && status >= 400 && !controlledOptional4xx && !controlledNewsletterFallback) {
+        runtimeFailures.push({ route: routeAtResponse, type: 'response', url, status });
+      }
+    })());
+  });
   const seededRoutes = [
     '/',
     '/tools',
@@ -65,9 +106,21 @@ async (page) => {
     });
   }
 
-  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
+  activeRoute = '/';
+  const bootstrapResponse = await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+  if (bootstrapResponse && !bootstrapResponse.ok()) {
+    throw new Error(`Bootstrap navigation failed with status ${bootstrapResponse.status()}`);
+  }
+  await page.waitForFunction(
+    () => Boolean(document.querySelector('#archive-heading')),
+    undefined,
+    { timeout: 10_000 }
+  );
   const discoveredRoutes = await sameOriginRoutesFromCurrentPage();
   const latestEditionRoute = discoveredRoutes.find((route) => route.startsWith('/edition/'));
+  if (!requestedRoutes && !latestEditionRoute) {
+    throw new Error('Full mobile audit could not discover a linked edition from the ready home archive.');
+  }
   const routes = Array.from(new Set(
     requestedRoutes ?? [...seededRoutes, latestEditionRoute].filter(Boolean)
   ));
@@ -76,16 +129,41 @@ async (page) => {
 
   for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const viewportRoutes = viewport.smoke ? routes.filter((route) => ['/', '/tools', '/newsletter'].includes(route)) : routes;
 
-    for (const route of routes) {
+    for (const route of viewportRoutes) {
+      activeRoute = route;
       const url = `${baseUrl}${route}`;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      const navigationResponse = await page.goto(url, { waitUntil: 'domcontentloaded' });
+      if (navigationResponse && !navigationResponse.ok()) {
+        throw new Error(`Navigation ${route} failed with status ${navigationResponse.status()}`);
+      }
+      await page.waitForFunction(
+        (currentRoute) => {
+          const identities = {
+            '/': { selector: '#archive-heading', text: 'All Editions' },
+            '/tools': { selector: 'main h1', text: 'AI Capabilities Matrix' },
+            '/model-watch': { selector: '#model-watch-title', text: 'Model Watch' },
+            '/timeline': { selector: '#timeline-title', text: 'AI Timeline' },
+            '/newsletter': { selector: '#newsletter-title', text: 'The LongmontAI AI Briefing' },
+            '/leaderboard': { selector: '#leaderboard-title', text: 'Leaderboard' },
+            '/about': { selector: 'main h1', text: 'About LongmontAI' },
+          };
+          const identity = identities[currentRoute] ?? (currentRoute.startsWith('/edition/')
+            ? { selector: 'article h1' }
+            : { selector: 'main h1' });
+          const heading = document.querySelector(identity.selector);
+          const text = heading?.textContent?.replace(/\s+/g, ' ').trim();
+          return Boolean(text && (!identity.text || text === identity.text));
+        },
+        route,
+        { timeout: 10_000 }
+      );
       await page.waitForFunction(
         () => Array.from(document.images).every((image) => image.complete),
         undefined,
         { timeout: 10_000 }
       );
-      await page.waitForTimeout(100);
 
       const audit = await page.evaluate(() => {
         const viewportWidth = window.innerWidth;
@@ -210,6 +288,74 @@ async (page) => {
     }
   }
 
+  if (typeof page.getByRole === 'function') {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    if (routes.includes('/')) {
+      activeRoute = '/';
+      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: 'Open navigation menu' }).click();
+      await page.getByRole('navigation', { name: 'Menu navigation' }).getByRole('link', { name: 'Newsletter' }).click();
+      await page.getByRole('heading', { name: 'The LongmontAI AI Briefing' }).waitFor();
+
+      activeRoute = '/';
+      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+      await page.getByPlaceholder('Search editions').fill('no-such-edition-contract-value');
+      await page.getByRole('heading', { name: 'No editions found' }).waitFor();
+      await page.getByRole('button', { name: 'Clear filters' }).click();
+      await page.locator('.home-archive-row').first().waitFor();
+    }
+
+    if (routes.includes('/tools')) {
+      activeRoute = '/tools';
+      await page.goto(`${baseUrl}/tools`, { waitUntil: 'domcontentloaded' });
+      const toolCell = page.getByRole('button', { name: /: [1-9][0-9]* tools$/ }).first();
+      await toolCell.click();
+      await page.getByText('Input → Output', { exact: true }).waitFor();
+    }
+
+    if (routes.includes('/timeline')) {
+      activeRoute = '/timeline';
+      await page.goto(`${baseUrl}/timeline`, { waitUntil: 'domcontentloaded' });
+      await page.getByRole('button', { name: 'Matrix' }).click();
+      await page.getByRole('table', { name: 'AI timeline event matrix' }).waitFor();
+    }
+
+    if (routes.includes('/newsletter')) {
+      let newsletterMode = 'success';
+      await page.route('**/api/newsletter/subscribe', async (route) => {
+        if (newsletterMode === 'success') {
+          await route.fulfill({ status: 202, contentType: 'application/json', body: JSON.stringify({ ok: true, status: 'confirmation_pending' }) });
+        } else if (newsletterMode === 'known-error') {
+          await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'invalid_email', message: 'Enter a valid email address.' }) });
+        } else {
+          await route.fulfill({
+            status: 502,
+            contentType: 'text/html',
+            headers: { 'x-longmont-audit-expected': 'newsletter-fallback' },
+            body: '<h1>Bad Gateway</h1>',
+          });
+        }
+      });
+      activeRoute = '/newsletter';
+      await page.goto(`${baseUrl}/newsletter`, { waitUntil: 'domcontentloaded' });
+      const signup = page.locator('longmont-newsletter-signup');
+      await signup.locator('input[name="email"]').fill('browser-contract@example.invalid');
+      await signup.getByRole('button', { name: 'Get the briefing' }).click();
+      await signup.getByText(/check your inbox/i).waitFor();
+      newsletterMode = 'known-error';
+      await signup.locator('input[name="email"]').fill('browser-contract@example.invalid');
+      await signup.getByRole('button', { name: 'Get the briefing' }).click();
+      await signup.getByText(/valid email address/i).waitFor();
+      newsletterMode = 'html-fallback';
+      await signup.locator('input[name="email"]').fill('browser-contract@example.invalid');
+      await signup.getByRole('button', { name: 'Get the briefing' }).click();
+      await signup.getByText('Newsletter signup is temporarily unavailable.').waitFor();
+      await page.unroute('**/api/newsletter/subscribe');
+    }
+  }
+
+  await Promise.all(runtimeChecks);
   const failures = results.filter((result) =>
     result.scrollWidth > result.viewportWidth + 1 ||
     result.bodyScrollWidth > result.viewportWidth + 1 ||
@@ -219,13 +365,14 @@ async (page) => {
     result.unreadableReleaseTables.length > 0
   );
 
-  if (failures.length > 0) {
-    throw new Error(`Mobile audit failed: ${JSON.stringify(failures, null, 2)}`);
+  if (failures.length > 0 || runtimeFailures.length > 0) {
+    throw new Error(`Mobile audit failed: ${JSON.stringify({ layout: failures, runtime: runtimeFailures }, null, 2)}`);
   }
 
   return {
     status: 'PASS',
     routes,
+    runtimeFailures,
     screenshots: results.flatMap((result) => result.screenshot ? [result.screenshot] : []),
   };
 }

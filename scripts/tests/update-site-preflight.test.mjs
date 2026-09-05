@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
+import { cp, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import scheduledRelease from '../../src/generated/scheduled-release/server.mjs';
 
@@ -9,13 +13,36 @@ const scheduledEditionOwners = [
   'src/articles/scheduledEdition.ts',
   scheduledRelease.source.article,
 ];
-const { stdout } = await execFileAsync(process.execPath, [
-  new URL('../update-site-preflight.mjs', import.meta.url).pathname,
-  '--as-of',
-  '2026-08-05',
-  '--json',
-]);
-const report = JSON.parse(stdout);
+const sourceRoot = fileURLToPath(new URL('../../', import.meta.url)).replace(/\/$/, '');
+const portableRoot = await mkdtemp(path.join(tmpdir(), 'longmont-update-site-portable-'));
+
+async function copy(relativePath) {
+  const destination = path.join(portableRoot, relativePath);
+  await mkdir(path.dirname(destination), { recursive: true });
+  await cp(path.join(sourceRoot, relativePath), destination);
+}
+
+let report;
+try {
+  await Promise.all([
+    copy('scripts/update-site-preflight.mjs'),
+    copy('scripts/model-watch-sources.mjs'),
+    copy('src/data/modelWatch.ts'),
+    copy('src/data/timeline.ts'),
+    copy('src/generated/scheduled-release/server.mjs'),
+  ]);
+  const { stdout } = await execFileAsync(process.execPath, [
+    path.join(portableRoot, 'scripts/update-site-preflight.mjs'),
+    '--as-of',
+    '2026-08-05',
+    '--json',
+  ]);
+  report = JSON.parse(stdout);
+} finally {
+  await rm(portableRoot, { recursive: true, force: true });
+}
+
+assert.notEqual(report.repository.detectedRoot, sourceRoot);
 
 assert.deepEqual(report.window, {
   timeZone: 'America/Denver',

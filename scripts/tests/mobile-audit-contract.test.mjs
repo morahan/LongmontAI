@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { access, chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -45,9 +45,10 @@ async function fixture() {
 }
 
 test('hook and exhaustive local-CI wiring preserve their distinct scopes', async () => {
-  const [packageJson, localCi, preCommit, prePush, browserRunner, audit, editorGuide] = await Promise.all([
+  const [packageJson, localCi, testSuite, preCommit, prePush, browserRunner, audit, editorGuide] = await Promise.all([
     readFile(path.join(root, 'package.json'), 'utf8').then(JSON.parse),
     readFile(path.join(root, 'scripts/local-ci.sh'), 'utf8'),
+    readFile(path.join(root, 'scripts/test-suite.mjs'), 'utf8'),
     readFile(path.join(root, '.githooks/pre-commit'), 'utf8'),
     readFile(path.join(root, '.githooks/pre-push'), 'utf8'),
     readFile(path.join(root, 'scripts/run-mobile-browser-audit.sh'), 'utf8'),
@@ -56,13 +57,15 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   ]);
 
   assert.equal(packageJson.scripts['test:mobile'], 'bash scripts/run-mobile-audit.sh');
-  assert.match(localCi, /npm run test:mobile-contract/);
+  assert.match(localCi, /npm test/);
+  assert.match(testSuite, /'test:mobile-contract'/);
   assert.match(localCi, /MOBILE_AUDIT_HEADED=0 env -u MOBILE_AUDIT_ROUTES npm run test:mobile/);
   assert.doesNotMatch(localCi, /test:mobile:staged/);
   assert.match(preCommit, /run-targeted-mobile-audit\.mjs staged/);
   assert.match(prePush, /run-targeted-mobile-audit\.mjs push/);
   assert.match(prePush, /cat >"\$PUSH_REFS"/);
   assert.equal(packageJson.scripts['audit:mobile'], 'bash scripts/run-mobile-browser-audit.sh');
+  assert.match(browserRunner, /MOBILE_AUDIT_PLAYWRIGHT_CLI/);
   assert.match(browserRunner, /MOBILE_AUDIT_HEADED/);
   assert.match(browserRunner, /browserName.*chromium/);
   assert.match(browserRunner, /launchOptions.*headless.*true/);
@@ -72,6 +75,11 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   assert.match(audit, /__longmont_mobile_audit_routes/);
   assert.doesNotMatch(audit, /process\.env\.MOBILE_AUDIT_ROUTES/);
   assert.match(audit, /mediaLayoutFailures/);
+  assert.match(audit, /pageerror/);
+  assert.match(audit, /desktop-smoke/);
+  assert.match(audit, /invalid_email/);
+  assert.match(audit, /newsletter-fallback/);
+  assert.match(audit, /Newsletter signup is temporarily unavailable/);
   for (const route of FULL_ROUTES) assert.ok(audit.includes(`'${route}'`), `full audit is missing ${route}`);
   assert.match(audit, /latestEditionRoute/);
   assert.match(editorGuide, /selects from the staged\s+snapshot/);
@@ -116,26 +124,33 @@ esac
   });
   const commands = async () => (await readFile(logPath, 'utf8')).trim().split('\n');
 
-  const headless = run({ MOBILE_AUDIT_ROUTES: JSON.stringify(['/', '/edition/test']) });
+  const headless = run({
+    CODEX_HOME: path.join(directory, 'unused-codex-home'),
+    MOBILE_AUDIT_PLAYWRIGHT_CLI: cliPath,
+    MOBILE_AUDIT_RUN_ID: 'contract-headless',
+    MOBILE_AUDIT_ROUTES: JSON.stringify(['/', '/edition/test']),
+  });
   assert.equal(headless.status, 0, headless.stderr);
   const headlessCommands = await commands();
   assert.equal(headlessCommands.length, 3);
   const session = headlessCommands[0].match(/^--session (\S+) /)?.[1];
   assert.match(session, /^longmont-mobile-audit-/);
   assert.ok(headlessCommands.every((command) => command.startsWith(`--session ${session} `)));
-  assert.match(headlessCommands[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_routes=/);
+  assert.match(headlessCommands[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_run=contract-headless&__longmont_mobile_audit_routes=/);
+  await assert.doesNotReject(() => access(path.join(directory, 'output/playwright/mobile-audit/contract-headless')));
   assert.match(headlessCommands[0], / --config \/.*longmont-mobile-audit-playwright\./);
   assert.doesNotMatch(headlessCommands[0], /(?:^|\s)(?:--headed|--browser(?:=|\s+)chrome)(?:\s|$)/);
   assert.match(headlessCommands[1], / run-code --filename scripts\/mobile-playwright-audit\.js$/);
   assert.match(headlessCommands[2], / close$/);
 
   await writeFile(logPath, '');
-  const headed = run({ MOBILE_AUDIT_HEADED: '1' });
+  const headed = run({ MOBILE_AUDIT_HEADED: '1', MOBILE_AUDIT_RUN_ID: 'contract-headed' });
   assert.equal(headed.status, 0, headed.stderr);
-  assert.match((await commands())[0], / open http:\/\/audit\.test --browser chrome --headed$/);
+  assert.match((await commands())[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_run=contract-headed --browser chrome --headed$/);
+  await assert.doesNotReject(() => access(path.join(directory, 'output/playwright/mobile-audit/contract-headed')));
 
   await writeFile(logPath, '');
-  const failedAudit = run({ MOBILE_AUDIT_TEST_FAIL: '1' });
+  const failedAudit = run({ MOBILE_AUDIT_PLAYWRIGHT_CLI: cliPath, MOBILE_AUDIT_TEST_FAIL: '1' });
   assert.equal(failedAudit.status, 17);
   assert.match((await commands()).at(-1), / close$/);
 
@@ -149,11 +164,21 @@ esac
   const invalidMode = run({ MOBILE_AUDIT_HEADED: 'sometimes' });
   assert.equal(invalidMode.status, 2);
   assert.match(invalidMode.stderr, /must be 0 or 1/);
+
+  const missingOverride = run({ MOBILE_AUDIT_PLAYWRIGHT_CLI: path.join(directory, 'missing-cli') });
+  assert.equal(missingOverride.status, 1);
+  assert.match(missingOverride.stderr, /must name an existing executable Playwright CLI launcher/);
+
+  const nonExecutable = path.join(directory, 'not-executable-cli');
+  await writeFile(nonExecutable, '#!/usr/bin/env bash\nexit 0\n');
+  const nonExecutableOverride = run({ MOBILE_AUDIT_PLAYWRIGHT_CLI: nonExecutable });
+  assert.equal(nonExecutableOverride.status, 1);
+  assert.match(nonExecutableOverride.stderr, /must name an existing executable Playwright CLI launcher/);
 });
 
 test('encoded targeted routes reach audit code before navigation and invalid transport fails closed', async () => {
   const source = await readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8');
-  const audit = vm.runInNewContext(`(${source})`, { Error, JSON, Array, Math, Set });
+  const audit = vm.runInNewContext(`(${source})`, { Error, JSON, Array, Math, Set, URL });
   const routes = ['/', '/edition/edition-2099-01-01-target'];
   const encoded = Buffer.from(JSON.stringify(routes)).toString('base64url');
   const navigations = [];
@@ -186,6 +211,103 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
 
   const invalidPage = { ...page, url: () => 'http://audit.test/?__longmont_mobile_audit_routes=not_json' };
   await assert.rejects(() => audit(invalidPage), /Invalid targeted mobile audit route transport/);
+});
+
+test('semantic audit fails wrong route identity, navigation errors, page exceptions, and required-resource 500s', async () => {
+  const source = await readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8');
+
+  async function runScenario({ fullScope = false, wrongIdentity = false, navigationStatus = 200, pageError = false, resourceStatus = 200 }) {
+    const context = { Error, JSON, Array, Math, Set, URL, document: undefined };
+    const audit = vm.runInNewContext(`(${source})`, context);
+    const encoded = Buffer.from(JSON.stringify(['/tools'])).toString('base64url');
+    const listeners = new Map();
+    let evaluateCount = 0;
+    let emitted = false;
+    const page = {
+      url: () => fullScope
+        ? 'http://audit.test/?__longmont_mobile_audit_run=semantic'
+        : `http://audit.test/?__longmont_mobile_audit_run=semantic&__longmont_mobile_audit_routes=${encoded}`,
+      on: (event, listener) => listeners.set(event, listener),
+      evaluate: async (_callback, argument) => {
+        evaluateCount += 1;
+        if (evaluateCount === 1) return 'http://audit.test';
+        if (typeof argument === 'string') {
+          return { canonical: argument, parsed: JSON.parse(Buffer.from(argument, 'base64url').toString('utf8')) };
+        }
+        if (evaluateCount === (fullScope ? 2 : 3)) return [];
+        return {
+          title: 'fixture', viewportWidth: 390, scrollWidth: 390, bodyScrollWidth: 390,
+          overflowingElements: [], brokenImages: [], mediaLayoutFailures: [], unreadableReleaseTables: [],
+        };
+      },
+      goto: async (url) => {
+        if (!emitted && url.endsWith('/tools')) {
+          emitted = true;
+          if (pageError) listeners.get('pageerror')?.(new Error('injected page exception'));
+          if (resourceStatus >= 400) listeners.get('response')?.({
+            url: () => 'http://audit.test/assets/required.js',
+            status: () => resourceStatus,
+            headerValue: async () => null,
+          });
+        }
+        const status = url.endsWith('/tools') ? navigationStatus : 200;
+        return { ok: () => status < 400, status: () => status };
+      },
+      setViewportSize: async () => {},
+      waitForFunction: async (callback, argument) => {
+        if (argument === '/tools') {
+          context.document = {
+            querySelector: () => ({ textContent: wrongIdentity ? 'Wrong page' : 'AI Capabilities Matrix' }),
+            images: [],
+          };
+          if (!callback(argument)) throw new Error('route readiness timed out');
+        }
+      },
+      screenshot: async () => {},
+    };
+    return audit(page);
+  }
+
+  await assert.rejects(() => runScenario({ fullScope: true }), /could not discover a linked edition/);
+  await assert.rejects(() => runScenario({ wrongIdentity: true }), /route readiness timed out/);
+  await assert.rejects(() => runScenario({ navigationStatus: 503 }), /Navigation \/tools failed with status 503/);
+  await assert.rejects(() => runScenario({ pageError: true }), /injected page exception/);
+  await assert.rejects(() => runScenario({ resourceStatus: 500 }), /required\.js/);
+});
+
+test('concurrent mobile audit launchers allocate distinct ports', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'longmont-mobile-concurrency-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const bin = path.join(directory, 'bin');
+  const log = path.join(directory, 'audit-urls.log');
+  await mkdir(bin, { recursive: true });
+  await writeFile(path.join(bin, 'npm'), `#!/usr/bin/env bash
+set -eu
+if [[ " $* " == *" run dev "* ]]; then
+  trap 'exit 0' TERM INT
+  while :; do sleep 1; done
+fi
+if [[ " $* " == *" run audit:mobile "* ]]; then
+  printf '%s\\n' "$MOBILE_AUDIT_BASE_URL" >>"$MOBILE_AUDIT_TEST_LOG"
+fi
+`);
+  await writeFile(path.join(bin, 'curl'), '#!/usr/bin/env bash\nexit 0\n');
+  await Promise.all(['npm', 'curl'].map((name) => chmod(path.join(bin, name), 0o755)));
+
+  const run = () => new Promise((resolve, reject) => {
+    const child = spawn('bash', [path.join(root, 'scripts/run-mobile-audit.sh')], {
+      cwd: directory,
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, MOBILE_AUDIT_TEST_LOG: log },
+      stdio: 'ignore',
+    });
+    child.on('error', reject);
+    child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`launcher exited ${code}`)));
+  });
+  await Promise.all([run(), run()]);
+  const urls = (await readFile(log, 'utf8')).trim().split('\n');
+  assert.equal(urls.length, 2);
+  assert.equal(new Set(urls).size, 2);
+  assert.ok(urls.every((url) => /^http:\/\/127\.0\.0\.1:\d+$/.test(url)));
 });
 
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {

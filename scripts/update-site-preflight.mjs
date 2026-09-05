@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 import { modelWatchSources as detectorSources } from './model-watch-sources.mjs';
 
 const root = new URL('../', import.meta.url);
-const expectedRoot = '/Users/msfm/Creations/Coding/LongmontAI';
 
 function parseArguments(args) {
   const options = { asOf: undefined, json: false };
@@ -84,8 +84,7 @@ const timelineDates = literalMatches(timeline, /\bdate: '(\d{4}-\d{2}-\d{2})'/g)
 
 const report = {
   repository: {
-    expectedRoot,
-    detectedRoot: root.pathname.replace(/\/$/, ''),
+    detectedRoot: fileURLToPath(root).replace(/\/$/, ''),
   },
   window: {
     timeZone: 'America/Denver',
@@ -116,10 +115,6 @@ const report = {
     duplicateTimelineIds: duplicates(timelineIds),
   },
 };
-
-if (report.repository.detectedRoot !== expectedRoot) {
-  throw new Error(`This command is site-specific. Expected ${expectedRoot}, found ${report.repository.detectedRoot}`);
-}
 
 if (report.integrity.duplicateModelIds.length || report.integrity.duplicateTimelineIds.length) {
   process.exitCode = 1;

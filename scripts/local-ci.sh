@@ -8,16 +8,8 @@ echo "Local verification: deterministic scanners, Codex security review, lint, c
 SECURITY_COMMIT_AGENT_REVIEW=1 npm run security:review
 npm run lint
 npm run release:check
-npm run release:self-test
-npm run test:scheduled-release
+npm test
 npm run content:check-assets
-npm run security:test
-npm run test:loop-push
-npm run test:update-site
-npm run test:newsletter
-npm run test:mobile-contract
-npm run test:flows-contract
-npm run test:tools-matrix
 npm run build
 MOBILE_AUDIT_HEADED=0 env -u MOBILE_AUDIT_ROUTES npm run test:mobile
 echo "Local verification passed."

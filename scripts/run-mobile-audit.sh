@@ -6,7 +6,20 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
 HOST="127.0.0.1"
-PORT="4173"
+PORT="${MOBILE_AUDIT_PORT:-$(node - <<'NODE'
+const net = await import('node:net');
+const server = net.createServer();
+server.listen(0, '127.0.0.1', () => {
+  const address = server.address();
+  process.stdout.write(String(address.port));
+  server.close();
+});
+NODE
+)}"
+if [[ ! "$PORT" =~ ^[0-9]+$ ]] || (( PORT < 1 || PORT > 65535 )); then
+  echo "MOBILE_AUDIT_PORT must be an integer from 1 to 65535." >&2
+  exit 2
+fi
 BASE_URL="http://${HOST}:${PORT}"
 LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmontai-mobile-audit-${PORT}.XXXXXXXX")"
 
