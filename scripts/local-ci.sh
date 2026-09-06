@@ -14,6 +14,8 @@ npm run content:check-assets
 npm run security:test
 npm run test:loop-push
 npm run test:update-site
+npm run test:content
+npm run test:model-watch
 npm run test:newsletter
 npm run test:mobile-contract
 npm run test:flows-contract

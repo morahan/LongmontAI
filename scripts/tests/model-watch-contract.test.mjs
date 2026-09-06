@@ -41,7 +41,16 @@ assert.deepEqual(
   `model watch snapshots must not repeat a company/date/source event: ${duplicateSnapshotIdentities.join(', ')}`,
 );
 
-assert.match(workflow, /cron: "17 13 \* \* 1"/);
+assert.match(workflow, /cron: "17 13 \* \* \*"/);
+assert.doesNotMatch(workflow, /cron: "17 13 \* \* 1"/);
+assert.match(workflow, /workflow_dispatch:/);
+assert.match(workflow, /permissions: \{\}/);
+assert.match(workflow, /needs: generate/);
+assert.match(workflow, /contents: read/);
+assert.match(workflow, /npm run lint\s+npm run build/);
+const proposalPaths = workflow.match(/add-paths: \|\n((?: {12}[^\n]+\n?)+)/)?.[1].trim().split('\n').map((line) => line.trim());
+assert.deepEqual(proposalPaths, ['src/data/modelWatch.generated.json', 'content/review/latest.json', 'content/review/biweekly/*.md']);
+assert.match(workflow, /peter-evans\/create-pull-request@/);
 assert.match(editorGuide, /npm run model-watch:update/);
 assert.match(updater, /Required Model Watch sources failed/);
 
