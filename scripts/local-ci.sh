@@ -18,6 +18,7 @@ npm run test:newsletter
 npm run test:mobile-contract
 npm run test:flows-contract
 npm run test:tools-matrix
+npm run test:space-background
 npm run build
 MOBILE_AUDIT_HEADED=0 env -u MOBILE_AUDIT_ROUTES npm run test:mobile
 echo "Local verification passed."
