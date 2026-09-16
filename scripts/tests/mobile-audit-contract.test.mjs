@@ -158,6 +158,7 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   const encoded = Buffer.from(JSON.stringify(routes)).toString('base64url');
   const navigations = [];
   let evaluateCount = 0;
+  let unreadableMarkdownTables = [];
   const page = {
     url: () => `http://audit.test/?__longmont_mobile_audit_routes=${encoded}`,
     evaluate: async (_callback, argument) => {
@@ -170,6 +171,7 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
       return {
         title: 'fixture', viewportWidth: 390, scrollWidth: 390, bodyScrollWidth: 390,
         overflowingElements: [], brokenImages: [], mediaLayoutFailures: [], unreadableReleaseTables: [],
+        unreadableMarkdownTables,
       };
     },
     goto: async (url) => { navigations.push(url); },
@@ -183,6 +185,10 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   assert.deepEqual([...result.routes], routes);
   assert.deepEqual([...new Set(navigations)], ['http://audit.test/', ...routes.slice(1).map((route) => `http://audit.test${route}`)]);
   assert.ok(!navigations.some((url) => url.includes('/tools')));
+
+  evaluateCount = 0;
+  unreadableMarkdownTables = [{ minimumCellWidth: 70, minimumFontSize: 12 }];
+  await assert.rejects(() => audit(page), /Mobile audit failed/);
 
   const invalidPage = { ...page, url: () => 'http://audit.test/?__longmont_mobile_audit_routes=not_json' };
   await assert.rejects(() => audit(invalidPage), /Invalid targeted mobile audit route transport/);

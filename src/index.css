@@ -1722,6 +1722,25 @@ main .container > * {
     word-break: break-word;
   }
 
+  /* Native Markdown tables with 3+ columns scroll instead of squeezing words.
+     Keep the existing compact layout for two-column comparisons. */
+  .article-layout .markdown-table-scroll {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .article-layout .markdown-table-scroll table:has(tr > :nth-child(3)) {
+    min-width: 42rem;
+    table-layout: auto;
+  }
+
+  .article-layout .markdown-table-scroll table:has(tr > :nth-child(3)) :is(th, td) {
+    min-width: 10rem;
+    font-size: 0.875rem;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
   /* Data-dense release tables stay legible through their own horizontal scroller. */
   .article-layout .release-table-wrap table {
     min-width: 38rem;
