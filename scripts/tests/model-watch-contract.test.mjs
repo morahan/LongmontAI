@@ -142,4 +142,53 @@ try {
   globalThis.fetch = originalFetch;
 }
 
-console.log('model watch contract: PASS');
+// Execute the production TypeScript helpers/data, not a test copy of ranking logic.
+const { stripTypeScriptTypes } = await import('node:module');
+async function loadTs(path) {
+  const source = await readFile(new URL(path, import.meta.url), 'utf8');
+  const outputText = stripTypeScriptTypes(source);
+  return import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+}
+const { modelWatchModels, modelBenchmarkDefinitions } = await loadTs('../../src/data/modelWatch.ts');
+const { rankBenchmarkModels, benchmarkRange, benchmarkPosition } = await loadTs('../../src/lib/benchmarkRanking.ts');
+const definition = (key) => modelBenchmarkDefinitions.find((entry) => entry.key === key);
+const ranked = (key) => rankBenchmarkModels(modelWatchModels, definition(key)).filter((entry) => entry.rank !== null);
+assert.deepEqual(ranked('frontierCode11Main').map(({ model }) => model.benchmarks.frontierCode11Main.value), [43.6]);
+assert.deepEqual(ranked('aaCodingAgent11').map(({ model }) => model.benchmarks.aaCodingAgent11.value), [80, 77.4, 74.6]);
+assert.deepEqual(ranked('terminalBench30ClaudeCode').map(({ model }) => model.benchmarks.terminalBench30ClaudeCode.value), [28.3]);
+assert.deepEqual(ranked('terminalBench21DeepSeek').map(({ model }) => model.benchmarks.terminalBench21DeepSeek.value), [82.7]);
+for (const key of ['terminalBench', 'frontierCode', 'aaCodingAgent', 'terminalBench21']) {
+  assert.equal(ranked(key).length, 0, `${key} must remain unranked`);
+  assert.ok(modelWatchModels.some((model) => model.benchmarks[key]), `${key} retains reported values`);
+}
+// Every original affected value/note survives, regardless of the new identity.
+const expected = [
+  [28.3, 'Vendor-reported on Terminal-Bench 3.0 under Claude Code 2.1.207.'],
+  [43.6, 'Vendor-reported on FrontierCode 1.1 Main.'],
+  [82.7, 'Vendor-reported on Terminal Bench 2.1 using DeepSeek Harness minimal mode at max effort.'],
+  [88.3, 'Vendor-reported with the KimiCode harness.'],
+  [88.8, 'Terminal-Bench 2.1.'], [87.4, 'Terminal-Bench 2.1.'], [84.7, 'Terminal-Bench 2.1.'],
+  [80, 'Artificial Analysis Coding Agent Index v1.1.'],
+  [77.4, 'Artificial Analysis Coding Agent Index v1.1.'],
+  [74.6, 'Artificial Analysis Coding Agent Index v1.1.'],
+  [75.8, 'Artificial Analysis Coding Agent Index.'], [29.3, undefined], [51.5, undefined], [54.2, undefined],
+];
+const affectedKeys = ['terminalBench', 'frontierCode', 'frontierCode11Main', 'aaCodingAgent11', 'aaCodingAgent', 'terminalBench21', 'terminalBench21DeepSeek', 'terminalBench30ClaudeCode'];
+const actual = modelWatchModels.flatMap((model) => affectedKeys.flatMap((key) => model.benchmarks[key] ? [[model.benchmarks[key].value, model.benchmarks[key].note]] : []));
+assert.deepEqual(actual.sort((a, b) => a[0] - b[0]), expected.sort((a, b) => a[0] - b[0]));
+const fixture = (name, value) => ({ name, benchmarks: value === undefined ? {} : { costPerTask: { value } } });
+const fixtures = [fixture('Missing', undefined), fixture('Zulu', 2), fixture('Alpha', 2), fixture('Cheap', 1), fixture('Invalid', NaN)];
+const cost = definition('costPerTask');
+assert.deepEqual(rankBenchmarkModels(fixtures, cost).map(({ model, rank }) => [model.name, rank]), [
+  ['Cheap', 1], ['Alpha', 2], ['Zulu', 2], ['Invalid', null], ['Missing', null],
+]);
+assert.deepEqual(rankBenchmarkModels(fixtures, { ...cost, higherIsBetter: true }).map(({ model, rank }) => [model.name, rank]), [
+  ['Alpha', 1], ['Zulu', 1], ['Cheap', 3], ['Invalid', null], ['Missing', null],
+]);
+assert.equal(fixtures[0].name, 'Missing', 'ranking must not mutate source order');
+assert.deepEqual(rankBenchmarkModels([], cost), []);
+assert.equal(benchmarkRange([]), null);
+assert.deepEqual(benchmarkRange([2, 2]), { min: 2, max: 2 });
+assert.equal(benchmarkPosition(2, 2, 2), 0.5);
+assert.deepEqual([1, 2, 3].map((value) => benchmarkPosition(value, 1, 3)), [0, 0.5, 1]);
+console.log('model watch contract: PASS (API, metric identity, provenance, ranking, ranges)');

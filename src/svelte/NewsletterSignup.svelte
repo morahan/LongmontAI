@@ -1,4 +1,4 @@
-<svelte:options customElement="longmont-newsletter-signup" />
+<svelte:options customElement={{ tag: 'longmont-newsletter-signup', props: { defaultCadence: { attribute: 'default-cadence' } } }} />
 
 <script lang="ts">
   import {
@@ -9,6 +9,7 @@
   let email = '';
   let name = '';
   let cadence: 'weekly' | 'biweekly' = 'weekly';
+  let cadenceChosen = false;
   let company = '';
   let status: 'idle' | 'loading' | 'success' | 'error' = 'idle';
   let message = '';
@@ -16,8 +17,8 @@
   export let source = 'newsletter-page';
   export let defaultCadence: 'weekly' | 'biweekly' = 'weekly';
 
-  $: if (defaultCadence === 'weekly' || defaultCadence === 'biweekly') {
-    cadence = cadence === 'weekly' || cadence === 'biweekly' ? cadence : defaultCadence;
+  $: if (!cadenceChosen && (defaultCadence === 'weekly' || defaultCadence === 'biweekly')) {
+    cadence = defaultCadence;
   }
 
   async function submit() {
@@ -84,11 +85,11 @@
     <legend>Cadence</legend>
     <div class="newsletter-cadence">
       <label class:active={cadence === 'weekly'}>
-        <input bind:group={cadence} type="radio" name="cadence" value="weekly" />
+        <input bind:group={cadence} on:change={() => cadenceChosen = true} on:click={() => cadenceChosen = true} type="radio" name="cadence" value="weekly" />
         <span>Weekly</span>
       </label>
       <label class:active={cadence === 'biweekly'}>
-        <input bind:group={cadence} type="radio" name="cadence" value="biweekly" />
+        <input bind:group={cadence} on:change={() => cadenceChosen = true} on:click={() => cadenceChosen = true} type="radio" name="cadence" value="biweekly" />
         <span>Bi-weekly</span>
       </label>
     </div>
@@ -108,6 +109,10 @@
 <style>
   :host {
     display: block;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
 
   .newsletter-signup {
@@ -190,8 +195,18 @@
     color: #fff;
   }
 
+  .newsletter-cadence label:has(input:focus-visible) {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+  }
+
   .newsletter-cadence input {
     position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
     opacity: 0;
     pointer-events: none;
   }

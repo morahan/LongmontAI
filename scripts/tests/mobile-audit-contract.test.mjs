@@ -303,6 +303,28 @@ test('semantic audit fails wrong route identity, navigation errors, page excepti
   await assert.rejects(() => runScenario({ resourceStatus: 500 }), /required\.js/);
 });
 
+test('readiness requires countdown identity and the exact rendered edition ID', async () => {
+  const source = await readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8');
+  const match = source.match(/(\(currentRoute\) => \{[\s\S]*?)\n        },\n        route,/);
+  assert.ok(match, 'actual browser readiness predicate must be inspectable');
+  const context = { document: { querySelector: () => null } };
+  const ready = vm.runInNewContext(`(${match[1]}\n})`, context);
+  context.document.querySelector = () => null;
+  assert.equal(ready('/countdown'), false, 'a generic heading is not countdown identity');
+  context.document.querySelector = (selector) => selector === '[data-page="countdown"] h1'
+    ? { textContent: 'Next meetup' } : null;
+  assert.equal(ready('/countdown'), true);
+  context.document.querySelector = (selector) => selector === 'article[data-edition-id]'
+    ? { getAttribute: () => 'edition-b', querySelector: () => ({ textContent: 'Unrelated edition' }) } : null;
+  assert.equal(ready('/edition/edition-a'), false);
+  assert.equal(ready('/edition/edition-b'), true);
+  context.document.querySelector = (selector) => selector === 'main h1' ? { textContent: 'Page not found' } : null;
+  assert.equal(ready('/countdown'), false, 'the unknown-page heading cannot satisfy countdown');
+  assert.equal(ready('/unknown'), false, 'unknown URLs need the separate recovery scenario');
+  assert.match(source, /audit-missing-page/);
+  assert.match(source, /audit-missing-edition/);
+});
+
 test('concurrent mobile audit launchers allocate distinct ports', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'longmont-mobile-concurrency-'));
   t.after(() => rm(directory, { recursive: true, force: true }));

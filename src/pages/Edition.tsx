@@ -35,7 +35,7 @@ const Edition: React.FC = () => {
     }
 
     return (
-        <article className="article-layout">
+        <article className="article-layout" data-edition-id={publishedEdition.id}>
             <div className="mb-8">
                 <Link
                     to="/"

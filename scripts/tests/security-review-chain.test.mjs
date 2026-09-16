@@ -13,13 +13,16 @@ async function exec(file, args, options = {}) {
   return execFileAsync(file, args, { encoding: 'utf8', ...options })
 }
 
-async function hashTree(path) {
+async function hashTree(path, excludeGit = false) {
   const hash = createHash('sha256')
   async function visit(current, relative = '') {
     const stat = await lstat(current)
     hash.update(`${relative}\0${stat.mode}\0${stat.size}\0`)
     if (stat.isDirectory()) {
-      for (const name of (await readdir(current)).sort()) await visit(join(current, name), join(relative, name))
+      for (const name of (await readdir(current)).sort()) {
+        if (excludeGit && name === '.git') continue
+        await visit(join(current, name), join(relative, name))
+      }
     } else if (stat.isFile()) {
       hash.update(await readFile(current))
     }
@@ -28,20 +31,22 @@ async function hashTree(path) {
   return hash.digest('hex')
 }
 
-async function callerGitState() {
+async function callerGitState(root = sourceRoot) {
   try {
-    const { stdout: commonOutput } = await exec('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: sourceRoot })
+    const { stdout: commonOutput } = await exec('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: root })
     const common = commonOutput.trim()
-    const [{ stdout: refs }, { stdout: config }, { stdout: head }] = await Promise.all([
-      exec('git', ['for-each-ref', '--format=%(refname)%00%(objectname)'], { cwd: sourceRoot }),
-      exec('git', ['config', '--local', '--null', '--list'], { cwd: sourceRoot }),
-      exec('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot }),
+    const [{ stdout: refs }, { stdout: config }, { stdout: head }, { stdout: indexPath }] = await Promise.all([
+      exec('git', ['for-each-ref', '--format=%(refname)%00%(objectname)'], { cwd: root }),
+      exec('git', ['config', '--local', '--null', '--list'], { cwd: root }),
+      exec('git', ['rev-parse', 'HEAD'], { cwd: root }),
+      exec('git', ['rev-parse', '--path-format=absolute', '--git-path', 'index'], { cwd: root }),
     ])
     return {
       refs: createHash('sha256').update(refs).digest('hex'),
       config: createHash('sha256').update(config).digest('hex'),
       head: head.trim(),
       objects: await hashTree(join(common, 'objects')),
+      index: createHash('sha256').update(await readFile(indexPath.trim())).digest('hex'),
     }
   } catch {
     return null
@@ -98,6 +103,7 @@ Object.assign(isolatedEnv, {
   XDG_CONFIG_HOME: join(home, '.config'),
   PATH: `${bin}:${process.env.PATH}`,
   SECURITY_TEST_LOG: scannerLog,
+  SECURITY_TEST_REAL_NODE: process.execPath,
 })
 
 const run = (file, args = [], options = {}) => execFileAsync(file, args, {
@@ -147,20 +153,56 @@ try {
   await writeFile(join(bin, 'gitleaks'), `#!/usr/bin/env bash
 set -eu
 record="gitleaks:$*"
+if [[ "\${2:-}" == --staged ]]; then
+  "$SECURITY_TEST_REAL_NODE" -e '
+    const fs = require("node:fs"), path = require("node:path");
+    const index = process.env.GIT_INDEX_FILE, parent = path.dirname(index);
+    for (const [file, mode] of [[index, 0o600], [parent, 0o700], [path.join(parent, "staged-snapshot"), 0o700]]) {
+      if ((fs.statSync(file).mode & 0o777) !== mode) process.exit(9);
+    }
+    const empty = path.join(parent, "staged-snapshot", "staged-empty.txt");
+    if (fs.existsSync(empty)) fs.appendFileSync(process.env.SECURITY_TEST_LOG, "empty-file-bytes:" + fs.readFileSync(empty).length + "\\n");
+  '
+fi
 if [[ "\${1:-}" == "dir" ]]; then
   target="\${!#}"
   record="$record:content=$(tr -d '\\n' <"$target/tracked.txt")"
   [[ ! -e "$target/untracked.txt" ]]
 fi
 printf '%s\\n' "$record" >>"$SECURITY_TEST_LOG"
+exit "\${SECURITY_TEST_GITLEAKS_EXIT:-0}"
 `)
   await writeFile(join(bin, 'osv-scanner'), `#!/usr/bin/env bash
 set -eu
 printf 'osv:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
+found=0
+while IFS= read -r -d '' file; do
+  found=1
+  content=$(tr -d '\\n' <"$file")
+  printf 'dependency-bytes:%s:%s\\n' "$file" "$content" >>"$SECURITY_TEST_LOG"
+  [[ "$content" != *REJECT_DEP* ]] || exit 2
+done < <(find . -name package-lock.json -type f -print0)
+[[ "$found" == 1 ]] || exit 128
+if [[ -n "\${SECURITY_TEST_MUTATE_WORKTREE:-}" ]]; then
+  printf 'REJECT_DEP-mutated\\n' >"$SECURITY_TEST_MUTATE_WORKTREE/package-lock.json"
+  printf 'REJECT_HEADER-mutated\\n' >"$SECURITY_TEST_MUTATE_WORKTREE/vercel.json"
+fi
 `)
   await writeFile(join(bin, 'node'), `#!/usr/bin/env bash
 set -eu
 printf 'node:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
+content=$(tr -d '\\n' <"$1")
+printf 'script-bytes:%s:%s\\n' "$1" "$content" >>"$SECURITY_TEST_LOG"
+[[ "$content" != *REJECT_SCRIPT* ]] || exit 3
+if [[ "$1" == scripts/tests/runtime-security-headers.mjs ]]; then
+  content=$(tr -d '\\n' <vercel.json)
+  printf 'header-bytes:%s\\n' "$content" >>"$SECURITY_TEST_LOG"
+  [[ "$content" != *REJECT_HEADER* ]] || exit 4
+fi
+case "\${1:-}" in
+  scripts/tests/security-review-chain.test.mjs) exit "\${SECURITY_TEST_POLICY_EXIT:-0}" ;;
+  scripts/tests/runtime-security-headers.mjs) exit "\${SECURITY_TEST_HEADERS_EXIT:-0}" ;;
+esac
 `)
   await Promise.all(['gitleaks', 'osv-scanner', 'node'].map((name) => chmod(join(bin, name), 0o755)))
 
@@ -187,6 +229,205 @@ printf 'node:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
   let lines = await scannerLines()
   assert.equal(lines.filter((line) => line.startsWith('gitleaks:git --staged')).length, 1)
   assert.equal(lines.filter((line) => line.startsWith('osv:')).length, 1, 'NUL-safe matching finds newline-containing dependency paths')
+  assert.ok(lines.join('\n').includes('dependency-bytes:./odd\nname/package-lock.json:{"lockfileVersion":3}'), 'newline path staged bytes are scanned')
+
+  // A-02: scanner findings and operational errors must survive the conditional
+  // gate wrapper. All status injection and Git writes stay in this fixture.
+  await writeFile(join(repo, 'vercel.json'), '{"fixture":true}\n')
+  await git(['add', 'vercel.json'])
+  async function assertStagedGateFailure(label, overrides, id) {
+    await clearLog()
+    const evidenceDirectory = join(fixture, `a02-evidence-${id}`)
+    let failure
+    await assert.rejects(runReview('staged', '', { env: {
+      ...isolatedEnv, ...overrides, SECURITY_REVIEW_EVIDENCE_DIR: evidenceDirectory,
+    } }), (error) => {
+      failure = error
+      return error.code === 1
+    })
+    assert.ok(failure.stdout.includes(`[FAIL] ${label}`), 'summary must mark the failed gate')
+    assert.ok(!failure.stdout.includes(`[PASS] ${label}`), 'failed gate cannot also pass')
+    const files = (await readdir(evidenceDirectory)).filter((name) => name.startsWith('evidence-'))
+    assert.equal(files.length, 1)
+    const evidence = await readFile(join(evidenceDirectory, files[0]), 'utf8')
+    assert.ok(evidence.includes(`failed_gates_begin\n${label}\nfailed_gates_end`), 'evidence names exactly the failed gate')
+    return failure
+  }
+  for (const status of [1, 2]) {
+    const failure = await assertStagedGateFailure('Secrets scan', {
+      SECURITY_TEST_GITLEAKS_EXIT: String(status),
+    }, `gitleaks-${status}`)
+    assert.doesNotMatch(failure.stdout, /Finding summary: no staged secrets detected/)
+    assert.equal(occurrences(await scannerLines(), 'gitleaks:git --staged'), 1)
+    assert.equal(occurrences(await scannerLines(), 'node:'), 2, 'independent policy lane still completes')
+  }
+  await assertStagedGateFailure('Security policy contract', {
+    SECURITY_TEST_POLICY_EXIT: '7', SECURITY_TEST_HEADERS_EXIT: '0',
+  }, 'first-policy')
+  lines = await scannerLines()
+  assert.equal(occurrences(lines.filter((line) => line.startsWith('node:')), 'scripts/tests/security-review-chain.test.mjs'), 1)
+  assert.equal(occurrences(lines.filter((line) => line.startsWith('node:')), 'scripts/tests/runtime-security-headers.mjs'), 0, 'first failure returns before a passing second command can mask it')
+
+  await assertStagedGateFailure('Security policy contract', {
+    SECURITY_TEST_POLICY_EXIT: '0', SECURITY_TEST_HEADERS_EXIT: '8',
+  }, 'headers')
+  assert.equal(occurrences(await scannerLines(), 'node:'), 2)
+
+  await clearLog()
+  const stagedPass = await runReview('staged', '', { env: {
+    ...isolatedEnv, SECURITY_TEST_GITLEAKS_EXIT: '0', SECURITY_TEST_POLICY_EXIT: '0', SECURITY_TEST_HEADERS_EXIT: '0',
+  } })
+  assert.match(stagedPass.stdout, /\[PASS\] Secrets scan/)
+  assert.match(stagedPass.stdout, /\[PASS\] Security policy contract/)
+  lines = await scannerLines()
+  assert.equal(occurrences(lines, 'gitleaks:git --staged'), 1)
+  assert.equal(occurrences(lines, 'node:'), 2, 'both successful policy commands execute')
+
+  // A-03: prove bytes, containment, and no caller Git/worktree mutation.
+  const snapshotEnv = { ...isolatedEnv, SECURITY_REVIEW_EVIDENCE_DIR: join(fixture, 'a03-evidence') }
+  async function checkSnapshot(expectedFailure = null, env = snapshotEnv, preserveWorktree = true) {
+    const before = await callerGitState(repo)
+    assert.ok(before, 'fixture Git state must be measurable')
+    const worktreeBefore = await hashTree(repo, true)
+    await clearLog()
+    if (expectedFailure) {
+      await assert.rejects(runReview('staged', '', { env }), (error) => {
+        assert.equal(error.code, 1)
+        assert.ok((error.stdout + error.stderr).includes(expectedFailure))
+        return true
+      })
+    } else {
+      await runReview('staged', '', { env })
+    }
+    assert.deepEqual(await callerGitState(repo), before, 'snapshot must preserve index bytes, objects, refs, HEAD and config')
+    if (preserveWorktree) assert.equal(await hashTree(repo, true), worktreeBefore, 'snapshot must preserve tracked and untracked files')
+    const records = await scannerLines()
+    const directories = [...new Set(records.filter((line) => /^(osv|node):cwd=/.test(line)).map((line) => line.split(':cwd=')[1].split(':')[0]))]
+    if (directories.length) {
+      assert.equal(directories.length, 1, 'all scoped readers share one snapshot')
+      assert.notEqual(directories[0], repo)
+      await assert.rejects(lstat(directories[0]), { code: 'ENOENT' }, 'snapshot cleaned on success/failure')
+    }
+    return records.join('\n')
+  }
+  for (const [file, rejected, gate, marker] of [
+    ['package-lock.json', 'REJECT_DEP', 'Dependency vulnerability audit', 'dependency-bytes:./package-lock.json:'],
+    ['vercel.json', 'REJECT_HEADER', 'Security policy contract', 'header-bytes:'],
+    ['scripts/tests/security-review-chain.test.mjs', 'REJECT_SCRIPT_POLICY', 'Security policy contract', 'script-bytes:scripts/tests/security-review-chain.test.mjs:'],
+    ['scripts/tests/runtime-security-headers.mjs', 'REJECT_SCRIPT_HEADERS', 'Security policy contract', 'script-bytes:scripts/tests/runtime-security-headers.mjs:'],
+  ]) {
+    for (const stagedBad of [true, false]) {
+      await git(['reset', '--hard', 'HEAD'])
+      const staged = stagedBad ? rejected : `SAFE_INDEX_${rejected}`.replace('REJECT_', '')
+      const working = stagedBad ? 'SAFE_WORKTREE' : rejected
+      await writeFile(join(repo, file), staged + '\n')
+      await git(['add', file])
+      await writeFile(join(repo, file), working + '\n')
+      if (file === 'package-lock.json' && stagedBad) {
+        // Negative control reproduces pre-A03 mutable-reader behavior only in
+        // the disposable script: the new byte/status assertions must catch it.
+        const legacyReaders = script.replaceAll('(cd "$staged_snapshot" &&', '(cd "$ROOT" &&')
+        assert.notEqual(legacyReaders, script)
+        await writeFile(reviewScript, legacyReaders)
+        try {
+          await clearLog()
+          await runReview('staged', '', { env: snapshotEnv })
+          const legacyRecords = (await scannerLines()).join('\n')
+          assert.ok(legacyRecords.includes(marker + working), 'old reader incorrectly accepts worktree bytes')
+          assert.ok(!legacyRecords.includes(marker + staged), 'negative control cannot satisfy exact-index assertion')
+        } finally {
+          await writeFile(reviewScript, script)
+        }
+      }
+      await mkdir(join(repo, 'untracked-dependency'), { recursive: true })
+      await writeFile(join(repo, 'untracked-dependency/package-lock.json'), 'REJECT_DEP-untracked\n')
+      const records = await checkSnapshot(stagedBad ? `[FAIL] ${gate}` : null)
+      assert.ok(records.includes(marker + staged), 'scanner consumes exact staged content')
+      assert.ok(!records.includes(marker + working), 'scanner never consumes divergent working content')
+      assert.ok(!records.includes('REJECT_DEP-untracked'))
+    }
+  }
+
+  await git(['reset', '--hard', 'HEAD'])
+  for (const [file, content] of [['package-lock.json', 'SAFE_FROZEN_DEP'], ['vercel.json', 'SAFE_FROZEN_HEADER']]) {
+    await writeFile(join(repo, file), content + '\n')
+    await git(['add', file])
+  }
+  let records = await checkSnapshot(null, { ...snapshotEnv, SECURITY_TEST_MUTATE_WORKTREE: repo }, false)
+  assert.ok(records.includes('dependency-bytes:./package-lock.json:SAFE_FROZEN_DEP'))
+  assert.ok(records.includes('header-bytes:SAFE_FROZEN_HEADER'))
+  assert.equal(await readFile(join(repo, 'vercel.json'), 'utf8'), 'REJECT_HEADER-mutated\n', 'only disposable scanner fixture intentionally mutates worktree')
+
+  await git(['reset', '--hard', 'HEAD'])
+  await mkdir(join(repo, 'space directory'), { recursive: true })
+  await git(['mv', 'package-lock.json', 'space directory/package-lock.json'])
+  await writeFile(join(repo, 'package-lock.json'), 'REJECT_DEP-resurrected\n')
+  records = await checkSnapshot()
+  assert.ok(records.includes('dependency-bytes:./space directory/package-lock.json:{}'))
+  assert.ok(!records.includes('REJECT_DEP-resurrected'))
+  await git(['rm', '-f', 'space directory/package-lock.json'])
+  await checkSnapshot('[FAIL] Dependency vulnerability audit') // no dependency sources: fail closed
+
+  await git(['reset', '--hard', 'HEAD'])
+  records = await checkSnapshot()
+  assert.equal(records, '', 'empty staged diff launches no scoped scanner/contract')
+  await writeFile(join(repo, 'tracked.txt'), 'plain change\n')
+  await git(['add', 'tracked.txt'])
+  records = await checkSnapshot()
+  assert.ok(!records.includes('osv:') && !records.includes('node:'), 'non-governing change keeps scope filters')
+
+  // Intent-only entries must never be fabricated as committed empty files.
+  // Include deleted governing paths recreated as intent entries: comparing only
+  // cached filenames would miss the different deletion/modification semantics.
+  for (const candidate of ['candidate.txt', 'new dependency/package-lock.json', 'vercel.json', 'scripts/tests/security-review-chain.test.mjs']) {
+    await git(['reset', '--hard', 'HEAD'])
+    await writeFile(join(repo, 'package-lock.json'), '{"staged":"governing-change"}\n')
+    await git(['add', 'package-lock.json'])
+    if (['vercel.json', 'scripts/tests/security-review-chain.test.mjs'].includes(candidate)) {
+      await git(['rm', '--cached', candidate])
+    }
+    await mkdir(dirname(join(repo, candidate)), { recursive: true })
+    await writeFile(join(repo, candidate), 'intent-worktree-content\n')
+    await git(['add', '--intent-to-add', candidate])
+    await checkSnapshot('intent-to-add index entries are unsupported', { ...snapshotEnv, TMPDIR: fixture })
+    assert.deepEqual(await scannerLines(), [], 'intent rejection must precede every scanner/contract')
+    assert.deepEqual((await readdir(fixture)).filter((name) => name.startsWith('security-review.')), [], 'early rejection cleans private index and temporary tree')
+  }
+  await git(['reset', '--hard', 'HEAD'])
+  await writeFile(join(repo, 'staged-empty.txt'), '')
+  await writeFile(join(repo, 'package-lock.json'), '{"staged":"empty-file-control"}\n')
+  await git(['add', 'staged-empty.txt', 'package-lock.json'])
+  await writeFile(join(repo, 'staged-empty.txt'), 'unstaged nonempty bytes must not be read\n')
+  records = await checkSnapshot()
+  assert.ok(records.includes('empty-file-bytes:0'), 'genuine staged empty file remains present with exact zero bytes')
+  assert.ok(records.includes('dependency-bytes:./package-lock.json:{"staged":"empty-file-control"}'))
+
+  // Malicious symlinks never reach a reader or materializer; no target access.
+  await git(['reset', '--hard', 'HEAD'])
+  await run('ln', ['-s', '../outside-sentinel', 'escape'])
+  await writeFile(join(fixture, 'outside-sentinel'), 'untouched\n')
+  await git(['add', 'escape'])
+  await checkSnapshot('unsupported staged entry')
+  assert.equal(await readFile(join(fixture, 'outside-sentinel'), 'utf8'), 'untouched\n')
+  assert.deepEqual(await scannerLines(), [])
+
+  await git(['reset', '--hard', 'HEAD'])
+  await assert.rejects(git(['-c', 'user.name=Security Test', '-c', 'user.email=security-test@example.invalid', 'merge', 'main']), 'disposable branches must conflict')
+  await checkSnapshot('unresolved or unsupported staged entry')
+  assert.deepEqual(await scannerLines(), [])
+
+  const unborn = join(fixture, 'unborn')
+  await mkdir(unborn)
+  await run('git', ['init', '-q'], { cwd: unborn })
+  await writeFile(join(unborn, 'package-lock.json'), '{}\n')
+  await run('git', ['add', '.'], { cwd: unborn })
+  const unbornIndex = await readFile(join(unborn, '.git/index'))
+  await assert.rejects(runReview('staged', '', { cwd: unborn, env: snapshotEnv }), (error) => {
+    assert.equal(error.code, 1)
+    assert.match(error.stderr, /unborn staged review is unsupported/)
+    return true
+  })
+  assert.deepEqual(await readFile(join(unborn, '.git/index')), unbornIndex)
 
   await git(['reset', '--hard', 'HEAD'])
   await writeFile(join(repo, 'tracked.txt'), 'mutable-worktree\n')

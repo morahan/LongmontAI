@@ -43,6 +43,12 @@ export type ModelBenchmarkKey =
   | 'sweBenchPro'
   | 'terminalBench'
   | 'frontierCode'
+  | 'frontierCode11Main'
+  | 'aaCodingAgent11'
+  | 'aaCodingAgent'
+  | 'terminalBench21'
+  | 'terminalBench21DeepSeek'
+  | 'terminalBench30ClaudeCode'
   | 'hle'
   | 'browseComp'
   | 'deepSearchQa'
@@ -65,6 +71,8 @@ export interface ModelBenchmarkDefinition {
   unit: '%' | 'score' | 'index' | '$/task' | '$/M tokens';
   higherIsBetter: boolean;
   description: string;
+  /** False when metric version or harness provenance is insufficient for ranking. */
+  rankable?: boolean;
 }
 
 export interface ModelBenchmarkScore {
@@ -764,17 +772,63 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
   },
   {
     key: 'terminalBench',
-    label: 'Terminal-Bench',
+    label: 'Terminal-Bench (version unspecified)',
+    rankable: false,
     unit: '%',
     higherIsBetter: true,
-    description: 'Terminal-based coding task score when reported for a model.',
+    description: 'Reported values retained unranked: benchmark version and comparable harness are not established.',
   },
   {
     key: 'frontierCode',
-    label: 'FrontierCode',
+    label: 'Coding score (metric/version unverified)',
+    rankable: false,
     unit: 'score',
     higherIsBetter: true,
-    description: 'Agentic coding benchmark score from the June model-watch notes where available.',
+    description: 'Legacy FrontierCode-field values retained unranked: the metric and version are not verified.',
+  },
+  {
+    key: 'frontierCode11Main',
+    label: 'FrontierCode 1.1 Main',
+    unit: 'score',
+    higherIsBetter: true,
+    description: 'Only scores explicitly reported for FrontierCode 1.1 Main.',
+  },
+  {
+    key: 'aaCodingAgent11',
+    label: 'AA Coding Agent Index v1.1',
+    unit: 'index',
+    higherIsBetter: true,
+    description: 'Artificial Analysis Coding Agent Index v1.1; not FrontierCode.',
+  },
+  {
+    key: 'aaCodingAgent',
+    label: 'AA Coding Agent Index (version unspecified)',
+    unit: 'index',
+    higherIsBetter: true,
+    rankable: false,
+    description: 'Reported values retained unranked because the index version is unspecified.',
+  },
+  {
+    key: 'terminalBench21',
+    label: 'Terminal-Bench 2.1 (harness unspecified)',
+    unit: '%',
+    higherIsBetter: true,
+    rankable: false,
+    description: 'Version 2.1 values retained unranked until comparable harness provenance is established.',
+  },
+  {
+    key: 'terminalBench21DeepSeek',
+    label: 'Terminal-Bench 2.1 / DeepSeek Harness',
+    unit: '%',
+    higherIsBetter: true,
+    description: 'DeepSeek Harness minimal mode at max effort only.',
+  },
+  {
+    key: 'terminalBench30ClaudeCode',
+    label: 'Terminal-Bench 3.0 / Claude Code 2.1.207',
+    unit: '%',
+    higherIsBetter: true,
+    description: 'Terminal-Bench 3.0 under Claude Code 2.1.207 only; not comparable to 2.1.',
   },
   {
     key: 'hle',
@@ -943,7 +997,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceLabel: 'Z.ai official release',
     sourceUrl: 'https://z.ai/blog/glm-5.3',
     benchmarks: {
-      terminalBench: { value: 28.3, note: 'Vendor-reported on Terminal-Bench 3.0 under Claude Code 2.1.207.' },
+      terminalBench30ClaudeCode: { value: 28.3, note: 'Vendor-reported on Terminal-Bench 3.0 under Claude Code 2.1.207.' },
       inputCost: { value: 1.4, note: 'Official API price at launch.' },
       outputCost: { value: 4.4, note: 'Official API price at launch.' },
     },
@@ -973,7 +1027,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceLabel: 'Google official release',
     sourceUrl: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/',
     benchmarks: {
-      frontierCode: { value: 43.6, note: 'Vendor-reported on FrontierCode 1.1 Main.' },
+      frontierCode11Main: { value: 43.6, note: 'Vendor-reported on FrontierCode 1.1 Main.' },
       inputCost: { value: 0.75, note: 'Introductory price through December 31, 2026.' },
       outputCost: { value: 3.75, note: 'Introductory price through December 31, 2026.' },
     },
@@ -1088,7 +1142,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceLabel: 'DeepSeek API changelog',
     sourceUrl: 'https://api-docs.deepseek.com/updates/',
     benchmarks: {
-      terminalBench: { value: 82.7, note: 'Vendor-reported on Terminal Bench 2.1 using DeepSeek Harness minimal mode at max effort.' },
+      terminalBench21DeepSeek: { value: 82.7, note: 'Vendor-reported on Terminal Bench 2.1 using DeepSeek Harness minimal mode at max effort.' },
     },
   },
   {
@@ -1220,8 +1274,8 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceUrl: 'https://openai.com/index/gpt-5-6/',
     benchmarks: {
       sweBenchPro: { value: 64.6 },
-      terminalBench: { value: 88.8, note: 'Terminal-Bench 2.1.' },
-      frontierCode: { value: 80, note: 'Artificial Analysis Coding Agent Index v1.1.' },
+      terminalBench21: { value: 88.8, note: 'Terminal-Bench 2.1.' },
+      aaCodingAgent11: { value: 80, note: 'Artificial Analysis Coding Agent Index v1.1.' },
       browseComp: { value: 90.4 },
       gpqaDiamond: { value: 94.6 },
       inputCost: { value: 4, note: 'API promo through at least 21 Nov 2026; was $5 list.' },
@@ -1239,8 +1293,8 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceUrl: 'https://openai.com/index/gpt-5-6/',
     benchmarks: {
       sweBenchPro: { value: 63.4 },
-      terminalBench: { value: 87.4, note: 'Terminal-Bench 2.1.' },
-      frontierCode: { value: 77.4, note: 'Artificial Analysis Coding Agent Index v1.1.' },
+      terminalBench21: { value: 87.4, note: 'Terminal-Bench 2.1.' },
+      aaCodingAgent11: { value: 77.4, note: 'Artificial Analysis Coding Agent Index v1.1.' },
       browseComp: { value: 87.5 },
       gpqaDiamond: { value: 92.9 },
       inputCost: { value: 2.5 },
@@ -1259,8 +1313,8 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceUrl: 'https://openai.com/index/gpt-5-6/',
     benchmarks: {
       sweBenchPro: { value: 62.7 },
-      terminalBench: { value: 84.7, note: 'Terminal-Bench 2.1.' },
-      frontierCode: { value: 74.6, note: 'Artificial Analysis Coding Agent Index v1.1.' },
+      terminalBench21: { value: 84.7, note: 'Terminal-Bench 2.1.' },
+      aaCodingAgent11: { value: 74.6, note: 'Artificial Analysis Coding Agent Index v1.1.' },
       browseComp: { value: 83.3 },
       gpqaDiamond: { value: 92.3 },
       inputCost: { value: 1 },
@@ -1277,7 +1331,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     sourceLabel: 'xAI launch',
     sourceUrl: 'https://x.ai/news/grok-4-5',
     benchmarks: {
-      frontierCode: { value: 75.8, note: 'Artificial Analysis Coding Agent Index.' },
+      aaCodingAgent: { value: 75.8, note: 'Artificial Analysis Coding Agent Index.' },
       inputCost: { value: 2 },
       outputCost: { value: 6 },
     },

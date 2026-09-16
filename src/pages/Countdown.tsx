@@ -489,7 +489,7 @@ const Countdown: React.FC = () => {
   const meetupTimeZone = mountainTimeLabel(nextMeetup);
 
   return (
-    <div className="relative min-h-[80vh] flex flex-col items-center justify-center text-center">
+    <div data-page="countdown" className="relative min-h-[80vh] flex flex-col items-center justify-center text-center">
       {/* Live confetti: High density for initial celebration, sparse for general live state */}
       {isCelebrationActive && <Confetti count={120} />}
       {!isCelebrationActive && isLiveEvent && <Confetti count={30} />}

@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { createNewsletterSubscribeHandler } from '../../scripts/lib/newsletter/subscribe-handler.mjs';
 import { createNewsletterGenerateHandler } from '../../scripts/lib/newsletter/generate-handler.mjs';
 import { modelWatchSources } from '../model-watch-sources.mjs';
-import { createCuratedNewsletterDraft, deterministicDraftFromSignals } from '../../scripts/lib/newsletter/curation.mjs';
-import { createListmonkCampaign, createNewsletterIssue, sendResendNotification } from '../../scripts/lib/newsletter/shared.mjs';
+import { collectWebsiteSignals, createCuratedNewsletterDraft, deterministicDraftFromSignals } from '../../scripts/lib/newsletter/curation.mjs';
+import { createListmonkCampaign, createNewsletterIssue, sendResendNotification, isValidEmail, readJsonBody } from '../../scripts/lib/newsletter/shared.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -30,6 +32,298 @@ function request(body, headers = {}) {
     body,
   };
 }
+
+function bodyRepresentations(body) {
+  const json = JSON.stringify(body);
+  return [
+    ['object', () => request(body)],
+    ['string', () => request(json)],
+    ['Buffer', () => request(Buffer.from(json))],
+    ['stream', () => ({
+      method: 'POST', headers: {},
+      async *[Symbol.asyncIterator]() {
+        // Single-byte chunks also exercise split UTF-8 sequences.
+        for (const byte of Buffer.from(json)) yield Buffer.from([byte]);
+      },
+    })],
+  ];
+}
+
+async function assertRejectedBeforeProvider(req, status, error) {
+  let calls = 0;
+  const handler = createNewsletterSubscribeHandler({
+    env: {},
+    fetchImpl: async () => { calls += 1; throw new Error('network forbidden'); },
+  });
+  const response = responseHarness();
+  await handler(req, response);
+  assert.equal(response.statusCode, status);
+  const messages = {
+    body_too_large: 'Request body is too large.',
+    invalid_json: 'Request body must be a valid JSON object.',
+    invalid_email: 'Enter a valid email address.',
+  };
+  assert.deepEqual(response.body, { ok: false, error, message: messages[error] });
+  assert.equal(response.headers['cache-control'], 'no-store');
+  assert.equal(calls, 0);
+}
+
+test('A-01 body limit counts UTF-8 bytes at the exact boundary for every representation', async () => {
+  for (const multibyte of [false, true]) {
+    for (const size of [4095, 4096, 4097]) {
+      const body = { email: 'test@example.com', name: '' };
+      const remaining = size - Buffer.byteLength(JSON.stringify(body));
+      body.name = multibyte ? 'é'.repeat(Math.floor(remaining / 2)) + 'x'.repeat(remaining % 2) : 'x'.repeat(remaining);
+      assert.equal(Buffer.byteLength(JSON.stringify(body)), size);
+      for (const [format, makeRequest] of bodyRepresentations(body)) {
+        if (size <= 4096) {
+          assert.deepEqual(await readJsonBody(makeRequest()), body, `${format}: ${size} bytes`);
+        } else {
+          await assert.rejects(readJsonBody(makeRequest()), { status: 413, code: 'body_too_large' });
+          await assertRejectedBeforeProvider(makeRequest(), 413, 'body_too_large');
+        }
+      }
+    }
+  }
+});
+
+test('A-01 oversized fields are rejected before normalization, honeypot or provider work', async () => {
+  for (const field of ['email', 'name', 'company']) {
+    const body = { email: 'test@example.com', [field]: 'a@' + 'a.'.repeat(8192) + '<' };
+    for (const [, makeRequest] of bodyRepresentations(body)) {
+      await assertRejectedBeforeProvider(makeRequest(), 413, 'body_too_large');
+    }
+  }
+});
+
+test('A-01 rejects invalid parsed-body shapes consistently before provider work', async () => {
+  for (const body of [null, [], ['test@example.com'], 123, true, 'test@example.com']) {
+    // A raw string is a JSON wire body; test scalar strings through encoded JSON.
+    for (const [format, makeRequest] of bodyRepresentations(body)) {
+      if (format === 'object' && typeof body === 'string') continue;
+      await assertRejectedBeforeProvider(makeRequest(), 400, 'invalid_json');
+    }
+  }
+  const cyclic = {};
+  cyclic.self = cyclic;
+  for (const body of [cyclic, new Date(0), new Uint8Array([1]), { count: 1n }]) {
+    await assertRejectedBeforeProvider(request(body), 400, 'invalid_json');
+  }
+  await assertRejectedBeforeProvider(request('{broken'), 400, 'invalid_json');
+  assert.deepEqual(await readJsonBody(request('')), {});
+  assert.deepEqual(await readJsonBody(request({})), {});
+});
+
+test('A-01 email length guard precedes regex evaluation without truncation', (t) => {
+  const asciiBoundary = 'a'.repeat(242) + '@example.com';
+  const utf8Boundary = 'é'.repeat(121) + '@example.com';
+  assert.equal(Buffer.byteLength(asciiBoundary), 254);
+  assert.equal(Buffer.byteLength(utf8Boundary), 254);
+  assert.equal(isValidEmail(asciiBoundary), true);
+  assert.equal(isValidEmail(utf8Boundary), true);
+  const regex = t.mock.method(RegExp.prototype, 'test', () => {
+    throw new Error('oversized email must not reach regex');
+  });
+  try {
+    for (const email of [asciiBoundary + 'a', utf8Boundary + 'a', 'a@' + 'a.'.repeat(16384) + '<', null, {}]) {
+      assert.equal(isValidEmail(email), false);
+    }
+    assert.equal(regex.mock.callCount(), 0);
+  } finally {
+    regex.mock.restore();
+  }
+});
+
+test('A-01 bounded malformed domains and overlong emails never reach a provider', async () => {
+  for (const email of ['a@' + 'a.'.repeat(120) + '<', 'a@' + 'a.'.repeat(500) + '<', 'a'.repeat(243) + '@example.com', 'é'.repeat(122) + '@example.com']) {
+    for (const [, makeRequest] of bodyRepresentations({ email })) {
+      await assertRejectedBeforeProvider(makeRequest(), 400, 'invalid_email');
+    }
+  }
+});
+
+test('C3 generated recap obeys embargo, strict data validation, promotion and package boundaries', async (t) => {
+  const fixture = await mkdtemp(path.join(tmpdir(), 'newsletter-c3-'));
+  const generatedDir = path.join(fixture, 'src/generated/scheduled-release');
+  const articleDir = path.join(fixture, 'src/articles');
+  const publishAt = '2026-09-02T11:30:00-06:00';
+  const instant = Date.parse(publishAt);
+  const id = 'edition-2026-09-02-generated-sentinel';
+  const url = `https://longmontai.com/edition/${id}`;
+  const raw = `---\nid: ${id}\ndate: 2026-09-02\npublishAt: ${publishAt}\nstatus: scheduled\ntitle: Generated sentinel title\nsummary: Generated sentinel summary\n---\n## Generated sentinel heading\nhttps://example.invalid/generated-sentinel\n`;
+  const descriptor = {
+    schemaVersion: 1, editionId: id, publishAt, publishAtMs: instant,
+    releaseRevision: 'private-revision-sentinel',
+    source: { manifest: '../../private-manifest-sentinel', article: '../../private-article-sentinel', assetRoot: '../../private-media-sentinel' },
+    article: { file: 'article.md', sha256: createHash('sha256').update(raw).digest('hex') },
+    media: { hidden: { file: '../../private-media-sentinel' } },
+  };
+  const wrapper = (value) => `// Generated by scripts/stage-scheduled-release.mjs. Do not edit.\nconst release = Object.freeze(${JSON.stringify(value, null, 2)});\n\nexport default release;\n`;
+  const writeGenerated = async (value = descriptor, article = raw) => {
+    await mkdir(generatedDir, { recursive: true });
+    await writeFile(path.join(generatedDir, 'server.mjs'), wrapper(value));
+    await writeFile(path.join(generatedDir, 'article.md'), article);
+  };
+  const offline = { root: fixture, fetchLiveSources: false, fetchImpl: async () => { throw new Error('network forbidden'); } };
+  const signalsAt = (time) => collectWebsiteSignals({ ...offline, now: new Date(time) });
+  const assertExcluded = (value) => assert.doesNotMatch(JSON.stringify(value), /generated-sentinel|Generated sentinel|private-.*sentinel/);
+  const assertMinimal = (value) => assert.doesNotMatch(JSON.stringify(value), /private-.*sentinel|scheduled-release|sha256|releaseRevision|assetRoot/);
+  try {
+    await mkdir(articleDir, { recursive: true });
+    await writeFile(path.join(articleDir, '2026.08.19-old.md'), '---\nid: edition-old\ndate: 2026-08-19\ntitle: Older static\nsummary: Older summary\n---\nOld body\n');
+    await writeGenerated();
+    await t.test('T-1/T/T+1 and actual AI input have no pre-publication egress', async () => {
+      for (const offset of [-1, 0, 1]) {
+        const now = new Date(instant + offset);
+        const signals = await signalsAt(now);
+        const fallback = deterministicDraftFromSignals(signals, { now });
+        let prompt;
+        const draft = await createCuratedNewsletterDraft({
+          ...offline, now, env: { OPENAI_API_KEY: 'test-only-placeholder' },
+          fetchImpl: async (_url, options) => {
+            prompt = JSON.parse(options.body).input;
+            return Response.json({ output_text: JSON.stringify({
+              subject: 'Candidate', preheader: 'Candidate', summary: 'Candidate',
+              items: [{ category: 'breakthroughs', title: 'Candidate', synthesis: 'Candidate', sourceName: 'Edition', sourceUrl: url, score: 80 }],
+            }) });
+          },
+        });
+        if (offset < 0) {
+          for (const value of [signals, fallback, draft, prompt]) assertExcluded(value);
+          assert.equal(draft.usedAi, false, 'future URL cannot enter through model attribution');
+          assert.equal(fallback.items[2].title, 'Older static');
+        } else {
+          assert.equal(signals.website.recentArticles.filter((article) => article.id === id).length, 1);
+          assert.equal(fallback.items[2].title, 'Generated sentinel title');
+          assert.equal(fallback.items[2].sourceUrl, url);
+          assert.equal(draft.usedAi, true);
+          assertMinimal(signals);
+          assertMinimal(draft);
+        }
+      }
+      await assert.rejects(signalsAt(NaN), /Invalid newsletter collection clock/);
+    });
+
+    await t.test('missing, malformed, mismatched and oversized generated inputs fail closed', async () => {
+      const cases = [
+        async () => rm(path.join(generatedDir, 'server.mjs')),
+        async () => rm(path.join(generatedDir, 'article.md')),
+        async () => writeFile(path.join(generatedDir, 'server.mjs'), 'throw new Error("must never execute");'),
+        async () => writeFile(path.join(generatedDir, 'server.mjs'), wrapper(descriptor).replace('"schemaVersion": 1', '"schemaVersion":')),
+        async () => writeGenerated({ ...descriptor, schemaVersion: 2 }),
+        async () => writeGenerated({ ...descriptor, publishAt: 'invalid' }),
+        async () => writeGenerated({ ...descriptor, publishAt: '2026-02-30T00:00:00Z', publishAtMs: Date.parse('2026-02-30T00:00:00Z') }),
+        async () => writeGenerated({ ...descriptor, publishAtMs: null }),
+        async () => writeGenerated({ ...descriptor, publishAtMs: instant + 1 }),
+        async () => writeGenerated({ ...descriptor, article: { ...descriptor.article, file: '../../outside.md' } }),
+        async () => writeGenerated({ ...descriptor, article: { ...descriptor.article, sha256: '0'.repeat(64) } }),
+        async () => writeGenerated(descriptor, raw + 'tampered'),
+        async () => writeFile(path.join(generatedDir, 'server.mjs'), 'x'.repeat(256 * 1024 + 1)),
+        ...[
+          raw.replace(id, 'edition-wrong'), raw.replace('status: scheduled', 'status: draft'),
+          raw.replace(`publishAt: ${publishAt}`, 'publishAt: 2026-09-01T00:00:00Z'),
+          raw.replace('id: ', 'id: duplicate\nid: '), 'missing frontmatter',
+        ].map((article) => async () => writeGenerated({ ...descriptor, article: { file: 'article.md', sha256: createHash('sha256').update(article).digest('hex') } }, article)),
+      ];
+      for (const mutate of cases) {
+        await writeGenerated();
+        await mutate();
+        const signals = await signalsAt(instant);
+        assertExcluded(signals);
+        assert.equal(signals.website.recentArticles[0].title, 'Older static');
+        assertExcluded(await createCuratedNewsletterDraft({ ...offline, now: new Date(instant), env: {} }));
+      }
+      await writeGenerated();
+    });
+
+    await t.test('fixed paths ignore descriptor source/media selectors and reject symlink layouts', async () => {
+      // Nonexistent traversal selectors in descriptor are never used, even after release.
+      assert.equal((await signalsAt(instant)).website.recentArticles[0].id, id);
+      const outside = path.join(fixture, 'outside.md');
+      await writeFile(outside, raw);
+      for (const name of ['article.md', 'server.mjs']) {
+        await rm(path.join(generatedDir, name));
+        await symlink(outside, path.join(generatedDir, name));
+        assertExcluded(await signalsAt(instant));
+        await rm(path.join(generatedDir, name));
+        await writeGenerated();
+      }
+      await rm(generatedDir, { recursive: true });
+      const outsideDir = path.join(fixture, 'outside-generated');
+      await mkdir(outsideDir);
+      await writeFile(path.join(outsideDir, 'server.mjs'), wrapper(descriptor));
+      await writeFile(path.join(outsideDir, 'article.md'), raw);
+      await symlink(outsideDir, generatedDir);
+      assertExcluded(await signalsAt(instant));
+      await rm(generatedDir);
+      await writeGenerated();
+    });
+
+    await t.test('eligible promotion wins; future duplicate cannot suppress merge before six-item limit', async () => {
+      const promoted = path.join(articleDir, '2026.09.02-promoted.md');
+      await writeFile(promoted, raw.replace('Generated sentinel title', 'Static promotion title'));
+      let articles = (await signalsAt(instant)).website.recentArticles;
+      assert.equal(articles.filter((article) => article.id === id).length, 1);
+      assert.equal(articles[0].title, 'Static promotion title');
+      await writeFile(promoted, raw.replace(publishAt, '2027-01-01T00:00:00Z'));
+      for (let day = 20; day < 28; day += 1) {
+        await writeFile(path.join(articleDir, `2026.08.${day}.md`), `---\nid: edition-aug-${day}\ndate: 2026-08-${day}\ntitle: Older ${day}\nsummary: Older\n---\nOld\n`);
+      }
+      articles = (await signalsAt(instant)).website.recentArticles;
+      assert.equal(articles.length, 6);
+      assert.equal(articles[0].id, id);
+      assert.equal(articles[0].title, 'Generated sentinel title');
+      assert.equal(articles.filter((article) => article.id === id).length, 1);
+    });
+
+    await t.test('isolated package selected by newsletter includeFiles contains only approved generated inputs', async () => {
+      const config = JSON.parse(await readFile(path.join(root, 'vercel.json'), 'utf8'));
+      const patterns = config.functions['api/newsletter/generate.mjs'].includeFiles.slice(1, -1).split(',');
+      assert.deepEqual(patterns.filter((pattern) => pattern.startsWith('src/generated/')), [
+        'src/generated/scheduled-release/server.mjs', 'src/generated/scheduled-release/article.md',
+      ]);
+      await mkdir(path.join(fixture, 'scripts/lib/newsletter'), { recursive: true });
+      await copyFile(path.join(root, 'scripts/lib/newsletter/curation.mjs'), path.join(fixture, 'scripts/lib/newsletter/curation.mjs'));
+      await copyFile(path.join(root, 'scripts/model-watch-sources.mjs'), path.join(fixture, 'scripts/model-watch-sources.mjs'));
+      await mkdir(path.join(fixture, 'src/data'));
+      await writeFile(path.join(fixture, 'src/data/modelWatch.generated.json'), '{"detectedModels":[],"successfulSources":0,"totalSources":0}');
+      await mkdir(path.join(articleDir, 'drafts'));
+      await writeFile(path.join(articleDir, 'drafts/private.md'), 'private-draft-sentinel');
+      await mkdir(path.join(generatedDir, 'media'));
+      await writeFile(path.join(generatedDir, 'media/private.png'), 'private-media-sentinel');
+      const packaged = await mkdtemp(path.join(tmpdir(), 'newsletter-c3-package-'));
+      try {
+        for (const pattern of patterns) {
+          let files;
+          if (pattern.endsWith('/**')) {
+            const directory = pattern.slice(0, -3);
+            files = (await readdir(path.join(fixture, directory), { recursive: true })).map((name) => `${directory}/${name}`);
+          } else if (pattern.endsWith('/*.md')) {
+            const directory = pattern.slice(0, -5);
+            files = (await readdir(path.join(fixture, directory))).filter((name) => name.endsWith('.md')).map((name) => `${directory}/${name}`);
+          } else files = [pattern];
+          for (const file of files) {
+            if (!(await lstat(path.join(fixture, file))).isFile()) continue;
+            await mkdir(path.dirname(path.join(packaged, file)), { recursive: true });
+            await copyFile(path.join(fixture, file), path.join(packaged, file));
+          }
+        }
+        const module = await import(pathToFileURL(path.join(packaged, 'scripts/lib/newsletter/curation.mjs')).href);
+        const draft = await module.createCuratedNewsletterDraft({ ...offline, root: packaged, now: new Date(instant), env: {} });
+        assert.equal(draft.items[2].title, 'Generated sentinel title');
+        assert.equal(draft.items[2].sourceUrl, url);
+        const before = await module.createCuratedNewsletterDraft({ ...offline, root: packaged, now: new Date(instant - 1), env: {} });
+        assertExcluded(before);
+        await assert.rejects(lstat(path.join(packaged, 'src/articles/drafts')), { code: 'ENOENT' });
+        await assert.rejects(lstat(path.join(packaged, 'src/generated/scheduled-release/media')), { code: 'ENOENT' });
+      } finally {
+        await rm(packaged, { recursive: true, force: true });
+      }
+    });
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
 
 test('newsletter migration enables RLS and keeps browser roles without table grants', async () => {
   const migration = await readFile(path.join(root, 'supabase/migrations/20260824085525_newsletter_infrastructure.sql'), 'utf8');

@@ -10,7 +10,7 @@
       "includeFiles": "{src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/media/**}"
     },
     "api/newsletter/generate.mjs": {
-      "includeFiles": "{scripts/lib/newsletter/**,scripts/model-watch-sources.mjs,src/data/modelWatch.generated.json,src/articles/*.md}"
+      "includeFiles": "{scripts/lib/newsletter/**,scripts/model-watch-sources.mjs,src/data/modelWatch.generated.json,src/articles/*.md,src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/article.md}"
     },
     "api/newsletter/subscribe.mjs": {
       "includeFiles": "{scripts/lib/newsletter/**}"

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const DETERMINISTIC_TEST_SCRIPTS = Object.freeze([
@@ -29,18 +30,65 @@ export const AGGREGATE_EXEMPTIONS = Object.freeze([
   'test:mobile',
 ]);
 
-export function assertSuiteCoverage(packageScripts, suite = DETERMINISTIC_TEST_SCRIPTS) {
+// Fixture modules are inputs, not executable suites. All other .mjs files in
+// scripts/tests (including nested directories), plus test/spec JS/TS variants,
+// must have an aggregate owner.
+export function discoverTestFiles(directory = fileURLToPath(new URL('./tests', import.meta.url))) {
+  function visit(path, prefix) {
+    return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
+      if (entry.isDirectory()) {
+        return entry.name === 'fixtures' ? [] : visit(join(path, entry.name), `${prefix}/${entry.name}`);
+      }
+      const isTest = entry.name.endsWith('.mjs') || /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry.name);
+      return entry.isFile() && isTest ? [`${prefix}/${entry.name}`] : [];
+    });
+  }
+  return visit(directory, 'scripts/tests').sort();
+}
+
+function matchesTestPattern(file, pattern) {
+  // npm scripts currently use single-directory * globs, not a shell glob engine.
+  const expression = pattern.split('*').map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*');
+  return new RegExp(`^${expression}$`).test(file);
+}
+
+export function assertSuiteCoverage(packageScripts, suite = DETERMINISTIC_TEST_SCRIPTS, testFiles = discoverTestFiles()) {
   const suiteSet = new Set(suite);
+  if (suiteSet.size !== suite.length) throw new Error('duplicate aggregate suite entries');
+  const reached = new Set();
+  const fileOwners = new Map(testFiles.map((file) => [file, []]));
+  function visit(name, ancestors = []) {
+    if (ancestors.includes(name)) throw new Error(`cyclic npm test chain: ${[...ancestors, name].join(' -> ')}`);
+    const command = packageScripts[name];
+    if (typeof command !== 'string') throw new Error(`aggregate entries missing from package.json: ${name}`);
+    reached.add(name);
+    // Deliberately recognize only our node / npm-run && command convention.
+    // Unsupported wrappers fail closed through the unowned-file check below.
+    for (const step of command.split('&&').map((value) => value.trim())) {
+      const child = step.match(/^npm run ([\w:-]+)$/);
+      if (child) visit(child[1], [...ancestors, name]);
+      else if (step.startsWith('node ')) {
+        for (const pattern of step.split(/\s+/).filter((value) => value.startsWith('scripts/tests/') && /\.[cm]?[jt]sx?$/.test(value))) {
+          for (const [file, owners] of fileOwners) {
+            if (matchesTestPattern(file, pattern)) owners.push(name);
+          }
+        }
+      }
+    }
+  }
+  for (const name of suite) visit(name);
   const exemptions = new Set(AGGREGATE_EXEMPTIONS);
   const registered = Object.keys(packageScripts)
-    .filter((name) => name.startsWith('test:') || name === 'security:test' || name === 'release:self-test')
+    .filter((name) => name.startsWith('test:') || name === 'security:test' || name.startsWith('security:test:') || name === 'release:self-test')
     .filter((name) => !exemptions.has(name));
-  const missing = registered.filter((name) => !suiteSet.has(name));
-  const unknown = suite.filter((name) => typeof packageScripts[name] !== 'string');
-  if (missing.length || unknown.length) {
+  const missing = registered.filter((name) => !reached.has(name));
+  const unowned = [...fileOwners].filter(([, owners]) => owners.length === 0).map(([file]) => file);
+  const repeated = [...fileOwners].filter(([, owners]) => owners.length > 1).map(([file]) => file);
+  if (missing.length || unowned.length || repeated.length) {
     throw new Error([
       missing.length ? `deterministic npm scripts missing from aggregate: ${missing.join(', ')}` : '',
-      unknown.length ? `aggregate entries missing from package.json: ${unknown.join(', ')}` : '',
+      unowned.length ? `standalone test files missing from aggregate: ${unowned.join(', ')}` : '',
+      repeated.length ? `test files executed more than once: ${repeated.join(', ')}` : '',
     ].filter(Boolean).join('; '));
   }
 }
@@ -48,9 +96,10 @@ export function assertSuiteCoverage(packageScripts, suite = DETERMINISTIC_TEST_S
 export function runTestSuite({
   packageScripts,
   suite = DETERMINISTIC_TEST_SCRIPTS,
+  testFiles = discoverTestFiles(),
   run = (name) => spawnSync('npm', ['run', name], { stdio: 'inherit' }),
 } = {}) {
-  assertSuiteCoverage(packageScripts, suite);
+  assertSuiteCoverage(packageScripts, suite, testFiles);
   for (const name of suite) {
     console.log(`\n=== ${name} ===`);
     const result = run(name);

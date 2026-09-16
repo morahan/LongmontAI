@@ -17,6 +17,8 @@ export function normalizeEmail(value) {
 }
 
 export function isValidEmail(email) {
+  // Bound work before the regex; never truncate into a different address.
+  if (typeof email !== 'string' || email.length > 254 || Buffer.byteLength(email) > 254) return false;
   return /^[^\s@<>()[\]\\,;:"']+@[^\s@<>()[\]\\,;:"']+\.[^\s@<>()[\]\\,;:"']{2,}$/.test(email);
 }
 
@@ -74,27 +76,55 @@ export function requireAllowedOrigin(request, env) {
 }
 
 export async function readJsonBody(request, { maxBytes = 4096 } = {}) {
-  if (request.body && typeof request.body === 'object' && !Buffer.isBuffer(request.body)) {
-    return request.body;
-  }
-
-  let raw = '';
-  if (typeof request.body === 'string' || Buffer.isBuffer(request.body)) {
-    raw = String(request.body);
-  } else if (request.readable || typeof request[Symbol.asyncIterator] === 'function') {
-    for await (const chunk of request) {
-      raw += chunk;
-      if (Buffer.byteLength(raw) > maxBytes) {
-        throw new NewsletterError('Request body is too large.', { status: 413, code: 'body_too_large' });
-      }
+  const checkSize = (bytes) => {
+    if (bytes > maxBytes) {
+      throw new NewsletterError('Request body is too large.', { status: 413, code: 'body_too_large' });
     }
+  };
+  const invalidBody = (cause) => new NewsletterError('Request body must be a valid JSON object.', {
+    status: 400, code: 'invalid_json', cause,
+  });
+  const requireObject = (body) => {
+    if (!body || typeof body !== 'object' || Array.isArray(body)
+      || ![Object.prototype, null].includes(Object.getPrototypeOf(body))) throw invalidBody();
+    return body;
+  };
+
+  const body = request.body;
+  let raw = '';
+  if (body !== undefined && typeof body === 'object' && !Buffer.isBuffer(body)) {
+    requireObject(body);
+    // Pre-parsed bodies no longer have wire bytes: enforce their JSON UTF-8 size.
+    try {
+      raw = JSON.stringify(body);
+      if (typeof raw !== 'string') throw invalidBody();
+    } catch (error) {
+      throw invalidBody(error);
+    }
+    checkSize(Buffer.byteLength(raw));
+  } else if (typeof body === 'string' || Buffer.isBuffer(body)) {
+    checkSize(typeof body === 'string' ? Buffer.byteLength(body) : body.length);
+    raw = String(body);
+  } else if (body !== undefined) {
+    throw invalidBody();
+  } else if (request.readable || typeof request[Symbol.asyncIterator] === 'function') {
+    const chunks = [];
+    let bytes = 0;
+    for await (const chunk of request) {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      bytes += buffer.length;
+      checkSize(bytes);
+      chunks.push(buffer);
+    }
+    // Decode once so UTF-8 characters split across chunks stay intact.
+    raw = Buffer.concat(chunks).toString('utf8');
   }
 
   if (!raw.trim()) return {};
   try {
-    return JSON.parse(raw);
+    return requireObject(JSON.parse(raw));
   } catch (error) {
-    throw new NewsletterError('Request body must be valid JSON.', { status: 400, code: 'invalid_json', cause: error });
+    throw invalidBody(error);
   }
 }
 

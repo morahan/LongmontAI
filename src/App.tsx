@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Link, Routes, Route, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
+import RouteNavigation from './components/RouteNavigation';
 import Feed from './pages/Feed';
 import { useDocumentTitle } from './lib/documentTitle';
 
@@ -50,9 +51,10 @@ function App() {
   return (
     <Router>
       <RouteDocumentTitle />
+      <RouteNavigation />
       <Layout>
         <Suspense fallback={(
-          <div className="min-h-[40vh]" role="status" aria-live="polite">
+          <div data-route-loading className="min-h-[40vh]" role="status" aria-live="polite">
             <span className="sr-only">Loading page…</span>
           </div>
         )}>

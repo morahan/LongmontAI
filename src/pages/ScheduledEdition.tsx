@@ -40,7 +40,7 @@ const ScheduledEdition: React.FC = () => {
 
     const { edition, slideshows } = result;
     return (
-        <article className="article-layout">
+        <article className="article-layout" data-edition-id={edition.id}>
             <div className="mb-8">
                 <Link to="/" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-white transition-colors mb-6">
                     <ArrowLeft size={16} /> BACK TO FEED

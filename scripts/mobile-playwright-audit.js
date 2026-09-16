@@ -149,9 +149,16 @@ async (page) => {
             '/leaderboard': { selector: '#leaderboard-title', text: 'Leaderboard' },
             '/about': { selector: 'main h1', text: 'About LongmontAI' },
           };
-          const identity = identities[currentRoute] ?? (currentRoute.startsWith('/edition/')
-            ? { selector: 'article h1' }
-            : { selector: 'main h1' });
+          if (currentRoute.startsWith('/edition/')) {
+            const article = document.querySelector('article[data-edition-id]');
+            return article?.getAttribute('data-edition-id') === currentRoute.slice('/edition/'.length)
+              && Boolean(article.querySelector('h1')?.textContent?.trim());
+          }
+          if (currentRoute === '/countdown') {
+            return Boolean(document.querySelector('[data-page="countdown"] h1')?.textContent?.trim());
+          }
+          const identity = identities[currentRoute];
+          if (!identity) return false;
           const heading = document.querySelector(identity.selector);
           const text = heading?.textContent?.replace(/\s+/g, ' ').trim();
           return Boolean(text && (!identity.text || text === identity.text));
@@ -291,6 +298,21 @@ async (page) => {
   if (typeof page.getByRole === 'function') {
     await page.setViewportSize({ width: 390, height: 844 });
 
+    // Unknown routes must recover, not accidentally pass the published-page predicates.
+    if (!requestedRoutes) {
+      for (const [missingRoute, heading] of [
+        ['/audit-missing-page', 'Page not found'],
+        ['/edition/audit-missing-edition', 'Edition unavailable'],
+      ]) {
+        activeRoute = missingRoute;
+        await page.goto(`${baseUrl}${missingRoute}`, { waitUntil: 'domcontentloaded' });
+        await page.getByRole('heading', { name: heading, exact: true }).waitFor();
+        await page.getByRole('link', { name: 'Back to editions', exact: true }).click();
+        await page.locator('#archive-heading').waitFor();
+        if (page.url() !== `${baseUrl}/`) throw new Error('Unknown route recovery did not reach home');
+      }
+    }
+
     if (routes.includes('/')) {
       activeRoute = '/';
       await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
@@ -304,6 +326,47 @@ async (page) => {
       await page.getByRole('heading', { name: 'No editions found' }).waitFor();
       await page.getByRole('button', { name: 'Clear filters' }).click();
       await page.locator('.home-archive-row').first().waitFor();
+      const archiveLink = page.locator('.home-archive-row').first();
+      await archiveLink.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(100);
+      const archiveY = await page.evaluate(() => window.scrollY);
+      await archiveLink.click();
+      await page.locator('article[data-edition-id] h1').waitFor();
+      await page.waitForFunction(() => window.scrollY < 2).catch(() => { throw new Error('Navigation PUSH did not start edition at top'); });
+      await page.evaluate(() => window.scrollTo(0, 450));
+      await page.waitForTimeout(100);
+      await page.goBack();
+      await page.locator('#archive-heading').waitFor();
+      await page.waitForFunction((y) => Math.abs(window.scrollY - y) < 2, archiveY).catch(() => { throw new Error('Navigation Back did not restore archive position'); });
+      await page.goForward();
+      await page.locator('article[data-edition-id] h1').waitFor();
+      await page.waitForFunction(() => Math.abs(window.scrollY - 450) < 2).catch(() => { throw new Error('Navigation Forward did not restore edition position'); });
+      await page.goto(`${baseUrl}/#archive`, { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => {
+        const target = document.getElementById('archive');
+        return target && Math.abs(target.getBoundingClientRect().top - parseFloat(getComputedStyle(target).scrollMarginTop)) < 2;
+      }).catch(() => { throw new Error('Direct hash navigation lost anchor scroll margin'); });
+      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+      await page.locator('#archive-heading').waitFor();
+      await page.locator('a[href="#latest"]').click();
+      await page.waitForFunction(() => location.hash === '#latest' && Math.abs(document.getElementById('latest').getBoundingClientRect().top) < 2)
+        .catch(() => { throw new Error('Same-document latest hash did not reach anchor'); });
+      await page.locator('a[href="#archive"]').click();
+      await page.waitForFunction(() => location.hash === '#archive' && Math.abs(document.getElementById('archive').getBoundingClientRect().top - parseFloat(getComputedStyle(document.getElementById('archive')).scrollMarginTop)) < 2)
+        .catch(() => { throw new Error('Same-document archive hash did not reach anchor'); });
+      await page.mouse.wheel(0, 200);
+      await page.waitForTimeout(300);
+      const hashEntryY = await page.evaluate(() => window.scrollY);
+      await page.goBack();
+      await page.waitForFunction(() => location.hash === '#latest');
+      await page.waitForTimeout(300);
+      await page.goForward();
+      await page.waitForFunction((y) => location.hash === '#archive' && Math.abs(window.scrollY - y) < 2, hashEntryY)
+        .catch(() => { throw new Error('Same-document hash POP did not preserve user scroll'); });
+      await page.locator('.skip-link').focus();
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => document.activeElement?.id === 'main-content')
+        .catch(() => { throw new Error('Skip link did not focus main content'); });
     }
 
     if (routes.includes('/tools')) {
@@ -323,7 +386,37 @@ async (page) => {
 
     if (routes.includes('/newsletter')) {
       let newsletterMode = 'success';
+      let newsletterPayload;
+      // Geometry must traverse the signup's shadow root, unlike document-wide selectors.
+      for (const width of [360, 390, 430, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`${baseUrl}/newsletter`, { waitUntil: 'domcontentloaded' });
+        const host = page.locator('longmont-newsletter-signup');
+        await host.locator('input[name="email"]').waitFor();
+        const fits = await host.evaluate((element) => {
+          const form = element.shadowRoot.querySelector('form').getBoundingClientRect();
+          const inputs = [...element.shadowRoot.querySelectorAll('input[name="email"],input[name="name"]')];
+          if (inputs.length !== 2 || new Set(inputs.map((input) => input.name)).size !== 2) return false;
+          const formStyle = getComputedStyle(element.shadowRoot.querySelector('form'));
+          const contentLeft = form.left + parseFloat(formStyle.borderLeftWidth) + parseFloat(formStyle.paddingLeft);
+          const contentRight = form.right - parseFloat(formStyle.borderRightWidth) - parseFloat(formStyle.paddingRight);
+          const visibleAndContained = inputs.every((input) => {
+            const field = input.getBoundingClientRect();
+            const label = input.closest('label').getBoundingClientRect();
+            const style = getComputedStyle(input);
+            return field.width > 0 && field.height > 0 && style.visibility === 'visible' && Number(style.opacity) > 0
+              && field.left >= contentLeft - 1 && field.right <= contentRight + 1
+              && field.left >= label.left && field.right <= label.right + 1;
+          });
+          const [email, name] = inputs.map((input) => input.getBoundingClientRect());
+          const noOverlap = email.right <= name.left || name.right <= email.left || email.bottom <= name.top || name.bottom <= email.top;
+          return visibleAndContained && noOverlap;
+        });
+        if (!fits) throw new Error(`Newsletter shadow controls overflow at ${width}px`);
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
       await page.route('**/api/newsletter/subscribe', async (route) => {
+        newsletterPayload = route.request().postDataJSON();
         if (newsletterMode === 'success') {
           await route.fulfill({ status: 202, contentType: 'application/json', body: JSON.stringify({ ok: true, status: 'confirmation_pending' }) });
         } else if (newsletterMode === 'known-error') {
@@ -340,9 +433,47 @@ async (page) => {
       activeRoute = '/newsletter';
       await page.goto(`${baseUrl}/newsletter`, { waitUntil: 'domcontentloaded' });
       const signup = page.locator('longmont-newsletter-signup');
+      await signup.locator('input[name="email"]').waitFor();
+      if (!await signup.locator('input[value="weekly"]').isChecked()) throw new Error('Weekly default was not initialized');
+      const initialized = await page.evaluate(async () => {
+        const element = document.createElement('longmont-newsletter-signup');
+        element.setAttribute('default-cadence', 'biweekly');
+        document.querySelector('main').append(element);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const checked = element.shadowRoot?.querySelector('input[value="biweekly"]')?.checked;
+        element.remove();
+        return checked;
+      });
+      if (!initialized) throw new Error('Biweekly attribute was not initialized');
+      await signup.evaluate((element) => element.setAttribute('default-cadence', 'biweekly'));
+      await page.waitForFunction(() => document.querySelector('longmont-newsletter-signup').shadowRoot.querySelector('input[value="biweekly"]').checked);
+      await signup.locator('input[name="name"]').focus();
+      await page.keyboard.press('Tab');
+      const visibleFocus = await signup.evaluate((element) => {
+        const input = element.shadowRoot.activeElement;
+        return input?.name === 'cadence' && input.matches(':focus-visible')
+          && getComputedStyle(input.closest('label')).outlineStyle !== 'none';
+      });
+      if (!visibleFocus) throw new Error('Newsletter cadence keyboard focus is invisible');
+      await page.keyboard.press('ArrowLeft');
+      await signup.evaluate((element) => element.setAttribute('default-cadence', 'weekly'));
+      await signup.evaluate((element) => element.setAttribute('default-cadence', 'biweekly'));
+      if (!await signup.locator('input[value="weekly"]').isChecked()) throw new Error('Default overwrote user cadence');
+      await page.screenshot({ path: `${outputDir}/newsletter-keyboard-focus.png` });
       await signup.locator('input[name="email"]').fill('browser-contract@example.invalid');
       await signup.getByRole('button', { name: 'Get the briefing' }).click();
       await signup.getByText(/check your inbox/i).waitFor();
+      if (newsletterPayload?.cadence !== 'weekly') throw new Error('Signup payload lost selected cadence');
+      await signup.locator('input[value="weekly"]').focus();
+      await page.keyboard.press('ArrowRight');
+      if (!await signup.locator('input[value="biweekly"]').isChecked()) throw new Error('Keyboard could not select biweekly');
+      const biweeklyFocus = await signup.locator('input[value="biweekly"]').evaluate((input) =>
+        input.matches(':focus-visible') && getComputedStyle(input.closest('label')).outlineStyle !== 'none');
+      if (!biweeklyFocus) throw new Error('Biweekly focus is invisible');
+      await signup.locator('input[name="email"]').fill('browser-contract@example.invalid');
+      await signup.getByRole('button', { name: 'Get the briefing' }).click();
+      await signup.getByText(/check your inbox/i).waitFor();
+      if (newsletterPayload?.cadence !== 'biweekly') throw new Error('Signup payload lost biweekly cadence');
       newsletterMode = 'known-error';
       await signup.locator('input[name="email"]').fill('browser-contract@example.invalid');
       await signup.getByRole('button', { name: 'Get the briefing' }).click();

@@ -12,6 +12,8 @@ import type {
   ModelWatchModel,
 } from '../data/modelWatch';
 
+import { benchmarkPosition, benchmarkRange, rankBenchmarkModels } from '../lib/benchmarkRanking';
+
 const defaultBenchmarkKey: ModelBenchmarkKey = 'sweBenchVerified';
 
 const getBenchmarkDefinition = (key: ModelBenchmarkKey) =>
@@ -51,9 +53,6 @@ const formatBenchmarkScore = (
 
   return formatNumber(score.value);
 };
-
-const getScoreValue = (model: ModelWatchModel, benchmarkKey: ModelBenchmarkKey) =>
-  model.benchmarks[benchmarkKey]?.value;
 
 const parseReleaseTimestamp = (model: ModelWatchModel) => {
   if (!model.releaseDateSort || !/^\d{4}-\d{2}-\d{2}$/.test(model.releaseDateSort)) {
@@ -126,61 +125,40 @@ const Leaderboard: React.FC = () => {
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const selectedBenchmark = getBenchmarkDefinition(selectedBenchmarkKey);
 
-  const rankedModels = useMemo(() => {
-    return [...modelWatchModels].sort((a, b) => {
-      const aValue = getScoreValue(a, selectedBenchmarkKey);
-      const bValue = getScoreValue(b, selectedBenchmarkKey);
-
-      if (aValue === undefined && bValue === undefined) {
-        return a.name.localeCompare(b.name);
-      }
-
-      if (aValue === undefined) {
-        return 1;
-      }
-
-      if (bValue === undefined) {
-        return -1;
-      }
-
-      const scoreDelta = selectedBenchmark.higherIsBetter ? bValue - aValue : aValue - bValue;
-      return scoreDelta || a.name.localeCompare(b.name);
-    });
-  }, [selectedBenchmark.higherIsBetter, selectedBenchmarkKey]);
+  const rankedModels = useMemo(
+    () => rankBenchmarkModels(modelWatchModels, selectedBenchmark),
+    [selectedBenchmark],
+  );
 
   const scoredModels = useMemo(
-    () => rankedModels.filter((model) => model.benchmarks[selectedBenchmarkKey]),
-    [rankedModels, selectedBenchmarkKey],
+    () => rankedModels.filter((entry) => entry.rank !== null),
+    [rankedModels],
   );
 
   const leaderboardChart = useMemo<LeaderboardChart | null>(() => {
     const scoredEntries = scoredModels
-      .map((model) => {
+      .map(({ model, rank }) => {
         const score = model.benchmarks[selectedBenchmarkKey];
         const releaseTimestamp = parseReleaseTimestamp(model);
 
-        return score && releaseTimestamp !== null ? { model, score, releaseTimestamp } : null;
+        return score && rank !== null && releaseTimestamp !== null ? { model, score, releaseTimestamp, rank } : null;
       })
       .filter((entry): entry is {
         model: ModelWatchModel;
         score: ModelBenchmarkScore;
         releaseTimestamp: number;
+        rank: number;
       } => entry !== null);
 
     if (scoredEntries.length === 0) {
       return null;
     }
 
-    const rankedChartEntries = scoredEntries.map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
+    const rankedChartEntries = scoredEntries;
     const values = rankedChartEntries.map((entry) => entry.score.value);
     const timestamps = rankedChartEntries.map((entry) => entry.releaseTimestamp);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const minTimestamp = Math.min(...timestamps);
-    const maxTimestamp = Math.max(...timestamps);
+    const { min: minValue, max: maxValue } = benchmarkRange(values)!;
+    const { min: minTimestamp, max: maxTimestamp } = benchmarkRange(timestamps)!;
     const width = 960;
     const height = 430;
     const plotLeft = 92;
@@ -189,16 +167,9 @@ const Leaderboard: React.FC = () => {
     const plotBottom = 352;
     const plotWidth = width - plotLeft - plotRight;
     const plotHeight = plotBottom - plotTop;
-    const valueRange = maxValue - minValue;
-    const timeRange = maxTimestamp - minTimestamp;
-
     const points = rankedChartEntries.map((entry) => {
-      const x = timeRange === 0
-        ? plotLeft + plotWidth / 2
-        : plotLeft + ((entry.releaseTimestamp - minTimestamp) / timeRange) * plotWidth;
-      const y = valueRange === 0
-        ? plotTop + plotHeight / 2
-        : plotBottom - ((entry.score.value - minValue) / valueRange) * plotHeight;
+      const x = plotLeft + benchmarkPosition(entry.releaseTimestamp, minTimestamp, maxTimestamp) * plotWidth;
+      const y = plotBottom - benchmarkPosition(entry.score.value, minValue, maxValue) * plotHeight;
 
       return {
         ...entry,
@@ -284,7 +255,7 @@ const Leaderboard: React.FC = () => {
         </div>
         <div>
           <span>{scoredModelCount}</span>
-          <p>with selected score</p>
+          <p>with rankable selected score</p>
         </div>
         <div>
           <span>{plottedModelCount}</span>
@@ -433,6 +404,13 @@ const Leaderboard: React.FC = () => {
         </section>
       )}
 
+      {selectedBenchmark.rankable === false && (
+        <section className="leaderboard-chart-empty" aria-label="Metric provenance unverified">
+          <strong>Reported scores are unranked.</strong>
+          <span>{selectedBenchmark.description}</span>
+        </section>
+      )}
+
       {!leaderboardChart && scoredModelCount > 0 && (
         <section className="leaderboard-chart-empty" aria-label="Metric plot unavailable">
           <strong>No exact release dates for this benchmark yet.</strong>
@@ -463,9 +441,9 @@ const Leaderboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {rankedModels.map((model, index) => {
+              {rankedModels.map(({ model, rank: modelRank }) => {
                 const selectedScore = model.benchmarks[selectedBenchmarkKey];
-                const rank = selectedScore ? `#${index + 1}` : 'N/A';
+                const rank = modelRank !== null ? `#${modelRank}` : selectedScore ? 'Unranked' : 'N/A';
 
                 return (
                   <tr key={model.id}>

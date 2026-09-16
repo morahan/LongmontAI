@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFile, rm, stat } from 'node:fs/promises';
+import { readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import test from 'node:test';
+import { build } from 'vite';
 
 import {
   FIRST_ID,
@@ -44,9 +45,11 @@ async function exists(path) {
 
 async function scanTree(root, tree, forbidden) {
   const directory = join(root, tree);
-  if (!(await exists(directory))) return [];
+  assert.equal(await exists(directory), true, `artifact tree ${tree} must exist before scanning`);
+  const files = await allFiles(directory);
+  assert.ok(files.length > 0, `artifact tree ${tree} must not be empty`);
   const findings = [];
-  for (const path of await allFiles(directory)) {
+  for (const path of files) {
     const bytes = await readFile(path);
     for (const value of forbidden) {
       if (bytes.includes(Buffer.from(value))) findings.push(`${relative(root, path)} contains ${value}`);
@@ -82,16 +85,48 @@ test('server package contains selected private inputs but excludes the next edit
   });
 });
 
-test('scheduled source and bytes are absent from public and any locally emitted dist tree', async () => {
+test('staging alone does not create public or dist artifacts', async () => {
+  await withStaged(async ({ root }) => {
+    assert.equal(await exists(join(root, 'public')), false);
+    assert.equal(await exists(join(root, 'dist')), false);
+    await assert.rejects(() => scanTree(root, 'dist', privateText), /artifact tree dist must exist/);
+  });
+});
+
+test('real emitted client artifacts exclude private release inputs and reject an injected leak', async () => {
   await withStaged(async ({ root, packages }) => {
     const release = await importGeneratedServer(packages.server.path);
     const revision = release.revision ?? release.releaseRevision ?? release.fingerprint;
     const forbidden = [...privateText, ...(revision ? [revision] : [])];
+    // Build only inside the disposable fixture. No source-checkout dist, Vite
+    // configuration, browser, providers, or generated production files are used.
+    const clientPath = relative(root, packages.client.path).replaceAll('\\', '/');
+    await writeFile(join(root, 'index.html'), '<!doctype html><html><body><main></main><script type="module" src="/entry.js"></script></body></html>');
+    await writeFile(join(root, 'entry.js'), `import * as locator from './${clientPath}';\ndocument.querySelector('main').textContent = JSON.stringify(locator);\n`);
+    await build({
+      // macOS temporary paths may enter through /var but resolve to /private/var.
+      // Vite's root must use the same canonical path as emitted module IDs.
+      root: await realpath(root),
+      configFile: false,
+      publicDir: false,
+      logLevel: 'silent',
+      build: { outDir: 'dist', emptyOutDir: true, minify: false },
+    });
+    const artifacts = await allFiles(join(root, 'dist'));
+    assert.ok(artifacts.some((path) => path.endsWith('/index.html')), 'Vite must emit HTML');
+    const scripts = artifacts.filter((path) => path.endsWith('.js'));
+    assert.ok(scripts.length > 0, 'Vite must emit JavaScript');
+    const emitted = await Promise.all(scripts.map((path) => readFile(path, 'utf8')));
+    assert.ok(emitted.every((text) => text.length > 0), 'emitted scripts must not be empty');
+    assert.ok(emitted.some((text) => text.includes(FIRST_ID)), 'public locator must survive bundling');
+    const assertNoLeaks = async () => assert.deepEqual(await scanTree(root, 'dist', forbidden), []);
+    await assertNoLeaks();
 
-    assert.deepEqual(await scanTree(root, 'public', forbidden), []);
-    assert.deepEqual(await scanTree(root, 'dist', forbidden), []);
-    assert.equal(await exists(join(root, 'public/weekly-screenshots/2026.09.02')), false);
-    assert.equal(await exists(join(root, 'public/slideshows/2026.09.02')), false);
+    const original = await readFile(scripts[0]);
+    await writeFile(scripts[0], Buffer.concat([original, Buffer.from('\n// FIRST_PRIVATE_BODY_MARKER\n')]));
+    await assert.rejects(assertNoLeaks, /FIRST_PRIVATE_BODY_MARKER/, 'same artifact assertion must fail on leaked private content');
+    await writeFile(scripts[0], original);
+    await assertNoLeaks();
   });
 });
 
