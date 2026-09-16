@@ -2,6 +2,43 @@
 
 Use this guide for every Longmont AI meetup edition.
 
+## Repeatable preparation recipes
+
+- `just blog-new 2026-09-16 astra-then-projects` validates a proposed new
+  draft without writing. Add `--write` as the third argument to create only
+  the Markdown draft from the template, using exclusive creation. An existing
+  draft **or** release manifest is an error, never permission to overwrite it.
+  The noon-meetup publication time is calculated in America/Denver, including DST.
+- For an existing scheduled draft with a release manifest, run
+  `just blog-update src/articles/drafts/2026.09.16-astra-then-projects.release.json`.
+  By default this is a read-only preparation check: validate the package, dated media,
+  11:50 publication time, downloadable deck, and living-site preflight. It is
+  repeatable and never edits content, fetches Model Watch data, promotes an
+  edition, changes the active scheduled package, commits, or pushes.
+- Add `--stage` as the second recipe argument to explicitly update the site's
+  scheduled release package using the same `stageRelease` machinery as
+  `npm run release:stage -- <manifest>`. Its future-time, integrity and active
+  edition rollover checks remain intact. This does **not** deploy, update living
+  Model Watch data, promote an older edition, or make a draft public early.
+  A blocked rollover is an error; never hand-edit the generated package to pass.
+- There is no automatic static-promotion recipe. The existing reviewed path is
+  step 5 below: only after the old edition's release time, promote its Markdown
+  and approved assets, register its article/slideshow, and run the listed gates.
+  That is separate work with separate file ownership. Only then may the new
+  edition replace the active package through guarded staging.
+- Exit 1 means invalid input, failed validation, or guarded staging failure. Exit 2 means preparation
+  was inspected but blockers remain, including a different active release.
+  **Preparation is not a completed site update.** Resolve release sequencing
+  through the reviewed workflow below; never bypass rollover checks.
+- Draft images use dated `/weekly-screenshots/YYYY.MM.DD/...` URLs and decks
+  use `/documents/YYYY.MM.DD/...` URLs, backed by private files under the
+  manifest's `assetRoot`. These references do not authorize copying files into
+  `public/` early. Relative `assets/...` links are not discovered by the release
+  packager and must not be used.
+- Run `node --test scripts/tests/blog-edition.test.mjs` and
+  `npm run test:update-site` when changing these recipes. Preflight identifies
+  the script's Git checkout/worktree rather than requiring one absolute path.
+
 ## Draft and release
 
 1. Read `design.md`, `public/brand/README.md`, the current countdown, and the
