@@ -25,6 +25,21 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    'astra-then-projects': {
+        id: 'astra-then-projects',
+        title: 'Astra, then Projects',
+        description: 'Seven source-briefing slides on Astra budgets, Cursor Projects, and bounded experiments. Read the article for source qualifications and supporting claims.',
+        sourceUrl: '/documents/2026.09.16/astra-then-projects-briefing.pdf',
+        slides: createSlides('/slideshows/2026.09.16/astra-then-projects', [
+            'Astra, then Projects',
+            'Price the hard job first: Astra standard input $10, output $50 per million; 1.05M context',
+            'Above 272K input tokens, Astra charges 2× input and cache, 1.5× output for the full request',
+            'Cursor Projects: coordinator, cloud and local agents, shared context, and subscriptions',
+            'Test one bounded Project with a review at each merge; vendor PR claims are not independent measurements',
+            'Supporting price and release board remains provisional: check effective dates, usage rates, and evidence type',
+            'One hard job, one bounded Project: bring back cost, result, and the approval you kept',
+        ]),
+    },
     'work-keeps-running': {
         id: 'work-keeps-running',
         title: 'The work keeps running',
