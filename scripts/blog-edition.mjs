@@ -5,7 +5,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { createScheduledReleaseTools } from './lib/scheduled-release.mjs';
+import { createScheduledReleaseTools, parseFrontmatter } from './lib/scheduled-release.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
 
@@ -43,10 +43,10 @@ export async function newDraft(root, date, slug, write = false) {
   const markdown = template.replaceAll('edition-yyyy-mm-dd-topic', `edition-${date}-${slug}`)
     .replace('yyyy-mm-ddT11:50:00-06:00', publishAt).replaceAll('yyyy-mm-dd', date);
   if (write) await writeFile(article, markdown, { flag: 'wx' });
-  return { mode: write ? 'created' : 'dry-run', article: path.relative(canonicalRoot, article), publishAt, published: false };
+  return { mode: write ? 'created' : 'dry-run', article: path.relative(canonicalRoot, article), publishAt, production: 'unverified', published: false };
 }
 
-export async function inspectDraft(root, manifestPath) {
+async function inspectCandidate(root, manifestPath) {
   if (!/^src\/articles\/drafts\/\d{4}\.\d{2}\.\d{2}-[a-z0-9-]+\.release\.json$/.test(manifestPath)) {
     throw new Error('Use a dated release manifest inside src/articles/drafts');
   }
@@ -58,27 +58,81 @@ export async function inspectDraft(root, manifestPath) {
   if (manifest.publishAt !== publicationTime(date)) throw new Error('publishAt must be 11:50 America/Denver on the meeting date');
   const text = spec.article.bytes.toString('utf8');
   if (/\]\(assets\//.test(text)) throw new Error('Relative assets/ URLs are not packaged; use dated /weekly-screenshots/ or /documents/ URLs');
-  const active = await tools.verifyGeneratedRelease();
+  return spec;
+}
+
+async function isRegisteredStatic(root, spec) {
+  const directory = await realpath(path.join(root, 'src/articles'));
+  const source = await readFile(path.join(directory, 'index.ts'), 'utf8');
+  // Recognize the repository's literal registry convention, never execute JS.
+  // Preserve quoted import paths while masking comments and template literals.
+  const index = source.replace(/(['"`])(?:\\[\s\S]|(?!\1)[^\\])*?\1|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+    (token) => token.startsWith('/') || token.startsWith('`') ? token.replace(/[^\n]/g, ' ') : token);
+  const registries = [...index.matchAll(/^export\s+const\s+editions(?:\s*:\s*Edition\[\])?\s*=\s*\[([\s\S]*?)\];?\s*$/gm)];
+  if (registries.length !== 1) return false;
+  const entries = registries[0][1].split(',').map((entry) => entry.trim()).filter(Boolean);
+  const members = entries.map((entry) => /^parseMarkdownToEdition\(\s*([A-Za-z_$][\w$]*)\s*\)$/.exec(entry)?.[1]);
+  if (members.some((member) => !member)) return false;
+  const imports = [...index.matchAll(/^import\s+([A-Za-z_$][\w$]*)\s+from\s+['"](\.\/[^'"\n]+\.md)\?raw['"];?\s*$/gm)];
+  if (new Set(imports.map((item) => item[2])).size !== imports.length) return false;
+  const matches = [];
+  for (const member of members) {
+    const imported = imports.filter((item) => item[1] === member);
+    if (imported.length !== 1) return false;
+    const file = await realpath(path.resolve(directory, imported[0][2]));
+    if (!file.startsWith(`${directory}${path.sep}`)) throw new Error('Registered article escapes articles directory');
+    const { data } = parseFrontmatter(await readFile(file, 'utf8'));
+    if (data.id === spec.editionId) matches.push(data);
+  }
+  return matches.length === 1 && matches[0].status === 'published'
+    && matches[0].publishAt === spec.publishAt && spec.publishAtMs <= Date.now();
+}
+
+async function reportPreparation(root, spec, active) {
+  const registered = await isRegisteredStatic(root, spec);
+  const selected = active.editionId === spec.editionId && active.publishAt === spec.publishAt
+    && active.releaseRevision === spec.releaseRevision && active.source.manifest === spec.source.manifest;
+  const due = spec.publishAtMs <= Date.now();
+  const publication = registered ? 'registered-static' : due ? (selected ? 'active-release-due' : 'overdue') : 'future';
   const blockers = [];
   if (!spec.media.some(({ path: name }) => /\.(pdf|pptx)$/.test(name))) blockers.push('Downloadable deck missing from article media');
-  if (active.editionId !== spec.editionId) {
-    blockers.push(`Staging not attempted: active pointer is ${active.editionId}; reviewed promotion/rollover is required before replacing it`);
+  if (publication === 'overdue') {
+    blockers.push('Overdue: use reviewed static publication; future-only staging cannot publish this historical draft');
+  } else if (!selected && !registered) {
+    blockers.push(`Staging not attempted: active pointer is ${active.editionId}; candidate identity/time/revision/source does not match. Use guarded staging, with reviewed promotion/rollover for a different active edition`);
   }
   return {
     mode: 'dry-run', preparation: 'validated', edition: spec.editionId, publishAt: spec.publishAt,
+    localState: registered ? 'registered-static' : selected ? 'locally-staged' : 'prepared',
+    publication, activeEdition: active.editionId,
     media: spec.media.map(({ path: name }) => name), blockers,
-    siteUpdate: 'not performed', published: false,
-    next: 'Review primary sources, preview and gates; parent owns reviewed release:stage and publication. Never bypass rollover.',
+    siteUpdate: 'not performed', production: 'unverified', published: false,
+    next: publication === 'overdue'
+      ? 'Use reviewed static publication with the original publishAt; do not bypass future-only staging.'
+      : registered
+        ? 'Local registration is not deployment evidence. Complete reviewed shipping and verify the production article and media; the scheduled pointer need not move to this historical edition.'
+        : 'Local metadata is not deployment evidence. Complete reviewed shipping and verify the production locator and publishAt before calling scheduling complete.',
   };
 }
 
+export async function inspectDraft(root, manifestPath) {
+  const spec = await inspectCandidate(root, manifestPath);
+  const active = await createScheduledReleaseTools({ root }).verifyGeneratedRelease();
+  return reportPreparation(root, spec, active);
+}
+
 export async function updateDraft(root, manifestPath, stage = false) {
-  const report = await inspectDraft(root, manifestPath);
-  if (!stage) return report;
-  if (report.blockers.some((blocker) => blocker.startsWith('Downloadable'))) throw new Error('Downloadable deck required before staging');
-  // Never hand-write generated files or bypass the active-edition rollover guard.
-  const staged = await createScheduledReleaseTools({ root }).stageRelease(manifestPath);
-  return { ...report, mode: 'staged', blockers: [], siteUpdate: 'scheduled package staged; not deployed', releaseRevision: staged.releaseRevision };
+  if (!stage) return inspectDraft(root, manifestPath);
+  const spec = await inspectCandidate(root, manifestPath);
+  const tools = createScheduledReleaseTools({ root });
+  // Only explicit staging may defer the old package's static-duplicate scan.
+  // Source/hash/inventory checks still run; core staging enforces old promotion.
+  await tools.verifyGeneratedRelease({ checkStaticDuplicates: false });
+  if (!spec.media.some(({ path: name }) => /\.(pdf|pptx)$/.test(name))) throw new Error('Downloadable deck required before staging');
+  await tools.stageRelease(manifestPath);
+  const staged = await tools.verifyGeneratedRelease();
+  const report = await reportPreparation(root, spec, staged);
+  return { ...report, mode: 'staged', siteUpdate: 'scheduled package locally staged; production unverified', releaseRevision: staged.releaseRevision };
 }
 
 export async function main(args) {
@@ -86,9 +140,9 @@ export async function main(args) {
   if (command === 'new' && first && second && rest.length <= 1 && (!rest.length || ['--write', '--dry-run'].includes(rest[0]))) {
     console.log(JSON.stringify(await newDraft(repositoryRoot, first, second, rest[0] === '--write'), null, 2));
   } else if (command === 'update' && first && rest.length === 0 && (second === undefined || ['--dry-run', '--stage'].includes(second))) {
-    const inspected = await inspectDraft(repositoryRoot, first);
-    const preflight = execFileSync(process.execPath, [path.join(repositoryRoot, 'scripts/update-site-preflight.mjs'), '--as-of', inspected.publishAt.slice(0, 10), '--json'], { encoding: 'utf8' });
-    const report = second === '--stage' ? await updateDraft(repositoryRoot, first, true) : inspected;
+    const candidate = await inspectCandidate(repositoryRoot, first);
+    const preflight = execFileSync(process.execPath, [path.join(repositoryRoot, 'scripts/update-site-preflight.mjs'), '--as-of', candidate.publishAt.slice(0, 10), '--json'], { encoding: 'utf8' });
+    const report = await updateDraft(repositoryRoot, first, second === '--stage');
     console.log(JSON.stringify({ ...report, sitePreflight: JSON.parse(preflight) }, null, 2));
     if (report.blockers.length) process.exitCode = 2;
   } else {
