@@ -1,9 +1,18 @@
 import { readFile } from 'node:fs/promises';
 import process from 'node:process';
+import { execFileSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { modelWatchSources as detectorSources } from './model-watch-sources.mjs';
 
 const root = new URL('../', import.meta.url);
-const expectedRoot = '/Users/msfm/Creations/Coding/LongmontAI';
+const detectedRoot = realpathSync(fileURLToPath(root));
+// Anchor to this script's checkout, not the caller's cwd or one machine's path.
+const gitRoot = realpathSync(execFileSync('git', ['-C', detectedRoot, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim());
+const trackedPackage = JSON.parse(execFileSync('git', ['-C', detectedRoot, 'show', 'HEAD:package.json'], { encoding: 'utf8' }));
+if (gitRoot !== detectedRoot || trackedPackage.name !== 'longmont-ai') {
+  throw new Error('This command requires the root of a LongmontAI Git checkout or worktree');
+}
 
 function parseArguments(args) {
   const options = { asOf: undefined, json: false };
@@ -12,6 +21,7 @@ function parseArguments(args) {
       options.json = true;
     } else if (args[index] === '--as-of') {
       options.asOf = args[index + 1];
+      if (!options.asOf || options.asOf.startsWith('--')) throw new Error('--as-of requires an ISO date');
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${args[index]}`);
@@ -84,8 +94,8 @@ const timelineDates = literalMatches(timeline, /\bdate: '(\d{4}-\d{2}-\d{2})'/g)
 
 const report = {
   repository: {
-    expectedRoot,
-    detectedRoot: root.pathname.replace(/\/$/, ''),
+    expectedRoot: gitRoot,
+    detectedRoot,
   },
   window: {
     timeZone: 'America/Denver',
@@ -116,10 +126,6 @@ const report = {
     duplicateTimelineIds: duplicates(timelineIds),
   },
 };
-
-if (report.repository.detectedRoot !== expectedRoot) {
-  throw new Error(`This command is site-specific. Expected ${expectedRoot}, found ${report.repository.detectedRoot}`);
-}
 
 if (report.integrity.duplicateModelIds.length || report.integrity.duplicateTimelineIds.length) {
   process.exitCode = 1;

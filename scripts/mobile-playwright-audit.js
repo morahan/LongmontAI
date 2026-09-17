@@ -181,6 +181,23 @@ async (page) => {
           })
           .filter((table) => table && table.scrollWidth <= table.clientWidth + 1);
 
+        const unreadableMarkdownTables = Array.from(document.querySelectorAll(
+          '.markdown-table-scroll table:has(tr > :nth-child(3))'
+        )).map((table) => {
+          const wrapper = table.parentElement;
+          const cells = Array.from(table.querySelectorAll('th, td'));
+          return {
+            tableWidth: table.getBoundingClientRect().width,
+            clientWidth: wrapper.clientWidth,
+            scrollWidth: wrapper.scrollWidth,
+            minimumCellWidth: Math.min(...cells.map((cell) => cell.getBoundingClientRect().width)),
+            minimumFontSize: Math.min(...cells.map((cell) => parseFloat(getComputedStyle(cell).fontSize))),
+          };
+        }).filter((table) =>
+          table.scrollWidth <= table.clientWidth + 1 ||
+          table.minimumCellWidth < 159 || table.minimumFontSize < 14
+        );
+
         return {
           title: document.title,
           viewportWidth,
@@ -190,6 +207,7 @@ async (page) => {
           brokenImages,
           mediaLayoutFailures,
           unreadableReleaseTables,
+          unreadableMarkdownTables,
         };
       });
 
@@ -216,7 +234,8 @@ async (page) => {
     result.overflowingElements.length > 0 ||
     result.brokenImages.length > 0 ||
     result.mediaLayoutFailures.length > 0 ||
-    result.unreadableReleaseTables.length > 0
+    result.unreadableReleaseTables.length > 0 ||
+    result.unreadableMarkdownTables.length > 0
   );
 
   if (failures.length > 0) {

@@ -378,6 +378,30 @@ export const modelWatchPipeline: ModelWatchPipelineStep[] = [
 
 export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   {
+    company: 'Google',
+    model: 'Gemini 3.8 Live / Live Extended Thinking',
+    update: 'Google announced real-time voice models with background tool use and parallel reasoning, available through Gemini API and AI Studio; enterprise access includes private preview. Performance claims are vendor-reported.',
+    date: 'Sep 15, 2026',
+    lane: 'Live audio and voice agents',
+    url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/',
+  },
+  {
+    company: 'DeepSeek',
+    model: 'DeepSeek-V4.1-Flash',
+    update: 'DeepSeek released MIT-licensed multimodal weights with a 552B backbone, 8B active parameters during prefill and 16B during decode, and 1M context. API pricing has separate weekday peak and off-peak rates.',
+    date: 'Sep 10, 2026',
+    lane: 'Open-weight multimodal model',
+    url: 'https://www.deepseek.com/en/news/deepseek-v4-1-flash/',
+  },
+  {
+    company: 'Anthropic',
+    model: 'Claude Fable 5.1',
+    update: 'Fable 5.1 retains $10 input / $50 output per million tokens and reduces cache reads to $0.25. Anthropic estimates approximately 25% typical and up to 45% agentic savings; these are vendor estimates, not independent measurements.',
+    date: 'Sep 1, 2026',
+    lane: 'Frontier API and cache economics',
+    url: 'https://platform.claude.com/docs/en/models/fable-5-1/overview',
+  },
+  {
     company: 'Google Research',
     model: 'TimesFM-3',
     update: 'TimesFM-3 shipped as a 330M zero-shot multivariate forecasting model with weights on GitHub and Hugging Face.',
