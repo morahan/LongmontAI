@@ -415,20 +415,13 @@ body:has(.home-feed),
   height: var(--home-hero-viewport);
   overflow: hidden;
   pointer-events: none;
-  background: #050508;
+  background: #000000;
 }
 
 .home-hero-shade {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    to top,
-    rgba(9, 9, 11, 0.76) 0%,
-    rgba(9, 9, 11, 0.3) 36%,
-    rgba(9, 9, 11, 0.06) 66%,
-    transparent 84%
-  );
 }
 
 .home-hero {

@@ -51,6 +51,18 @@ async (page) => {
     }
   }
 
+  async function navigateToRenderedRoute(url) {
+    const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
+    if (!response || !response.ok()) {
+      throw new Error(`Mobile audit navigation failed (${response?.status() ?? 'no response'}): ${url}`);
+    }
+    await page.waitForFunction(() =>
+      document.readyState === 'complete' &&
+      Boolean(document.querySelector('#root')?.childElementCount) &&
+      !document.querySelector('#root [role="status"][aria-live="polite"]')
+    );
+  }
+
   async function sameOriginRoutesFromCurrentPage() {
     return page.evaluate(() => {
       const origin = window.location.origin;
@@ -65,7 +77,7 @@ async (page) => {
     });
   }
 
-  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
+  await navigateToRenderedRoute(`${baseUrl}/`);
   const discoveredRoutes = await sameOriginRoutesFromCurrentPage();
   const latestEditionRoute = discoveredRoutes.find((route) => route.startsWith('/edition/'));
   const routes = Array.from(new Set(
@@ -79,7 +91,7 @@ async (page) => {
 
     for (const route of routes) {
       const url = `${baseUrl}${route}`;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      await navigateToRenderedRoute(url);
       await page.waitForFunction(
         () => Array.from(document.images).every((image) => image.complete),
         undefined,
