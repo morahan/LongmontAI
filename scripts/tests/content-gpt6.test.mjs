@@ -13,7 +13,7 @@ import {
   modelWatchSnapshots,
 } from '../../src/data/modelWatch.ts';
 
-const releaseUrl = 'https://openai.com/index/gpt-6-astra/';
+const releaseUrl = 'https://developers.openai.com/api/docs/models/gpt-6-astra';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 let server;
 
@@ -49,7 +49,8 @@ test('GPT-6 Astra carries the primary-verified September 3 release identity', ()
   assert.equal(model.releaseDate, 'Sep 3, 2026');
   assert.equal(model.releaseDateSort, '2026-09-03');
   assert.equal(model.sourceUrl, releaseUrl);
-  assert.match(model.description, /staged rollout/);
+  assert.match(model.description, /September 3 API changelog/);
+  assert.doesNotMatch(model.description, /staged rollout|paid ChatGPT/);
   const signals = modelWatchSnapshots.filter((signal) => signal.url === releaseUrl);
   assert.equal(signals.length, 1);
   assert.equal(signals[0].model, model.name);

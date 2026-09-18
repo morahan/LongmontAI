@@ -65,8 +65,7 @@ try {
   await rm(fixtureRoot, { recursive: true, force: true });
 }
 
-// The default guard accepts the real site root and the current linked checkout.
-await assertSiteRepository('/Users/msfm/Creations/Coding/LongmontAI');
+// The default guard accepts this checkout without a machine-specific root.
 await assertSiteRepository(sourceRoot);
 const { stdout } = await execFileAsync(process.execPath, [
   fileURLToPath(new URL('../update-site-preflight.mjs', import.meta.url)),
@@ -76,7 +75,7 @@ const { stdout } = await execFileAsync(process.execPath, [
 ], { cwd: tmpdir() });
 const report = JSON.parse(stdout);
 assert.equal(await realpath(report.repository.detectedRoot), await realpath(sourceRoot));
-assert.equal(report.repository.expectedRoot, '/Users/msfm/Creations/Coding/LongmontAI');
+assert.equal(report.repository.expectedRoot, await realpath(sourceRoot));
 
 assert.deepEqual(report.window, {
   timeZone: 'America/Denver',
@@ -102,4 +101,14 @@ assert.ok(report.sources.detector.some(({ company, required }) => company === 'M
 assert.deepEqual(report.integrity.duplicateModelIds, []);
 assert.deepEqual(report.integrity.duplicateTimelineIds, []);
 
-console.log('update site preflight: PASS');
+const local = await execFileAsync(process.execPath, [
+  fileURLToPath(new URL('../update-site-preflight.mjs', import.meta.url)),
+  '--as-of', '2026-08-05', '--json',
+], { cwd: sourceRoot });
+assert.deepEqual(JSON.parse(local.stdout), report, 'caller cwd must not select a different checkout');
+for (const args of [['--as-of', '2026-02-30'], ['--as-of'], ['--as-of', '--json'], ['--unknown']]) {
+  await assert.rejects(execFileAsync(process.execPath, [
+    fileURLToPath(new URL('../update-site-preflight.mjs', import.meta.url)), ...args,
+  ]));
+}
+console.log('update site preflight: PASS (portable checkout, linked identity, foreign cwd and invalid arguments)');

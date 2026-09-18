@@ -6,7 +6,8 @@ import { promisify } from 'node:util';
 import { modelWatchSources as detectorSources } from './model-watch-sources.mjs';
 
 const root = new URL('../', import.meta.url);
-const expectedRoot = '/Users/msfm/Creations/Coding/LongmontAI';
+// Anchor to this script's checkout, never the caller's cwd or a machine path.
+const expectedRoot = await realpath(fileURLToPath(root));
 const execFileAsync = promisify(execFile);
 
 export async function assertSiteRepository(detectedRoot, canonicalRoot = expectedRoot) {
@@ -24,7 +25,17 @@ export async function assertSiteRepository(detectedRoot, canonicalRoot = expecte
   }
   try {
     const [detected, expected] = await Promise.all([identity(detectedRoot), identity(canonicalRoot)]);
-    if (detected === expected) return;
+    if (detected === expected) {
+      // Explicit anchors support isolated identity tests. The CLI's default
+      // anchor must also be a committed LongmontAI checkout, as on main.
+      if (canonicalRoot === expectedRoot) {
+        const { stdout } = await execFileAsync('git', [
+          '-C', canonicalRoot, 'show', 'HEAD:package.json',
+        ], { env });
+        if (JSON.parse(stdout).name !== 'longmont-ai') throw new Error('Not a LongmontAI checkout');
+      }
+      return;
+    }
   } catch (error) {
     throw new Error(`This command is site-specific. Could not verify ${detectedRoot} against ${canonicalRoot}`, { cause: error });
   }
@@ -38,6 +49,7 @@ function parseArguments(args) {
       options.json = true;
     } else if (args[index] === '--as-of') {
       options.asOf = args[index + 1];
+      if (!options.asOf || options.asOf.startsWith('--')) throw new Error('Missing --as-of date');
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${args[index]}`);
@@ -82,7 +94,7 @@ function duplicates(values) {
 }
 
 async function main() {
-  const detectedRoot = fileURLToPath(root).replace(/\/$/, '');
+  const detectedRoot = await realpath(fileURLToPath(root));
   await assertSiteRepository(detectedRoot);
   const options = parseArguments(process.argv.slice(2));
   const asOf = options.asOf ?? denverDate();

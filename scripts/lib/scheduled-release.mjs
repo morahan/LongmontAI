@@ -8,6 +8,7 @@ export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.met
 const TYPES = new Map([
   ['.avif', 'image/avif'], ['.gif', 'image/gif'], ['.jpeg', 'image/jpeg'],
   ['.jpg', 'image/jpeg'], ['.mp4', 'video/mp4'], ['.png', 'image/png'],
+  ['.pdf', 'application/pdf'],
   ['.webm', 'video/webm'], ['.webp', 'image/webp'],
 ]);
 const MEDIA_URL = /\/(?:weekly-screenshots|slideshows|documents)\/([A-Za-z0-9._-]+)\/([A-Za-z0-9][A-Za-z0-9._/-]*)/g;
@@ -54,6 +55,7 @@ function slideshowFrom(manifest) {
   const slides = show.slides.map((slide, index) => {
     if (!slide?.title?.trim()) fail(`slideshow slide ${index + 1} needs a title`);
     const mediaPath = safeRelative(slide.path, `slideshow slide ${index + 1}`);
+    if (path.extname(mediaPath).toLowerCase() === '.pdf') fail('PDF decks must be article document links, not slideshow images');
     if (seen.has(mediaPath)) fail(`duplicate slideshow path: ${mediaPath}`);
     seen.add(mediaPath);
     return { title: slide.title, path: mediaPath };
@@ -160,6 +162,7 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     for (const match of articleText.matchAll(MEDIA_URL)) {
       if (match[1] !== manifest.assetFolder) fail(`article media uses the wrong dated folder: ${match[0]}`);
       const mediaPath = safeRelative(match[2], 'article media');
+      if (path.extname(mediaPath).toLowerCase() === '.pdf' && !match[0].startsWith('/documents/')) fail('PDF decks must use dated /documents/ article links');
       selected.set(mediaPath, { path: mediaPath, sourceUrl: match[0] });
     }
     for (const slide of slideshow?.slides ?? []) if (!selected.has(slide.path)) selected.set(slide.path, { path: slide.path, sourceUrl: null });

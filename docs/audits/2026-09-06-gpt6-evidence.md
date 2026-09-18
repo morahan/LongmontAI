@@ -2,6 +2,18 @@
 
 Scope: local GPT-6 content correction only; no publication, deployment, billing, workflow or gate changes.
 
+## September 17 merge-resolution evidence
+
+This resolution retains the narrowed claims accepted in integration `8641944`:
+the September 3 API changelog announcement, official model-documentation URL,
+and Standard API pricing, without the unverified paid-ChatGPT rollout wording.
+The prior integration and independent review recorded successful September 17
+unauthenticated changelog/model/pricing requests and a 403 from the marketing
+URL. Their response evidence is in `/tmp/lai-pr34-source-evidence/` and
+`/tmp/lai-pr34-independent-primary/`; this resolution does not claim a new live
+capture. Newer September 15/10/1 signals and main's September 16 detector capture
+are preserved rather than overwritten with September 6 data.
+
 ## Primary evidence
 
 Public, unauthenticated HTTP access on 2026-09-06:

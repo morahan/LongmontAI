@@ -5,7 +5,7 @@ import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { collectContent, completedPeriod, denverDate, draftPacket, parseSource, reviewMatrix, ROUTES, MAX_BYTES, TIMEOUT_MS } from '../lib/content/collector.mjs';
+import { canonicalName, collectContent, completedPeriod, denverDate, draftPacket, parseSource, reviewMatrix, ROUTES, MAX_BYTES, TIMEOUT_MS } from '../lib/content/collector.mjs';
 import { runUpdate, TRUSTED_PATHS } from '../update-content.mjs';
 import { contentSources } from '../model-watch-sources.mjs';
 
@@ -438,11 +438,21 @@ test('VAL-CONTENT-04 generated September 2 packet equals offline rendering and d
   assert.doesNotMatch(packet.split('\n').find((line) => line.startsWith('Status:')), /\b(?:non-public|private|confidential)\b/i);
 });
 
-test('VAL-CONTENT-01 generated rollout preserves full GPT-6 Astra, never the provisional bare suffix', async () => {
+test('VAL-CONTENT-01 next capture preserves current snapshot names and full GPT-6 Astra, never the provisional bare suffix', async () => {
   const snapshot = JSON.parse(await readFile(new URL('../../src/data/modelWatch.generated.json', import.meta.url), 'utf8'));
   const ledger = JSON.parse(await readFile(new URL('../../content/review/latest.json', import.meta.url), 'utf8'));
-  assert.ok(snapshot.detectedModels.includes('GPT-6 Astra'));
-  assert.ok(!snapshot.detectedModels.includes('Astra'));
+  // Preserve main's newer capture rather than fabricate a fresh all-source run.
+  const openai = contentSources.find(({ id }) => id === 'openai');
+  const result = await collectContent({
+    sources: [openai], snapshot, previous: ledger, seeds: [],
+    now: new Date('2026-09-17T20:00:00Z'),
+    fetchImpl: async () => response(feed('GPT-6 Astra', 'Thu, 03 Sep 2026 11:00:00 GMT').replaceAll('https://models.example/release', 'https://openai.com/index/gpt-6-astra/')),
+  });
+  assert.equal(result.ok, true);
+  assert.ok(result.snapshot.detectedModels.includes('GPT-6 Astra'));
+  assert.ok(!result.snapshot.detectedModels.includes('Astra'));
+  const capturedIdentities = new Set(result.snapshot.detectedModels.map((name) => canonicalName(name).toLowerCase()));
+  for (const name of snapshot.detectedModels) assert.ok(capturedIdentities.has(canonicalName(name).toLowerCase()), `preserve identity ${name}`);
   const openaiRecords = ledger.sources.find(({ id }) => id === 'openai').records;
   assert.ok(openaiRecords.some(({ name }) => name === 'GPT-6 Astra'));
   assert.ok(!openaiRecords.some(({ name }) => name === 'Astra'));

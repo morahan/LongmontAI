@@ -1,0 +1,48 @@
+{
+  "editionId": "edition-2026-09-16-astra-then-projects",
+  "meetingDate": "2026-09-16",
+  "timezone": "America/Denver",
+  "meetupStartsAt": "2026-09-16T12:00:00-06:00",
+  "publishAt": "2026-09-16T11:50:00-06:00",
+  "status": "scheduled",
+  "articlePath": "src/articles/drafts/2026.09.16-astra-then-projects.md",
+  "article": "src/articles/drafts/2026.09.16-astra-then-projects.md",
+  "slideshowId": "astra-then-projects",
+  "assetFolder": "2026.09.16",
+  "assetRoot": "src/articles/drafts/assets/2026.09.16",
+  "slideshow": {
+    "id": "astra-then-projects",
+    "title": "Astra, then Projects",
+    "description": "Seven private-review slides: Astra budget and context limits, Cursor Projects coordination, and two bounded experiments. Supporting comparison claims remain pending source review in the article.",
+    "slides": [
+      {
+        "title": "Astra, then Projects",
+        "path": "slide-01.png"
+      },
+      {
+        "title": "Price the hard job first: Astra standard input $10, output $50 per million; 1.05M context",
+        "path": "slide-02.png"
+      },
+      {
+        "title": "Above 272K input tokens, Astra charges 2× input and cache, 1.5× output for the full request",
+        "path": "slide-03.png"
+      },
+      {
+        "title": "Cursor Projects: coordinator, cloud and local agents, shared context, and subscriptions",
+        "path": "slide-04.png"
+      },
+      {
+        "title": "Test one bounded Project with a review at each merge; vendor PR claims are not independent measurements",
+        "path": "slide-05.png"
+      },
+      {
+        "title": "Supporting price and release board remains provisional: check effective dates, usage rates, and evidence type",
+        "path": "slide-06.png"
+      },
+      {
+        "title": "One hard job, one bounded Project: bring back cost, result, and the approval you kept",
+        "path": "slide-07.png"
+      }
+    ]
+  }
+}

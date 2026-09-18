@@ -3,15 +3,18 @@
 ## Scope and activation
 
 `npm run content:update` (legacy alias: `npm run model-watch:update`) runs one
-producer. `.github/workflows/model-watch.yml` runs it daily at 13:17 UTC, on
-relevant `main` pushes, and by manual dispatch. Generated-only pushes do not
-match its explicit push paths. GitHub schedules are best-effort, not a daily SLA.
+producer, invoked **manually and locally**. **GitHub Actions is disabled by owner
+requirement; do not re-enable or dispatch it.** The retained
+`.github/workflows/model-watch.yml` defines daily 13:17 UTC, relevant `main` push,
+and manual-dispatch triggers, but these are inactive definitions, not running
+scheduling. No replacement scheduler or unattended daily SLA is installed.
 
-**Hosted activation is externally blocked.** The August 31 run
+The historical August 31 run
 [33430925069](https://github.com/morahan/LongmontAI/actions/runs/33430925069)
-never started: GitHub reported an account billing lock. The owner must resolve
-that account issue; code or cron changes cannot resolve it. Local validation is
-not evidence of successful hosted execution or publication.
+never started because of a reported billing lock. That historical issue is not
+permission to activate Actions. Local validation is not evidence of hosted
+execution or publication. Hosted-job descriptions below document retained code
+contracts only; they do not describe an active service.
 
 Standard GitHub-hosted Linux Actions are free for eligible public repositories;
 private-repository quotas, larger runners, storage and provider terms differ.
@@ -145,13 +148,12 @@ reviewed adapters or editors. These packets do **not** make those pages current.
 
 ## Options and next steps (not implemented; owner approval required)
 
-- **Recommended:** retain public GitHub Actions intake plus the existing Vercel
-  deployment path: least extra infrastructure. Vercel Cron ingestion would need
-  additional persistence/secrets; an always-on local scheduler needs a maintained,
-  reliably running machine. Neither alternative bypasses review or source limits.
-- After security/dependency/required-CI blockers clear, integrate through the
-  approved path and manually dispatch once to prove the actual PR, required
-  checks, reviewed merge and deployment. Local success is not hosted activation.
+- Keep intake manual and local while GitHub Actions remains disabled. A future
+  non-GitHub scheduler requires separate owner approval, maintained infrastructure
+  and fresh verification; it cannot bypass review or source limits.
+- After security/dependency/publication blockers clear, integrate only through
+  the approved local review and parent-owned publication path. Do not dispatch
+  retained workflows or waive checks to publish.
 - A future free-tier, keyed Artificial Analysis adapter could provide separately
   attributed benchmark data, subject to current API terms/quota and owner approval.
   Preserve harness comparability; do not mix vendor scores or invent missing data.
@@ -163,7 +165,7 @@ reviewed adapters or editors. These packets do **not** make those pages current.
 
 ## PR / publication controls (VAL-CONTENT-05/06)
 
-Generation runs with contents-read permissions and nonpersisted checkout
+The inactive workflow defines generation with contents-read permissions and nonpersisted checkout
 credentials, tests and changed-content lint/build. Only the exact three artifact
 patterns above cross into a separate writer job. That job rejects unexpected
 paths/symlinks, copies data only and updates the existing review PR branch.

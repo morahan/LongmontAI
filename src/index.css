@@ -415,20 +415,13 @@ body:has(.home-feed),
   height: var(--home-hero-viewport);
   overflow: hidden;
   pointer-events: none;
-  background: #050508;
+  background: #000000;
 }
 
 .home-hero-shade {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    to top,
-    rgba(9, 9, 11, 0.76) 0%,
-    rgba(9, 9, 11, 0.3) 36%,
-    rgba(9, 9, 11, 0.06) 66%,
-    transparent 84%
-  );
 }
 
 .home-hero {
@@ -1720,6 +1713,25 @@ main .container > * {
     font-size: 0.78rem;
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+
+  /* Native Markdown tables with 3+ columns scroll instead of squeezing words.
+     Keep the existing compact layout for two-column comparisons. */
+  .article-layout .markdown-table-scroll {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .article-layout .markdown-table-scroll table:has(tr > :nth-child(3)) {
+    min-width: 42rem;
+    table-layout: auto;
+  }
+
+  .article-layout .markdown-table-scroll table:has(tr > :nth-child(3)) :is(th, td) {
+    min-width: 10rem;
+    font-size: 0.875rem;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   /* Data-dense release tables stay legible through their own horizontal scroller. */
