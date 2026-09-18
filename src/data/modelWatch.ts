@@ -31,6 +31,7 @@ export interface ModelWatchPipelineStep {
 
 export interface ModelWatchSnapshot {
   company: string;
+  model: string;
   update: string;
   date: string;
   lane: string;
@@ -377,7 +378,144 @@ export const modelWatchPipeline: ModelWatchPipelineStep[] = [
 
 export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   {
+    company: 'Google',
+    model: 'Gemini 3.8 Live / Live Extended Thinking',
+    update: 'Google announced real-time voice models with background tool use and parallel reasoning, available through Gemini API and AI Studio; enterprise access includes private preview. Performance claims are vendor-reported.',
+    date: 'Sep 15, 2026',
+    lane: 'Live audio and voice agents',
+    url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/',
+  },
+  {
+    company: 'DeepSeek',
+    model: 'DeepSeek-V4.1-Flash',
+    update: 'DeepSeek released MIT-licensed multimodal weights with a 552B backbone, 8B active parameters during prefill and 16B during decode, and 1M context. API pricing has separate weekday peak and off-peak rates.',
+    date: 'Sep 10, 2026',
+    lane: 'Open-weight multimodal model',
+    url: 'https://www.deepseek.com/en/news/deepseek-v4-1-flash/',
+  },
+  {
+    company: 'Anthropic',
+    model: 'Claude Fable 5.1',
+    update: 'Fable 5.1 retains $10 input / $50 output per million tokens and reduces cache reads to $0.25. Anthropic estimates approximately 25% typical and up to 45% agentic savings; these are vendor estimates, not independent measurements.',
+    date: 'Sep 1, 2026',
+    lane: 'Frontier API and cache economics',
+    url: 'https://platform.claude.com/docs/en/models/fable-5-1/overview',
+  },
+  {
+    company: 'Google Research',
+    model: 'TimesFM-3',
+    update: 'TimesFM-3 shipped as a 330M zero-shot multivariate forecasting model with weights on GitHub and Hugging Face.',
+    date: 'Aug 31, 2026',
+    lane: 'Time-series forecasting',
+    url: 'https://research.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/',
+  },
+  {
+    company: 'Tencent Hunyuan',
+    model: 'Hy4',
+    update: 'Hy4 preview launched as an Apache-2.0 770B/49B-active MoE with 1M context. Official API $0.834 / $0.042 cache hit / $2.501 per 1M tokens. Tencent\'s internal expert panel is not a public leaderboard.',
+    date: 'Aug 28, 2026',
+    lane: 'Open-weight preview flagship',
+    url: 'https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/',
+  },
+  {
+    company: 'Cohere',
+    model: 'Parse',
+    update: 'Parse (parse-v5.0) launched as a document VLM that turns pages into Markdown at $1.50 per 1,000 pages.',
+    date: 'Aug 27, 2026',
+    lane: 'Document ingest',
+    url: 'https://cohere.com/blog/parse',
+  },
+  {
+    company: 'Google DeepMind',
+    model: 'Gemini Omni 1.1 Flash',
+    update: 'Gemini Omni 1.1 Flash added production video controls: 40s scene extend, 360p drafts billed at about one-third the cost of 720p, then upscale.',
+    date: 'Aug 27, 2026',
+    lane: 'Video generation and editing',
+    url: 'https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/',
+  },
+  {
+    company: 'AWS',
+    model: 'Glimmer 30B',
+    update: 'SageMaker JumpStart added Muse Glimmer 30B and Qwen 3.8-27B. Distribution for models that shipped earlier in August, not new weights.',
+    date: 'Aug 27, 2026',
+    lane: 'Cloud distribution',
+    url: 'https://aws.amazon.com/about-aws/whats-new/2026/01/muse-glimmer-30b-qwen-3.8-27b-on-sagemaker-jumpstart/',
+  },
+  {
     company: 'Z.ai',
+    model: 'GLM-5.3-Flash',
+    update: 'GLM-5.3-Flash shipped as the first natively multimodal GLM-5: MIT open weights, 320B/18B-active MoE, list $0.15 / $0.03 cached / $0.50 per 1M tokens with 50% off through 9 Sep 2026 24:00 UTC+8. Coding and agent scores on the launch post are vendor-reported.',
+    date: 'Aug 26, 2026',
+    lane: 'Open-weight multimodal coding',
+    url: 'https://z.ai/blog/glm-5.3-flash',
+  },
+  {
+    company: 'Alibaba Qwen',
+    model: 'Qwen3.8-Flash-Next',
+    update: 'Qwen3.8-Flash-Next released open weights under Qwen Community License 1.0 (not Apache), 6B active per token, 262k native context. Official per-token cloud API price is not quoted on the model card.',
+    date: 'Aug 26, 2026',
+    lane: 'Open-weight long-context agents',
+    url: 'https://huggingface.co/Qwen/Qwen3.8-Flash-Next',
+  },
+  {
+    company: 'Google DeepMind',
+    model: 'Gemini 3.5 Transcribe',
+    update: 'Gemini 3.5 Transcribe entered public preview for file and live speech-to-text. Google cites Artificial Analysis WER 4.0% streaming / 2.6% non-streaming. Launch blog has no Developer API price.',
+    date: 'Aug 26, 2026',
+    lane: 'Speech-to-text',
+    url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5-transcribe/',
+  },
+  {
+    company: 'IBM',
+    model: 'Granite 4.2',
+    update: 'Granite 4.2 launched as Apache-2.0 3B / 8B / 30B dense models with switchable thinking. Granite Speech 5.0 Turbo CTC is a 470M on-device ASR model with no LLM backbone.',
+    date: 'Aug 25, 2026',
+    lane: 'Open-weight SLM and ASR',
+    url: 'https://research.ibm.com/blog/introducing-granite-4-2',
+  },
+  {
+    company: 'DeepSeek',
+    model: 'DeepSeek-V4-Flash-Vision-Exp',
+    update: 'DeepSeek-V4-Flash-Vision-Exp became the first V4 vision understanding model, billed as V4-Flash tokens with a 384-token image cap.',
+    date: 'Aug 21, 2026',
+    lane: 'Experimental vision',
+    url: 'https://api-docs.deepseek.com/guides/vision',
+  },
+  {
+    company: 'Mistral AI',
+    model: 'Agentic Search',
+    update: 'Agentic Search added five retrieval tools on an existing index. FinanceBench ~3× versus one-shot RAG is Mistral\'s vendor eval on Medium 3.5 and GLM-5.2, not a new chat model.',
+    date: 'Aug 20, 2026',
+    lane: 'Retrieval product',
+    url: 'https://mistral.ai/news/agentic-search/',
+  },
+  {
+    company: 'xAI',
+    model: 'Grok 4.6',
+    update: 'Grok 4.6 became available on Amazon Bedrock at $2 / $0.50 cached / $6 per 1M tokens with 500k context. Distribution of the 12 Aug model, not a new release.',
+    date: 'Aug 19, 2026',
+    lane: 'Cloud distribution',
+    url: 'https://x.ai/news/grok-4-6-amazon-bedrock',
+  },
+  {
+    company: 'Google',
+    model: 'AI Pro',
+    update: 'US college students can redeem one year of Google AI Pro free (stated $19.99/mo value); many other markets get AI Plus. Redeem through 31 Dec 2026; auto-renews unless cancelled.',
+    date: 'Aug 19, 2026',
+    lane: 'Cheap access',
+    url: 'https://blog.google/innovation-and-ai/products/gemini-app/student-offer-google-ai/',
+  },
+  {
+    company: 'Cursor',
+    model: 'Origin',
+    update: 'Origin launched as an early-beta git host inside Cursor (paid plans). Cloud agents later gained start-from-scratch so a repo is no longer required before the first draft.',
+    date: 'Aug 17, 2026',
+    lane: 'Developer hosting and agents',
+    url: 'https://cursor.com/changelog/origin-code-hosting',
+  },
+  {
+    company: 'Z.ai',
+    model: 'GLM-5.3',
     update: 'GLM-5.3 launched through the API and Coding Plan with 1M context, stronger long-horizon coding, and sharply higher vendor-reported cyber scores.',
     date: 'Aug 14, 2026',
     lane: 'Coding and cybersecurity',
@@ -385,6 +523,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Alibaba Qwen',
+    model: 'Qwen3.8-27B',
     update: 'Qwen3.8-27B shipped as an Apache-2.0 dense vision-language model with 262K native context for local multimodal agents.',
     date: 'Aug 14, 2026',
     lane: 'Open-weight multimodal agents',
@@ -392,6 +531,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google',
+    model: 'Gemini 3.7 Flash',
     update: 'Gemini 3.7 Flash became Google\'s lower-cost coding and agent workhorse, with introductory API pricing through year-end.',
     date: 'Aug 13, 2026',
     lane: 'Coding and agentic work',
@@ -399,6 +539,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok 4.6',
     update: 'Grok 4.6 arrived for long-running research, codebase work, and visual artifacts across Cursor, Grok Build, and the API.',
     date: 'Aug 12, 2026',
     lane: 'Frontier agents',
@@ -406,6 +547,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'NVIDIA',
+    model: 'Nemotron 3.5 Lightning',
     update: 'Nemotron 3.5 Lightning paired a fast open execution model with NeMo Switchyard, an open model-routing library for agent workflows.',
     date: 'Aug 11, 2026',
     lane: 'Open model and routing',
@@ -413,6 +555,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Glimmer',
     update: 'Muse Glimmer released as a 30B Apache-2.0 local agent model whose 4-bit build targets a 24–32 GB GPU envelope.',
     date: 'Aug 10, 2026',
     lane: 'Open-weight local agents',
@@ -420,6 +563,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'WeatherNext Cyclones',
     update: 'WeatherNext Cyclones published open weights and a Nature evaluation reporting roughly an extra day of average forecast lead-time advantage.',
     date: 'Aug 6, 2026',
     lane: 'Weather research',
@@ -427,6 +571,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Spark 1.2',
     update: 'Muse Spark 1.2 and Muse Code beta paired a coding-focused hosted model with a restart-safe terminal agent and persistent background subagents.',
     date: 'Aug 5, 2026',
     lane: 'Agentic coding',
@@ -434,6 +579,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Mistral AI',
+    model: 'Shieldstral',
     update: 'Shieldstral shipped as a 3B Apache-2.0 open-weight multimodal safety classifier with natural-language policy controls.',
     date: 'Aug 4, 2026',
     lane: 'Open-weight safety',
@@ -441,6 +587,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Alibaba Qwen',
+    model: 'Qwen3.8-Max',
     update: 'Qwen3.8-Max arrived as Alibaba\'s 2.4T-parameter multimodal flagship, with 95B active parameters and a 1M-token context window.',
     date: 'Aug 3, 2026',
     lane: 'Frontier',
@@ -448,6 +595,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'DeepSeek',
+    model: 'DeepSeek-V4-Flash',
     update: 'DeepSeek-V4-Flash-0731 entered public beta with stronger agent capabilities, Responses API support, and a Codex-specific configuration.',
     date: 'Jul 31, 2026',
     lane: 'Agentic coding',
@@ -455,6 +603,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'MiniMax',
+    model: 'MiniMax H3',
     update: 'MiniMax H3 launched as an omni-modal video model accepting text, image, video, and audio inputs.',
     date: 'Jul 31, 2026',
     lane: 'Multimodal generation',
@@ -462,6 +611,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Imagine Video 1.5',
     update: 'Imagine Video 1.5 added text-to-video, image and voice references, native 1080p output, and API access.',
     date: 'Jul 31, 2026',
     lane: 'Video generation',
@@ -469,6 +619,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'Gemini Robotics ER 2',
     update: 'Gemini Robotics ER 2 became publicly available for continuous-video progress tracking, task orchestration, tool use, and multi-robot collaboration.',
     date: 'Jul 30, 2026',
     lane: 'Robotics',
@@ -476,6 +627,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok Voice Think Fast 2.0',
     update: 'Grok Voice Think Fast 2.0 shipped as xAI\'s next-generation speech-to-speech model with improved transcription, conversation, and tool reliability.',
     date: 'Jul 29, 2026',
     lane: 'Voice',
@@ -483,6 +635,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'Lyria 3.5',
     update: 'Lyria 3.5 rolled out in Google Flow Music with stronger musicality, lyrics, vocals, pronunciation, and creative controls.',
     date: 'Jul 29, 2026',
     lane: 'Music generation',
@@ -490,6 +643,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Moonshot AI',
+    model: 'Kimi K3',
     update: 'Moonshot published the full Kimi K3 model card and open weights for its 2.8T-parameter native multimodal model.',
     date: 'Jul 27, 2026',
     lane: 'Open-weight',
@@ -497,6 +651,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Microsoft',
+    model: 'MAI-Cyber-1-Flash',
     update: 'Microsoft introduced MAI-Cyber-1-Flash inside the MDASH vulnerability-management agent system, with Project Perception entering public preview August 3.',
     date: 'Jul 27, 2026',
     lane: 'Cybersecurity',
@@ -504,6 +659,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Anthropic',
+    model: 'Claude Opus 5',
     update: 'Claude Opus 5 became available across Claude platforms for coding, knowledge work, automation, computer use, and scientific research.',
     date: 'Jul 24, 2026',
     lane: 'Frontier',
@@ -511,6 +667,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Spark 1.1',
     update: 'Muse Spark 1.1 now powers Meta AI features for planning, connected email and calendar work, slide creation, and recurring tasks.',
     date: 'Jul 24, 2026',
     lane: 'Frontier',
@@ -518,6 +675,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Black Forest Labs',
+    model: 'FLUX 3',
     update: 'FLUX 3 entered early access as a unified image, video, audio, and action-prediction foundation model.',
     date: 'Jul 23, 2026',
     lane: 'Multimodal generation',
@@ -525,6 +683,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok Build',
     update: 'Grok Build can now write and run background workflows that fan work across parallel agents and report verified results.',
     date: 'Jul 23, 2026',
     lane: 'Agent tooling',
@@ -532,6 +691,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Meta AI',
+    model: 'Muse Spark 1.1',
     update: 'Muse Spark 1.1 is Meta Superintelligence Labs\' latest multimodal reasoning model and is available in Meta AI and the Meta Model API preview.',
     date: 'Jul 9, 2026',
     lane: 'Frontier',
@@ -539,6 +699,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'OpenAI',
+    model: 'GPT-5.6',
     update: 'GPT-5.6 is generally available as Sol, Terra, and Luna across ChatGPT, Codex, and the API.',
     date: 'Jul 9, 2026',
     lane: 'Frontier',
@@ -546,6 +707,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok 4.5',
     update: 'Grok 4.5 is the latest general Grok model, focused on coding, research, and knowledge work.',
     date: 'Jul 8, 2026',
     lane: 'Frontier',
@@ -553,6 +715,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Anthropic',
+    model: 'Claude Fable 5',
     update: 'Claude Fable 5 returned to general availability after its temporary June suspension.',
     date: 'Jul 1, 2026',
     lane: 'Frontier',
@@ -560,6 +723,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'OpenAI',
+    model: 'GPT-5.5',
     update: 'GPT-5.5 release page lists product availability, API follow-up, and agentic coding capabilities.',
     date: 'Apr 23, 2026',
     lane: 'Frontier',
@@ -567,6 +731,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Anthropic',
+    model: 'Claude Opus 4.8',
     update: 'Claude Opus 4.8 appeared in the Anthropic newsroom as an Opus-class model upgrade.',
     date: 'May 28, 2026',
     lane: 'Frontier',
@@ -574,6 +739,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Google DeepMind',
+    model: 'Gemma 4 12B',
     update: 'Gemma 4 12B was listed as a unified multimodal open model update.',
     date: 'June 2026',
     lane: 'Open-weight',
@@ -581,6 +747,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'xAI',
+    model: 'Grok 4',
     update: 'Grok 4 release page remains a model-release source, with xAI News tracking model and API updates.',
     date: 'Jul 9, 2025',
     lane: 'Frontier',
@@ -588,6 +755,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Mistral AI',
+    model: 'Mistral OCR 4',
     update: 'Mistral OCR 4 shipped as a document-intelligence model update.',
     date: 'Jun 23, 2026',
     lane: 'Specialist',
@@ -595,6 +763,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   },
   {
     company: 'Z.ai',
+    model: 'GLM-5.2',
     update: 'GLM-5.2 was published as an MIT-licensed long-horizon model with 1M-token context.',
     date: 'Jun 17, 2026',
     lane: 'Open-weight',
@@ -698,11 +867,101 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
 
 export const modelWatchModels: ModelWatchModel[] = [
   {
+    id: 'hy4-preview',
+    name: 'Hy4 preview',
+    provider: 'Tencent Hunyuan',
+    lane: 'Open-weight datacenter coding and office work',
+    description: 'Apache-2.0 MoE preview, 770B total / 49B active, 1M context. Datacenter-scale, not a laptop download. Tencent internal expert-panel scores are vendor-reported.',
+    releaseDate: 'Aug 28, 2026',
+    releaseDateSort: '2026-08-28',
+    sourceLabel: 'Tencent official release',
+    sourceUrl: 'https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/',
+    benchmarks: {
+      inputCost: { value: 0.834, note: 'Official API list price at launch.' },
+      outputCost: { value: 2.501, note: 'Official API list price at launch. Cache hit $0.042 / 1M tokens.' },
+    },
+  },
+  {
+    id: 'gemini-omni-1-1-flash',
+    name: 'Gemini Omni 1.1 Flash',
+    provider: 'Google DeepMind',
+    lane: 'Video generation and editing',
+    description: 'Closed video SKU with 40s scene extend, keyframes, 360p drafts, and 1080p/4K upscale. Blog: 360p drafts about one-third the cost of 720p. Confirm live token prices before quoting a client.',
+    releaseDate: 'Aug 27, 2026',
+    releaseDateSort: '2026-08-27',
+    sourceLabel: 'Google official release',
+    sourceUrl: 'https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/',
+    benchmarks: {},
+  },
+  {
+    id: 'glm-5-3-flash',
+    name: 'GLM-5.3-Flash',
+    provider: 'Z.ai',
+    lane: 'Cheap multimodal coding and agents',
+    description: 'MIT open-weight MoE, 320B total / 18B active, native vision. First multimodal GLM-5. Promo 50% off list through 9 Sep 2026 24:00 UTC+8. Launch coding/agent tables are vendor-reported.',
+    releaseDate: 'Aug 26, 2026',
+    releaseDateSort: '2026-08-26',
+    sourceLabel: 'Z.ai official release',
+    sourceUrl: 'https://z.ai/blog/glm-5.3-flash',
+    benchmarks: {
+      inputCost: { value: 0.15, note: 'Official API list at launch. Promo $0.075 through 9 Sep 2026 24:00 UTC+8.' },
+      outputCost: { value: 0.5, note: 'Official API list at launch. Promo $0.25 through 9 Sep 2026 24:00 UTC+8. Cached input $0.03 list / $0.015 promo.' },
+    },
+  },
+  {
+    id: 'qwen-3-8-flash-next',
+    name: 'Qwen3.8-Flash-Next',
+    provider: 'Alibaba Qwen',
+    lane: 'Open-weight long-context agents',
+    description: 'Open weights under Qwen Community License 1.0 (not Apache). 125B main + 51B n-gram + 4B MTP, 6B active/token, 262k native / 1M with YaRN. Official per-token cloud API price not quoted on the card.',
+    releaseDate: 'Aug 26, 2026',
+    releaseDateSort: '2026-08-26',
+    sourceLabel: 'Qwen official model card',
+    sourceUrl: 'https://huggingface.co/Qwen/Qwen3.8-Flash-Next',
+    benchmarks: {},
+  },
+  {
+    id: 'gemini-3-5-transcribe',
+    name: 'Gemini 3.5 Transcribe',
+    provider: 'Google DeepMind',
+    lane: 'Speech-to-text',
+    description: 'Closed STT public preview for files and Live API. Google cites Artificial Analysis WER 4.0% streaming / 2.6% non-streaming. Launch blog has no Developer API price.',
+    releaseDate: 'Aug 26, 2026',
+    releaseDateSort: '2026-08-26',
+    sourceLabel: 'Google official release',
+    sourceUrl: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5-transcribe/',
+    benchmarks: {},
+  },
+  {
+    id: 'granite-4-2',
+    name: 'Granite 4.2',
+    provider: 'IBM',
+    lane: 'Open-weight enterprise SLMs',
+    description: 'Apache-2.0 dense 3B / 8B / 30B with switchable thinking. Runnable without a frontier GPU cluster. Hosted IBM/cloud token prices unknown from the launch post.',
+    releaseDate: 'Aug 25, 2026',
+    releaseDateSort: '2026-08-25',
+    sourceLabel: 'IBM Research official release',
+    sourceUrl: 'https://research.ibm.com/blog/introducing-granite-4-2',
+    benchmarks: {},
+  },
+  {
+    id: 'granite-speech-5-0-turbo',
+    name: 'Granite Speech 5.0 Turbo CTC',
+    provider: 'IBM',
+    lane: 'Open-weight on-device ASR',
+    description: '470M CTC transcriber with no LLM backbone. NC variant uses non-commercial data. IBM RTFx claims are vendor hardware results, not a meetup leaderboard row.',
+    releaseDate: 'Aug 25, 2026',
+    releaseDateSort: '2026-08-25',
+    sourceLabel: 'IBM Research official release',
+    sourceUrl: 'https://research.ibm.com/blog/introducing-granite-4-2',
+    benchmarks: {},
+  },
+  {
     id: 'glm-5-3',
     name: 'GLM-5.3',
     provider: 'Z.ai',
     lane: 'Long-horizon coding and authorized cyber research',
-    description: 'API-first coding flagship with 1M context, mandatory thinking, and a large provider-reported jump on coding and exploitation benchmarks.',
+    description: 'API-first coding flagship with 1M context; weights published ~27 Aug. Confirm the HF license. List price remains $1.40 / $4.40. Flash is the cheaper multimodal sibling.',
     releaseDate: 'Aug 14, 2026',
     releaseDateSort: '2026-08-14',
     sourceLabel: 'Z.ai official release',
@@ -718,7 +977,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     name: 'Qwen3.8-27B',
     provider: 'Alibaba Qwen',
     lane: 'Open-weight local multimodal agents',
-    description: 'Apache-2.0 dense vision-language model with 262K native context, image and video understanding, and controllable reasoning effort.',
+    description: 'Apache-2.0 dense vision-language model with 262K native context, image and video understanding, and controllable reasoning effort. Also listed on SageMaker JumpStart as of Aug 27 (AWS instance $ unknown from that note).',
     releaseDate: 'Aug 14, 2026',
     releaseDateSort: '2026-08-14',
     sourceLabel: 'Qwen official model card',
@@ -748,7 +1007,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     name: 'Grok 4.6',
     provider: 'xAI',
     lane: 'Long-running coding, research, and visual work',
-    description: 'Hosted frontier model for codebase-scale jobs, multi-step research, and turning product ideas into working visual artifacts.',
+    description: 'Hosted frontier model for codebase-scale jobs, multi-step research, and visual artifacts. Also on Amazon Bedrock as of Aug 19 at $2 / $0.50 cached / $6 per 1M tokens (distribution, not a new model).',
     releaseDate: 'Aug 12, 2026',
     releaseDateSort: '2026-08-12',
     sourceLabel: 'xAI official release',
@@ -776,7 +1035,7 @@ export const modelWatchModels: ModelWatchModel[] = [
     name: 'Muse Glimmer',
     provider: 'Meta AI',
     lane: 'Open-weight local computer-use agents',
-    description: 'Apache-2.0 30B local agent model whose 4-bit configuration is designed to share a 24–32 GB GPU with its runtime components.',
+    description: 'Apache-2.0 30B local agent model whose 4-bit configuration is designed to share a 24–32 GB GPU with its runtime components. Also listed on SageMaker JumpStart as of Aug 27 (AWS instance $ unknown from that note).',
     releaseDate: 'Aug 10, 2026',
     releaseDateSort: '2026-08-10',
     sourceLabel: 'Meta official release',
@@ -989,8 +1248,8 @@ export const modelWatchModels: ModelWatchModel[] = [
       frontierCode: { value: 80, note: 'Artificial Analysis Coding Agent Index v1.1.' },
       browseComp: { value: 90.4 },
       gpqaDiamond: { value: 94.6 },
-      inputCost: { value: 5 },
-      outputCost: { value: 30 },
+      inputCost: { value: 4, note: 'API promo through at least 21 Nov 2026; was $5 list.' },
+      outputCost: { value: 20, note: 'API promo through at least 21 Nov 2026; was $30 list.' },
     },
   },
   {

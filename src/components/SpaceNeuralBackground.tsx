@@ -5,6 +5,8 @@ import {
     createConstellationGeometry,
     createConstellationGeometryForPhrase,
     createEasterEggTargetStyles,
+    createEmbeddedGalaxySystems,
+    createNeuralContagionState,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
@@ -15,6 +17,9 @@ import {
     getEasterEggStrength,
     getEasterEggStarFieldStyles,
     getElapsedSecondsSinceMount,
+    getEmbeddedGalaxySystemOpacity,
+    getEmbeddedGalaxySystemState,
+    getNeuralSignalSlot,
     getNeuralSignals,
     getOrbitingMoon,
     getOrbitingPlanets,
@@ -31,7 +36,9 @@ import {
     getSystemOpacity,
     getSystemOwnerDiscLocalRadius,
     getSystemScale,
+    getGalaxyAnimationState,
     getGalaxyAppearance,
+    getGalaxyParticleState,
     getTravelerAppearance,
     getTravelerStarRenderPolicy,
     getTravelerVariant,
@@ -40,12 +47,14 @@ import {
     isPlanetBehindSystemStar,
     isStarRenderable,
     projectTraveler,
-    remapAmbientStarsToFirstGlyphSlots,
+    remapAmbientStarsToTextSlots,
     scaleConstellationGeometry,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
     shouldTriggerEasterEgg,
+    syncNeuralContagionState,
     travelerCountForWidth,
+    updateNeuralContagionForSignal,
     type ConstellationGeometry,
     type ConstellationPhrase,
     type EasterEggClickSequence,
@@ -480,72 +489,64 @@ const drawGalaxy = (
     projection: ProjectedTraveler,
     simulationSeconds: number,
 ) => {
-    const appearance = getGalaxyAppearance(traveler, projection.progress);
+    const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
+    const animation = getGalaxyAnimationState(traveler, projection.cycle, simulationSeconds);
     const { x, y, opacity } = projection;
-    const rotation = surfaceValue(traveler.seed, projection.cycle) * TAU
-        + simulationSeconds * 0.055;
-
-    const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.outerRadius);
-    halo.addColorStop(0, `rgba(245, 226, 198, ${opacity * 0.5})`);
-    halo.addColorStop(0.38, `rgba(126, 177, 221, ${opacity * 0.2})`);
-    halo.addColorStop(1, 'rgba(77, 119, 180, 0)');
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(x, y, appearance.outerRadius, 0, TAU);
-    ctx.fill();
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(rotation);
-    ctx.strokeStyle = `rgba(171, 205, 235, ${opacity * 0.23})`;
-    ctx.lineWidth = Math.max(0.25, appearance.outerRadius * 0.045);
-    for (let arm = 0; arm < appearance.armCount; arm += 1) {
-        ctx.beginPath();
-        for (let step = 0; step <= 18; step += 1) {
-            const radialProgress = step / 18;
-            const radius = appearance.coreRadius
-                + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.9;
-            const angle = arm * TAU / appearance.armCount + radialProgress * TAU * 1.45;
-            const armX = Math.cos(angle) * radius;
-            const armY = Math.sin(angle) * radius * 0.58;
-            if (step === 0) ctx.moveTo(armX, armY);
-            else ctx.lineTo(armX, armY);
-        }
-        ctx.stroke();
-    }
+    ctx.rotate(animation.rotation);
 
+    // Formation identity comes entirely from seeded point positions, colors, and density.
     for (let star = 0; star < appearance.internalStarCount; star += 1) {
-        const arm = star % appearance.armCount;
-        const radialProgress = (Math.floor(star / appearance.armCount) + 0.45
-            + surfaceValue(traveler.seed, star + 41) * 0.5)
-            / Math.ceil(appearance.internalStarCount / appearance.armCount);
-        const radius = appearance.coreRadius
-            + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.88;
-        const angle = arm * TAU / appearance.armCount
-            + radialProgress * TAU * 1.45
-            + (surfaceValue(traveler.seed, star + 83) - 0.5) * 0.42;
-        ctx.fillStyle = `rgba(232, 242, 255, ${opacity * (0.55
-            + surfaceValue(traveler.seed, star + 127) * 0.45)})`;
-        ctx.beginPath();
-        ctx.arc(
-            Math.cos(angle) * radius,
-            Math.sin(angle) * radius * 0.58,
-            Math.max(0.18, Math.min(0.58, appearance.outerRadius * 0.035)),
-            0,
-            TAU,
+        const particle = getGalaxyParticleState(
+            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
         );
+        const color = particle.kind === 'dust' ? '111, 86, 83'
+            : particle.kind === 'young-star' ? '151, 211, 255' : '238, 242, 247';
+        ctx.fillStyle = `rgba(${color}, ${opacity * particle.opacity})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
         ctx.fill();
     }
 
-    ctx.fillStyle = `rgba(2, 3, 8, ${Math.min(1, opacity * 1.3)})`;
-    ctx.beginPath();
-    ctx.arc(0, 0, appearance.coreRadius, 0, TAU);
-    ctx.fill();
-    ctx.strokeStyle = `rgba(255, 205, 133, ${opacity * 0.9})`;
-    ctx.lineWidth = Math.max(0.3, appearance.coreRadius * 0.35);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, appearance.coreRadius * 1.75, appearance.coreRadius * 0.52, 0, 0, TAU);
-    ctx.stroke();
+    if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
+        ctx.fillStyle = `rgba(2, 3, 7, ${Math.min(1, opacity * 0.9)})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.min(0.72, appearance.coreRadius * 0.2), 0, TAU);
+        ctx.fill();
+    }
+
+    // Miniature systems use only filled points. Planets are ordered around their moving host.
+    const embeddedSystemOpacity = opacity * getEmbeddedGalaxySystemOpacity(appearance.outerRadius);
+    if (embeddedSystemOpacity > 0) {
+        const systems = createEmbeddedGalaxySystems(traveler, projection.cycle, appearance);
+        ctx.globalAlpha = embeddedSystemOpacity;
+        for (let systemIndex = 0; systemIndex < systems.length; systemIndex += 1) {
+            const system = systems[systemIndex];
+            const state = getEmbeddedGalaxySystemState(system, simulationSeconds);
+            for (let planetIndex = 0; planetIndex < state.planets.length; planetIndex += 1) {
+                const planet = state.planets[planetIndex];
+                if (planet.z >= 0) continue;
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+                ctx.fill();
+            }
+            ctx.fillStyle = system.hostColor;
+            ctx.beginPath();
+            ctx.arc(state.host.x, state.host.y, system.hostRadius, 0, TAU);
+            ctx.fill();
+            for (let planetIndex = 0; planetIndex < state.planets.length; planetIndex += 1) {
+                const planet = state.planets[planetIndex];
+                if (planet.z < 0) continue;
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+                ctx.fill();
+            }
+        }
+    }
     ctx.restore();
 };
 
@@ -755,8 +756,17 @@ const SpaceNeuralBackground: React.FC = () => {
         const ctx = canvas?.getContext('2d');
         if (!canvas || !ctx) return;
 
-        // The refresh seed prefers Web Crypto and has a one-sample legacy fallback.
-        const scene = createSpaceScene();
+        // The refresh seed prefers Web Crypto. A development-only query override makes Canvas
+        // motion reviews repeatable without changing production randomness or the simulation clock.
+        const requestedSeedValue = import.meta.env.DEV
+            ? new URLSearchParams(window.location.search).get('spaceSeed')
+            : null;
+        const requestedSeed = requestedSeedValue === null ? Number.NaN : Number(requestedSeedValue);
+        const scene = createSpaceScene(
+            Number.isInteger(requestedSeed) && requestedSeed >= 0 && requestedSeed <= 0xffffffff
+                ? requestedSeed
+                : undefined,
+        );
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         const mountedAt = performance.now();
         let width = 0;
@@ -765,13 +775,13 @@ const SpaceNeuralBackground: React.FC = () => {
         let isOnscreen = typeof IntersectionObserver === 'undefined';
         let pageIsVisible = !document.hidden;
         let reducedMotion = motionQuery.matches;
-        let backdropGlow: CanvasGradient | null = null;
         let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
         let constellationEvent = -1;
         let prominentSystemOwner: ProminentSystemOwner | null = null;
         let easterEgg: EasterEggTransition | null = null;
         let easterEggClickSequence: EasterEggClickSequence | null = null;
         let easterEggTriggerCount = 0;
+        let neuralContagion = createNeuralContagionState();
 
         const clearEasterEggDataset = () => {
             delete canvas.dataset.constellationPhrase;
@@ -836,7 +846,6 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endVelocities,
                             { x: width, y: height },
                             {
-                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
                                 endpointVisible: easterEgg.endVisibility,
                             },
@@ -847,7 +856,6 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endStyles,
                             age,
                             {
-                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
                                 endpointVisible: easterEgg.endVisibility,
                             },
@@ -863,13 +871,9 @@ const SpaceNeuralBackground: React.FC = () => {
         const drawScene = (elapsed: number, renderDetails = true) => {
             if (width <= 0 || height <= 0) return;
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#050508';
+            // The canvas owns an opaque, unmodulated black backdrop on every frame.
+            ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, width, height);
-
-            if (backdropGlow) {
-                ctx.fillStyle = backdropGlow;
-                ctx.fillRect(0, 0, width, height);
-            }
 
             const frame = getRenderedStarFrame(elapsed);
             const { phase, positions, styles, lineLayers } = frame;
@@ -888,7 +892,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     const toPoint = positions[to];
                     const fromStyle = styles[from];
                     const toStyle = styles[to];
-                    // Connections follow revealed nodes; hidden burst destinations never leak.
+                    // Connections follow revealed nodes; hidden target destinations never leak.
                     if (!fromPoint || !toPoint || !fromStyle || !toStyle
                         || fromStyle.opacity <= 0 || toStyle.opacity <= 0
                         || fromStyle.strength <= 0 || toStyle.strength <= 0) return;
@@ -931,16 +935,31 @@ const SpaceNeuralBackground: React.FC = () => {
             );
 
             // Filaments sit below traveler stars; their endpoints are always current projections.
-            getNeuralSignals(scene.seed, elapsed, projections, width, height, reducedMotion)
-                .forEach((signal) => drawNeuralSignal(
-                    ctx,
-                    projections[signal.fromTravelerIndex],
-                    projections[signal.toTravelerIndex],
-                    signal.opacity,
-                    signal.pulseProgress,
-                    signal.lineWidth,
-                    signal.bend,
-                ));
+            neuralContagion = syncNeuralContagionState(
+                neuralContagion, projections, width, height,
+            );
+            const neuralSignals = getNeuralSignals(
+                scene.seed, elapsed, projections, width, height, reducedMotion, neuralContagion,
+            );
+            if (neuralSignals[0]) {
+                neuralContagion = updateNeuralContagionForSignal(
+                    neuralContagion,
+                    getNeuralSignalSlot(elapsed),
+                    neuralSignals[0],
+                    projections,
+                    width,
+                    height,
+                );
+            }
+            neuralSignals.forEach((signal) => drawNeuralSignal(
+                ctx,
+                projections[signal.fromTravelerIndex],
+                projections[signal.toTravelerIndex],
+                signal.opacity,
+                signal.pulseProgress,
+                signal.lineWidth,
+                signal.bend,
+            ));
 
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
@@ -1025,13 +1044,6 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.width = Math.max(1, Math.round(width * dpr));
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            backdropGlow = ctx.createRadialGradient(
-                width * 0.5, height * 0.42, 0,
-                width * 0.5, height * 0.42, Math.max(width, height) * 0.62,
-            );
-            backdropGlow.addColorStop(0, 'rgba(19, 49, 68, 0.1)');
-            backdropGlow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
-            backdropGlow.addColorStop(1, 'rgba(5, 5, 8, 0)');
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
             const resizePhase = getConstellationPhase(elapsed);
             constellationEvent = resizePhase.event;
@@ -1074,6 +1086,7 @@ const SpaceNeuralBackground: React.FC = () => {
             reducedMotion = event.matches;
             if (reducedMotion) {
                 easterEgg = null;
+                neuralContagion = createNeuralContagionState();
                 clearEasterEggDataset();
             }
             syncAnimation();
@@ -1170,17 +1183,14 @@ const SpaceNeuralBackground: React.FC = () => {
             let startStyles = fillStyles(currentFrame.styles);
             const endStyles = fillStyles(rawEndStyles);
             if (currentFrame.phase.name === 'ambient') {
-                const remapped = remapAmbientStarsToFirstGlyphSlots(
-                    startPositions,
-                    startStyles,
-                    geometry.glyphs[0].indices.length,
+                const remapped = remapAmbientStarsToTextSlots(
+                    startPositions, startStyles, geometry.points.length,
                 );
                 startPositions = remapped.positions;
                 startStyles = remapped.styles;
-                remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
-                    .forEach((sourceIndex) => {
-                        targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
-                    });
+                remapped.sourceIndices.forEach((sourceIndex) => {
+                    targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
+                });
             }
             easterEgg = {
                 startedAt: elapsed,

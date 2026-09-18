@@ -1,5 +1,13 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 
+# Prepare a new draft without overwriting existing work. Pass --write explicitly to create it.
+blog-new date topic mode="--dry-run":
+    @node scripts/blog-edition.mjs new {{quote(date)}} {{quote(topic)}} {{quote(mode)}}
+
+# Draft + site preflight; opt in with --stage to use guarded release staging. Never publish.
+blog-update manifest mode="--dry-run":
+    @node scripts/blog-edition.mjs update {{quote(manifest)}} {{quote(mode)}}
+
 verify:
     @bash scripts/local-ci.sh
 

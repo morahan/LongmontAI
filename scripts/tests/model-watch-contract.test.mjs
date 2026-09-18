@@ -25,6 +25,22 @@ assert.match(models, /id: 'qwen-image-3-0'/);
 assert.match(models, /id: 'weather-next-cyclones'/);
 assert.match(models, /latestBriefingModelIds/);
 assert.match(models, /id: 'kimi-k3'/);
+
+const snapshotsBlock = models.match(/export const modelWatchSnapshots: ModelWatchSnapshot\[\] = \[([\s\S]*?)\n\];/);
+assert.ok(snapshotsBlock, 'modelWatchSnapshots export should remain parseable by the contract test');
+const snapshotIdentities = [...snapshotsBlock[1].matchAll(
+  /\{\s*company: '([^']+)',[\s\S]*?\n\s*date: '([^']+)',[\s\S]*?\n\s*url: '([^']+)',\s*\n\s*\}/g,
+)].map(([, company, date, url]) => `${company}\u0000${date}\u0000${url}`);
+assert.ok(snapshotIdentities.length > 0, 'contract test should extract model watch snapshot identities');
+const duplicateSnapshotIdentities = snapshotIdentities.filter(
+  (identity, index) => snapshotIdentities.indexOf(identity) !== index,
+);
+assert.deepEqual(
+  duplicateSnapshotIdentities,
+  [],
+  `model watch snapshots must not repeat a company/date/source event: ${duplicateSnapshotIdentities.join(', ')}`,
+);
+
 assert.match(workflow, /cron: "17 13 \* \* 1"/);
 assert.match(editorGuide, /npm run model-watch:update/);
 assert.match(updater, /Required Model Watch sources failed/);
