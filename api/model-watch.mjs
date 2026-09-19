@@ -1,39 +1,38 @@
-import {
-  modelWatchSources as sources,
-  normalizeModelName,
-  seedModels,
-} from '../scripts/model-watch-sources.mjs';
+// Load only the deployed artifact. Missing/invalid JSON must also fail closed,
+// without falling back to a producer, upstream fetch or an invented timestamp.
+const snapshot = await import('../src/data/modelWatch.generated.json', { with: { type: 'json' } })
+  .then((module) => module.default)
+  .catch(() => null);
 
-export default async function handler(_request, response) {
-  const detectedModels = new Set(seedModels);
-  let successfulSources = 0;
+const isValidSnapshot = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (Object.keys(value).sort().join(',') !== 'checkedAt,detectedModels,successfulSources,totalSources') return false;
+  if (typeof value.checkedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.checkedAt)) return false;
+  const timestamp = Date.parse(value.checkedAt);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString() !== value.checkedAt) return false;
+  if (!Number.isSafeInteger(value.successfulSources) || !Number.isSafeInteger(value.totalSources)
+    || value.successfulSources < 0 || value.totalSources < value.successfulSources) return false;
+  return Array.isArray(value.detectedModels) && value.detectedModels.every((name) => (
+    typeof name === 'string' && name.length > 0 && name.length <= 200
+    && name === name.trim() && !/[\u0000-\u001f\u007f]/.test(name)
+  ));
+};
 
-  await Promise.all(sources.map(async (source) => {
-    try {
-      const sourceResponse = await fetch(source.url, {
-        headers: { 'User-Agent': 'LongmontAI-ModelWatch/1.0 (+https://longmont.ai/model-watch)' },
-        signal: AbortSignal.timeout(12_000),
-      });
-
-      if (!sourceResponse.ok) return;
-
-      const body = await sourceResponse.text();
-      for (const pattern of source.patterns) {
-        for (const match of body.matchAll(pattern)) {
-          detectedModels.add(normalizeModelName(match[0]));
-        }
-      }
-      successfulSources += 1;
-    } catch {
-      // A partial result is more useful than failing the entire watch cycle.
-    }
-  }));
-
+export default function handler(request, response) {
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+  // Intentionally narrow the legacy all-method endpoint to read-only retrieval.
+  // Query/body/environment never influence capture time, counts or freshness.
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    response.setHeader('Allow', 'GET, HEAD');
+    response.setHeader('Cache-Control', 'no-store');
+    return response.status(405).json({ ok: false, error: 'method_not_allowed' });
+  }
+  if (!isValidSnapshot(snapshot)) {
+    response.setHeader('Cache-Control', 'no-store');
+    response.status(503);
+    return request.method === 'HEAD' ? response.end() : response.json({ ok: false, error: 'snapshot_unavailable' });
+  }
   response.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-  response.status(200).json({
-    checkedAt: new Date().toISOString(),
-    successfulSources,
-    totalSources: sources.length,
-    detectedModels: [...detectedModels].sort((a, b) => a.localeCompare(b)),
-  });
+  response.status(200);
+  return request.method === 'HEAD' ? response.end() : response.json(snapshot);
 }

@@ -136,17 +136,30 @@ Use this guide for every Longmont AI meetup edition.
 
 ## Model Watch cadence
 
-- GitHub Actions checks the fixed official sources every Monday and opens or
-  refreshes a reviewable Model Watch pull request. It does not publish an
-  unreviewed release claim. A Meta or Moonshot source failure fails the check
-  rather than producing a stale success.
+- Intake is **manual local**: `npm run content:update` checks fixed official
+  sources and writes a reviewable Model Watch snapshot and website-unpublished
+  route/fortnight review packets visible in this repository. GitHub Actions is
+  disabled by owner requirement; retained workflow definitions are inactive and
+  must not be re-enabled or dispatched. No unattended replacement scheduler is
+  installed. The producer never commits, pushes, deploys or automatically updates
+  curated pages. OpenAI, Meta and Moonshot source failures fail the command and
+  preserve trusted files rather than producing stale success. See
+  `docs/content-automation.md` for source bounds and review-only contracts.
+  `checkedAt` is the last semantic snapshot capture, not daily health or editorial
+  review; separate local health records attempts.
 - Every blog-editing session runs `npm run model-watch:update` before the
   edition is promoted. Add a curated entry only when the primary announcement
   confirms a named model, date, and availability; label vendor benchmark claims
   as vendor-reported.
-- The source configuration is shared by the scheduled updater and the live
-  status endpoint in `scripts/model-watch-sources.mjs`. Add a provider there,
-  rather than changing only the source-map UI.
+- The source configuration in `scripts/model-watch-sources.mjs` is shared by
+  the local producer and compatibility updater. The status endpoint serves
+  only the deployed static snapshot; it never refreshes upstream sources.
+  Add a provider to the registry rather than changing only the source-map UI.
+  Generated `content/review/biweekly/` packets cover completed fourteen-day Denver
+  windows anchored May 27, 2026; they are unreviewed source briefs, NOT blog
+  articles, approved release manifests or permission to bypass an embargo.
+  Actual every-other-Wednesday article authoring/approval remains this guide's
+  normal process.
 
 ## Asset handling
 

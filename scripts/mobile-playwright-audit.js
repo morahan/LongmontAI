@@ -39,9 +39,14 @@ async (page) => {
         return { canonical: canonicalValue, parsed: JSON.parse(new TextDecoder().decode(bytes)) };
       }, encodedRoutes);
       if (canonical !== encodedRoutes) throw new Error('non-canonical base64url');
-      const validRoute = (route) => typeof route === 'string' &&
-        route.length <= 2048 &&
-        (route === '/' || /^\/(?:[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)(?:\/[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)*$/.test(route));
+      const validRoute = (route) => {
+        if (typeof route !== 'string' || route.length > 2048 || !route.startsWith('/')) return false;
+        if (route === '/') return true;
+        // Check each bounded segment once; overlapping repetitions can backtrack exponentially.
+        return route.slice(1).split('/').every((segment) => segment.length > 0 &&
+          segment[0] !== '-' && segment[segment.length - 1] !== '-' &&
+          !/[^a-z0-9-]/.test(segment));
+      };
       if (!Array.isArray(parsed) || parsed.length === 0 || parsed.length > 50 || !parsed.every(validRoute)) {
         throw new Error('expected 1-50 normalized same-origin routes');
       }

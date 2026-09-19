@@ -394,6 +394,14 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
     url: 'https://www.deepseek.com/en/news/deepseek-v4-1-flash/',
   },
   {
+    company: 'OpenAI',
+    model: 'GPT-6 Astra',
+    update: 'OpenAI announced GPT-6 Astra in its September 3 API changelog. Standard API pricing is $10 input / $50 output per 1M tokens; prompts over 272K input tokens use higher rates for the full request. No independently verified performance scores are recorded here.',
+    date: 'Sep 3, 2026',
+    lane: 'Frontier reasoning and coding',
+    url: 'https://developers.openai.com/api/docs/models/gpt-6-astra',
+  },
+  {
     company: 'Anthropic',
     model: 'Claude Fable 5.1',
     update: 'Fable 5.1 retains $10 input / $50 output per million tokens and reduces cache reads to $0.25. Anthropic estimates approximately 25% typical and up to 45% agentic savings; these are vendor estimates, not independent measurements.',
@@ -866,6 +874,21 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
 ];
 
 export const modelWatchModels: ModelWatchModel[] = [
+  {
+    id: 'gpt-6-astra',
+    name: 'GPT-6 Astra',
+    provider: 'OpenAI',
+    lane: 'Frontier reasoning and coding',
+    description: 'Announced in the September 3 API changelog. Standard API: $10 input / $1 cached input / $50 output per 1M tokens. Prompts over 272K input tokens use $20 input / $2 cached input / $75 output per 1M tokens for the full request. Other processing tiers differ; no independently verified performance scores are recorded here.',
+    releaseDate: 'Sep 3, 2026',
+    releaseDateSort: '2026-09-03',
+    sourceLabel: 'OpenAI official release',
+    sourceUrl: 'https://developers.openai.com/api/docs/models/gpt-6-astra',
+    benchmarks: {
+      inputCost: { value: 10, note: 'Standard USD per 1M tokens, checked Sep 17, 2026. Cached input $1. Prompts over 272K input tokens: $20 input / $2 cached input for the full request. Other processing tiers differ. Source: https://developers.openai.com/api/docs/pricing.md; threshold: https://developers.openai.com/api/docs/models/gpt-6-astra.md' },
+      outputCost: { value: 50, note: 'Standard USD per 1M tokens, checked Sep 17, 2026. Prompts over 272K input tokens: $75 output for the full request. Other processing tiers differ. Source: https://developers.openai.com/api/docs/pricing.md; threshold: https://developers.openai.com/api/docs/models/gpt-6-astra.md' },
+    },
+  },
   {
     id: 'hy4-preview',
     name: 'Hy4 preview',

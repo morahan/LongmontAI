@@ -231,6 +231,65 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   await assert.rejects(() => audit(invalidPage), /Invalid targeted mobile audit route transport/);
 });
 
+test('production route transport validates bounded paths without backtracking or navigation on rejection', () => {
+  // A child deadline also catches a synchronous regex hang, which an async test
+  // timeout cannot interrupt. Execute the real audit and its decoding callback.
+  const result = spawnSync(process.execPath, ['--input-type=module'], {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 2000,
+    env: { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR },
+    input: `
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+const source = readFileSync('scripts/mobile-playwright-audit.js', 'utf8');
+const audit = vm.runInNewContext('(' + source + ')', {
+  Error, JSON, Array, Math, Set, Uint8Array, TextDecoder, atob, btoa,
+  window: { location: { origin: 'http://audit.test' } },
+});
+async function check(parsed, accepted, rawEncoding) {
+  const encoded = rawEncoding ?? Buffer.from(JSON.stringify(parsed)).toString('base64url');
+  const navigations = [];
+  const page = {
+    url: () => 'http://audit.test/?__longmont_mobile_audit_routes=' + encoded,
+    evaluate: async (callback, argument) => callback(argument),
+    goto: async (url) => { navigations.push(url); throw new Error('fixture-navigation'); },
+  };
+  await assert.rejects(() => audit(page), accepted
+    ? /^Error: fixture-navigation$/
+    : /Invalid targeted mobile audit route transport/);
+  assert.deepEqual(navigations, accepted ? ['http://audit.test/'] : []);
+}
+const shortAttack = '/0/' + '00/'.repeat(25) + '!';
+const longAttack = '/0/' + '00/'.repeat(681) + '!';
+assert.equal(shortAttack.length, 79);
+assert.equal(longAttack.length, 2047);
+for (const route of [shortAttack, longAttack]) await check([route], false);
+for (const routes of [
+  ['/'], ['/a', '/0', '/123/456', '/a--b/0-9', '/edition/edition-2099-01-01-target'],
+  ['/' + 'a'.repeat(2047)], Array.from({ length: 50 }, (_, i) => '/route-' + i),
+]) await check(routes, true);
+for (const parsed of [
+  null, {}, '/', [], [null], [1], Array(51).fill('/'), ['/' + 'a'.repeat(2048)],
+  ...['', 'a', '//', '/a/', '/a//b', '/-a', '/a-', '/a/-b', '/a/b-', '/A',
+    '/.', '/..', '/a/../b', '/a?b', '/a#b', 'https://evil.test/a', '//evil.test/a',
+    '/%2f', '/%2e%2e', '/a b', '/é', '/a' + String.fromCharCode(92) + 'b',
+    '/a' + String.fromCharCode(10), '/a' + String.fromCharCode(13),
+  ].map((route) => [route]),
+]) await check(parsed, false);
+await check(null, false, 'not_json');
+// "WyIvIl0" is the canonical encoding of ["/"]; the final low bits must be zero.
+await check(null, false, 'WyIvIl1');
+await check(null, false, 'WyIvIl0=');
+console.log('bounded production route validation: PASS');
+`,
+  });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /bounded production route validation: PASS/);
+});
+
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {
   assert.deepEqual(FULL_ROUTES, [
     '/', '/tools', '/model-watch', '/timeline', '/newsletter', '/countdown', '/leaderboard', '/about',

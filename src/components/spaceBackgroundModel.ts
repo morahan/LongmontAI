@@ -38,11 +38,13 @@ export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
 export const MOBILE_BREAKPOINT = 640;
 export const NEURAL_SIGNAL_SLOT_SECONDS = 24;
-export const NEURAL_SIGNAL_DURATION_RANGE = [2.4, 3.2] as const;
+export const NEURAL_SIGNAL_DURATION_RANGE = [4.2, 5] as const;
+export const NEURAL_SIGNAL_FADE_SECONDS = [1.3, 1.9] as const;
+export const NEURAL_SIGNAL_COLORS = ['155, 213, 239', '183, 188, 239', '151, 185, 236'] as const;
 export const NEURAL_SIGNAL_MAX_CONCURRENT = 1;
 export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.48;
 export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.30;
-export const NEURAL_SIGNAL_MAX_OPACITY = 0.12;
+export const NEURAL_SIGNAL_MAX_OPACITY = 0.075;
 export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
 export const NEURAL_CONTAGION_OPPORTUNITIES = 3;
 export const NEURAL_CONTAGION_AFFINITY_BOOST = 4;
@@ -51,6 +53,7 @@ export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
+/** @deprecated Historical event window; ambient twinkle now uses independent continuous periods. */
 export const TWINKLE_WINDOW_SECONDS = 120;
 export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
@@ -330,6 +333,8 @@ export interface NeuralSignal {
     pulseProgress: number;
     lineWidth: number;
     bend: number;
+    color: string;
+    sparkles: { progress: number; opacity: number; radius: number }[];
 }
 
 export interface NeuralContagionEntry {
@@ -621,30 +626,28 @@ export const getDriftedStarVelocity = (
     };
 };
 
+/** Separate seed channels preserve layout/drift randomness and never reseed on a frame or cycle. */
+export const getStarTwinkleParameters = (star: Pick<DistantStar, 'twinkleSeed'>) => ({
+    periodSeconds: 8 + hashRandom(star.twinkleSeed, 0, 0) * 10,
+    phase: hashRandom(star.twinkleSeed, 0, 1) * TAU,
+    dim: 0.82 + hashRandom(star.twinkleSeed, 0, 2) * 0.1,
+    bright: 1.04 + hashRandom(star.twinkleSeed, 0, 3) * 0.08,
+});
+
 const getAmbientTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
-    const elapsed = Math.max(0, elapsedSeconds);
-    const cycle = Math.floor(elapsed / TWINKLE_WINDOW_SECONDS);
-    const cycleTime = elapsed - cycle * TWINKLE_WINDOW_SECONDS;
-    const fallDuration = 2 + hashRandom(star.twinkleSeed, cycle, 1) * 3;
-    const restDuration = 0.35 + hashRandom(star.twinkleSeed, cycle, 2) * 1.4;
-    const riseDuration = 2 + hashRandom(star.twinkleSeed, cycle, 3) * 3;
-    const totalDuration = fallDuration + restDuration + riseDuration;
-    const start = hashRandom(star.twinkleSeed, cycle, 0) * (TWINKLE_WINDOW_SECONDS - totalDuration);
-    const target = 0.4 + hashRandom(star.twinkleSeed, cycle, 4) * 0.2;
-    const eventTime = cycleTime - start;
-    if (eventTime < 0 || eventTime >= totalDuration) return 1;
-    if (eventTime < fallDuration) return 1 - (1 - target) * smoothstep(eventTime / fallDuration);
-    if (eventTime < fallDuration + restDuration) return target;
-    return target + (1 - target) * smoothstep(
-        (eventTime - fallDuration - restDuration) / riseDuration,
-    );
+    const { periodSeconds, phase, dim, bright } = getStarTwinkleParameters(star);
+    const wave = (1 + Math.sin(Math.max(0, elapsedSeconds) * TAU / periodSeconds + phase)) / 2;
+    return dim + (bright - dim) * wave;
 };
 
-/** One independently seeded full-dim-full event per <=120s cycle. */
-export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) =>
-    getConstellationPhase(elapsedSeconds).name === 'ambient'
-        ? getAmbientTwinkleBrightness(star, elapsedSeconds)
-        : 1;
+/** Slow, independent dim/bright variation; constellation choreography retains its own styles. */
+export const getTwinkleBrightness = (
+    star: DistantStar,
+    elapsedSeconds: number,
+    prefersReducedMotion = false,
+) => !prefersReducedMotion && getConstellationPhase(elapsedSeconds).name === 'ambient'
+    ? getAmbientTwinkleBrightness(star, elapsedSeconds)
+    : 1;
 
 export const getConstellationStrength = (phase: ConstellationPhase) => {
     if (phase.name === 'morph-in') return phase.progress;
@@ -718,8 +721,12 @@ const hiddenStarStyle = (radius = 1): StarVisualStyle => ({
     alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0,
 });
 
-const ambientVisualStyle = (star: DistantStar, elapsedSeconds: number): StarVisualStyle => {
-    const twinkle = getAmbientTwinkleBrightness(star, elapsedSeconds);
+const ambientVisualStyle = (
+    star: DistantStar,
+    elapsedSeconds: number,
+    prefersReducedMotion = false,
+): StarVisualStyle => {
+    const twinkle = prefersReducedMotion ? 1 : getAmbientTwinkleBrightness(star, elapsedSeconds);
     return {
         alpha: star.alpha,
         twinkle,
@@ -729,7 +736,13 @@ const ambientVisualStyle = (star: DistantStar, elapsedSeconds: number): StarVisu
     };
 };
 
-export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): StarVisualStyle[] => {
+export const getStarFieldStyles = (
+    sceneSeed: number,
+    elapsedSeconds: number,
+    prefersReducedMotion = false,
+): StarVisualStyle[] => {
+    // Match the Canvas lifecycle's static time-zero frame, including redraws after resize.
+    if (prefersReducedMotion) elapsedSeconds = 0;
     const phase = getConstellationPhase(elapsedSeconds);
     const ambient = createAmbientLayout(sceneSeed, phase.event);
     if (phase.name === 'ambient') {
@@ -742,7 +755,7 @@ export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): S
         return [
             ...Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) =>
                 hiddenStarStyle(hiddenSource[index]?.size ? hiddenSource[index].size * 1.18 : 1)),
-            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds)),
+            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds, prefersReducedMotion)),
         ];
     }
 
@@ -1914,14 +1927,15 @@ export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppea
     };
 };
 
-/** Stable local-space trail geometry; Canvas rotates its +distance axis opposite current motion. */
+/** Seeded local-space debris drifts continuously while widening along the motion-opposed wake. */
 export const getCometAppearance = (
     traveler: Traveler,
     cycle: number,
     progress: number,
 ): CometAppearance => {
     const stableCycle = Math.max(0, Math.trunc(cycle));
-    const headRadius = getTravelerAppearance(traveler, progress).radius * 1.35;
+    const boundedProgress = clamp01(progress);
+    const headRadius = getTravelerAppearance(traveler, boundedProgress).radius * 1.35;
     const trailLength = Math.max(18, headRadius * 12);
     const trailWidth = Math.max(3.5, headRadius * 2.8);
     const random = createSeededRandom(hashUint(traveler.seed, stableCycle, 401));
@@ -1930,18 +1944,33 @@ export const getCometAppearance = (
         index: number,
         count: number,
     ): CometTrailParticle => {
-        const distanceFraction = (index + 0.55 + random() * 0.35) / count;
-        const spread = trailWidth * (0.18 + distanceFraction * 0.82);
+        const baseDistance = (index + 0.55 + random() * 0.35) / count;
+        const distanceFraction = baseDistance * (0.88 + boundedProgress * 0.12);
+        const wakeAge = smoothstep(distanceFraction);
+        const lateralBias = random() * 2 - 1;
+        const flutterPhase = random() * TAU;
+        const flutterRate = 0.65 + random() * 0.65;
+        const spread = trailWidth * (0.12 + wakeAge * 0.88);
+        const flutter = Math.sin(flutterPhase + boundedProgress * TAU * flutterRate);
         const asteroid = kind === 'asteroid';
+        const radiusRoll = random();
+        const baseOpacity = asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42;
+        const opacityPulse = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(
+            flutterPhase + boundedProgress * TAU * (0.8 + flutterRate * 0.35),
+        ));
+        const rotation = positiveModulo(
+            random() * TAU + boundedProgress * TAU * (0.45 + random() * 1.1),
+            TAU,
+        );
         return {
             kind,
             distance: trailLength * distanceFraction,
-            lateralOffset: (random() * 2 - 1) * spread,
+            lateralOffset: spread * (lateralBias * 0.72 + flutter * 0.28),
             radius: asteroid
-                ? Math.max(0.35, headRadius * (0.13 + random() * 0.16))
-                : Math.max(0.1, headRadius * (0.035 + random() * 0.045)),
-            opacity: asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42,
-            rotation: random() * TAU,
+                ? Math.max(0.35, headRadius * (0.13 + radiusRoll * 0.16))
+                : Math.max(0.1, headRadius * (0.035 + radiusRoll * 0.045)),
+            opacity: baseOpacity * opacityPulse * (1 - wakeAge * 0.28),
+            rotation,
         };
     };
     return {
@@ -2004,6 +2033,42 @@ const isSensibleNeuralPair = (
     const maximumDistance = Math.hypot(width, height) * 0.48;
     return distance >= minimumDistance && distance <= maximumDistance;
 };
+
+/** Approach every eligibility boundary at zero light, before hard offscreen suppression. */
+export const getNeuralPairVisibility = (
+    left: ProjectedTraveler, right: ProjectedTraveler, width: number, height: number,
+) => {
+    const minimumDistance = Math.min(72, Math.max(36, Math.min(width, height) * 0.09));
+    const maximumDistance = Math.hypot(width, height) * 0.48;
+    const distance = Math.hypot(right.x - left.x, right.y - left.y);
+    const edgeBand = Math.min(80, Math.min(width, height) * 0.12);
+    const endpointFade = (point: ProjectedTraveler) => smoothstep(
+        Math.min(point.x, width - point.x, point.y, height - point.y) / edgeBand,
+    ) * smoothstep((point.opacity - 0.08) / 0.27);
+    return Math.min(endpointFade(left), endpointFade(right))
+        * smoothstep((distance - minimumDistance) / 32)
+        * smoothstep((maximumDistance - distance) / 80);
+};
+
+/** Render-only extinction: preserve intrinsic scheduling while fading before an endpoint is hidden.
+ * The ratio replaces (rather than doubles) the intrinsic opacity fade already in the signal.
+ */
+export const getNeuralEndpointTransmission = (intrinsicOpacity: number, renderedOpacity: number) => {
+    const intrinsicFade = smoothstep((intrinsicOpacity - 0.08) / 0.27);
+    if (intrinsicFade <= 0) return 0;
+    return Math.min(1, smoothstep((renderedOpacity - 0.08) / 0.27) / intrinsicFade);
+};
+
+export const getNeuralSignalEnvelope = (elapsed: number, duration: number) =>
+    smoothstep(elapsed / NEURAL_SIGNAL_FADE_SECONDS[0])
+    * smoothstep((duration - elapsed) / NEURAL_SIGNAL_FADE_SECONDS[1]);
+
+/** Two fixed beads bloom once as the eased light passes; no per-frame random flicker. */
+export const getNeuralSignalSparkles = (progress: number) => [0.34, 0.68].map((position) => ({
+    progress: position,
+    opacity: 0.65 * smoothstep(1 - Math.abs(progress - position) / 0.26),
+    radius: 2.6,
+}));
 
 /** A small value object keeps recent traveler affinity bounded and independent from React. */
 export const createNeuralContagionState = (): NeuralContagionState => ({
@@ -2213,17 +2278,18 @@ export const getNeuralSignals = (
     if (!pair) return [];
     const { fromTravelerIndex, toTravelerIndex } = pair;
 
-    const fadeIn = smoothstep(signalElapsed / 0.48);
-    const fadeOut = smoothstep((duration - signalElapsed) / 0.68);
+    const pulseProgress = smoothstep(signalElapsed / duration);
     return [{
         fromTravelerIndex,
         toTravelerIndex,
-        opacity: NEURAL_SIGNAL_MAX_OPACITY * Math.min(fadeIn, fadeOut)
-            * clamp01(Math.min(projections[fromTravelerIndex].opacity, projections[toTravelerIndex].opacity) / 0.35),
-        pulseProgress: clamp01(signalElapsed / duration),
+        opacity: NEURAL_SIGNAL_MAX_OPACITY * getNeuralSignalEnvelope(signalElapsed, duration)
+            * getNeuralPairVisibility(projections[fromTravelerIndex], projections[toTravelerIndex], width, height),
+        pulseProgress,
         lineWidth: mix(NEURAL_SIGNAL_WIDTH_RANGE[0], NEURAL_SIGNAL_WIDTH_RANGE[1],
             hashRandom(sceneSeed, slot, 305)),
-        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.055,
+        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.12,
+        color: NEURAL_SIGNAL_COLORS[hashUint(sceneSeed, slot, 307) % NEURAL_SIGNAL_COLORS.length],
+        sparkles: getNeuralSignalSparkles(pulseProgress),
     }];
 };
 
@@ -2420,6 +2486,17 @@ export const getSystemOwnerDiscLocalRadius = (appearanceRadius: number, systemSc
         || appearanceRadius <= 0
         || systemScale <= 0) return 0;
     return appearanceRadius / systemScale;
+};
+
+/** Keeps planet bodies visibly smaller than their unchanged host disc. */
+export const MAX_PLANET_TO_HOST_RADIUS_RATIO = 0.75;
+
+/** Cap only the body, in system-local coordinates; no pixel floor may override the host limit. */
+export const getPlanetRenderRadius = (planetRadius: number, ownerDiscLocalRadius: number) => {
+    if (!Number.isFinite(planetRadius) || !Number.isFinite(ownerDiscLocalRadius)
+        || planetRadius <= 0 || ownerDiscLocalRadius <= 0) return 0;
+    return Math.min(planetRadius * PLANET_RENDER_SCALE,
+        ownerDiscLocalRadius * MAX_PLANET_TO_HOST_RADIUS_RATIO);
 };
 
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {

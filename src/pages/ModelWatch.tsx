@@ -79,11 +79,11 @@ const ModelWatch: React.FC = () => {
         </div>
         <div>
           <span>{liveStatus.successfulSources}/{liveStatus.totalSources}</span>
-          <p>sources healthy</p>
+          <p>sources captured</p>
         </div>
         <div>
-          <span>Daily</span>
-          <p>autonomous check</p>
+          <span>Source</span>
+          <p>snapshot</p>
         </div>
         <div>
           <span>0</span>
@@ -96,7 +96,7 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Clock3 size={16} />
-              Last checked {checkedLabel}
+              Source snapshot {checkedLabel}
             </div>
             <h2 id="snapshot-heading">Latest Signals</h2>
           </div>

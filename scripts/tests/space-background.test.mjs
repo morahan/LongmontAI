@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
+import { stripTypeScriptTypes } from 'node:module';
+import * as spaceModel from '../../src/components/spaceBackgroundModel.ts';
 import {
   AMBIENT_STAR_COUNT,
   AMBIENT_STAR_RADIUS_RANGE,
@@ -28,6 +31,7 @@ import {
   GALAXY_SPIRAL_ARM_COUNT,
   MAX_GLYPH_STAR_COUNT,
   MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO,
+  MAX_PLANET_TO_HOST_RADIUS_RATIO,
   MAX_STAR_TEXT_ANCHOR_COUNT,
   MAX_PLANET_ORBIT_PERIOD_SECONDS,
   MAX_PLANET_ORBIT_RADIUS,
@@ -64,7 +68,7 @@ import {
   TRAVELER_PALETTE,
   TRAVELER_RADIUS_RANGE,
   TRAVELER_SURFACE_TEXTURES,
-  TWINKLE_WINDOW_SECONDS,
+  getStarTwinkleParameters,
   UFO_BASIS_POINTS,
   UFO_SIZE_MULTIPLIER,
   advanceEasterEggClickSequence,
@@ -105,6 +109,7 @@ import {
   getOrbitingMoon,
   getOrbitingPlanet,
   getPlanetLightingStyle,
+  getPlanetRenderRadius,
   getNeuralSignalSlot,
   getNeuralSignals,
   getOrbitingPlanets,
@@ -312,22 +317,79 @@ test('production ambient stars transfer into deterministic origins distributed a
   });
 });
 
-test('twinkles are independent random events with 40-60% minima in every <=120s cycle', () => {
+test('each star has stable independent speed, phase and subtle dim/bright bounds', () => {
   const stars = createAmbientLayout(6789, 0);
-  assert.equal(TWINKLE_WINDOW_SECONDS, 120);
-  for (let cycle = 0; cycle < 4; cycle += 1) {
-    const samples = Array.from({ length: TWINKLE_WINDOW_SECONDS * 20 }, (_, index) =>
-      getTwinkleBrightness(stars[0], cycle * TWINKLE_WINDOW_SECONDS + index / 20));
-    const minimum = Math.min(...samples);
-    assert.ok(minimum >= 0.4 && minimum <= 0.6, `cycle ${cycle} minimum ${minimum}`);
-    assert.ok(samples.some((value) => value === 1));
-    assert.ok(samples.some((value) => value < 0.99));
+  const parameters = stars.map(getStarTwinkleParameters);
+  assert.deepEqual(parameters, createAmbientLayout(6789, 0).map(getStarTwinkleParameters));
+  assert.deepEqual(createAmbientLayout(6789, 0, 140).slice(0, 70), stars);
+  for (const key of ['periodSeconds', 'phase', 'dim', 'bright']) {
+    assert.equal(new Set(parameters.map((value) => value[key])).size, stars.length, key);
   }
-  const simultaneous = stars.map((star) => getTwinkleBrightness(star, 47).toFixed(5));
-  assert.ok(new Set(simultaneous).size > 3, 'twinkle events synchronized');
+  stars.forEach((star, index) => {
+    const { periodSeconds, phase, dim, bright } = parameters[index];
+    assert.ok(periodSeconds >= 8 && periodSeconds <= 18);
+    assert.ok(phase >= 0 && phase < Math.PI * 2);
+    assert.ok(dim >= 0.82 && dim <= 0.92);
+    assert.ok(bright >= 1.04 && bright <= 1.12);
+    const samples = Array.from({ length: 1201 }, (_, step) => {
+      const time = step / 20;
+      const value = getTwinkleBrightness(star, time);
+      assert.ok(value >= dim && value <= bright);
+      closeTo(value, getTwinkleBrightness(star, time));
+      closeTo(value, getTwinkleBrightness(star, time + periodSeconds));
+      return value;
+    });
+    closeTo(Math.min(...samples), dim, 0.0001);
+    closeTo(Math.max(...samples), bright, 0.0001);
+    closeTo(getTwinkleBrightness(star, -1), getTwinkleBrightness(star, 0));
+  });
+  for (const time of [0, 1, 47, 120, 240]) {
+    const values = stars.map((star) => getTwinkleBrightness(star, time));
+    assert.ok(new Set(values.map((value) => value.toFixed(5))).size > 60);
+    const slopes = stars.map((star, index) => getTwinkleBrightness(star, time + 0.01) - values[index]);
+    assert.ok(slopes.filter((value) => value > 0).length > 15);
+    assert.ok(slopes.filter((value) => value < 0).length > 15);
+  }
+});
+
+test('twinkle is smooth across frames and old window boundaries, and reaches rendered opacity only', () => {
+  const seed = 6789;
+  const stars = createAmbientLayout(seed, 0);
+  for (const time of [0, 8, 18, 119.999, 120, 239.999, 240, 479.999]) {
+    const styles = getStarFieldStyles(seed, time).slice(MAX_STAR_TEXT_ANCHOR_COUNT);
+    stars.forEach((star, index) => {
+      const value = getTwinkleBrightness(star, time);
+      // Maximum sine slope is (1.12 - 0.82) * PI / 8 per second.
+      assert.ok(Math.abs(getTwinkleBrightness(star, time + 1 / 60) - value) < 0.002);
+      closeTo(styles[index].twinkle, value);
+      closeTo(styles[index].opacity, star.alpha * value);
+      assert.equal(styles[index].alpha, star.alpha);
+      assert.equal(styles[index].radius, star.size);
+      assert.equal(styles[index].strength, 0);
+    });
+  }
   for (const time of [600, 605, 610, 619.9, 620, 625, 629.9, 1200]) {
     assert.ok(stars.every((star) => getTwinkleBrightness(star, time) === 1));
   }
+});
+
+test('reduced motion disables twinkle and preserves a static ambient frame across redraw times', () => {
+  const seed = 6789;
+  const stars = createAmbientLayout(seed, 0);
+  const staticStyles = getStarFieldStyles(seed, 0, true);
+  for (const time of [0, 1, 47, 120, 600, 625, 630, 10000]) {
+    assert.deepEqual(getStarFieldStyles(seed, time, true), staticStyles);
+    assert.ok(stars.every((star) => getTwinkleBrightness(star, time, true) === 1));
+  }
+  staticStyles.slice(MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style, index) => {
+    assert.equal(style.twinkle, 1);
+    assert.equal(style.opacity, stars[index].alpha);
+    assert.equal(style.radius, stars[index].size);
+  });
+  const component = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  assert.match(component, /styles: getStarFieldStyles\(scene\.seed, elapsed, reducedMotion\)/);
+  assert.match(component, /const shouldAnimate = \(\) => !reducedMotion && pageIsVisible && isOnscreen/);
+  assert.match(component, /if \(reducedMotion\) drawScene\(0\)/);
 });
 
 test('constellation phases and frozen simulation clocks have exact boundaries', () => {
@@ -1854,7 +1916,7 @@ test('traveler variants are lifecycle-stable, mutually exclusive, cycle-seeded, 
   });
 });
 
-test('comet trails have deterministic distinct particles inside bounded motion-opposed geometry', () => {
+test('comet debris animates deterministically and gradually widens behind its motion', () => {
   const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
   const trail = getCometAppearance(traveler, 3, 0.68);
   assert.deepEqual(trail, getCometAppearance(traveler, 3, 0.68));
@@ -1877,6 +1939,38 @@ test('comet trails have deterministic distinct particles inside bounded motion-o
   const largestDust = Math.max(...trail.particles
     .filter(({ kind }) => kind === 'stardust').map(({ radius }) => radius));
   assert.ok(largestAsteroid > largestDust * 1.5, 'fragments are not visibly distinct from stardust');
+
+  const next = getCometAppearance(traveler, 3, 0.6801);
+  const normalized = (appearance, particle) => ({
+    distance: particle.distance / appearance.trailLength,
+    lateralOffset: particle.lateralOffset / appearance.trailWidth,
+    rotation: particle.rotation,
+    opacity: particle.opacity,
+  });
+  const currentParticle = normalized(trail, trail.particles[0]);
+  const nextParticle = normalized(next, next.particles[0]);
+  assert.notDeepEqual(nextParticle, currentParticle,
+    'particle-local geometry stayed rigid as traveler progress advanced');
+  assert.ok(Math.abs(nextParticle.distance - currentParticle.distance) > 1e-8);
+  assert.ok(Math.abs(nextParticle.lateralOffset - currentParticle.lateralOffset) > 1e-8);
+  assert.ok(Math.abs(nextParticle.rotation - currentParticle.rotation) > 1e-8);
+  assert.ok(Math.abs(nextParticle.opacity - currentParticle.opacity) > 1e-8);
+  assert.ok(Math.abs(nextParticle.distance - currentParticle.distance) < 0.001);
+  assert.ok(Math.abs(nextParticle.lateralOffset - currentParticle.lateralOffset) < 0.001);
+  assert.ok(Math.abs(nextParticle.rotation - currentParticle.rotation) < 0.001);
+  assert.ok(Math.abs(nextParticle.opacity - currentParticle.opacity) < 0.001);
+
+  for (const seed of [0x51a7, 1, 2, 3, 99]) {
+    const seededTrail = getCometAppearance({ ...traveler, seed }, 3, 0.68);
+    const byAge = [...seededTrail.particles].sort((left, right) => left.distance - right.distance);
+    const third = Math.floor(byAge.length / 3);
+    const meanWakeWidth = (particles) => particles.reduce(
+      (sum, particle) => sum + Math.abs(particle.lateralOffset) / seededTrail.trailWidth,
+      0,
+    ) / particles.length;
+    assert.ok(meanWakeWidth(byAge.slice(-third)) > meanWakeWidth(byAge.slice(0, third)) * 2,
+      `seed ${seed} did not widen its older trailing debris`);
+  }
 });
 
 test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at every depth', () => {
@@ -1923,7 +2017,8 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
   const seed = 0x51a7cafe;
 
   assert.equal(NEURAL_SIGNAL_SLOT_SECONDS, 24);
-  assert.deepEqual(NEURAL_SIGNAL_DURATION_RANGE, [2.4, 3.2]);
+  assert.deepEqual(NEURAL_SIGNAL_DURATION_RANGE, [4.2, 5]);
+  assert.equal(NEURAL_SIGNAL_MAX_OPACITY, 0.075);
   assert.equal(NEURAL_SIGNAL_MAX_CONCURRENT, 1);
   assert.equal(NEURAL_SIGNAL_DESKTOP_CHANCE, 0.48);
   assert.equal(NEURAL_SIGNAL_MOBILE_CHANCE, 0.30);
@@ -1951,6 +2046,9 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
       desktopActive += 1;
       const signal = desktopSignals[0];
       observedOpacities.push(signal.opacity);
+      assert.ok(['155, 213, 239', '183, 188, 239', '151, 185, 236'].includes(signal.color));
+      assert.equal(signal.sparkles.length, 2);
+      assert.ok(Math.abs(signal.bend) <= 0.12);
       assert.ok(signal.opacity >= 0 && signal.opacity <= NEURAL_SIGNAL_MAX_OPACITY);
       assert.ok(signal.pulseProgress >= 0 && signal.pulseProgress <= 1);
       assert.ok(signal.lineWidth >= NEURAL_SIGNAL_WIDTH_RANGE[0]
@@ -1963,6 +2061,82 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
   assert.ok(observedOpacities.some((opacity) => opacity > 0 && opacity < NEURAL_SIGNAL_MAX_OPACITY * 0.7),
     'fade ramps were not observed');
   assert.ok(mobileActive <= desktopActive, `${mobileActive} mobile samples exceeded ${desktopActive} desktop`);
+});
+
+test('neural light eases through long fades, restrained colors and two continuous soft sparkles', async () => {
+  const { getNeuralSignalEnvelope, getNeuralSignalSparkles, NEURAL_SIGNAL_COLORS,
+    NEURAL_SIGNAL_FADE_SECONDS, getNeuralPairVisibility } = await import('../../src/components/spaceBackgroundModel.ts');
+  assert.deepEqual(NEURAL_SIGNAL_FADE_SECONDS, [1.3, 1.9]);
+  assert.deepEqual(NEURAL_SIGNAL_COLORS, ['155, 213, 239', '183, 188, 239', '151, 185, 236']);
+  for (const duration of NEURAL_SIGNAL_DURATION_RANGE) {
+    for (const time of [-1, 0, duration, duration + 1]) assert.equal(getNeuralSignalEnvelope(time, duration), 0);
+    assert.ok(getNeuralSignalEnvelope(0.01, duration) < 0.0002);
+    assert.ok(getNeuralSignalEnvelope(duration - 0.01, duration) < 0.0001);
+    assert.ok(getNeuralSignalEnvelope(1, duration) < 1);
+    assert.ok(getNeuralSignalEnvelope(duration - 1, duration) < 0.6);
+  }
+  let previous = getNeuralSignalSparkles(0);
+  assert.ok(previous.every((sparkle) => sparkle.opacity === 0));
+  for (let step = 1; step <= 1000; step += 1) {
+    const beads = getNeuralSignalSparkles(step / 1000);
+    assert.equal(beads.length, 2);
+    beads.forEach((bead, index) => {
+      assert.equal(bead.progress, [0.34, 0.68][index]);
+      assert.equal(bead.radius, 2.6);
+      assert.ok(bead.opacity >= 0 && bead.opacity <= 0.65);
+      assert.ok(Math.abs(bead.opacity - previous[index].opacity) < 0.004);
+    });
+    previous = beads;
+  }
+  assert.ok(previous.every((sparkle) => sparkle.opacity === 0));
+  const left = { x: 200, y: 200, opacity: 0.6 };
+  const right = { x: 400, y: 200, opacity: 0.6 };
+  const visibility = (a, b = right) => getNeuralPairVisibility(a, b, 1000, 600);
+  assert.equal(visibility(left), 1);
+  for (const x of [-1, 0]) assert.equal(visibility({ ...left, x }), 0);
+  assert.ok(visibility({ ...left, x: 0.01 }) < 0.000001);
+  assert.equal(visibility({ ...left, opacity: 0.08 }), 0);
+  assert.ok(visibility({ ...left, opacity: 0.08001 }) < 0.000001);
+  const min = 54;
+  const max = Math.hypot(1000, 600) * 0.48;
+  for (const distance of [min, max]) {
+    assert.ok(visibility(left, { ...right, x: left.x + distance }) < 1e-20);
+  }
+  assert.ok(visibility(left, { ...right, x: left.x + min + 0.01 }) < 0.000001);
+  assert.ok(visibility(left, { ...right, x: left.x + max - 0.01 }) < 0.000001);
+});
+
+test('neural events keep color and eased light continuous for their full four-to-five second lifetime', () => {
+  const projections = [200, 400].map((x) => ({
+    x, y: 200, depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 0,
+  }));
+  let previous;
+  let start;
+  let completed = 0;
+  for (let tick = 0; tick < 12000; tick += 1) {
+    const time = tick / 100;
+    const signal = getNeuralSignals(0x51a7cafe, time, projections, 1000, 600)[0];
+    if (signal && !previous) {
+      start = time;
+      assert.ok(signal.opacity < 0.00002);
+      assert.ok(signal.pulseProgress < 0.00002);
+    }
+    if (signal && previous) {
+      assert.equal(signal.color, previous.color);
+      assert.equal(signal.bend, previous.bend);
+      assert.ok(signal.pulseProgress >= previous.pulseProgress);
+      assert.ok(signal.pulseProgress - previous.pulseProgress < 0.004);
+      assert.ok(Math.abs(signal.opacity - previous.opacity) < 0.001);
+    }
+    if (!signal && previous) {
+      assert.ok(time - start >= 4.19 && time - start <= 5.01);
+      assert.ok(previous.opacity < 0.00002);
+      assert.ok(previous.pulseProgress > 0.99998);
+      completed += 1;
+    }
+    previous = signal;
+  }
+  assert.ok(completed > 0);
 });
 
 test('recent neural endpoints receive bounded decaying affinity without excluding ordinary pairs', () => {
@@ -2282,6 +2456,94 @@ test('planet bodies remain half-sized while prominent system stars are exactly 1
       assert.ok(cssDiameter <= 9.2, `seed ${seed} body is ${cssDiameter}px`);
       assert.equal(getPlanetSurfaceDetailLevel(planet.radius * PLANET_RENDER_SCALE, closestScale), 1);
     });
+  }
+});
+
+test('planet body sizing respects tiny hosts and perspective without a minimum-size override', () => {
+  assert.equal(MAX_PLANET_TO_HOST_RADIUS_RATIO, 0.75);
+  for (const size of [0.001, TRAVELER_RADIUS_RANGE[0], 0.5, TRAVELER_RADIUS_RANGE[1]]) {
+    for (let step = 0; step <= 100; step += 1) {
+      const progress = step / 100;
+      const host = getTravelerAppearance({ size, seed: 17 }, progress);
+      const scale = getSystemScale({ progress });
+      const localHost = getSystemOwnerDiscLocalRadius(host.radius, scale);
+      closeTo(localHost * scale, host.radius);
+      for (const radius of [...PLANET_RADIUS_RANGE, 0.00001]) {
+        const rendered = getPlanetRenderRadius(radius, localHost);
+        assert.ok(rendered > 0 && rendered * scale < host.radius);
+        assert.ok(rendered <= radius * PLANET_RENDER_SCALE);
+        assert.ok(rendered * scale <= host.radius * MAX_PLANET_TO_HOST_RADIUS_RATIO + 1e-12);
+        if (radius * PLANET_RENDER_SCALE <= localHost * MAX_PLANET_TO_HOST_RADIUS_RATIO) {
+          assert.equal(rendered, radius * PLANET_RENDER_SCALE, 'already smaller bodies stay unchanged');
+        }
+      }
+    }
+  }
+  for (const invalid of [0, -1, NaN, Infinity]) {
+    assert.equal(getPlanetRenderRadius(2, invalid), 0);
+    assert.equal(getPlanetRenderRadius(invalid, 2), 0);
+  }
+  assert.equal(getPlanetRenderRadius(2, 1), 0.75, 'equal-sized bodies must shrink too');
+  assert.equal(getPlanetRenderRadius(20, 1), 0.75);
+  assert.equal(getPlanetRenderRadius(1, 1), 0.5, 'smaller bodies stay unchanged');
+});
+
+test('canvas uses the same unchanged host radius to cap both orbital halves and moon bodies', () => {
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const declarations = ['drawPlanet', 'drawPlanetarySystem'].map((name) => {
+    const start = source.indexOf(`const ${name} = (`);
+    assert.ok(start >= 0);
+    return source.slice(start, source.indexOf('\n};', start) + 3);
+  }).join('\n');
+  const compiled = stripTypeScriptTypes(declarations);
+  for (const size of [0.001, TRAVELER_RADIUS_RANGE[0], TRAVELER_RADIUS_RANGE[1]]) {
+    for (const progress of [0.4, 0.65, 1]) {
+      const traveler = { size, seed: 17, alpha: 1 };
+      const projection = { progress, cycle: 0, x: 0, y: 0, opacity: 1 };
+      const hostRadius = getTravelerAppearance(traveler, progress).radius;
+      const scale = getSystemScale(projection);
+      const bodies = [];
+      const moons = [];
+      let drawnHost;
+      let drawnHostOpacity;
+      const moonOpacities = [];
+      const nebulaTransmission = 0.3;
+      const ctx = new Proxy({}, {
+        get: (_, key) => key === 'createLinearGradient' || key === 'createRadialGradient'
+          ? () => ({ addColorStop() {} })
+          : key === 'arc' ? (x, y, radius) => bodies.push(radius * scale) : () => {},
+      });
+      const draw = runInNewContext(`${compiled}\ndrawPlanetarySystem;`, {
+        ...spaceModel,
+        TAU: Math.PI * 2,
+        drawAtmosphereSurface() {},
+        drawPlanetRing() {},
+        drawMoon: (_, moon, opacity) => {
+          moons.push(moon.radius * scale);
+          moonOpacities.push(opacity);
+        },
+        drawTravelerDisc: (_, appearance, x, y, radius, opacity) => {
+          drawnHost = radius * scale;
+          drawnHostOpacity = opacity;
+        },
+        // Force both painter-order halves, with no atmosphere to obscure body arc measurements.
+        getOrbitingPlanets: () => [-1, 1].map((z) => ({
+          radius: PLANET_RADIUS_RANGE[1], x: z * 10, y: 0, z,
+          atmosphere: 'rocky-cratered', color: '#ffffff', surfaceSeed: 1,
+          moons: [{ radius: 0.5, orbitRadius: 2, phase: 0, speed: 1, inclination: 0.5 }],
+        })),
+      });
+      draw(ctx, traveler, projection, 1, nebulaTransmission);
+      closeTo(drawnHost, hostRadius);
+      const expectedOpacity = getSystemOpacity(projection, traveler.alpha) * nebulaTransmission;
+      closeTo(drawnHostOpacity, expectedOpacity);
+      moonOpacities.forEach((opacity) => closeTo(opacity, expectedOpacity));
+      assert.equal(bodies.length, 6, 'both planets draw their body, shadow, and highlight arcs');
+      assert.ok(bodies.every((radius) => radius > 0 && radius < drawnHost
+        && radius <= drawnHost * MAX_PLANET_TO_HOST_RADIUS_RATIO + 1e-12));
+      assert.equal(moons.length, 2);
+      assert.ok(moons.every((radius) => radius <= bodies[0] * MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO));
+    }
   }
 });
 
