@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
+import { stripTypeScriptTypes } from 'node:module';
+import * as spaceModel from '../../src/components/spaceBackgroundModel.ts';
 import {
   AMBIENT_STAR_COUNT,
   AMBIENT_STAR_RADIUS_RANGE,
@@ -17,11 +21,17 @@ import {
   EASTER_EGG_PHRASES,
   FAR_DEPTH,
   GALAXY_CREATION_CHANCE,
+  GALAXY_EMBEDDED_PLANET_COUNT_RANGE,
+  GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE,
+  GALAXY_FORMATIONS,
+  GALAXY_FORMATION_RATE_MULTIPLIERS,
   GALAXY_INTERNAL_STAR_COUNT,
   GALAXY_MAX_RADIUS_MULTIPLIER,
+  GALAXY_ROTATION_RATE_RANGE,
   GALAXY_SPIRAL_ARM_COUNT,
   MAX_GLYPH_STAR_COUNT,
   MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO,
+  MAX_PLANET_TO_HOST_RADIUS_RATIO,
   MAX_STAR_TEXT_ANCHOR_COUNT,
   MAX_PLANET_ORBIT_PERIOD_SECONDS,
   MAX_PLANET_ORBIT_RADIUS,
@@ -29,6 +39,9 @@ import {
   MIN_PLANET_ORBIT_PERIOD_SECONDS,
   MOBILE_TRAVELER_COUNT,
   NEAR_DEPTH,
+  NEURAL_CONTAGION_AFFINITY_BOOST,
+  NEURAL_CONTAGION_MAX_ENTRIES,
+  NEURAL_CONTAGION_OPPORTUNITIES,
   NEURAL_SIGNAL_DESKTOP_CHANCE,
   NEURAL_SIGNAL_DURATION_RANGE,
   NEURAL_SIGNAL_MAX_CONCURRENT,
@@ -46,8 +59,6 @@ import {
   SYSTEM_MAX_PROGRESS,
   SYSTEM_MIN_PROGRESS,
   STAR_FIELD_SLOT_COUNT,
-  STAR_TEXT_BURST_SECONDS,
-  STAR_TEXT_FIRST_GLYPH_SECONDS,
   SYSTEM_STAR_RADIUS,
   LARGE_TRAVELER_RED_CHANCE,
   SMALL_TRAVELER_RED_CHANCE,
@@ -57,7 +68,7 @@ import {
   TRAVELER_PALETTE,
   TRAVELER_RADIUS_RANGE,
   TRAVELER_SURFACE_TEXTURES,
-  TWINKLE_WINDOW_SECONDS,
+  getStarTwinkleParameters,
   UFO_BASIS_POINTS,
   UFO_SIZE_MULTIPLIER,
   advanceEasterEggClickSequence,
@@ -69,10 +80,12 @@ import {
   createConstellationGeometryForPhrase,
   createCryptoSeed,
   createEasterEggTargetStyles,
+  createEmbeddedGalaxySystems,
+  createNeuralContagionState,
   createPlanetSystem,
   createSeededRandom,
   createSpaceScene,
-  createStarTextBurstOrigins,
+  createStarTextAmbientOrigins,
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
   getConstellationGlyphAnchorCounts,
@@ -81,15 +94,23 @@ import {
   getCometAppearance,
   getDriftedStar,
   getDriftedStarVelocity,
+  getGalaxyAnimationState,
   getGalaxyAppearance,
+  getGalaxyFormation,
+  getGalaxyParticleState,
+  getGalaxyRotationRate,
   getEasterEggPhase,
   getEasterEggStarFieldPositions,
   getEasterEggStarFieldStyles,
   getEasterEggStrength,
   getElapsedSecondsSinceMount,
+  getEmbeddedGalaxySystemOpacity,
+  getEmbeddedGalaxySystemState,
   getOrbitingMoon,
   getOrbitingPlanet,
   getPlanetLightingStyle,
+  getPlanetRenderRadius,
+  getNeuralSignalSlot,
   getNeuralSignals,
   getOrbitingPlanets,
   getPlanetOrbitPeriod,
@@ -127,14 +148,17 @@ import {
   isSystemInViewport,
   isSystemOverlappingViewport,
   projectTraveler,
-  remapAmbientStarsToFirstGlyphSlots,
+  remapAmbientStarsToTextSlots,
   scaleConstellationGeometry,
   selectConstellationPhrase,
+  selectNeuralSignalPair,
   selectEasterEggPhrase,
   selectProminentSystem,
   selectProminentSystemOwner,
   shouldTriggerEasterEgg,
   starCountForWidth,
+  syncNeuralContagionState,
+  updateNeuralContagionForSignal,
   travelerCountForWidth,
 } from '../../src/components/spaceBackgroundModel.ts';
 
@@ -144,6 +168,11 @@ const closeTo = (actual, expected, epsilon = 1e-8) =>
 const circularDistance = (left, right) => {
   const direct = Math.abs(left - right);
   return Math.min(direct, 1 - direct);
+};
+
+const angularDistance = (left, right) => {
+  const direct = Math.abs(left - right) % (Math.PI * 2);
+  return Math.min(direct, Math.PI * 2 - direct);
 };
 
 test('crypto seeding is preferred, falls back exactly once, and explicit scene seeds remain deterministic', () => {
@@ -235,7 +264,7 @@ test('ambient remains 70 while variable Star Text retains 35 ambient stars', () 
   closeTo(getDriftedStarVelocity({ ...bounce, x: 0, driftAngle: Math.PI }, 0, 1200, 600).x, 1.2);
 });
 
-test('production ambient slots transfer into Easter first-glyph slots without hidden starts or duplicates', () => {
+test('production ambient stars transfer into deterministic origins distributed across every glyph', () => {
   const seed = 0x51a7;
   const elapsed = 180;
   const width = 1200;
@@ -243,22 +272,11 @@ test('production ambient slots transfer into Easter first-glyph slots without hi
   const positions = getStarFieldPositions(seed, elapsed, width, height);
   const styles = getStarFieldStyles(seed, elapsed);
   const geometry = createConstellationGeometryForPhrase(width, height, 'Attention', seed, 1);
-  const firstGlyphCount = geometry.glyphs[0].indices.length;
-  const remapped = remapAmbientStarsToFirstGlyphSlots(
-    positions, styles, firstGlyphCount,
+  const remapped = remapAmbientStarsToTextSlots(
+    positions, styles, geometry.points.length,
   );
-  assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT);
+  assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT);
   assert.ok(remapped.sourceIndices.every((index) => index >= MAX_STAR_TEXT_ANCHOR_COUNT));
-
-  const transferredCount = Math.min(firstGlyphCount, AMBIENT_STAR_COUNT);
-  for (let index = 0; index < transferredCount; index += 1) {
-    const sourceIndex = remapped.sourceIndices[index];
-    assert.deepEqual(remapped.positions[index], positions[sourceIndex]);
-    assert.deepEqual(remapped.styles[index], styles[sourceIndex]);
-    assert.equal(remapped.styles[sourceIndex].opacity, 0);
-  }
-  assert.ok(remapped.styles.slice(transferredCount, firstGlyphCount)
-    .every(({ opacity }) => opacity === 0));
 
   const visibleFrame = (framePositions, frameStyles) => frameStyles
     .map((style, index) => ({ style, point: framePositions[index] }))
@@ -271,42 +289,107 @@ test('production ambient slots transfer into Easter first-glyph slots without hi
     'slot transfer changed the rendered trigger frame',
   );
 
+  const targetCount = geometry.points.length;
   const targetPositions = positions.map((point, index) =>
     ({ ...(geometry.points[index] ?? point) }));
-  const targetStyles = styles.map((style, index) => index < geometry.points.length
-    ? createEasterEggTargetStyles(seed, 0, geometry.points.length)[index]
+  const targetStyles = styles.map((style, index) => index < targetCount
+    ? createEasterEggTargetStyles(seed, 0, targetCount)[index]
     : style);
-  const options = { firstGlyphCount, targetCount: geometry.points.length };
-  const firstStage = getEasterEggStarFieldPositions(
-    remapped.positions, targetPositions, positions, 2, [], undefined, options,
+  const options = { targetCount };
+  const atStart = getEasterEggStarFieldPositions(
+    remapped.positions, targetPositions, positions, 0, [], undefined, options,
   );
-  const firstStageStyles = getEasterEggStarFieldStyles(
-    remapped.styles, targetStyles, styles, 2, options,
+  const atStartStyles = getEasterEggStarFieldStyles(
+    remapped.styles, targetStyles, styles, 0, options,
   );
-  assert.ok(firstStageStyles.slice(0, firstGlyphCount).every(isStarRenderable));
-  assert.ok(firstStageStyles.slice(firstGlyphCount, geometry.points.length)
-    .every(({ opacity }) => opacity === 0));
-  assert.ok(firstStage.slice(0, firstGlyphCount).some((point, index) =>
-    Math.hypot(point.x - remapped.positions[index].x,
-      point.y - remapped.positions[index].y) > 1));
+  assert.deepEqual(
+    visibleFrame(atStart, atStartStyles),
+    visibleFrame(positions, styles),
+    'all-glyph distribution changed the trigger boundary frame',
+  );
+  const ambientPositionKeys = new Set(positions.slice(MAX_STAR_TEXT_ANCHOR_COUNT)
+    .map(({ x, y }) => `${x},${y}`));
+  assert.ok(atStart.slice(0, targetCount)
+    .every(({ x, y }) => ambientPositionKeys.has(`${x},${y}`)));
+  geometry.glyphs.forEach((glyph) => {
+    assert.ok(glyph.indices.some((index) => isStarRenderable(atStartStyles[index])),
+      `${glyph.character} received no existing ambient star`);
+  });
 });
 
-test('twinkles are independent random events with 40-60% minima in every <=120s cycle', () => {
+test('each star has stable independent speed, phase and subtle dim/bright bounds', () => {
   const stars = createAmbientLayout(6789, 0);
-  assert.equal(TWINKLE_WINDOW_SECONDS, 120);
-  for (let cycle = 0; cycle < 4; cycle += 1) {
-    const samples = Array.from({ length: TWINKLE_WINDOW_SECONDS * 20 }, (_, index) =>
-      getTwinkleBrightness(stars[0], cycle * TWINKLE_WINDOW_SECONDS + index / 20));
-    const minimum = Math.min(...samples);
-    assert.ok(minimum >= 0.4 && minimum <= 0.6, `cycle ${cycle} minimum ${minimum}`);
-    assert.ok(samples.some((value) => value === 1));
-    assert.ok(samples.some((value) => value < 0.99));
+  const parameters = stars.map(getStarTwinkleParameters);
+  assert.deepEqual(parameters, createAmbientLayout(6789, 0).map(getStarTwinkleParameters));
+  assert.deepEqual(createAmbientLayout(6789, 0, 140).slice(0, 70), stars);
+  for (const key of ['periodSeconds', 'phase', 'dim', 'bright']) {
+    assert.equal(new Set(parameters.map((value) => value[key])).size, stars.length, key);
   }
-  const simultaneous = stars.map((star) => getTwinkleBrightness(star, 47).toFixed(5));
-  assert.ok(new Set(simultaneous).size > 3, 'twinkle events synchronized');
+  stars.forEach((star, index) => {
+    const { periodSeconds, phase, dim, bright } = parameters[index];
+    assert.ok(periodSeconds >= 8 && periodSeconds <= 18);
+    assert.ok(phase >= 0 && phase < Math.PI * 2);
+    assert.ok(dim >= 0.82 && dim <= 0.92);
+    assert.ok(bright >= 1.04 && bright <= 1.12);
+    const samples = Array.from({ length: 1201 }, (_, step) => {
+      const time = step / 20;
+      const value = getTwinkleBrightness(star, time);
+      assert.ok(value >= dim && value <= bright);
+      closeTo(value, getTwinkleBrightness(star, time));
+      closeTo(value, getTwinkleBrightness(star, time + periodSeconds));
+      return value;
+    });
+    closeTo(Math.min(...samples), dim, 0.0001);
+    closeTo(Math.max(...samples), bright, 0.0001);
+    closeTo(getTwinkleBrightness(star, -1), getTwinkleBrightness(star, 0));
+  });
+  for (const time of [0, 1, 47, 120, 240]) {
+    const values = stars.map((star) => getTwinkleBrightness(star, time));
+    assert.ok(new Set(values.map((value) => value.toFixed(5))).size > 60);
+    const slopes = stars.map((star, index) => getTwinkleBrightness(star, time + 0.01) - values[index]);
+    assert.ok(slopes.filter((value) => value > 0).length > 15);
+    assert.ok(slopes.filter((value) => value < 0).length > 15);
+  }
+});
+
+test('twinkle is smooth across frames and old window boundaries, and reaches rendered opacity only', () => {
+  const seed = 6789;
+  const stars = createAmbientLayout(seed, 0);
+  for (const time of [0, 8, 18, 119.999, 120, 239.999, 240, 479.999]) {
+    const styles = getStarFieldStyles(seed, time).slice(MAX_STAR_TEXT_ANCHOR_COUNT);
+    stars.forEach((star, index) => {
+      const value = getTwinkleBrightness(star, time);
+      // Maximum sine slope is (1.12 - 0.82) * PI / 8 per second.
+      assert.ok(Math.abs(getTwinkleBrightness(star, time + 1 / 60) - value) < 0.002);
+      closeTo(styles[index].twinkle, value);
+      closeTo(styles[index].opacity, star.alpha * value);
+      assert.equal(styles[index].alpha, star.alpha);
+      assert.equal(styles[index].radius, star.size);
+      assert.equal(styles[index].strength, 0);
+    });
+  }
   for (const time of [600, 605, 610, 619.9, 620, 625, 629.9, 1200]) {
     assert.ok(stars.every((star) => getTwinkleBrightness(star, time) === 1));
   }
+});
+
+test('reduced motion disables twinkle and preserves a static ambient frame across redraw times', () => {
+  const seed = 6789;
+  const stars = createAmbientLayout(seed, 0);
+  const staticStyles = getStarFieldStyles(seed, 0, true);
+  for (const time of [0, 1, 47, 120, 600, 625, 630, 10000]) {
+    assert.deepEqual(getStarFieldStyles(seed, time, true), staticStyles);
+    assert.ok(stars.every((star) => getTwinkleBrightness(star, time, true) === 1));
+  }
+  staticStyles.slice(MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style, index) => {
+    assert.equal(style.twinkle, 1);
+    assert.equal(style.opacity, stars[index].alpha);
+    assert.equal(style.radius, stars[index].size);
+  });
+  const component = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  assert.match(component, /styles: getStarFieldStyles\(scene\.seed, elapsed, reducedMotion\)/);
+  assert.match(component, /const shouldAnimate = \(\) => !reducedMotion && pageIsVisible && isOnscreen/);
+  assert.match(component, /if \(reducedMotion\) drawScene\(0\)/);
 });
 
 test('constellation phases and frozen simulation clocks have exact boundaries', () => {
@@ -375,14 +458,15 @@ test('Easter eggs cycle deterministically through every hidden phrase and never 
   }
 });
 
-test('Easter-egg lifecycle has explicit first-glyph/burst timing inside exact 10s in, hold, and fade', () => {
-  assert.equal(STAR_TEXT_FIRST_GLYPH_SECONDS, 4);
-  assert.equal(STAR_TEXT_BURST_SECONDS, 6);
-  assert.deepEqual(getStarTextIntroProgress(0), { stage: 'first-glyph', firstGlyph: 0, burst: 0 });
-  assert.equal(getStarTextIntroProgress(3.999).stage, 'first-glyph');
-  assert.deepEqual(getStarTextIntroProgress(4), { stage: 'burst', firstGlyph: 1, burst: 0 });
-  closeTo(getStarTextIntroProgress(7).burst, 0.5);
-  assert.deepEqual(getStarTextIntroProgress(10), { stage: 'complete', firstGlyph: 1, burst: 1 });
+test('Easter-egg lifecycle gives every glyph one shared exact 10s morph, hold, and fade', () => {
+  assert.deepEqual(getStarTextIntroProgress(0), {
+    stage: 'morph-in', progress: 0,
+  });
+  assert.equal(getStarTextIntroProgress(3.999).stage, 'morph-in');
+  closeTo(getStarTextIntroProgress(5).progress, 0.5);
+  assert.deepEqual(getStarTextIntroProgress(10), {
+    stage: 'complete', progress: 1,
+  });
   assert.equal(getEasterEggPhase(0).name, 'morph-in');
   closeTo(getEasterEggPhase(5).progress, 0.5);
   assert.equal(getEasterEggPhase(9.999).name, 'morph-in');
@@ -398,6 +482,160 @@ test('Easter-egg lifecycle has explicit first-glyph/burst timing inside exact 10
   closeTo(getEasterEggStrength(0.37, 0.22, 20), 1);
   closeTo(getEasterEggStrength(0.37, 0.22, 25), 0.61);
   closeTo(getEasterEggStrength(0.37, 0.22, 30), 0.22);
+});
+
+test('scheduled and Easter intros share all-glyph progress and exact morph boundaries', () => {
+  const seed = 777;
+  const width = 1200;
+  const height = 600;
+  const geometry = createConstellationGeometry(width, height, seed, 1);
+  const targetCount = geometry.points.length;
+  const ambientPositions = getStarFieldPositions(seed, 120, width, height);
+  const ambientStyles = getStarFieldStyles(seed, 120);
+  const remapped = remapAmbientStarsToTextSlots(
+    ambientPositions, ambientStyles, targetCount,
+  );
+  const targetPositions = remapped.positions.map((point, index) =>
+    ({ ...(geometry.points[index] ?? point) }));
+  const scheduledHoldStyles = getStarFieldStyles(seed, 610);
+  const targetStyles = remapped.styles.map((style, index) =>
+    ({ ...(scheduledHoldStyles[index] ?? style) }));
+  const options = { targetCount };
+
+  for (const age of [0, 0.001, 2.5, 5, 7.5, 9.999, 10]) {
+    const scheduledStyles = getStarFieldStyles(seed, 600 + age);
+    const easterStyles = getEasterEggStarFieldStyles(
+      remapped.styles, targetStyles, ambientStyles, age, options,
+    );
+    const expected = age < 10 ? getConstellationPhase(600 + age).progress : 1;
+    geometry.glyphs.forEach((glyph) => glyph.indices.forEach((index) => {
+      closeTo(scheduledStyles[index].strength, expected);
+      closeTo(easterStyles[index].strength, expected);
+    }));
+  }
+
+  assert.deepEqual(
+    getEasterEggStarFieldPositions(
+      remapped.positions, targetPositions, ambientPositions, 10, [], undefined, options,
+    ).slice(0, targetCount),
+    geometry.points,
+  );
+  assert.deepEqual(
+    getStarFieldPositions(seed, 610, width, height).slice(0, targetCount),
+    geometry.points,
+  );
+});
+
+test('every phrase and seed uses identical position, opacity, strength, and geometry progress', () => {
+  const width = 1200;
+  const height = 600;
+  const seeds = [0, 1, 0x51a7, 0xffffffff];
+  const ages = [0, 0.001, 2.5, 4, 5, 7.5, 9.999, 10];
+
+  for (const seed of seeds) {
+    for (const [phraseIndex, phrase] of CONSTELLATION_PHRASES.entries()) {
+      const event = phraseIndex + 1;
+      const geometry = createConstellationGeometryForPhrase(
+        width, height, phrase, seed, event,
+      );
+      const ambientPositions = getStarFieldPositions(seed, 120, width, height);
+      const ambientStyles = getStarFieldStyles(seed, 120);
+      const remapped = remapAmbientStarsToTextSlots(
+        ambientPositions, ambientStyles, geometry.points.length,
+      );
+      const targets = remapped.positions.map((point, index) =>
+        ({ ...(geometry.points[index] ?? point) }));
+      const targetStyles = remapped.styles.map((style) => ({ ...style }));
+      createEasterEggTargetStyles(seed, event - 1, geometry.points.length)
+        .forEach((style, index) => { targetStyles[index] = style; });
+      const options = { targetCount: geometry.points.length };
+      const origins = getEasterEggStarFieldPositions(
+        remapped.positions, targets, ambientPositions, 0, [], undefined, options,
+      );
+      const originStyles = getEasterEggStarFieldStyles(
+        remapped.styles, targetStyles, ambientStyles, 0, options,
+      );
+
+      for (const age of ages) {
+        const progress = getEasterEggPhase(age).progress;
+        const positions = getEasterEggStarFieldPositions(
+          remapped.positions, targets, ambientPositions, age, [], undefined, options,
+        );
+        const styles = getEasterEggStarFieldStyles(
+          remapped.styles, targetStyles, ambientStyles, age, options,
+        );
+        geometry.glyphs.forEach((glyph) => glyph.indices.forEach((index) => {
+          closeTo(positions[index].x,
+            origins[index].x + (targets[index].x - origins[index].x) * progress);
+          closeTo(positions[index].y,
+            origins[index].y + (targets[index].y - origins[index].y) * progress);
+          closeTo(styles[index].opacity,
+            originStyles[index].opacity
+              + (targetStyles[index].opacity - originStyles[index].opacity) * progress);
+          closeTo(styles[index].strength, progress);
+        }));
+      }
+      assert.deepEqual(
+        getEasterEggStarFieldPositions(
+          remapped.positions, targets, ambientPositions, 10, [], undefined, options,
+        ).slice(0, geometry.points.length),
+        geometry.points,
+        `${phrase}/${seed} missed exact full geometry`,
+      );
+    }
+  }
+});
+
+test('production model and Canvas contain no staged-glyph compatibility path', () => {
+  const modelSource = readFileSync(
+    new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8',
+  );
+  const componentSource = readFileSync(
+    new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8',
+  );
+  for (const [name, source] of [['model', modelSource], ['component', componentSource]]) {
+    assert.doesNotMatch(source, /first[\s_-]*glyph|glyph[\s_-]*first|burst/i,
+      `${name} restored staged-glyph runtime naming`);
+  }
+  assert.match(componentSource,
+    /remapAmbientStarsToTextSlots\([\s\n]*startPositions, startStyles, geometry\.points\.length,/);
+  assert.match(componentSource, /remapped\.sourceIndices\.forEach/);
+  assert.match(componentSource,
+    /\{ geometry: easterEgg\.geometry, strength: phase\.progress \}/,
+    'Canvas line reveal does not use the shared lifecycle progress');
+});
+
+test('production transition options preserve the exact frame when retriggered mid-event', () => {
+  const width = 1200;
+  const height = 600;
+  const seed = 0x72a7;
+  for (const elapsed of [600, 605, 610, 615, 620, 625]) {
+    const startPositions = getStarFieldPositions(seed, elapsed, width, height);
+    const startStyles = getStarFieldStyles(seed, elapsed);
+    const geometry = createConstellationGeometryForPhrase(
+      width, height, 'Attention', seed, 2,
+    );
+    const targetPositions = startPositions.map((point, index) =>
+      ({ ...(geometry.points[index] ?? point) }));
+    const targetStyles = startStyles.map((style) => ({ ...style }));
+    createEasterEggTargetStyles(seed, 1, geometry.points.length)
+      .forEach((style, index) => { targetStyles[index] = style; });
+    const options = { targetCount: geometry.points.length };
+    assert.deepEqual(
+      getEasterEggStarFieldPositions(
+        startPositions, targetPositions, startPositions, 0, [], undefined, options,
+      ),
+      startPositions,
+      `positions changed on trigger at ${elapsed}`,
+    );
+    assert.deepEqual(
+      getEasterEggStarFieldStyles(
+        startStyles, targetStyles, startStyles, 0, options,
+      ),
+      startStyles,
+      `styles changed on trigger at ${elapsed}`,
+    );
+  }
 });
 
 test('Easter-egg endpoints and active-transition restarts preserve exact rendered frames', () => {
@@ -457,17 +695,22 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   );
 });
 
-test('Easter choreography shares first-glyph origins, exact burst geometry, and fade-only outro', () => {
+test('Easter choreography moves every glyph concurrently and keeps a fade-only outro', () => {
   const geometry = createConstellationGeometryForPhrase(1200, 600, 'Attention', 0x51a7, 2);
   const targetCount = geometry.points.length;
-  const firstGlyphCount = geometry.glyphs[0].indices.length;
   const total = targetCount + 5;
-  const start = Array.from({ length: total }, (_, index) => ({ x: index * 1.7, y: index * 0.9 }));
+  const ambient = Array.from({ length: AMBIENT_STAR_COUNT }, (_, index) =>
+    ({ x: 20 + index * 13, y: 30 + (index * 29) % 500 }));
+  const origins = createStarTextAmbientOrigins(ambient, targetCount);
+  const start = [...origins, ...Array.from({ length: 5 }, (_, index) => ({ x: index, y: index }))];
   const end = Array.from({ length: total }, (_, index) => ({ x: 1000 - index, y: 500 - index }));
   const targets = [...geometry.points, ...start.slice(targetCount)];
   const style = (opacity) => ({ alpha: opacity, twinkle: 1, strength: opacity,
     radius: 1.2, opacity });
-  const startStyles = Array.from({ length: total }, () => style(0.5));
+  const startStyles = [
+    ...Array.from({ length: targetCount }, () => style(0)),
+    ...Array.from({ length: total - targetCount }, () => style(0.5)),
+  ];
   const targetStyles = [
     ...Array.from({ length: targetCount }, () => style(1)),
     ...Array.from({ length: total - targetCount }, () => style(0.5)),
@@ -475,15 +718,20 @@ test('Easter choreography shares first-glyph origins, exact burst geometry, and 
   const endStyles = Array.from({ length: total }, (_, index) => index < targetCount
     ? { alpha: 0, twinkle: 0.25, strength: 0, radius: 0.37, opacity: 0 }
     : style(0.7));
-  const options = { firstGlyphCount, targetCount,
-    endpointVisible: endStyles.map(isStarRenderable) };
+  const options = { targetCount, endpointVisible: endStyles.map(isStarRenderable) };
 
-  const firstStage = getEasterEggStarFieldPositions(start, targets, end, 3, [], undefined, options);
-  assert.ok(firstStage.slice(firstGlyphCount, targetCount)
-    .every((point, index) => point === start[firstGlyphCount + index]));
-  const burstStart = getEasterEggStarFieldPositions(start, targets, end, 4, [], undefined, options);
-  const origins = createStarTextBurstOrigins(targets, firstGlyphCount, targetCount);
-  assert.deepEqual(burstStart.slice(firstGlyphCount, targetCount), origins.slice(firstGlyphCount));
+  const early = getEasterEggStarFieldPositions(start, targets, end, 2, [], undefined, options);
+  const earlyStyles = getEasterEggStarFieldStyles(
+    startStyles, targetStyles, endStyles, 2, options,
+  );
+  const sharedProgress = getEasterEggPhase(2).progress;
+  geometry.glyphs.forEach((glyph) => {
+    assert.ok(glyph.indices.every((index) => earlyStyles[index].strength > 0));
+    assert.ok(glyph.indices.some((index) => Math.hypot(
+      early[index].x - start[index].x, early[index].y - start[index].y,
+    ) > 1));
+    glyph.indices.forEach((index) => closeTo(earlyStyles[index].strength, sharedProgress));
+  });
   assert.deepEqual(
     getEasterEggStarFieldPositions(start, targets, end, 10, [], undefined, options),
     targets,
@@ -542,19 +790,18 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
     let startPositions = rawStartPositions;
     let startStyles = rawStartStyles;
     if (getConstellationPhase(triggerElapsed).name === 'ambient') {
-      const remapped = remapAmbientStarsToFirstGlyphSlots(
-        rawStartPositions, rawStartStyles, geometry.glyphs[0].indices.length,
+      const remapped = remapAmbientStarsToTextSlots(
+        rawStartPositions, rawStartStyles, geometry.points.length,
       );
       startPositions = remapped.positions;
       startStyles = remapped.styles;
-      remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
+      remapped.sourceIndices
         .forEach((index) => { targetStyles[index] = { ...startStyles[index] }; });
     }
     const endpoint = triggerElapsed + CONSTELLATION_WINDOW_SECONDS;
     const endPositions = getStarFieldPositions(seed, endpoint, width, height);
     const endStyles = getStarFieldStyles(seed, endpoint);
     const options = {
-      firstGlyphCount: geometry.glyphs[0].indices.length,
       targetCount: geometry.points.length,
       endpointVisible: endStyles.map(isStarRenderable),
     };
@@ -944,13 +1191,22 @@ test('constellation-only stars fade with strength while retained background stay
   assert.equal(ambient.length, STAR_FIELD_SLOT_COUNT);
   assert.equal(after.length, STAR_FIELD_SLOT_COUNT);
   const geometry = createConstellationGeometry(1200, 600, seed, 1);
-  const firstGlyphCount = geometry.glyphs[0].indices.length;
-  assert.ok(morphStart.slice(0, firstGlyphCount).every(({ opacity }) => opacity > 0));
-  assert.ok(morphStart.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity === 0));
-  const firstComplete = getStarFieldStyles(seed, 604);
-  assert.ok(firstComplete.slice(0, firstGlyphCount).every(({ strength }) => strength === 1));
-  assert.ok(firstComplete.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity === 0));
-  assert.ok(morphMiddle.slice(firstGlyphCount, anchorCount).every(({ opacity }) => opacity > 0));
+  const boundaryProgresses = geometry.glyphs.map((glyph) =>
+    new Set(glyph.indices.map((index) => morphStart[index].strength)));
+  assert.ok(boundaryProgresses.every((progresses) =>
+    progresses.size === 1 && progresses.has(0)));
+  assert.ok(geometry.glyphs.every((glyph) =>
+    glyph.indices.some((index) => morphStart[index].opacity > 0)),
+  'existing ambient stars were not distributed across every glyph');
+  const early = getStarFieldStyles(seed, 604);
+  const expectedEarlyProgress = getConstellationPhase(604).progress;
+  geometry.glyphs.forEach((glyph) => {
+    assert.ok(glyph.indices.every((index) => early[index].opacity > 0));
+    glyph.indices.forEach((index) => closeTo(early[index].strength, expectedEarlyProgress));
+  });
+  const expectedMiddleProgress = getConstellationPhase(605).progress;
+  assert.ok(morphMiddle.slice(0, anchorCount)
+    .every(({ opacity, strength }) => opacity > 0 && Math.abs(strength - expectedMiddleProgress) < 1e-8));
   assert.ok(hold.slice(0, anchorCount).every(({ strength }) => strength === 1));
   assert.ok(outStart.slice(0, anchorCount).every((style, index) =>
     style.opacity >= outMiddle[index].opacity));
@@ -983,15 +1239,18 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   assert.equal(createConstellationGeometry(width, height, seed, 1).phrase,
     selectConstellationPhrase(seed, 1));
   const geometry = createConstellationGeometry(width, height, seed, 1);
-  const firstCount = geometry.glyphs[0].indices.length;
-  const origins = createStarTextBurstOrigins(targets, firstCount);
-  const burstStart = getStarFieldPositions(seed, 604, width, height);
-  burstStart.slice(firstCount, targets.length).forEach((point, offset) =>
-    assert.deepEqual(point, origins[firstCount + offset]));
-  const burstMiddle = getStarFieldPositions(seed, 607, width, height);
-  assert.ok(burstMiddle.slice(firstCount, targets.length).some((point, offset) =>
-    Math.hypot(point.x - origins[firstCount + offset].x,
-      point.y - origins[firstCount + offset].y) > 1));
+  const ambientAtBoundary = createAmbientLayout(seed, 0).map((star) => {
+    const point = getDriftedStar(star, CONSTELLATION_INTERVAL_SECONDS);
+    return { x: point.x * width, y: point.y * height };
+  });
+  const origins = createStarTextAmbientOrigins(ambientAtBoundary, targets.length);
+  const morphStartAll = getStarFieldPositions(seed, 600, width, height);
+  assert.deepEqual(morphStartAll.slice(0, targets.length), origins);
+  for (const time of [600.001, 604, 607, 609.999]) {
+    const sample = getStarFieldPositions(seed, time, width, height);
+    geometry.glyphs.forEach((glyph) => assert.ok(glyph.indices.some((index) =>
+      Math.hypot(sample[index].x - origins[index].x, sample[index].y - origins[index].y) > 0)));
+  }
   const holdPositions = getStarFieldPositions(seed, 610, width, height);
   const lateHoldPositions = getStarFieldPositions(seed, 619.9, width, height);
   for (let index = 0; index < targets.length; index += 1) {
@@ -1001,14 +1260,11 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   const morphStart = getStarFieldPositions(seed, 600, width, height);
   const beforeMorph = getStarFieldPositions(seed, 599.999999, width, height);
   const afterMorph = getStarFieldPositions(seed, 630, width, height);
-  const firstGlyphCount = createConstellationGeometry(width, height, seed, 1)
-    .glyphs[0].indices.length;
-  for (let index = 0; index < firstGlyphCount; index += 1) {
-    assert.ok(Math.hypot(
-      morphStart[index].x - beforeMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].x,
-      morphStart[index].y - beforeMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].y,
-    ) < 0.001);
-  }
+  const beforePositionKeys = new Set(beforeMorph.slice(MAX_STAR_TEXT_ANCHOR_COUNT)
+    .map(({ x, y }) => `${x.toFixed(3)},${y.toFixed(3)}`));
+  morphStart.slice(0, targets.length).forEach(({ x, y }) => {
+    assert.ok(beforePositionKeys.has(`${x.toFixed(3)},${y.toFixed(3)}`));
+  });
   for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
     const regenerated = getDriftedStar(createAmbientLayout(seed, 1)[index], 0);
     closeTo(afterMorph[MAX_STAR_TEXT_ANCHOR_COUNT + index].x, regenerated.x * width);
@@ -1183,21 +1439,68 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
   closeTo(projected.radius, getTravelerAppearance(traveler, projected.progress).radius);
 });
 
-test('galaxy creation uses the exact 10% half-open threshold', () => {
-  assert.equal(GALAXY_CREATION_CHANCE, 0.1);
+test('galaxy creation uses the exact 20% half-open threshold', () => {
+  assert.equal(GALAXY_CREATION_CHANCE, 0.2);
   assert.equal(isGalaxyCreationRoll(0), true);
-  assert.equal(isGalaxyCreationRoll(0.099999999), true);
-  assert.equal(isGalaxyCreationRoll(0.1), false);
+  assert.equal(isGalaxyCreationRoll(0.1), true);
+  assert.equal(isGalaxyCreationRoll(0.199999999), true);
+  assert.equal(isGalaxyCreationRoll(0.2), false);
+  assert.equal(isGalaxyCreationRoll(0.200000001), false);
   assert.equal(isGalaxyCreationRoll(0.999999999), false);
+  assert.equal(isGalaxyCreationRoll(1), false);
   assert.equal(isGalaxyCreationRoll(-0.000001), false);
 
   const outcomes = Array.from({ length: 10000 }, (_, index) =>
     isGalaxyCreationRoll(index / 10000));
-  assert.equal(outcomes.filter(Boolean).length, 1000);
+  assert.equal(outcomes.filter(Boolean).length, 2000);
+  assert.ok(outcomes.slice(0, 2000).every((outcome) => outcome === true));
+  assert.ok(outcomes.slice(2000).every((outcome) => outcome === false));
 
   const scene = createSpaceScene(0x51a7c0de);
   assert.ok(scene.travelers.every(({ isGalaxy }) => typeof isGalaxy === 'boolean'));
   assert.deepEqual(scene, createSpaceScene(0x51a7c0de));
+});
+
+test('starscape source contracts an opaque black backdrop and disc-clipped star patterns', () => {
+  const componentSource = readFileSync(
+    new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8',
+  );
+  const cssSource = readFileSync(new URL('../../src/index.css', import.meta.url), 'utf8');
+  const drawScene = componentSource.slice(
+    componentSource.indexOf('const drawScene ='),
+    componentSource.indexOf('// RAF may pause while hidden'),
+  );
+  const travelerSurface = componentSource.slice(
+    componentSource.indexOf('const drawTravelerSurface ='),
+    componentSource.indexOf('const drawTravelerDisc ='),
+  );
+  const homeScene = cssSource.slice(
+    cssSource.indexOf('.home-hero-scene'),
+    cssSource.indexOf('.home-hero {'),
+  );
+  const planetarySystem = componentSource.slice(
+    componentSource.indexOf('const drawPlanetarySystem ='),
+    componentSource.indexOf('const SpaceNeuralBackground'),
+  );
+
+  assert.match(drawScene, /ctx\.globalAlpha = 1;\s*\/\/ The canvas owns[\s\S]*?ctx\.fillStyle = '#000000';\s*ctx\.fillRect\(0, 0, width, height\);/);
+  assert.doesNotMatch(componentSource, /backdropGlow/);
+  assert.doesNotMatch(homeScene, /gradient|radial-gradient|rgba\(/i);
+  assert.match(homeScene, /\.home-hero-scene[\s\S]*?background: #000000;/);
+
+  assert.match(travelerSurface, /ctx\.save\(\);\s*ctx\.beginPath\(\);\s*ctx\.arc\(x, y, radius, 0, TAU\);\s*ctx\.clip\(\);/);
+  assert.match(componentSource, /drawTravelerSurface\(ctx, appearance, x, y, radius, opacity\);/);
+  assert.match(planetarySystem, /drawTravelerDisc\(\s*ctx,\s*ownerAppearance,/);
+
+  const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const resolving = getTravelerAppearance(traveler, 0.5);
+  const resolved = getTravelerAppearance(traveler, 0.9);
+  assert.equal(resolving.texture, resolved.texture);
+  assert.equal(resolving.surfaceSeed, resolved.surfaceSeed);
+  assert.ok(resolved.detailLevel > 0);
+  assert.deepEqual(getTravelerStarRenderPolicy(true), {
+    renderDisc: true, renderHalo: false, renderShadowGlow: false, renderFlare: false,
+  });
 });
 
 test('traveler palette and surface textures are seeded, stable, and diverse', () => {
@@ -1230,7 +1533,8 @@ test('traveler palette and surface textures are seeded, stable, and diverse', ()
 
 test('small and large traveler colors follow their weighted palette with coherent interpolation', () => {
   assert.equal(SMALL_TRAVELER_RED_CHANCE, 0.06);
-  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.35);
+  assert.equal(LARGE_TRAVELER_RED_CHANCE, 0.7 / 2);
   const smallWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[0]);
   const largeWeights = getTravelerColorWeights(TRAVELER_RADIUS_RANGE[1]);
   const middleWeights = getTravelerColorWeights(
@@ -1244,6 +1548,24 @@ test('small and large traveler colors follow their weighted palette with coheren
     weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
   }
 
+  for (const progress of [0.25, 0.75]) {
+    const size = TRAVELER_RADIUS_RANGE[0]
+      + (TRAVELER_RADIUS_RANGE[1] - TRAVELER_RADIUS_RANGE[0]) * progress;
+    const weights = getTravelerColorWeights(size);
+    closeTo(weights[0], 0.06 + (0.35 - 0.06) * progress ** 2 * (3 - 2 * progress));
+    weights.slice(1).forEach((weight) => closeTo(weight, (1 - weights[0]) / 4));
+  }
+
+  const largeSize = TRAVELER_RADIUS_RANGE[1];
+  assert.equal(chooseTravelerColor(largeSize, 0.35 - Number.EPSILON).name, 'red');
+  assert.equal(chooseTravelerColor(largeSize, 0.35).name, 'yellow');
+  const exactCounts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
+  for (let index = 0; index < 10000; index += 1) {
+    const { name } = chooseTravelerColor(largeSize, (index + 0.5) / 10000);
+    exactCounts.set(name, exactCounts.get(name) + 1);
+  }
+  assert.deepEqual([...exactCounts.values()], [3500, 1625, 1625, 1625, 1625]);
+
   const sample = (size, seed) => {
     const random = createSeededRandom(seed);
     const counts = new Map(TRAVELER_PALETTE.map(({ name }) => [name, 0]));
@@ -1254,8 +1576,8 @@ test('small and large traveler colors follow their weighted palette with coheren
     return counts;
   };
   for (const [size, redChance, seed] of [
-    [TRAVELER_RADIUS_RANGE[0], SMALL_TRAVELER_RED_CHANCE, 0x51a70001],
-    [TRAVELER_RADIUS_RANGE[1], LARGE_TRAVELER_RED_CHANCE, 0x51a70002],
+    [TRAVELER_RADIUS_RANGE[0], 0.06, 0x51a70001],
+    [TRAVELER_RADIUS_RANGE[1], 0.35, 0x51a70002],
   ]) {
     const counts = sample(size, seed);
     assert.ok(Math.abs(counts.get('red') / 100000 - redChance) < 0.006);
@@ -1320,7 +1642,8 @@ test('traveler approach glow grows monotonically while blur and opacity remain s
 test('galaxies compose with traveler variants and stay within seven moving-star radii', () => {
   const traveler = { seed: 17, initialDistance: 0, speed: 20, size: 1.21, alpha: 0.6, isGalaxy: true };
   assert.equal(GALAXY_MAX_RADIUS_MULTIPLIER, 7);
-  assert.ok(GALAXY_INTERNAL_STAR_COUNT >= 30);
+  assert.equal(GALAXY_INTERNAL_STAR_COUNT, 72);
+  assert.ok(GALAXY_INTERNAL_STAR_COUNT > 36);
   assert.ok(GALAXY_SPIRAL_ARM_COUNT >= 2);
   assert.equal(getTravelerVariant(traveler, 0), 'galaxy');
   assert.equal(getTravelerVariant(traveler, 99), 'galaxy');
@@ -1330,12 +1653,12 @@ test('galaxies compose with traveler variants and stay within seven moving-star 
 
   for (const progress of [0, 0.28, 0.5, 0.68, 1]) {
     const star = getTravelerAppearance(traveler, progress);
-    const galaxy = getGalaxyAppearance(traveler, progress);
-    assert.deepEqual(galaxy, getGalaxyAppearance(traveler, progress));
+    const galaxy = getGalaxyAppearance(traveler, progress, 2);
+    assert.deepEqual(galaxy, getGalaxyAppearance(traveler, progress, 2));
     assert.ok(galaxy.outerRadius <= star.radius * GALAXY_MAX_RADIUS_MULTIPLIER + 1e-12);
     assert.ok(galaxy.outerRadius > star.radius);
     assert.ok(galaxy.coreRadius > 0 && galaxy.coreRadius < galaxy.outerRadius);
-    assert.equal(galaxy.armCount, GALAXY_SPIRAL_ARM_COUNT);
+    assert.ok(galaxy.flattening > 0 && galaxy.flattening <= 1);
     assert.equal(galaxy.internalStarCount, GALAXY_INTERNAL_STAR_COUNT);
   }
 
@@ -1343,6 +1666,215 @@ test('galaxies compose with traveler variants and stay within seven moving-star 
   const galaxyProjection = projectTraveler(traveler, 12.5, 1000, 600);
   assert.deepEqual(galaxyProjection, projectTraveler(ordinary, 12.5, 1000, 600),
     'galaxy identity must not alter traveler motion or lifecycle');
+});
+
+test('reality-inspired galaxy formations are deterministic, distinct, and all reachable', () => {
+  assert.deepEqual(GALAXY_FORMATIONS,
+    ['spiral', 'barred-spiral', 'elliptical', 'irregular']);
+  assert.deepEqual(GALAXY_ROTATION_RATE_RANGE, [0.09, 0.15]);
+  assert.deepEqual(GALAXY_FORMATION_RATE_MULTIPLIERS, {
+    spiral: 1,
+    'barred-spiral': 0.92,
+    elliptical: 0.78,
+    irregular: 1.12,
+  });
+  const seedByFormation = new Map();
+  for (let seed = 0; seed < 1024; seed += 1) {
+    const formation = getGalaxyFormation(seed, 0);
+    assert.equal(getGalaxyFormation(seed, 0), formation);
+    if (!seedByFormation.has(formation)) seedByFormation.set(formation, seed);
+  }
+  assert.deepEqual([...seedByFormation.keys()].sort(), [...GALAXY_FORMATIONS].sort());
+
+  const profiles = new Map();
+  for (const formation of GALAXY_FORMATIONS) {
+    const traveler = { seed: seedByFormation.get(formation), initialDistance: 0,
+      speed: 20, size: 1, alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.8, 0);
+    assert.equal(appearance.formation, formation);
+    const pointLikeMatter = Array.from({ length: appearance.internalStarCount }, (_, index) =>
+      getGalaxyParticleState(traveler, 0, 0.8, 0, index, appearance))
+      .filter(({ kind }) => kind !== 'dust');
+    assert.ok(pointLikeMatter.length > 36,
+      `${formation} has only ${pointLikeMatter.length} visible point-like stars`);
+    profiles.set(formation, appearance);
+  }
+  assert.ok(profiles.get('spiral').armCount >= 3);
+  assert.equal(profiles.get('barred-spiral').armCount, 2);
+  assert.ok(profiles.get('barred-spiral').barLength > 0);
+  assert.ok(profiles.get('elliptical').coreRadius > profiles.get('spiral').coreRadius);
+  assert.equal(profiles.get('irregular').armCount, 0);
+  assert.notEqual(profiles.get('elliptical').flattening, profiles.get('barred-spiral').flattening);
+  assert.ok([...profiles.values()].every((appearance) => !('ringRadius' in appearance)));
+
+  const modelSource = readFileSync(new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8');
+  const canvasSource = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  assert.equal(modelSource.includes('ringRadius'), false);
+  assert.equal(canvasSource.includes("appearance.formation === 'ring'"), false);
+  assert.equal(canvasSource.includes('appearance.ringRadius'), false);
+  const drawGalaxySource = canvasSource.slice(
+    canvasSource.indexOf('const drawGalaxy ='),
+    canvasSource.indexOf('const drawUfo ='),
+  );
+  for (const forbiddenMorphology of [
+    'createRadialGradient', 'createLinearGradient', '.ellipse(', '.stroke()',
+    '.moveTo(', '.lineTo(', '.bezierCurveTo(', '.quadraticCurveTo(',
+  ]) {
+    assert.equal(drawGalaxySource.includes(forbiddenMorphology), false,
+      `drawGalaxy retained ring-like morphology: ${forbiddenMorphology}`);
+  }
+  assert.equal(drawGalaxySource.includes('.filter('), false,
+    'embedded system depth ordering allocates filter arrays each frame');
+  assert.equal(drawGalaxySource.includes('hostGlow'), false,
+    'embedded host retained a per-frame glow gradient');
+  assert.ok(canvasSource.includes('drawPlanetRing'), 'ordinary planet-ring behavior was removed');
+});
+
+test('embedded galaxy systems are deterministic, bounded, orbiting, and host-relative', () => {
+  assert.deepEqual(GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE, [2, 3]);
+  assert.deepEqual(GALAXY_EMBEDDED_PLANET_COUNT_RANGE, [1, 2]);
+  assert.equal(getEmbeddedGalaxySystemOpacity(Number.NaN), 0);
+  assert.equal(getEmbeddedGalaxySystemOpacity(4), 0);
+  assert.equal(getEmbeddedGalaxySystemOpacity(9), 1);
+  assert.ok(getEmbeddedGalaxySystemOpacity(6) > 0 && getEmbeddedGalaxySystemOpacity(6) < 1);
+
+  const observedSystemCounts = new Set();
+  const observedPlanetCounts = new Set();
+  for (let seed = 0; seed < 128; seed += 1) {
+    const traveler = { seed, initialDistance: 0, speed: 20, size: 1.1,
+      alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.82, 2);
+    const systems = createEmbeddedGalaxySystems(traveler, 2, appearance);
+    assert.deepEqual(systems, createEmbeddedGalaxySystems(traveler, 2, appearance));
+    const zeroSized = createEmbeddedGalaxySystems(traveler, 2,
+      { outerRadius: 0, flattening: Number.NaN });
+    assert.ok(zeroSized.every((system) => system.orbitRadius === 0 && system.hostRadius === 0
+      && system.planets.every((planet) => planet.orbitRadius === 0 && planet.radius === 0)));
+    observedSystemCounts.add(systems.length);
+    assert.ok(systems.length >= 2 && systems.length <= 3);
+
+    systems.forEach((system) => {
+      observedPlanetCounts.add(system.planets.length);
+      assert.ok(system.planets.length >= 1 && system.planets.length <= 2);
+      assert.ok(system.orbitRadius > 0);
+      assert.ok(system.orbitRadius + system.hostRadius < appearance.outerRadius);
+      const atZero = getEmbeddedGalaxySystemState(system, 0);
+      const later = getEmbeddedGalaxySystemState(system, 4);
+      closeTo(Math.hypot(atZero.host.x, atZero.host.y), system.orbitRadius);
+      closeTo(Math.hypot(later.host.x, later.host.y), system.orbitRadius);
+      assert.ok(Math.hypot(later.host.x - atZero.host.x, later.host.y - atZero.host.y)
+        > system.hostRadius, 'host star did not visibly move around galaxy center');
+
+      const hostPeriod = Math.PI * 2 / Math.abs(system.speed);
+      const returnedHost = getEmbeddedGalaxySystemState(system, hostPeriod).host;
+      closeTo(returnedHost.x, atZero.host.x);
+      closeTo(returnedHost.y, atZero.host.y);
+      system.planets.forEach((planet, planetIndex) => {
+        const stateAtZero = atZero.planets[planetIndex];
+        const stateLater = later.planets[planetIndex];
+        assert.ok(stateAtZero.z >= -1 && stateAtZero.z <= 1);
+        assert.ok(stateLater.z >= -1 && stateLater.z <= 1);
+        closeTo(Math.hypot(stateAtZero.x - atZero.host.x, stateAtZero.y - atZero.host.y),
+          planet.orbitRadius);
+        closeTo(Math.hypot(stateLater.x - later.host.x, stateLater.y - later.host.y),
+          planet.orbitRadius);
+        assert.ok(Math.hypot(stateLater.x - stateAtZero.x, stateLater.y - stateAtZero.y) > 0.01);
+        assert.ok(Math.hypot(stateLater.x, stateLater.y) + planet.radius < appearance.outerRadius);
+
+        const planetPeriod = Math.PI * 2 / Math.abs(planet.speed);
+        const periodStart = getEmbeddedGalaxySystemState(system, 0);
+        const periodEnd = getEmbeddedGalaxySystemState(system, planetPeriod);
+        closeTo(periodEnd.planets[planetIndex].x - periodEnd.host.x,
+          periodStart.planets[planetIndex].x - periodStart.host.x);
+        closeTo(periodEnd.planets[planetIndex].y - periodEnd.host.y,
+          periodStart.planets[planetIndex].y - periodStart.host.y);
+      });
+    });
+  }
+  assert.deepEqual([...observedSystemCounts].sort(), [2, 3]);
+  assert.deepEqual([...observedPlanetCounts].sort(), [1, 2]);
+
+  const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1.1,
+    alpha: 0.6, isGalaxy: true };
+  const appearance = getGalaxyAppearance(traveler, 0.82, 0);
+  const system = createEmbeddedGalaxySystems(traveler, 0, appearance)[0];
+  assert.deepEqual(
+    getEmbeddedGalaxySystemState(system, getSimulationTime(620)),
+    getEmbeddedGalaxySystemState(system, getSimulationTime(600)),
+    'embedded system did not freeze with the shared simulation clock',
+  );
+  assert.deepEqual(getEmbeddedGalaxySystemState(system, 0), getEmbeddedGalaxySystemState(system, 0),
+    'reduced-motion time zero must be deterministic');
+});
+
+test('every galaxy formation turns meaningfully in five seconds with visible differential matter motion', () => {
+  const seedByFormation = new Map();
+  const directionsByFormation = new Map(GALAXY_FORMATIONS.map((formation) => [formation, new Set()]));
+  for (let seed = 0; seed < 4096; seed += 1) {
+    const formation = getGalaxyFormation(seed, 0);
+    if (!seedByFormation.has(formation)) seedByFormation.set(formation, seed);
+    directionsByFormation.get(formation).add(Math.sign(getGalaxyRotationRate(seed, 0)));
+  }
+
+  for (const formation of GALAXY_FORMATIONS) {
+    assert.deepEqual([...directionsByFormation.get(formation)].sort(), [-1, 1],
+      `${formation} does not vary rotation direction`);
+    const traveler = { seed: seedByFormation.get(formation), initialDistance: 0,
+      speed: 20, size: 1.1, alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.75, 0);
+    const atZero = getGalaxyAnimationState(traveler, 0, 0);
+    const atFive = getGalaxyAnimationState(traveler, 0, 5);
+    const formationDisplacement = Math.abs(atFive.rotation - atZero.rotation);
+    assert.ok(formationDisplacement >= 0.35,
+      `${formation} turns only ${formationDisplacement} radians in five seconds`);
+    closeTo(formationDisplacement, Math.abs(appearance.rotationRate) * 5);
+
+    let visiblyDifferential = 0;
+    for (let index = 0; index < appearance.internalStarCount; index += 1) {
+      const before = getGalaxyParticleState(traveler, 0, 0.75, 0, index, appearance);
+      const after = getGalaxyParticleState(traveler, 0, 0.75, 5, index, appearance);
+      const beforeAngle = Math.atan2(before.y / appearance.flattening, before.x);
+      const afterAngle = Math.atan2(after.y / appearance.flattening, after.x);
+      if (angularDistance(beforeAngle, afterAngle) >= 0.07) visiblyDifferential += 1;
+    }
+    assert.ok(visiblyDifferential >= appearance.internalStarCount / 2,
+      `${formation} has differential motion in only ${visiblyDifferential} particles`);
+  }
+});
+
+test('galaxy matter is deterministic, bounded, gently animated, and frozen by simulation time', () => {
+  let movingParticles = 0;
+  for (let seed = 0; seed < 128; seed += 1) {
+    const traveler = { seed, initialDistance: 0, speed: 20, size: 1.1, alpha: 0.6, isGalaxy: true };
+    const appearance = getGalaxyAppearance(traveler, 0.75, 1);
+    for (let index = 0; index < appearance.internalStarCount; index += 1) {
+      const atZero = getGalaxyParticleState(traveler, 1, 0.75, 0, index);
+      const later = getGalaxyParticleState(traveler, 1, 0.75, 12, index);
+      assert.deepEqual(atZero, getGalaxyParticleState(traveler, 1, 0.75, 0, index));
+      assert.ok(Number.isFinite(atZero.x) && Number.isFinite(atZero.y));
+      assert.ok(Math.hypot(atZero.x, atZero.y) <= appearance.outerRadius + 1e-12);
+      assert.ok(['star', 'young-star', 'dust'].includes(atZero.kind));
+      assert.ok(atZero.radius >= 0.12 && atZero.radius <= 0.68,
+        `galaxy point radius ${atZero.radius} is not tightly bounded`);
+      assert.ok(atZero.radius < appearance.outerRadius * 0.1);
+      assert.ok(atZero.opacity > 0 && atZero.opacity <= 1);
+      if (Math.hypot(later.x - atZero.x, later.y - atZero.y) > 1e-5
+        || Math.abs(later.opacity - atZero.opacity) > 1e-5) movingParticles += 1;
+    }
+  }
+  assert.ok(movingParticles > 4000, `only ${movingParticles} particles animated`);
+
+  const traveler = { seed: 99, initialDistance: 0, speed: 20, size: 1, alpha: 0.6, isGalaxy: true };
+  const beforeFreeze = getGalaxyAnimationState(traveler, 0, getSimulationTime(600));
+  const duringFreeze = getGalaxyAnimationState(traveler, 0, getSimulationTime(620));
+  assert.deepEqual(duringFreeze, beforeFreeze, 'constellation simulation clock did not freeze galaxy');
+  assert.deepEqual(
+    getGalaxyParticleState(traveler, 0, 0.7, getSimulationTime(620), 3),
+    getGalaxyParticleState(traveler, 0, 0.7, getSimulationTime(600), 3),
+  );
+  assert.deepEqual(getGalaxyAnimationState(traveler, 0, 0), getGalaxyAnimationState(traveler, 0, 0),
+    'reduced-motion time zero must be stable');
+  assert.notDeepEqual(getGalaxyAnimationState(traveler, 0, 20), getGalaxyAnimationState(traveler, 0, 0));
 });
 
 test('one equiprobable basis-point roll reserves disjoint exact 3% UFO and comet bands', () => {
@@ -1384,7 +1916,7 @@ test('traveler variants are lifecycle-stable, mutually exclusive, cycle-seeded, 
   });
 });
 
-test('comet trails have deterministic distinct particles inside bounded motion-opposed geometry', () => {
+test('comet debris animates deterministically and gradually widens behind its motion', () => {
   const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
   const trail = getCometAppearance(traveler, 3, 0.68);
   assert.deepEqual(trail, getCometAppearance(traveler, 3, 0.68));
@@ -1407,6 +1939,38 @@ test('comet trails have deterministic distinct particles inside bounded motion-o
   const largestDust = Math.max(...trail.particles
     .filter(({ kind }) => kind === 'stardust').map(({ radius }) => radius));
   assert.ok(largestAsteroid > largestDust * 1.5, 'fragments are not visibly distinct from stardust');
+
+  const next = getCometAppearance(traveler, 3, 0.6801);
+  const normalized = (appearance, particle) => ({
+    distance: particle.distance / appearance.trailLength,
+    lateralOffset: particle.lateralOffset / appearance.trailWidth,
+    rotation: particle.rotation,
+    opacity: particle.opacity,
+  });
+  const currentParticle = normalized(trail, trail.particles[0]);
+  const nextParticle = normalized(next, next.particles[0]);
+  assert.notDeepEqual(nextParticle, currentParticle,
+    'particle-local geometry stayed rigid as traveler progress advanced');
+  assert.ok(Math.abs(nextParticle.distance - currentParticle.distance) > 1e-8);
+  assert.ok(Math.abs(nextParticle.lateralOffset - currentParticle.lateralOffset) > 1e-8);
+  assert.ok(Math.abs(nextParticle.rotation - currentParticle.rotation) > 1e-8);
+  assert.ok(Math.abs(nextParticle.opacity - currentParticle.opacity) > 1e-8);
+  assert.ok(Math.abs(nextParticle.distance - currentParticle.distance) < 0.001);
+  assert.ok(Math.abs(nextParticle.lateralOffset - currentParticle.lateralOffset) < 0.001);
+  assert.ok(Math.abs(nextParticle.rotation - currentParticle.rotation) < 0.001);
+  assert.ok(Math.abs(nextParticle.opacity - currentParticle.opacity) < 0.001);
+
+  for (const seed of [0x51a7, 1, 2, 3, 99]) {
+    const seededTrail = getCometAppearance({ ...traveler, seed }, 3, 0.68);
+    const byAge = [...seededTrail.particles].sort((left, right) => left.distance - right.distance);
+    const third = Math.floor(byAge.length / 3);
+    const meanWakeWidth = (particles) => particles.reduce(
+      (sum, particle) => sum + Math.abs(particle.lateralOffset) / seededTrail.trailWidth,
+      0,
+    ) / particles.length;
+    assert.ok(meanWakeWidth(byAge.slice(-third)) > meanWakeWidth(byAge.slice(0, third)) * 2,
+      `seed ${seed} did not widen its older trailing debris`);
+  }
 });
 
 test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at every depth', () => {
@@ -1421,14 +1985,14 @@ test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at 
   }
 });
 
-test('moving star radii and traveler counts rise exactly 10% from their reviewed baselines', () => {
+test('20% galaxy probability preserves moving star radii and desktop/mobile traveler counts', () => {
   const scene = createSpaceScene(9876);
   assert.equal(AMBIENT_STAR_COUNT, 70);
   assert.deepEqual(TRAVELER_RADIUS_RANGE, [0.66, 1.21]);
   assert.ok(scene.travelers.every((traveler) =>
     traveler.size >= TRAVELER_RADIUS_RANGE[0] && traveler.size <= TRAVELER_RADIUS_RANGE[1]));
-  assert.equal(DESKTOP_TRAVELER_COUNT, Math.round(22 * 1.1));
-  assert.equal(MOBILE_TRAVELER_COUNT, Math.round(14 * 1.1));
+  assert.equal(DESKTOP_TRAVELER_COUNT, 24);
+  assert.equal(MOBILE_TRAVELER_COUNT, 15);
   assert.equal(scene.travelers.length, 24);
   assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 15);
   assert.equal(travelerCountForWidth(639), 15);
@@ -1453,8 +2017,13 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
   const seed = 0x51a7cafe;
 
   assert.equal(NEURAL_SIGNAL_SLOT_SECONDS, 24);
-  assert.deepEqual(NEURAL_SIGNAL_DURATION_RANGE, [2.4, 3.2]);
+  assert.deepEqual(NEURAL_SIGNAL_DURATION_RANGE, [4.2, 5]);
+  assert.equal(NEURAL_SIGNAL_MAX_OPACITY, 0.075);
   assert.equal(NEURAL_SIGNAL_MAX_CONCURRENT, 1);
+  assert.equal(NEURAL_SIGNAL_DESKTOP_CHANCE, 0.48);
+  assert.equal(NEURAL_SIGNAL_MOBILE_CHANCE, 0.30);
+  closeTo(NEURAL_SIGNAL_DESKTOP_CHANCE / 0.32, 1.5);
+  closeTo(NEURAL_SIGNAL_MOBILE_CHANCE / 0.20, 1.5);
   assert.ok(NEURAL_SIGNAL_MOBILE_CHANCE < NEURAL_SIGNAL_DESKTOP_CHANCE);
   assert.deepEqual(NEURAL_SIGNAL_WIDTH_RANGE, [0.5, 0.72]);
 
@@ -1477,6 +2046,9 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
       desktopActive += 1;
       const signal = desktopSignals[0];
       observedOpacities.push(signal.opacity);
+      assert.ok(['155, 213, 239', '183, 188, 239', '151, 185, 236'].includes(signal.color));
+      assert.equal(signal.sparkles.length, 2);
+      assert.ok(Math.abs(signal.bend) <= 0.12);
       assert.ok(signal.opacity >= 0 && signal.opacity <= NEURAL_SIGNAL_MAX_OPACITY);
       assert.ok(signal.pulseProgress >= 0 && signal.pulseProgress <= 1);
       assert.ok(signal.lineWidth >= NEURAL_SIGNAL_WIDTH_RANGE[0]
@@ -1489,6 +2061,180 @@ test('neural signals use a deterministic sparse schedule with bounded fades, pul
   assert.ok(observedOpacities.some((opacity) => opacity > 0 && opacity < NEURAL_SIGNAL_MAX_OPACITY * 0.7),
     'fade ramps were not observed');
   assert.ok(mobileActive <= desktopActive, `${mobileActive} mobile samples exceeded ${desktopActive} desktop`);
+});
+
+test('neural light eases through long fades, restrained colors and two continuous soft sparkles', async () => {
+  const { getNeuralSignalEnvelope, getNeuralSignalSparkles, NEURAL_SIGNAL_COLORS,
+    NEURAL_SIGNAL_FADE_SECONDS, getNeuralPairVisibility } = await import('../../src/components/spaceBackgroundModel.ts');
+  assert.deepEqual(NEURAL_SIGNAL_FADE_SECONDS, [1.3, 1.9]);
+  assert.deepEqual(NEURAL_SIGNAL_COLORS, ['155, 213, 239', '183, 188, 239', '151, 185, 236']);
+  for (const duration of NEURAL_SIGNAL_DURATION_RANGE) {
+    for (const time of [-1, 0, duration, duration + 1]) assert.equal(getNeuralSignalEnvelope(time, duration), 0);
+    assert.ok(getNeuralSignalEnvelope(0.01, duration) < 0.0002);
+    assert.ok(getNeuralSignalEnvelope(duration - 0.01, duration) < 0.0001);
+    assert.ok(getNeuralSignalEnvelope(1, duration) < 1);
+    assert.ok(getNeuralSignalEnvelope(duration - 1, duration) < 0.6);
+  }
+  let previous = getNeuralSignalSparkles(0);
+  assert.ok(previous.every((sparkle) => sparkle.opacity === 0));
+  for (let step = 1; step <= 1000; step += 1) {
+    const beads = getNeuralSignalSparkles(step / 1000);
+    assert.equal(beads.length, 2);
+    beads.forEach((bead, index) => {
+      assert.equal(bead.progress, [0.34, 0.68][index]);
+      assert.equal(bead.radius, 2.6);
+      assert.ok(bead.opacity >= 0 && bead.opacity <= 0.65);
+      assert.ok(Math.abs(bead.opacity - previous[index].opacity) < 0.004);
+    });
+    previous = beads;
+  }
+  assert.ok(previous.every((sparkle) => sparkle.opacity === 0));
+  const left = { x: 200, y: 200, opacity: 0.6 };
+  const right = { x: 400, y: 200, opacity: 0.6 };
+  const visibility = (a, b = right) => getNeuralPairVisibility(a, b, 1000, 600);
+  assert.equal(visibility(left), 1);
+  for (const x of [-1, 0]) assert.equal(visibility({ ...left, x }), 0);
+  assert.ok(visibility({ ...left, x: 0.01 }) < 0.000001);
+  assert.equal(visibility({ ...left, opacity: 0.08 }), 0);
+  assert.ok(visibility({ ...left, opacity: 0.08001 }) < 0.000001);
+  const min = 54;
+  const max = Math.hypot(1000, 600) * 0.48;
+  for (const distance of [min, max]) {
+    assert.ok(visibility(left, { ...right, x: left.x + distance }) < 1e-20);
+  }
+  assert.ok(visibility(left, { ...right, x: left.x + min + 0.01 }) < 0.000001);
+  assert.ok(visibility(left, { ...right, x: left.x + max - 0.01 }) < 0.000001);
+});
+
+test('neural events keep color and eased light continuous for their full four-to-five second lifetime', () => {
+  const projections = [200, 400].map((x) => ({
+    x, y: 200, depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 0,
+  }));
+  let previous;
+  let start;
+  let completed = 0;
+  for (let tick = 0; tick < 12000; tick += 1) {
+    const time = tick / 100;
+    const signal = getNeuralSignals(0x51a7cafe, time, projections, 1000, 600)[0];
+    if (signal && !previous) {
+      start = time;
+      assert.ok(signal.opacity < 0.00002);
+      assert.ok(signal.pulseProgress < 0.00002);
+    }
+    if (signal && previous) {
+      assert.equal(signal.color, previous.color);
+      assert.equal(signal.bend, previous.bend);
+      assert.ok(signal.pulseProgress >= previous.pulseProgress);
+      assert.ok(signal.pulseProgress - previous.pulseProgress < 0.004);
+      assert.ok(Math.abs(signal.opacity - previous.opacity) < 0.001);
+    }
+    if (!signal && previous) {
+      assert.ok(time - start >= 4.19 && time - start <= 5.01);
+      assert.ok(previous.opacity < 0.00002);
+      assert.ok(previous.pulseProgress > 0.99998);
+      completed += 1;
+    }
+    previous = signal;
+  }
+  assert.ok(completed > 0);
+});
+
+test('recent neural endpoints receive bounded decaying affinity without excluding ordinary pairs', () => {
+  const width = 1000;
+  const height = 600;
+  const projections = [
+    { x: 140, y: 170 }, { x: 360, y: 170 }, { x: 140, y: 390 }, { x: 360, y: 390 },
+  ].map((point) => ({ ...point, depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 0 }));
+  const empty = createNeuralContagionState();
+  const struck = updateNeuralContagionForSignal(
+    empty, 0, { fromTravelerIndex: 0, toTravelerIndex: 1 }, projections, width, height,
+  );
+
+  assert.equal(NEURAL_CONTAGION_AFFINITY_BOOST, 4);
+  assert.equal(NEURAL_CONTAGION_OPPORTUNITIES, 3);
+  assert.equal(NEURAL_CONTAGION_MAX_ENTRIES, 8);
+  assert.deepEqual(struck.entries.map(({ travelerIndex }) => travelerIndex), [0, 1]);
+  assert.ok(struck.entries.every(({ remainingOpportunities }) =>
+    remainingOpportunities === NEURAL_CONTAGION_OPPORTUNITIES));
+
+  let unbiasedParticipation = 0;
+  let contagiousParticipation = 0;
+  let ordinaryAlternative = 0;
+  const samples = 4096;
+  for (let sample = 0; sample < samples; sample += 1) {
+    const seed = sample * 7919;
+    const slot = 1 + sample % 97;
+    const unbiased = selectNeuralSignalPair(seed, slot, projections, width, height, empty);
+    const contagious = selectNeuralSignalPair(seed, slot, projections, width, height, struck);
+    if (unbiased.fromTravelerIndex === 0 || unbiased.toTravelerIndex === 0) unbiasedParticipation += 1;
+    if (contagious.fromTravelerIndex === 0 || contagious.toTravelerIndex === 0) contagiousParticipation += 1;
+    if (![contagious.fromTravelerIndex, contagious.toTravelerIndex].includes(0)
+      && ![contagious.fromTravelerIndex, contagious.toTravelerIndex].includes(1)) {
+      ordinaryAlternative += 1;
+    }
+  }
+  assert.ok(contagiousParticipation > unbiasedParticipation * 1.2,
+    `${contagiousParticipation} affinity samples vs ${unbiasedParticipation} baseline`);
+  assert.ok(ordinaryAlternative > 0, 'baseline-weight alternative pairs became impossible');
+
+  const repeated = updateNeuralContagionForSignal(
+    struck, 0, { fromTravelerIndex: 0, toTravelerIndex: 1 }, projections, width, height,
+  );
+  assert.equal(repeated, struck, 'one RAF-visible event reinforced more than once');
+
+  let decayed = struck;
+  for (let slot = 1; slot <= NEURAL_CONTAGION_OPPORTUNITIES; slot += 1) {
+    decayed = updateNeuralContagionForSignal(
+      decayed, slot, { fromTravelerIndex: 2, toTravelerIndex: 3 }, projections, width, height,
+    );
+  }
+  assert.ok(decayed.entries.every(({ travelerIndex }) => travelerIndex !== 0 && travelerIndex !== 1),
+    'old affinity survived its opportunity limit');
+
+  const many = Array.from({ length: 14 }, (_, index) => ({
+    x: 80 + (index % 7) * 125,
+    y: 120 + Math.floor(index / 7) * 220,
+    depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 0,
+  }));
+  let bounded = createNeuralContagionState();
+  for (let slot = 0; slot < 7; slot += 1) {
+    bounded = updateNeuralContagionForSignal(
+      bounded, slot, { fromTravelerIndex: slot * 2, toTravelerIndex: slot * 2 + 1 },
+      many, width, height,
+    );
+    assert.ok(bounded.entries.length <= NEURAL_CONTAGION_MAX_ENTRIES);
+  }
+});
+
+test('neural contagion resets recycled and stale travelers and locks one logical event across RAFs', () => {
+  const width = 1000;
+  const height = 600;
+  const projections = [
+    { x: 100, y: 150 }, { x: 300, y: 150 }, { x: 500, y: 150 }, { x: 700, y: 150 },
+  ].map((point) => ({ ...point, depth: 400, progress: 0.4, radius: 2, opacity: 0.6, cycle: 2 }));
+  const state = updateNeuralContagionForSignal(
+    createNeuralContagionState(), 9,
+    { fromTravelerIndex: 0, toTravelerIndex: 1 }, projections, width, height,
+  );
+  const locked = selectNeuralSignalPair(0x51a7, 9, projections, width, height, state);
+  assert.deepEqual(locked, { fromTravelerIndex: 0, toTravelerIndex: 1 });
+  assert.deepEqual(selectNeuralSignalPair(0xdeadbeef, 9, projections, width, height, state), locked,
+    'same logical event changed endpoints with a different RAF call');
+
+  const recycled = projections.map((projection) => ({ ...projection }));
+  recycled[0].cycle += 1;
+  const afterCycle = syncNeuralContagionState(state, recycled, width, height);
+  assert.ok(afterCycle.entries.every(({ travelerIndex }) => travelerIndex !== 0));
+  assert.equal(selectNeuralSignalPair(0x51a7, 9, recycled, width, height, afterCycle), null,
+    'a recycled locked endpoint caused a replacement jump');
+
+  const stale = recycled.map((projection) => ({ ...projection }));
+  stale[1].opacity = 0.08;
+  const afterStale = syncNeuralContagionState(afterCycle, stale, width, height);
+  assert.equal(afterStale.entries.length, 0);
+
+  assert.equal(getNeuralSignalSlot(48.1), 2);
+  assert.equal(getNeuralSignalSlot(605), 25, 'frozen simulation advanced the signal slot');
 });
 
 test('neural endpoints are exclusively live eligible travelers and constellation/reduced-motion states suppress them', () => {
@@ -1638,10 +2384,12 @@ test('the expanded deterministic carrier minority still selects one nearest usef
   const scene = createSpaceScene(9876);
   const carrierIndices = scene.travelers.map((traveler, index) =>
     isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0);
-  assert.deepEqual(carrierIndices, [2, 8, 14, 20]);
+  // The 20% roll makes slot 14 a galaxy; galaxies remain excluded from carriers.
+  assert.equal(scene.travelers[14].isGalaxy, true);
+  assert.deepEqual(carrierIndices, [2, 8, 20]);
   const mobileTravelers = scene.travelers.slice(0, MOBILE_TRAVELER_COUNT);
   assert.deepEqual(mobileTravelers.map((traveler, index) =>
-    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8, 14]);
+    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8]);
 
   const projections = scene.travelers.map((_, index) => ({
     x: 400,
@@ -1658,7 +2406,7 @@ test('the expanded deterministic carrier minority still selects one nearest usef
     projections.slice(0, MOBILE_TRAVELER_COUNT),
     1000,
     600,
-  ), 14);
+  ), 8);
 });
 
 test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', () => {
@@ -1708,6 +2456,94 @@ test('planet bodies remain half-sized while prominent system stars are exactly 1
       assert.ok(cssDiameter <= 9.2, `seed ${seed} body is ${cssDiameter}px`);
       assert.equal(getPlanetSurfaceDetailLevel(planet.radius * PLANET_RENDER_SCALE, closestScale), 1);
     });
+  }
+});
+
+test('planet body sizing respects tiny hosts and perspective without a minimum-size override', () => {
+  assert.equal(MAX_PLANET_TO_HOST_RADIUS_RATIO, 0.75);
+  for (const size of [0.001, TRAVELER_RADIUS_RANGE[0], 0.5, TRAVELER_RADIUS_RANGE[1]]) {
+    for (let step = 0; step <= 100; step += 1) {
+      const progress = step / 100;
+      const host = getTravelerAppearance({ size, seed: 17 }, progress);
+      const scale = getSystemScale({ progress });
+      const localHost = getSystemOwnerDiscLocalRadius(host.radius, scale);
+      closeTo(localHost * scale, host.radius);
+      for (const radius of [...PLANET_RADIUS_RANGE, 0.00001]) {
+        const rendered = getPlanetRenderRadius(radius, localHost);
+        assert.ok(rendered > 0 && rendered * scale < host.radius);
+        assert.ok(rendered <= radius * PLANET_RENDER_SCALE);
+        assert.ok(rendered * scale <= host.radius * MAX_PLANET_TO_HOST_RADIUS_RATIO + 1e-12);
+        if (radius * PLANET_RENDER_SCALE <= localHost * MAX_PLANET_TO_HOST_RADIUS_RATIO) {
+          assert.equal(rendered, radius * PLANET_RENDER_SCALE, 'already smaller bodies stay unchanged');
+        }
+      }
+    }
+  }
+  for (const invalid of [0, -1, NaN, Infinity]) {
+    assert.equal(getPlanetRenderRadius(2, invalid), 0);
+    assert.equal(getPlanetRenderRadius(invalid, 2), 0);
+  }
+  assert.equal(getPlanetRenderRadius(2, 1), 0.75, 'equal-sized bodies must shrink too');
+  assert.equal(getPlanetRenderRadius(20, 1), 0.75);
+  assert.equal(getPlanetRenderRadius(1, 1), 0.5, 'smaller bodies stay unchanged');
+});
+
+test('canvas uses the same unchanged host radius to cap both orbital halves and moon bodies', () => {
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const declarations = ['drawPlanet', 'drawPlanetarySystem'].map((name) => {
+    const start = source.indexOf(`const ${name} = (`);
+    assert.ok(start >= 0);
+    return source.slice(start, source.indexOf('\n};', start) + 3);
+  }).join('\n');
+  const compiled = stripTypeScriptTypes(declarations);
+  for (const size of [0.001, TRAVELER_RADIUS_RANGE[0], TRAVELER_RADIUS_RANGE[1]]) {
+    for (const progress of [0.4, 0.65, 1]) {
+      const traveler = { size, seed: 17, alpha: 1 };
+      const projection = { progress, cycle: 0, x: 0, y: 0, opacity: 1 };
+      const hostRadius = getTravelerAppearance(traveler, progress).radius;
+      const scale = getSystemScale(projection);
+      const bodies = [];
+      const moons = [];
+      let drawnHost;
+      let drawnHostOpacity;
+      const moonOpacities = [];
+      const nebulaTransmission = 0.3;
+      const ctx = new Proxy({}, {
+        get: (_, key) => key === 'createLinearGradient' || key === 'createRadialGradient'
+          ? () => ({ addColorStop() {} })
+          : key === 'arc' ? (x, y, radius) => bodies.push(radius * scale) : () => {},
+      });
+      const draw = runInNewContext(`${compiled}\ndrawPlanetarySystem;`, {
+        ...spaceModel,
+        TAU: Math.PI * 2,
+        drawAtmosphereSurface() {},
+        drawPlanetRing() {},
+        drawMoon: (_, moon, opacity) => {
+          moons.push(moon.radius * scale);
+          moonOpacities.push(opacity);
+        },
+        drawTravelerDisc: (_, appearance, x, y, radius, opacity) => {
+          drawnHost = radius * scale;
+          drawnHostOpacity = opacity;
+        },
+        // Force both painter-order halves, with no atmosphere to obscure body arc measurements.
+        getOrbitingPlanets: () => [-1, 1].map((z) => ({
+          radius: PLANET_RADIUS_RANGE[1], x: z * 10, y: 0, z,
+          atmosphere: 'rocky-cratered', color: '#ffffff', surfaceSeed: 1,
+          moons: [{ radius: 0.5, orbitRadius: 2, phase: 0, speed: 1, inclination: 0.5 }],
+        })),
+      });
+      draw(ctx, traveler, projection, 1, nebulaTransmission);
+      closeTo(drawnHost, hostRadius);
+      const expectedOpacity = getSystemOpacity(projection, traveler.alpha) * nebulaTransmission;
+      closeTo(drawnHostOpacity, expectedOpacity);
+      moonOpacities.forEach((opacity) => closeTo(opacity, expectedOpacity));
+      assert.equal(bodies.length, 6, 'both planets draw their body, shadow, and highlight arcs');
+      assert.ok(bodies.every((radius) => radius > 0 && radius < drawnHost
+        && radius <= drawnHost * MAX_PLANET_TO_HOST_RADIUS_RATIO + 1e-12));
+      assert.equal(moons.length, 2);
+      assert.ok(moons.every((radius) => radius <= bodies[0] * MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO));
+    }
   }
 });
 

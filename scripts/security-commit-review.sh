@@ -14,7 +14,12 @@ if [[ "$MODE" == "commit" ]]; then
   MODE="staged"
 fi
 
-ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if ! ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" \
+  || ! git_metadata_dir="$(git rev-parse --absolute-git-dir 2>/dev/null)" \
+  || [[ ! -d "$ROOT" || "$git_metadata_dir" != /* || ! -d "$git_metadata_dir" ]]; then
+  echo "security-commit-review: cannot establish Git repository metadata." >&2
+  exit 1
+fi
 cd "$ROOT"
 
 if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
@@ -63,7 +68,7 @@ failed_gates=""
 gate_count=0
 gate_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/security-review.XXXXXXXXXX")"
 chmod 700 "$gate_temp_dir"
-evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$ROOT/.git/security-review}"
+evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$git_metadata_dir/security-review}"
 evidence_file=""
 
 cleanup() {
@@ -339,7 +344,7 @@ secret_scan() {
       echo "  Finding summary: no staged files, so no staged secrets to scan."
       return 0
     fi
-    gitleaks git --staged --redact --no-banner --log-level warn .
+    gitleaks git --staged --redact --no-banner --log-level warn . || return
     echo "  Finding summary: no staged secrets detected."
     return
   fi
@@ -572,8 +577,8 @@ security_policy_contract() {
   fi
 
   if [[ "$MODE" == "staged" ]]; then
-    node scripts/tests/security-review-chain.test.mjs
-    node scripts/tests/runtime-security-headers.mjs
+    node scripts/tests/security-review-chain.test.mjs || return
+    node scripts/tests/runtime-security-headers.mjs || return
     return
   fi
   local entry tip snapshot

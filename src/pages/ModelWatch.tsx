@@ -64,8 +64,8 @@ const ModelWatch: React.FC = () => {
           <p>sources healthy</p>
         </div>
         <div>
-          <span>Daily</span>
-          <p>autonomous check</p>
+          <span>Source</span>
+          <p>snapshot</p>
         </div>
         <div>
           <span>0</span>
@@ -78,7 +78,7 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Clock3 size={16} />
-              Last checked {checkedLabel}
+              Source snapshot {checkedLabel}
             </div>
             <h2 id="snapshot-heading">Latest Signals</h2>
           </div>
@@ -86,18 +86,19 @@ const ModelWatch: React.FC = () => {
         <div className="model-watch-snapshot-grid">
           {modelWatchSnapshots.slice(0, 6).map((item) => (
             <a
-              key={`${item.company}-${item.update}`}
+              key={`${item.company}-${item.model}-${item.date}-${item.url}`}
               className="model-watch-snapshot"
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <div>
-                <span>{item.company}</span>
-                <strong>{item.date}</strong>
+              <div className="model-watch-snapshot-identity">
+                <span className="model-watch-snapshot-company">{item.company}</span>
+                <h3 className="model-watch-snapshot-model">{item.model}</h3>
+                <p className="model-watch-snapshot-date">{item.date}</p>
               </div>
-              <h3>{item.update}</h3>
-              <p>{item.lane}</p>
+              <p className="model-watch-snapshot-update">{item.update}</p>
+              <p className="model-watch-snapshot-lane">{item.lane}</p>
             </a>
           ))}
         </div>

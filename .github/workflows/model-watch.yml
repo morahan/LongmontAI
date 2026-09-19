@@ -2,7 +2,23 @@ name: Update Model Watch
 
 on:
   schedule:
-    - cron: "17 13 * * 1"
+    - cron: "17 13 * * *"
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/model-watch.yml'
+      - 'scripts/model-watch-sources.mjs'
+      - 'scripts/update-model-watch.mjs'
+      - 'scripts/update-content.mjs'
+      - 'scripts/lib/content/**'
+      - 'scripts/tests/content-*.test.mjs'
+      - 'scripts/local-ci.sh'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/**'
+      - '!src/data/modelWatch.generated.json'
+      - 'docs/content-automation.md'
+      - 'docs/blog-editor.md'
   workflow_dispatch:
 
 permissions: {}
@@ -13,11 +29,13 @@ concurrency:
 
 jobs:
   generate:
-    name: Generate and verify snapshot
+    name: Generate and verify content evidence
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
 
     steps:
       - name: Checkout repository without persisted credentials
@@ -34,25 +52,62 @@ jobs:
       - name: Install dependencies without lifecycle scripts
         run: npm ci --ignore-scripts
 
-      - name: Check official model sources
-        run: npm run model-watch:update
+      - name: Test collector even when sources have not changed
+        run: npm run test:content
 
-      - name: Verify generated data and site build
+      - name: Restore conditional source cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: output/content-automation/cache.json
+          key: content-intake-v1-${{ hashFiles('scripts/model-watch-sources.mjs', 'scripts/lib/content/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            content-intake-v1-${{ hashFiles('scripts/model-watch-sources.mjs', 'scripts/lib/content/**') }}-
+
+      - name: Collect fixed official sources
+        run: npm run content:update
+
+      - name: Detect semantic changes against the checked-out main baseline
+        id: changes
+        shell: bash
         run: |
+          if [[ -n "$(git status --porcelain -- src/data/modelWatch.generated.json content/review/latest.json content/review/biweekly)" ]]; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify changed content and site build
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          npm run test:model-watch
           npm run lint
           npm run build
 
-      - name: Upload verified snapshot
+      - name: Upload verified narrow content proposal
+        if: steps.changes.outputs.changed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: model-watch-snapshot
-          path: src/data/modelWatch.generated.json
+          path: |
+            src/data/modelWatch.generated.json
+            content/review/latest.json
+            content/review/biweekly/*.md
           if-no-files-found: error
           retention-days: 1
 
+      - name: Preserve run health separately from semantic proposal
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: content-intake-health
+          path: output/content-automation/health.json
+          if-no-files-found: warn
+          retention-days: 7
+
   propose:
-    name: Open update pull request
+    name: Open review-only content pull request
     needs: generate
+    if: needs.generate.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -65,23 +120,71 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download verified snapshot
+      - name: Download verified proposal outside the checkout
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: model-watch-snapshot
-          path: src/data
+          path: ${{ runner.temp }}/content-proposal
 
-      - name: Create or update model-watch pull request
+      - name: Validate artifact paths before copying data only
+        env:
+          PROPOSAL_ROOT: ${{ runner.temp }}/content-proposal
+        run: |
+          node --input-type=module <<'NODE'
+          import { readdir, lstat, readFile, mkdir, copyFile } from 'node:fs/promises';
+          import path from 'node:path';
+          const root = process.env.PROPOSAL_ROOT;
+          const allowed = /^(?:src\/data\/modelWatch\.generated\.json|content\/review\/latest\.json|content\/review\/biweekly\/\d{4}-\d{2}-\d{2}\.md)$/;
+          const files = [];
+          let totalBytes = 0;
+          let entriesSeen = 0;
+          async function inspect(relative = '', depth = 0) {
+            if (depth > 3) throw new Error('Artifact depth limit exceeded');
+            const names = await readdir(path.join(root, relative));
+            entriesSeen += names.length;
+            if (entriesSeen > 128) throw new Error('Artifact entry limit exceeded');
+            for (const name of names) {
+              const entry = path.posix.join(relative, name);
+              const stat = await lstat(path.join(root, entry));
+              if (stat.isSymbolicLink()) throw new Error('Artifact symlink rejected');
+              if (stat.isDirectory()) await inspect(entry, depth + 1);
+              else if (stat.isFile() && allowed.test(entry)) {
+                const limit = entry === 'content/review/latest.json' ? 2 * 1024 * 1024 : 256 * 1024;
+                totalBytes += stat.size;
+                if (stat.size > limit || totalBytes > 8 * 1024 * 1024 || files.length >= 64) throw new Error('Artifact byte/file limit exceeded');
+                files.push(entry);
+              } else throw new Error('Unexpected artifact path');
+            }
+          }
+          await inspect();
+          for (const required of ['src/data/modelWatch.generated.json', 'content/review/latest.json']) {
+            if (!files.includes(required)) throw new Error('Required artifact missing');
+            JSON.parse(await readFile(path.join(root, required), 'utf8'));
+          }
+          for (const relative of files) {
+            await mkdir(path.dirname(relative), { recursive: true });
+            await copyFile(path.join(root, relative), relative);
+          }
+          NODE
+
+      - name: Create or update review pull request (never auto-merge)
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.MODEL_WATCH_PR_TOKEN || github.token }}
           branch: automation/model-watch
           delete-branch: true
-          commit-message: "chore: refresh model watch"
-          title: "chore: refresh model watch"
+          commit-message: "chore: refresh content source evidence"
+          title: "chore: refresh content source evidence"
           body: |
-            Automated refresh from the fixed official model sources.
-
-            The snapshot was generated, linted, and built in a separate read-only job.
+            Zero-model-token source intake and unreviewed living-surface/fortnight packets.
+            Generated and tested in a separate read-only job. The detection snapshot
+            updates Model Watch status only; no curated model/tool/benchmark edits,
+            article, scheduled release, or email publication are authorized by this PR.
+            Review source coverage and the separate run-health artifact; named sightings
+            are not verified release claims. Required repository checks and human review
+            must pass before merge. Auto-merge is not enabled by this workflow.
           labels: automation
-          add-paths: src/data/modelWatch.generated.json
+          add-paths: |
+            src/data/modelWatch.generated.json
+            content/review/latest.json
+            content/review/biweekly/*.md

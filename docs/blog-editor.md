@@ -2,6 +2,84 @@
 
 Use this guide for every Longmont AI meetup edition.
 
+## Repeatable preparation recipes
+
+- `just blog-new 2026-09-16 astra-then-projects` validates a proposed new
+  draft without writing. Add `--write` as the third argument to create only
+  the Markdown draft from the template, using exclusive creation. An existing
+  draft **or** release manifest is an error, never permission to overwrite it.
+  The noon-meetup publication time is calculated in America/Denver, including DST.
+- For an existing scheduled draft with a release manifest, run
+  `just blog-update src/articles/drafts/2026.09.16-astra-then-projects.release.json`.
+  By default this is a read-only preparation check: validate the package, dated media,
+  11:50 publication time, downloadable deck, and living-site preflight. It is
+  repeatable and never edits content, fetches Model Watch data, promotes an
+  edition, changes the active scheduled package, commits, or pushes.
+- Add `--stage` as the second recipe argument to explicitly update the site's
+  scheduled release package using the same `stageRelease` machinery as
+  `npm run release:stage -- <manifest>`. Its future-time, integrity and active
+  edition rollover checks remain intact. This does **not** deploy, update living
+  Model Watch data, promote an older edition, or make a draft public early.
+  A blocked rollover is an error; never hand-edit the generated package to pass.
+- There is no automatic static-promotion recipe. The existing reviewed path is
+  step 5 below: only after the old edition's release time, promote its Markdown
+  and approved assets, register its article/slideshow, and run the listed gates.
+  That is separate work with separate file ownership. Only then may a **future**
+  edition replace the active package through guarded staging. Complete the old
+  promotion and new staging in one coherent reviewed change before the final
+  build: default inspection still rejects static duplicates of the active
+  package during this transition. Explicit `blog-update ... --stage` validates
+  the candidate and runs preflight, checks active source/hash/inventory integrity,
+  and lets the core stager enforce old publication time and complete promotion.
+  It then runs full integrity and static-leak verification on the new package.
+  A final verification failure is not success and may leave the newly staged
+  local package for correction; it does not deploy anything.
+- Exit 1 means invalid input, failed validation, or guarded staging failure. Exit 2 means preparation
+  was inspected but blockers remain, including a different active release.
+  **Preparation is not a completed site update.** Resolve release sequencing
+  through the reviewed workflow below; never bypass rollover checks.
+- Read output as local evidence only: `localState` is `prepared`,
+  `locally-staged`, or `registered-static`; `production` is always `unverified`
+  and `published` remains `false`. `publication: future` says only that the
+  timestamp is ahead. `active-release-due` says the selected local package's
+  time has arrived, **not** that production serves it.
+- `publication: overdue` means the timestamp passed without matching the active
+  package or a registered published static article. Use the reviewed static
+  publication path with the original timestamp, not late staging or a fake
+  future date. A retained draft with exactly one published article of matching
+  identity and time in the exported `editions` registry is `registered-static`,
+  not a new overdue release. Inspection recognizes the current literal
+  `parseMarkdownToEdition(importName)` array convention, not arbitrary computed
+  registries; unused/commented imports and duplicate entries are not registration.
+  This is not proof of asset completeness or deployment.
+- These recipe reports apply only to manifests using the current 11:50 Denver
+  policy. Historical exceptions, including the existing Sep 2 11:30 package,
+  fail recipe inspection with an explicit 11:50 policy error instead of receiving
+  a readiness classification. Use the existing `release:check` for that active
+  package's integrity. Do not retime or rewrite historical packages to obtain a
+  recipe report; supporting their read-only classification is deferred.
+- Scheduling is complete only after the approved package is shipped through the
+  normal reviewed main/deployment path and the **production locator and publishAt**
+  match the intended edition. Verify the deployed client locator before the
+  deadline without exposing private payloads; the API intentionally returns a
+  generic 404 before release. At/after release, verify the intended article and
+  real media bytes (an HTTP 200 SPA shell is not evidence). An already deployed
+  package unlocks at server request time without cron. A local schedule or PR
+  preview cannot arm production, and billing-blocked required checks still block
+  publication; do not bypass them.
+- **Unresolved readiness gap:** these recipes do not monitor delivery, alert on
+  missed deadlines, or provide an external heartbeat. Operators must verify the
+  shipping receipt manually; automated readiness monitoring remains separate,
+  deferred work.
+- Draft images use dated `/weekly-screenshots/YYYY.MM.DD/...` URLs and decks
+  use `/documents/YYYY.MM.DD/...` URLs, backed by private files under the
+  manifest's `assetRoot`. These references do not authorize copying files into
+  `public/` early. Relative `assets/...` links are not discovered by the release
+  packager and must not be used.
+- Run `node --test scripts/tests/blog-edition.test.mjs` and
+  `npm run test:update-site` when changing these recipes. Preflight identifies
+  the script's Git checkout/worktree rather than requiring one absolute path.
+
 ## Draft and release
 
 1. Read `design.md`, `public/brand/README.md`, the current countdown, and the
@@ -58,17 +136,30 @@ Use this guide for every Longmont AI meetup edition.
 
 ## Model Watch cadence
 
-- GitHub Actions checks the fixed official sources every Monday and opens or
-  refreshes a reviewable Model Watch pull request. It does not publish an
-  unreviewed release claim. A Meta or Moonshot source failure fails the check
-  rather than producing a stale success.
+- Intake is **manual local**: `npm run content:update` checks fixed official
+  sources and writes a reviewable Model Watch snapshot and website-unpublished
+  route/fortnight review packets visible in this repository. GitHub Actions is
+  disabled by owner requirement; retained workflow definitions are inactive and
+  must not be re-enabled or dispatched. No unattended replacement scheduler is
+  installed. The producer never commits, pushes, deploys or automatically updates
+  curated pages. OpenAI, Meta and Moonshot source failures fail the command and
+  preserve trusted files rather than producing stale success. See
+  `docs/content-automation.md` for source bounds and review-only contracts.
+  `checkedAt` is the last semantic snapshot capture, not daily health or editorial
+  review; separate local health records attempts.
 - Every blog-editing session runs `npm run model-watch:update` before the
   edition is promoted. Add a curated entry only when the primary announcement
   confirms a named model, date, and availability; label vendor benchmark claims
   as vendor-reported.
-- The source configuration is shared by the scheduled updater and the live
-  status endpoint in `scripts/model-watch-sources.mjs`. Add a provider there,
-  rather than changing only the source-map UI.
+- The source configuration in `scripts/model-watch-sources.mjs` is shared by
+  the local producer and compatibility updater. The status endpoint serves
+  only the deployed static snapshot; it never refreshes upstream sources.
+  Add a provider to the registry rather than changing only the source-map UI.
+  Generated `content/review/biweekly/` packets cover completed fourteen-day Denver
+  windows anchored May 27, 2026; they are unreviewed source briefs, NOT blog
+  articles, approved release manifests or permission to bypass an embargo.
+  Actual every-other-Wednesday article authoring/approval remains this guide's
+  normal process.
 
 ## Asset handling
 

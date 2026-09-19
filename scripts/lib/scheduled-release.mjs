@@ -8,6 +8,7 @@ export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.met
 const TYPES = new Map([
   ['.avif', 'image/avif'], ['.gif', 'image/gif'], ['.jpeg', 'image/jpeg'],
   ['.jpg', 'image/jpeg'], ['.mp4', 'video/mp4'], ['.png', 'image/png'],
+  ['.pdf', 'application/pdf'],
   ['.webm', 'video/webm'], ['.webp', 'image/webp'],
 ]);
 const MEDIA_URL = /\/(?:weekly-screenshots|slideshows|documents)\/([A-Za-z0-9._-]+)\/([A-Za-z0-9][A-Za-z0-9._/-]*)/g;
@@ -54,6 +55,7 @@ function slideshowFrom(manifest) {
   const slides = show.slides.map((slide, index) => {
     if (!slide?.title?.trim()) fail(`slideshow slide ${index + 1} needs a title`);
     const mediaPath = safeRelative(slide.path, `slideshow slide ${index + 1}`);
+    if (path.extname(mediaPath).toLowerCase() === '.pdf') fail('PDF decks must be article document links, not slideshow images');
     if (seen.has(mediaPath)) fail(`duplicate slideshow path: ${mediaPath}`);
     seen.add(mediaPath);
     return { title: slide.title, path: mediaPath };
@@ -160,6 +162,7 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     for (const match of articleText.matchAll(MEDIA_URL)) {
       if (match[1] !== manifest.assetFolder) fail(`article media uses the wrong dated folder: ${match[0]}`);
       const mediaPath = safeRelative(match[2], 'article media');
+      if (path.extname(mediaPath).toLowerCase() === '.pdf' && !match[0].startsWith('/documents/')) fail('PDF decks must use dated /documents/ article links');
       selected.set(mediaPath, { path: mediaPath, sourceUrl: match[0] });
     }
     for (const slide of slideshow?.slides ?? []) if (!selected.has(slide.path)) selected.set(slide.path, { path: slide.path, sourceUrl: null });
@@ -224,6 +227,32 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
   async function scanStaticLeaks(spec) {
     const articleText = spec.article.bytes.toString('utf8');
     const { data: frontmatter, body } = parseFrontmatter(articleText);
+    const publicSourceText = [];
+    const articleIndex = await readFile(path.join(rootPath, 'src/articles/index.ts'), 'utf8');
+    for (const found of articleIndex.matchAll(/from ['"](\.\/[^'"]+\.md)\?raw['"]/g)) {
+      const publishedFile = path.resolve(rootPath, 'src/articles', found[1]);
+      await assertContainedPath(publishedFile, 'published article', 'file');
+      const published = parseFrontmatter(await readFile(publishedFile, 'utf8'));
+      const publishedAt = published.data.publishAt
+        ? publication(published.data.publishAt, false)
+        : Date.parse(`${published.data.date}T00:00:00Z`);
+      if (!Number.isFinite(publishedAt) || publishedAt > now()) continue;
+      publicSourceText.push(published.body);
+    }
+    async function collectPublicClientSource(directory) {
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const file = path.join(directory, entry.name);
+        const relative = rootRelative(file);
+        if (entry.isSymbolicLink()) fail(`public client source contains a symlink: ${relative}`);
+        if (entry.isDirectory()) {
+          if (relative === 'src/articles/drafts' || relative === 'src/generated') continue;
+          await collectPublicClientSource(file);
+        } else if (entry.isFile() && /\.(?:[cm]?[jt]sx?|svelte|json)$/.test(entry.name)) {
+          publicSourceText.push(await readFile(file, 'utf8'));
+        }
+      }
+    }
+    await collectPublicClientSource(path.join(rootPath, 'src'));
     const forbiddenText = new Map();
     const addText = (label, value, minimum = 1) => {
       if (typeof value !== 'string' || value.length < minimum) return;
@@ -234,7 +263,11 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     addText('article title', frontmatter.title, 8);
     addText('article summary', frontmatter.summary, 12);
     for (const line of body.split(/\r?\n/).map((value) => value.trim()).filter((value) => value.length >= 32)) {
-      addText('article body marker', line);
+      // Text already present in public client source or a registered, published
+      // edition is not evidence that the active private article entered a bundle.
+      // Unique private lines, identity fields, paths, hashes, and media bytes
+      // remain forbidden.
+      if (!publicSourceText.some((source) => source.includes(line))) addText('article body marker', line);
     }
     for (const sourcePath of [spec.source.manifest, spec.source.article, spec.source.assetRoot, 'src/generated/scheduled-release']) {
       addText('private source path', sourcePath);

@@ -39,9 +39,14 @@ async (page) => {
         return { canonical: canonicalValue, parsed: JSON.parse(new TextDecoder().decode(bytes)) };
       }, encodedRoutes);
       if (canonical !== encodedRoutes) throw new Error('non-canonical base64url');
-      const validRoute = (route) => typeof route === 'string' &&
-        route.length <= 2048 &&
-        (route === '/' || /^\/(?:[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)(?:\/[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)*$/.test(route));
+      const validRoute = (route) => {
+        if (typeof route !== 'string' || route.length > 2048 || !route.startsWith('/')) return false;
+        if (route === '/') return true;
+        // Check each bounded segment once; overlapping repetitions can backtrack exponentially.
+        return route.slice(1).split('/').every((segment) => segment.length > 0 &&
+          segment[0] !== '-' && segment[segment.length - 1] !== '-' &&
+          !/[^a-z0-9-]/.test(segment));
+      };
       if (!Array.isArray(parsed) || parsed.length === 0 || parsed.length > 50 || !parsed.every(validRoute)) {
         throw new Error('expected 1-50 normalized same-origin routes');
       }
@@ -49,6 +54,18 @@ async (page) => {
     } catch (error) {
       throw new Error(`Invalid targeted mobile audit route transport: ${error.message}`, { cause: error });
     }
+  }
+
+  async function navigateToRenderedRoute(url) {
+    const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
+    if (!response || !response.ok()) {
+      throw new Error(`Mobile audit navigation failed (${response?.status() ?? 'no response'}): ${url}`);
+    }
+    await page.waitForFunction(() =>
+      document.readyState === 'complete' &&
+      Boolean(document.querySelector('#root')?.childElementCount) &&
+      !document.querySelector('#root [role="status"][aria-live="polite"]')
+    );
   }
 
   async function sameOriginRoutesFromCurrentPage() {
@@ -65,7 +82,7 @@ async (page) => {
     });
   }
 
-  await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle' });
+  await navigateToRenderedRoute(`${baseUrl}/`);
   const discoveredRoutes = await sameOriginRoutesFromCurrentPage();
   const latestEditionRoute = discoveredRoutes.find((route) => route.startsWith('/edition/'));
   const routes = Array.from(new Set(
@@ -79,7 +96,7 @@ async (page) => {
 
     for (const route of routes) {
       const url = `${baseUrl}${route}`;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      await navigateToRenderedRoute(url);
       await page.waitForFunction(
         () => Array.from(document.images).every((image) => image.complete),
         undefined,
@@ -181,6 +198,23 @@ async (page) => {
           })
           .filter((table) => table && table.scrollWidth <= table.clientWidth + 1);
 
+        const unreadableMarkdownTables = Array.from(document.querySelectorAll(
+          '.markdown-table-scroll table:has(tr > :nth-child(3))'
+        )).map((table) => {
+          const wrapper = table.parentElement;
+          const cells = Array.from(table.querySelectorAll('th, td'));
+          return {
+            tableWidth: table.getBoundingClientRect().width,
+            clientWidth: wrapper.clientWidth,
+            scrollWidth: wrapper.scrollWidth,
+            minimumCellWidth: Math.min(...cells.map((cell) => cell.getBoundingClientRect().width)),
+            minimumFontSize: Math.min(...cells.map((cell) => parseFloat(getComputedStyle(cell).fontSize))),
+          };
+        }).filter((table) =>
+          table.scrollWidth <= table.clientWidth + 1 ||
+          table.minimumCellWidth < 159 || table.minimumFontSize < 14
+        );
+
         return {
           title: document.title,
           viewportWidth,
@@ -190,6 +224,7 @@ async (page) => {
           brokenImages,
           mediaLayoutFailures,
           unreadableReleaseTables,
+          unreadableMarkdownTables,
         };
       });
 
@@ -216,7 +251,8 @@ async (page) => {
     result.overflowingElements.length > 0 ||
     result.brokenImages.length > 0 ||
     result.mediaLayoutFailures.length > 0 ||
-    result.unreadableReleaseTables.length > 0
+    result.unreadableReleaseTables.length > 0 ||
+    result.unreadableMarkdownTables.length > 0
   );
 
   if (failures.length > 0) {

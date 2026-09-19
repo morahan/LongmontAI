@@ -2,7 +2,9 @@ export const modelWatchSources = [
   {
     company: 'OpenAI',
     url: 'https://openai.com/news/rss.xml',
-    patterns: [/GPT[-\u2011\s]\d+(?:\.\d+)?(?:\s+(?:Sol|Terra|Luna))?/gi],
+    format: 'rss',
+    required: true,
+    patterns: [/GPT[-\u2011\s]\d+(?:\.\d+)?(?:\s+(?:Sol|Terra|Luna|Astra))?/gi],
   },
   {
     company: 'Anthropic',
@@ -81,6 +83,19 @@ export const seedModels = [
   'WeatherNext Cyclones',
   'Kimi K3',
 ];
+
+// Fixed official repository feeds: never follow URLs supplied by feed content.
+export const toolReleaseSources = [
+  { company: 'OpenAI Codex', url: 'https://api.github.com/repos/openai/codex/releases?per_page=10', format: 'github', category: 'tool', sampleSize: 10, evidencePrefix: 'https://github.com/openai/codex/releases/' },
+  { company: 'Anthropic Claude Code', url: 'https://api.github.com/repos/anthropics/claude-code/releases?per_page=20', format: 'github', category: 'tool', sampleSize: 20, evidencePrefix: 'https://github.com/anthropics/claude-code/releases/' },
+];
+
+export const contentSources = [...modelWatchSources, ...toolReleaseSources].map((source) => ({
+  ...source,
+  id: source.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, ''),
+  category: source.category ?? 'model',
+  format: source.format ?? 'text',
+}));
 
 export const normalizeModelName = (value) => value
   .replaceAll('\u2011', '-')

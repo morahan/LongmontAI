@@ -1,433 +1,265 @@
 ---
-id: edition-2026-08-19-work-keeps-running
-date: 2026-08-19
-publishAt: 2026-08-19T11:28:00-06:00
+id: edition-2026-09-02-host-then-cheap-stack
+date: 2026-09-02
+publishAt: 2026-09-02T11:30:00-06:00
 status: scheduled
-title: "The work keeps running"
-summary: "An August 19 briefing on GLM-5.3's coding and cyber jump, Grok Bot, Nemotron Lightning and Switchyard, Gemini and Muse coding agents, physical AI, WeatherNext cyclones, Qwen-Image 3.0, and the hardware gating the stack."
+title: "The teammate, then the Flash"
+summary: "A September 2 briefing on the 14 days ending at noon meetup: Grok Bot’s August 26 access expansion and GLM-5.3-Flash, plus a short board for the rest of 20 Aug–2 Sep."
 ---
 
-The last two weeks were not another model-badge race. They were the moment
-the work left the chat window. SpaceXAI shipped an always-on Bot with its own
-computer. Z.ai pushed GLM-5.3 further into coding and vulnerability work.
-NVIDIA paired a fast execution model with an open router, while Meta paired a
-coding model with a persistent terminal agent. Google and OpenAI made cheap or
-fast serving part of the product, not a footnote. Alibaba stretched both local
-agents and generated images. And the scientific story moved from fluent
-answers toward artifacts a community can check: a tighter bound on zeta
-zeros, and a cyclone model with an extra day of average lead time.
+This edition documents the 14 days ending on meetup day: **20 August through
+2 September 2026**. Two things in that window changed how a Longmont owner
+actually works: **Grok Bot** became included with paid Cursor and SuperGrok
+plans, and **GLM-5.3-Flash** shipped as Z.ai’s first natively multimodal
+GLM-5 — cheap while a dated promo lasts. The rest of the fortnight still
+matters. It is not the headline.
 
-That is one stack, read at four layers: **models**, **tools**, **science**,
-and **the physical market that still prices all of it**. The right local
-habit is the same as last month. Treat a release as a configuration to test,
-not a verdict. Measure an accepted result. Keep a stop button on anything
-that can send, spend, publish, or act.
+Grok Bot is not Grok 4.6, not Cursor Origin, and not a start-from-scratch
+cloud agent. It is the named-teammate product. GLM-5.3-Flash is not the
+14 August GLM-5.3 text flagship. It is the newest GLM this fortnight.
 
-**In this edition:** the release board, GLM-5.3 coding and cyber capability,
-Grok Bot, Nemotron Lightning and Switchyard, Muse Code and local open-weight
-agents, workhorse pricing, Qwen-Image 3.0, the physical-AI loop, checked math
-and cyclone science, and the foundry-and-memory constraint underneath.
+Treat both as configuration, not a personality upgrade. A teammate that
+can send mail needs an approval. A 50% API promo needs a calendar. Vendor
+benches stay labeled as vendor-reported.
 
-{{slideshow:work-keeps-running}}
+**In this edition:** Grok Bot’s access expansion, GLM-5.3-Flash, then a
+short rest-of-fortnight board — Origin (17 Aug, just before this window), Granite 4.2, Qwen Flash-Next
+license, Hy4 preview, Gemini Transcribe and Omni, Mistral Agentic Search,
+dead Assistants API, and the AWS pipes.
 
-![Longmont AI's cubist parrot beside the title The work keeps running on the branded dark cover slide.](/weekly-screenshots/2026.08.19/source-media/work-keeps-running-cover.png)
+{{slideshow:host-then-cheap-stack}}
 
-*Longmont AI briefing cover. Source graphics and citations appear on the
-relevant slides and in the sections below.*
+![Longmont AI's cubist parrot on the branded dark cover for the September 2 briefing.](/weekly-screenshots/2026.09.02/source-media/host-then-cheap-stack-cover.png)
 
-## The release board: a practical model-and-tool matrix
+*Cover art for this briefing. The parrot is brand illustration, not a
+product screenshot. The two featured products are Grok Bot and
+GLM-5.3-Flash. Source links are in the sections. Vendor-reported numbers
+stay labeled as vendor-reported.*
+
+## Grok Bot: the teammate is now on the paid plans
+
+![A geometric parrot beside a named Bot on a persistent cloud computer, with browser, files, and terminal.](/weekly-screenshots/2026.09.02/source-media/sep2-grok-bot.png)
+
+*Grok Bot is a teammate with a computer, not a new chat model. Brand art,
+not a product screenshot.*
+
+**Beta launched 11 August 2026**, just before this fortnight. Last
+meetup covered that launch as a gated product. Do not treat 11 August as
+a this-week ship.
+
+**This fortnight’s official story is access.** On 26 August, SpaceXAI
+posted that [Grok Bot is now included with more plans](https://x.ai/news/grok-bot-more-plans).
+The included list is SuperGrok, SuperGrok Plus, SuperGrok Heavy, Cursor
+Pro, Cursor Pro+, Cursor Ultra, and Cursor Teams Standard and Premium.
+Grok Bot has **its own usage pool**, separate from Grok and Cursor plan
+usage. Handing work to a Bot does not spend the same quota as a Grok or
+Cursor coding session.
+
+That is the official page. Stick to it.
+
+**[Cursor’s Grok Bot docs](https://cursor.com/docs/grok-bot) describe the
+product, not a model card.** You get named AI teammates. Each Bot works
+on a persistent cloud computer with a browser, filesystem, and terminal,
+so jobs finish in real tools instead of chat drafts. You message a Bot
+the way you would message a colleague. It takes multi-step work, updates
+you in the thread, and comes back when something needs approval.
+
+Platforms: **macOS, Windows, and iOS.** There is **no Linux desktop
+app.** The computers Bots work on run in Cursor’s cloud, not on your
+desk. Included with every paid individual Cursor plan and with Cursor
+Teams; you can also link SuperGrok, SuperGrok Plus, or SuperGrok Heavy.
+**Usage resets weekly.** Docs do not publish a dollar rate for Bot turns
+beyond that inclusion. Do not invent one.
+
+Several Bots share **one computer per account.** Files, browser
+sessions, and logins are shared across your roster. Isolation is between
+users, not between Bots. Bots can run in parallel and coordinate in
+group chats. They can learn a path from demonstration and save it as a
+skill or routine. Work continues when the laptop is closed.
+
+**For a Longmont owner:** pick one real job that spans a few tools and
+has a finish line — a research-and-draft outreach pack, a site that
+needs a live URL, an inbox sweep that leaves sends for you. Message it
+like a colleague. Keep **approvals on send, pay, unsubscribe, and
+publish.** Do not paste passwords into the thread. The 11 August docs
+already said the shared computer is an account-level surface; that did
+not change on 26 August.
+
+**Keep the names straight.** Cursor Origin is a git host. Cloud agents
+and “start from scratch” are Cursor’s repo-writing workers. Grok 4.6 is
+the model. Grok Bot is the teammate product.
+
+## GLM-5.3-Flash: the newest GLM, with a date on the price
+
+![Geometric parrot gripping a glowing calendar page marked 9 SEP.](/weekly-screenshots/2026.09.02/source-media/sep2-promo-calendar.png)
+
+*9 Sep is the GLM-5.3-Flash 50% promo end (24:00 UTC+8). It is not the
+September 2 meetup, and it is not an Apple event. Calendar the list-price
+swing.*
+
+**[GLM-5.3-Flash launched 26 August 2026](https://z.ai/blog/glm-5.3-flash).**
+Z.ai calls it the first natively multimodal model in the GLM-5 series:
+**320B total / 18B active**, hybrid sparse plus linear attention, MIT
+weights on [Hugging Face `zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash).
+List API: **$0.15 input / $0.03 cached / $0.50 output per 1M tokens**,
+with **50% off through 9 September 2026 24:00 UTC+8**. Coding Plan users
+get **3× quota versus GLM-5.3**.
+
+That promo end is a calendar item for API buyers. After 9 Sep UTC+8, the
+list rate is a 2× swing. Confirm [Z.ai pricing](https://docs.z.ai/guides/overview/pricing)
+the morning you quote a client.
+
+**Benches are Z.ai’s table.** DeepSWE v1.1, Terminal Bench 2.1, and the
+claim that Flash “approaches Claude Opus 4.8” on coding and agent work
+are **vendor-reported**. Z.ai also cites an Artificial Analysis
+Intelligence Index of **57 at $0.045 per task on the discounted rate** —
+that is **Z.ai citing AA**, not an independent bake-off reproduced here.
+Use the numbers as a lead. Run your own tasks before you change a
+default.
+
+**GLM-5.3 the text flagship is supporting context, not the star.** Its
+API launched 14 August, just before this window. Weights landed around
+27 August. Flash is the newest GLM this fortnight and the one with the
+promo clock.
+
+**Practical:** while the promo lasts, Flash is a cheap multimodal
+coding/agent default to test against whatever you currently pay. It is
+not a laptop toy just because 18B are active; 320B total still wants
+serious serving. MIT on the Flash weights is the permission slip to
+read; GLM-5.3 itself is a different license conversation — read that
+card before you productize the flagship files.
+
+## The rest of the fortnight, short
+
+The two highlights above are the story. This board still documents the
+14 days ending 2 September. Origin (17 Aug) and a few 19 Aug rows sit
+just before the window — listed for continuity with last meetup, not as
+the thesis.
 
 | Release | Date | Type and access | Best fit | Main caveat |
 | --- | --- | --- | --- | --- |
-| GLM-5.3 | Aug. 14 | Hosted coding/reasoning model; API and Coding Plan now, weights promised after two weeks | Long-horizon coding, tool use, authorized vulnerability research | Coding and cyber results are provider-run; mandatory thinking changes migration behavior |
-| Grok Bot | Aug. 11 | Persistent cloud-computer agent; gated beta | Multi-app jobs that need a browser, terminal, files, and background execution | Bots share one account-level computer; this is a product, not a separate model |
-| Nemotron 3.5 Lightning | Aug. 11 | Open 30B MoE with 3B active parameters; local, hosted, BF16, and NVFP4 | Fast, high-volume execution steps beneath a larger planner | Speed and task-completion comparisons are NVIDIA-reported |
-| NeMo Switchyard | Aug. 11 | Apache-2.0 Rust routing proxy and library | Routing each agent turn by quality, latency, cost, or workflow stage | Pre-alpha and explicitly not production-ready |
-| Gemini 3.7 Flash | Aug. 13 | Hosted multimodal workhorse; API and Gemini products | Cost-sensitive coding, web apps, agent loops, and knowledge work | Introductory pricing expires December 31; benchmark gains are Google-reported |
-| Muse Spark 1.2 + Muse Code beta | Aug. 5 | Hosted coding model in Meta Model API plus macOS/Linux terminal agent | Repository-scale coding with persistent background subagents | Provider evaluations; Spark 1.2 is not the downloadable Glimmer model |
-| Grok 4.6 | Aug. 12 | Hosted frontier model in Cursor, Grok Build, and xAI API | Long-running research, codebase work, and visual artifact creation | Benchmark comparison is compiled from vendor and public figures |
-| Qwen3.8-27B | Aug. 14 | Apache-2.0 dense vision-language weights; 262K native context | Private local multimodal agents on capable hardware | SWE-bench Pro result is Alibaba-reported under a Claude Code harness |
-| Muse Glimmer | Aug. 10 | Apache-2.0 30B local agent model; 4-bit build targets 24–32 GB GPUs | Offline or private computer-use and agent experiments | Smaller-model capability still trails hosted frontier systems |
-| GPT-5.6 Sol and Luna update | Aug. 6 | ChatGPT model retune; Sol for Plus/Pro and Luna for Free/Go | Everyday chat with selectable effort and lower factual-error rates | ChatGPT-only builds do not replace the Codex or API versions |
-| GPT-5.6 Sol Ultrafast | Aug. 13 | Cerebras-hosted limited API preview of Sol | Interactive workloads where generation latency dominates | No public price or general-availability date; 750 tokens/sec is a vendor ceiling |
-| Qwen-Image 3.0 | Jul. 16 | Hosted unified image-generation and editing model in Qwen Chat | Dense infographics, storyboards, multilingual text, and interface mockups | Outside this fortnight; no weights, API terms, or reproducible eval card announced |
-| WeatherNext Cyclones | Aug. 6 | Open weather-research model, code, and weights | Tropical-cyclone track, intensity, and wind-structure forecasting research | Average evaluation gains do not replace official NHC, NWS, or Met Office warnings |
+| Grok Bot access expansion | Aug. 26 | Included with SuperGrok and paid Cursor / Teams plans | Named teammates that finish work in real tools | Own weekly usage pool. Shared computer per account. Not Grok 4.6. |
+| GLM-5.3-Flash | Aug. 26 | Open-weight MIT MoE; 320B / 18B active | Cheap multimodal coding/agent API while the promo lasts | Promo ends 9 Sep 2026 24:00 UTC+8. Benches are Z.ai’s table |
+| Cursor Origin | Aug. 17 | Early-beta git host; Pro / Teams / Enterprise | Keep the repo next to the agent | Not on Free. GitHub Issues/Actions do not automatically move |
+| Cursor cloud agents | Aug. 19 / 27 | Event subscriptions, then "Start from scratch" | Prompt an app and save it to Origin | Paid Cursor plan; a public URL still needs Vercel |
+| Google student offer | Aug. 19 | 1 year of AI Pro (US) or AI Plus (many other markets) | Cheap everyday Gemini if you are eligible | Redeem through 31 Dec 2026; auto-renews unless you cancel |
+| Grok 4.6 on Bedrock | Aug. 19 | Same model, new AWS pipe | Bedrock shops that want Grok 4.6 | Distribution, not a new model. xAI list: $2 / $0.50 cached / $6 per 1M |
+| Mistral Agentic Search | Aug. 20 | Retrieval on your index | PDFs/filings where one-shot RAG fails | Not a new LLM. FinanceBench ~3× is Mistral’s eval |
+| Granite 4.2 (3B / 8B / 30B) | Aug. 25 | Open-weight Apache 2.0 dense SLMs | On-prem reasoning/agent work | Hosted IBM/cloud token price unknown from the launch post |
+| Granite Speech 5.0 Turbo CTC | Aug. 25 | 470M open ASR; no LLM backbone | On-device or high-throughput transcription | NC variant is non-commercial data |
+| Qwen3.8-Flash-Next | Aug. 26 | Open weights; Qwen Community License 1.0 | Long agent sessions if the license fits | Not Apache. MaaS / "AI Work Assistant" commercial use needs a separate Qwen license |
+| Gemini 3.5 Transcribe | Aug. 26 | Closed STT public preview | Meeting notes, dictation, speaker labels | Launch blog has no Developer API price. Google cites AA WER |
+| OpenAI Assistants API | Aug. 26 | Shutdown | Move remaining automations to Responses + Conversations | Already dead. Do not leave Zapier/Make recipes on Assistants |
+| Gemini Omni 1.1 Flash | Aug. 27 | Closed video gen/edit | Cheap 360p drafts, then upscale | Blog: 360p drafts about 1/3 the cost of 720p. Re-check live prices |
+| SageMaker JumpStart | Aug. 27 | Glimmer 30B + Qwen 3.8-27B on-ramp | Run mid-August local models on AWS | Those models shipped 10–14 Aug. Instance $ unknown from the note |
+| Hy4 preview | Aug. 28 | Open-weight Apache 2.0 MoE; 770B / 49B active | Datacenter coding/office if you have the GPUs | Explicit preview. Tencent’s 163-expert panel is internal |
 
-Dates, prices, parameter counts, and scores are provider-reported unless a
-linked source names an independent harness. Products and routing tools are
-included because they materially change how the models can be used.
+Dates, prices, parameter counts, and scores are provider-reported unless
+a linked source names an independent harness.
 
-### Short description breakdown
+![Geometric parrot beside an Origin panel in front of a faded GitHub panel.](/weekly-screenshots/2026.09.02/source-media/sep2-origin-host.png)
 
-- **GLM-5.3:** Z.ai's post-trained coding flagship, notable for a large jump on
-  long-horizon coding tests and rapidly improving dual-use cyber capability.
-- **Grok Bot:** an always-on agent workspace that gives Grok-backed workers one
-  persistent cloud computer instead of another temporary chat session.
-- **Nemotron 3.5 Lightning:** NVIDIA's small-active-footprint execution model,
-  designed to handle the repetitive calls that dominate an always-on agent's
-  latency and token budget.
-- **NeMo Switchyard:** an open routing layer that can keep routine turns on a
-  cheaper model and escalate difficult stages to a stronger one.
-- **Gemini 3.7 Flash:** Google's lower-cost coding and agent workhorse, tuned for
-  fast multimodal product work rather than maximum-effort frontier reasoning.
-- **Muse Spark 1.2:** Meta's hosted coding model, co-trained with the Muse Code
-  harness for debugging, repository understanding, compaction, and long jobs.
-- **Muse Code beta:** Meta's restart-safe terminal agent, with persistent
-  background subagents that gather context while the main agent keeps moving.
-- **Grok 4.6:** SpaceXAI's frontier lane for long-running code, research, and
-  visual work, with standard and faster API serving options.
-- **Qwen3.8-27B:** Alibaba's downloadable dense multimodal model for builders who
-  want long context, images, video, and agent controls on their own hardware.
-- **Muse Glimmer:** Meta's compact open-weight computer-use agent for private or
-  offline workflows within a high-end consumer-GPU envelope.
-- **GPT-5.6 Sol and Luna:** OpenAI's ChatGPT pair for deeper paid-tier reasoning
-  and cheaper broad access; the August update changes ChatGPT behavior, not API
-  model identity.
-- **GPT-5.6 Sol Ultrafast:** the same Sol model served through Cerebras for a
-  latency-first API preview rather than a new intelligence tier.
-- **Qwen-Image 3.0:** Alibaba's image model for information-heavy visual output,
-  especially small text, multilingual layouts, editing, and nested interfaces.
-- **WeatherNext Cyclones:** Google's open research system for cyclone tracks,
-  intensity, and wind structure, evaluated at roughly an extra day of average
-  lead-time advantage over leading operational models.
+*Origin is a git host inside Cursor, not this edition’s thesis. Brand art,
+not a Cursor UI screenshot.*
 
-**[GLM-5.3](https://z.ai/blog/glm-5.3) is a coding release with a dual-use
-cyber warning attached.** Z.ai says the model keeps GLM-5.2's base and gets
-its gains from scaled post-training on more long-horizon environments. Under
-the company's Claude Code 2.1.207 harness, GLM-5.3 rose from 4.6 to 28.3 on
-Terminal-Bench 3.0 and from 46.2% to 66.9% on DeepSWE v1.1. On Z.ai's private
-Code Bench, max effort reached 34.5% at about 75K output tokens per task,
-versus 23.4% at 96K for GLM-5.2. These are provider-run evaluations, and the
-private benchmark cannot be independently reproduced.
+![A geometric parrot tapping a blank holographic window.](/weekly-screenshots/2026.09.02/source-media/sep2-start-from-scratch.png)
 
-The cyber result deserves equal weight. Z.ai reports 84.5% on the 1,507-task
-CyberGym vulnerability-discovery set, 54.4% versus GLM-5.2's 24.4% on
-ExploitBench, and 105 / 130 completed ExploitGym tasks under normalized two-
-and six-hour budgets, versus 29 / 39 for 5.2. Closed models still led the
-deeper exploitation tests. Z.ai also says reviewed model runs found 2,436
-vulnerabilities across 269 projects, but its disclosure ledger currently
-lists only 53 as public and 2,383 under embargo. Treat that larger total as a
-vendor claim until disclosures can be inspected, and use the capability only
-inside authorized testing and coordinated disclosure.
+*Start from scratch: prompt an app, save to Origin. Complementary to the
+host row, not a how-to.*
 
-GLM-5.3 is available through the API and Coding Plan at $1.40 / $4.40 per
-million input/output tokens. It has 1M context, up to 128K output, mandatory
-thinking, and `low`, `high`, or `max` reasoning effort. Z.ai says weights will
-follow two weeks after launch, after safety evaluation and hardening; this is
-not an open-weight release yet.
+**Origin launched 17 August**, two days before this 14-day window and
+the same week as the last meetup. **Start from scratch (27 Aug)** is
+inside the window. Together they moved the repo next to the agent. Paid
+Cursor only. GitHub Issues and Actions do not follow automatically.
+Vercel can publish Origin repos; you still need a Vercel account for a
+URL. Coding quality is whatever model you already use inside Cursor. The
+host changed. The teammate product is Grok Bot, above.
 
-**[Grok 4.6](https://x.ai/news/grok-4-6) is the closed-model release to try on long jobs.** SpaceXAI
-presents it as a Grok 4.5 follow-on aimed at staying with research, codebase
-work, and turning a product idea into a working artifact across many steps.
-The company reports that it matches GPT-5.6 Sol on the Artificial Analysis
-Intelligence Index, a nine-benchmark composite, with a posted 61 versus 61
-for Sol Max and 62 for Fable 5 Max. Those figures are compiled from
-developers' system cards and public leaderboards. Reproduce them on your
-tasks before you change a default. Pricing starts at $2 per million input
-tokens and $6 per million output tokens; a fast variant is twice that.
+**Granite 4.2** is the runnable Apache 2.0 lane: dense 3B / 8B / 30B
+with switchable thinking. **Granite Speech 5.0 Turbo CTC** is a 470M
+transcriber, not a chat model.
 
-**[Gemini 3.7 Flash](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/) is the workhorse price cut.** Three weeks after 3.6 Flash,
-Google is selling more coding, knowledge-work, and web-app capability at
-half the prior Flash rate through December 31, then $1.50 / $7.50 in 2027.
-Vendor-reported gains over 3.6 Flash include FrontierCode 1.1 Main at 43.6%
-versus 34.4% and DeepSWE v1.1 at 65.3% versus 49.0%. Gemini Spark, the 24/7
-personal agent for Google AI Pro and Ultra subscribers in supported
-countries, now runs on 3.7 Flash. That is a product update, not proof that
-your Workspace workflow is ready to run unattended.
+**Qwen3.8-Flash-Next** is open weights under **Qwen Community License
+1.0**, not Apache. MaaS and “AI Work Assistant” commercial use need a
+separate Qwen license. Architecture preview of the Qwen-4 stack: 125B
+main + 51B n-gram embeddings + 4B MTP, 6B active per token.
 
-**[Nemotron 3.5 Lightning and NeMo Switchyard](https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/)
-turn model routing into a product pair.** Lightning is an open 30B
-mixture-of-experts model with 3B active parameters, aimed at routine tool
-calls, validation, code review, and other high-volume execution beneath a
-larger planner. NVIDIA reports up to 4× the output speed of similar-size
-models and 30% faster completion of 10,000 PinchBench tasks than Qwen3.6 35B
-at similar accuracy; those are vendor-run comparisons. Weights, data, recipes,
-BF16 and NVFP4 checkpoints are available under OpenMDW-1.1.
+**Hy4 preview** is Apache 2.0 and datacenter-scale (770B / 49B). Official
+API $0.834 in / $0.042 cache hit / $2.501 out per 1M tokens. Internal
+163-expert panel is not a public leaderboard. Not a laptop download.
 
-[Switchyard](https://github.com/NVIDIA-NeMo/Switchyard) is the Apache-2.0
-routing layer: a Rust proxy and library that translates OpenAI, Anthropic, and
-Responses APIs and can route by classification, agent stage, escalation, or a
-custom policy. NVIDIA and partners report meaningful cost reductions, but the
-trade-offs vary: LangChain's 145-task test cut cost 74% while losing about six
-accuracy points. The repository labels Switchyard pre-alpha and not for
-production, which is the caveat to keep beside every savings number.
+![Three oversized keys and a geometric parrot — different permission slips, not one open license.](/weekly-screenshots/2026.09.02/source-media/sep2-three-licenses.png)
 
-**[Muse Code beta and Muse Spark 1.2](https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2)
-are Meta's cloud coding lane.** Muse Code is a macOS/Linux terminal agent whose
-persistent background subagents can research and report back while the main
-agent works. An append-only local event log records calls, tools, approvals,
-and edits so a crashed session can replay and resume. Spark 1.2 was co-trained
-with that harness for repository-scale generation, debugging, compaction, and
-long-horizon work. It is available in Muse Code and the Meta Model API; Meta's
-post describes the benchmark and 24-hour kernel-optimization examples as its
-own evaluations, not independent proof. Do not confuse this closed hosted
-model with the separate open-weight Muse Glimmer below.
+*Three keys, three licenses. Open-weight is not one permission slip.*
 
-**OpenAI split ChatGPT access from API serving.** On August 6 it
-[retuned GPT-5.6 Sol for ChatGPT](https://openai.com/index/improving-gpt-5-6-sol-in-chatgpt/),
-added a reasoning slider for Plus and Pro,
-and began moving Free and Go users onto GPT-5.6 Luna with unlimited text
-chats and a Think button. OpenAI reports that, on an internal set of
-financial, medical, and legal prompts, responses containing at least one
-factual error were about 62% less common with Luna and 68% less common with
-Sol than with GPT-5.5 Instant. The ChatGPT-only versions do not replace the
-July Sol and Luna builds in Codex or ChatGPT Work. A week later, OpenAI
-previewed **[Ultrafast](https://openai.com/index/previewing-ultrafast/)**:
-the same Sol model on Cerebras hardware, at up to
-750 output tokens per second, described as up to 14× Standard. It is a
-limited API preview with no public price and no general-availability date.
-Treat the multiple as a vendor ceiling until a named workload is published.
+**Gemini 3.5 Transcribe** is the polished STT preview (files + Live).
+Google cites Artificial Analysis WER 4.0% streaming / 2.6%
+non-streaming. No Developer API price on the launch blog. **Omni 1.1
+Flash** is the practical video update: scene extend toward 40s, 360p
+drafts, upscale to 1080p/4K. Re-check live Gemini API pricing before you
+quote a client.
 
-**[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) and
-[Muse Glimmer](https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model)
-make the local lane look like an agent runtime, not a hobby chat.** Qwen's
-August 14 Hugging Face card describes a
-27-billion-parameter dense vision-language model under Apache 2.0, with
-262,144 native tokens, native image and video understanding, and a
-`reasoning_effort` dial. Alibaba reports 61.7 on SWE-bench Pro under a
-Claude Code harness, above a 53.4 figure it lists for Claude Opus 4.6 Max;
-those are vendor numbers with named evaluation notes, not an independent
-bake-off. A managed Qwen Cloud build with 1M context is listed as coming
-soon. Muse Glimmer, posted August 10, is Meta Superintelligence Labs' 30B
-Apache-2.0 local agent, distilled from a larger Muse teacher. Meta says
-4-bit quantization shrinks the language model under 20 GB so it can share a
-24–32 GB card with KV cache, a perception encoder, and a speculative-decoding
-drafter. Artificial Analysis independently put Glimmer (high) at 35 on its
-Intelligence Index — useful as a size-class signal, not as a substitute for
-running it on your machine.
+![Geometric parrot conducting a cyan Gemini Transcribe waveform toward pink Omni Flash film frames, including a 360p-to-upscale pair.](/weekly-screenshots/2026.09.02/source-media/sep2-voice-and-video.png)
 
-## Image work: Qwen-Image 3.0 aims at useful, not just pretty
+*Voice on the left, video drafts on the right. 360p is the cheap sketch.
+Not a new chat model.*
 
-**[Qwen-Image 3.0](https://qwen.ai/blog?id=56cf5a94-052c-4e8f-8d9c-e05ff75a1133)
-is older context requested for this edition, released July 16 rather than in
-this fortnight.** Alibaba's third-generation Qwen image model unifies
-generation and editing around information-dense output: up to 4.5K-token
-instructions, native rendering in 12 languages, claimed legibility down to
-10-pixel text, and layouts such as newspapers, storyboards, exam sheets, and
-nested interfaces. The launch examples are curated provider demonstrations,
-not a measured third-party text-accuracy study. The announcement points to
-Qwen Chat and does not publish weights, an API price, or a reproducible eval
-card, so test spelling, formulas, attribution, and visual facts before using
-its output as a finished document.
+**Mistral Agentic Search** (20 Aug) is five tools on your index, not a
+new LLM. **Assistants API shut down 26 August** — remaining automations
+move to Responses + Conversations. **Grok 4.6 on Bedrock** and
+**SageMaker JumpStart for Glimmer 30B and Qwen 3.8-27B** are pipes, not
+new brains.
 
-## Grok Bot: a computer, not a chat
-
-![Official Grok Bot release graphic on a soft blue background.](/weekly-screenshots/2026.08.19/source-media/grok-bot.png)
-
-*Source image: [SpaceXAI's Grok Bot announcement](https://x.ai/news/introducing-grok-bot),
-August 11, 2026.*
-
-[Grok Bot](https://x.ai/news/introducing-grok-bot) is the tool of the
-fortnight, and it is easy to misread. It is not a better autocomplete. It is
-a roster of named agents that share one persistent cloud VM — browser,
-filesystem, terminal — and keep working after you close the laptop. SpaceXAI
-says Bots can use connectors and MCP where they exist, and computer use
-everywhere else, so the finished work lands in the actual app instead of a
-draft you have to paste. You can show a Bot a workflow once and save it as a
-routine. Several Bots can message each other in a group thread.
-
-That architecture has a security implication the docs state plainly: **the
-computer is isolated to your account, not to an individual Bot.** Files,
-logins, and browser sessions are shared across the roster. Separate Bots are
-not a privilege boundary. Approvals cover proposed actions; they do not undo
-work already done. Passwords, passkeys, and 2FA belong in a take-control
-handoff, not in chat. Grok Bot requires data storage and does not support
-Legacy Privacy Mode.
-
-Availability is gated. The beta is on desktop and iOS for SuperGrok Heavy,
-Cursor Ultra, and Cursor Teams Premium. Enterprise is a waitlist. Android is
-not in the launch set. Internal sales, ops, and engineering anecdotes are
-leads, not a reliability study.
-
-**If you try it this week:** pick one bounded, multi-tool job with a clear
-deliverable and an approval gate on send, pay, publish, or production
-change. Do not point it at a privileged local folder until you have watched
-it fail safely on the cloud computer.
-
-## Physical AI: the loop leaves the screen
-
-The persistent-agent idea becomes harder when the computer has wheels, arms,
-and momentum. A robot cannot stop at a plausible answer. It has to turn sensor
-readings into a model of the world, choose an action, observe what actually
-happened, and feed that result back into the next decision.
-
-![A glowing circular physical-AI flywheel connects real-world robots, data, Gaussian splats, simulation, AI models, and robots again.](/weekly-screenshots/2026.08.19/source-media/physical-ai-flywheel.png)
-
-*What it means: physical AI improves as real robot experience becomes training
-data, reconstructed worlds, simulation practice, and better models that return
-to the machine.*
-
-That loop begins with sensing. Cameras provide texture and color; lidar and
-radar measure geometry and range; microphones capture sound; touch reports
-contact; and an inertial measurement unit tracks motion. The model only sees
-the world that this sensor stack can represent.
-
-![A humanoid robot stands inside a halo of cameras, lidar, radar, microphones, touch sensors, and an IMU, all feeding a central AI core.](/weekly-screenshots/2026.08.19/source-media/humanoid-sensor-halo.png)
-
-*What it means: the AI core is downstream of the sensors. Blind spots, noise,
-latency, and calibration errors become model limits before planning even
-starts.*
-
-Autonomy is therefore a closed loop, not a one-shot prompt. A useful system
-senses, perceives, predicts, plans, acts, and corrects. The correction step is
-what lets a delivery robot stop for the dog it did not expect and update the
-next plan from the new scene.
-
-![A closed autonomy loop surrounds a delivery robot pausing safely for a dog: sense, perceive, predict, plan, act, and correct.](/weekly-screenshots/2026.08.19/source-media/robot-autonomy-closed-loop.png)
-
-*What it means: safe behavior comes from repeated observation and correction,
-not from assuming the first prediction will remain true after the robot acts.*
-
-Gaussian splats can shorten the path from captured place to training ground.
-A 360-degree scan becomes a volumetric reconstruction; that reconstruction can
-seed a simulated world; and the simulator can provide repeatable situations
-for learning and testing a control policy before the robot runs it onboard.
-
-![A four-stage pipeline moves from 360-degree room capture to Gaussian splats, a simulation world, and a robot control policy.](/weekly-screenshots/2026.08.19/source-media/gaussian-splat-sim-pipeline.png)
-
-*What it means: reconstructing a real place gives simulation a concrete world
-to rehearse in, while the control policy remains the part that must transfer
-those rehearsals back to the physical robot.*
-
-The final constraint is onboard compute. A larger model may improve perception
-or planning, but it also competes for memory, battery, cooling, and response
-time. The best robot model is not simply the largest one; it is the model that
-fits the machine and still closes the loop quickly enough for the task.
-
-![A balance scale weighs model size against onboard memory and power for a robot.](/weekly-screenshots/2026.08.19/source-media/onboard-model-tradeoff.png)
-
-*What it means: model capability has to fit a physical budget. Memory and power
-limits are design inputs, not deployment details to solve after training.*
-
-## Science: from plausible answers to checked artifacts
-
-The scientific story this month is not "AI solved a famous problem." It is
-that research systems are starting to return **objects other people can
-inspect**.
-
-**[Claude raised a classical analytic-number-theory bound](https://www.anthropic.com/research/riemann-zeta).** On August 10,
-Anthropic reported that an unreleased research version of Claude improved
-the proven lower bound on the fraction of Riemann zeta zeros that lie on the
-critical line, from 41.6% to 67.2%. The model did not prove the Riemann
-hypothesis, and Anthropic says it does not expect these techniques to do so.
-What happened is still striking: a non-mathematician staff member asked
-Claude to take a real stab at the hypothesis; after a failed first pass, a
-second Claude Code session coordinated about 60 subagents, used 31 million
-output tokens, downloaded 54 arXiv papers, and produced a paper plus a Lean
-formalization. Anthropic mathematicians Levent Alpöge and Ralph Furman
-studied the argument. Number theorists Brian Conrey and Dan Goldston
-examined the paper on short notice. A clearer revision of the paper went up
-on August 13.
-
-Lean can check that the encoded proof follows the rules of the formal
-system. It does not, by itself, settle novelty, literature credit, or
-whether the formal statement is the theorem the community cares about. Those
-remain human questions. Read this next to OpenAI's August 1 Astra package —
-ten claimed advances with Lean certificates in
-[openai/ten-proofs](https://github.com/openai/ten-proofs) — as one research
-loop, not two unrelated headlines: generate, formalize, then wait for the
-field.
-
-**WeatherNext turned a decade of cyclone-forecast progress into an extra day
-of average lead time, then open-sourced the weights.** On August 6, Google
-DeepMind and Google Research published
-[Operational Tropical Cyclone Forecasting with AI](https://www.nature.com/articles/s41586-026-10953-2)
-in *Nature*. The paper reports that WeatherNext Cyclones, evaluated on
-storms from 2023–2025, offers on average a day or more of lead-time
-advantage on track, intensity, and wind structure versus leading operational
-models. DeepMind's accompanying post frames the three-day forecast as
-matching what prior models could do at two days, and says the National
-Hurricane Center used the system during the 2025 season, including on
-Hurricane Melissa. The code and weights, plus a smaller Colab-runnable
-variant, are now public. Official warnings still come from meteorological
-agencies. An extra day of average skill is not a guarantee about the next
-named storm.
-
-![Google DeepMind's WeatherNext release graphic shows a sequence of modeled cyclone positions approaching the southeastern United States.](/weekly-screenshots/2026.08.19/source-media/weathernext-cyclones.png)
-
-*Source image: [Google DeepMind's WeatherNext Cyclones announcement](https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/),
-August 6, 2026. The image is illustrative; the reported comparison comes from
-the linked Nature evaluation.*
-
-## Markets and chips: Arizona turns a profit while memory stays expensive
-
-The model and tool news sits on a physical constraint that did not loosen
-this fortnight.
-
-**[TSMC's Arizona site is no longer just a political talking point](https://www.trendforce.com/news/2026/08/17/news-tsmc-arizona-profit-soars-663-yoy-in-1h26-u-s-earnings-pull-back-8-2-qoq-in-2q-as-depreciation-bites/).** On
-August 17, TrendForce summarized TSMC's first-half 2026 interim report:
-TSMC Arizona posted NT$36.066 billion in profit for 1H26, up 662.8%
-year-over-year, and overtook Nanjing as the company's most profitable
-overseas subsidiary. Second-quarter profit still slipped 8.2% sequentially
-as depreciation rose. The first Phoenix fab has been in 4nm mass production
-since late 2024; the 3nm follow-on is slated for the second half of 2027.
-The $265 billion planned U.S. investment, including the additional $100
-billion discussed on the July earnings call, is the capacity bet behind
-those figures — context, not a new August 17 commitment. None of this is
-investment advice. It is evidence that advanced-node AI demand is showing up
-in an overseas P&L, while packaging, depreciation, and ramp timing still
-tax the margin.
-
-**[Consumer and server memory remain the other bottleneck](https://www.trendforce.com/news/2026/08/17/news-germany-ddr5-prices-near-5x-yoy-in-august-china-reportedly-sees-14-wow-jump-as-global-rally-continues/).** TrendForce's
-August 17 roundup, citing 3D Center via Wccftech, put Germany's DDR5 retail
-index at 486% of the prior-year baseline in August, about 4.9× a typical
-kit versus a year earlier. Separate China, U.S., U.K., and Japan spot
-checks in the same piece describe three- to fourfold kit prices and thin
-availability. TrendForce's own contract outlook, cited there, still has
-server DRAM rising 13–18% quarter-over-quarter in 3Q26, with tightness
-expected to persist into 2027. That is why a "run Qwen locally" plan and a
-"rent Sol Ultrafast" plan are both hardware stories: HBM and DDR5 allocation
-is what makes the GPU, the laptop, and the API bill move together.
-
-OpenAI's Cerebras Ultrafast preview is the inference-side rhyme. Custom or
-wafer-scale serving is how a lab tries to sell frontier intelligence at
-interactive latency without waiting on the same GPU queue. It is also, for
-now, a waitlist.
+**What did not ship.** No public Astra or GPT-6. Anthropic **Claude
+Fable 5.1** still has no newsroom post, model card, or API ID. OpenAI
+published a Hugging Face-incident post-mortem and a pause on some RL;
+that is not a model launch.
 
 ## What to do this week
 
-- Try GLM-5.3, Grok 4.6, Gemini 3.7 Flash, and Muse Spark 1.2 on the same five
-  coding tasks, with cost per accepted result, not per token, as the score.
-- Put Nemotron Lightning behind a small Switchyard experiment only after you
-  define quality and escalation thresholds; Switchyard is still pre-alpha.
-- If you have Grok Bot access, hand off one multi-app job with an approval
-  gate. Read the shared-computer warning before you log into anything
-  important.
-- If you have a 24 GB+ GPU, download Muse Glimmer or Qwen3.8-27B and run
-  one private agent loop offline. Compare it to the API you already pay for.
-- Do not treat Anthropic's zeta bound or OpenAI's Astra certificates as
-  "AI solved math." Read the paper, the Lean artifact, and the remaining
-  human questions.
-- For weather or emergency use, keep official NHC or NWS guidance in front
-  of any WeatherNext demo.
-- Test Qwen-Image 3.0 on one dense flyer or explainer, then verify every small
-  label and factual visual element before publication.
-- Price local RAM and cloud GPUs as part of the model decision. The memory
-  market is still setting the floor.
+- If you already pay for Cursor or SuperGrok, create **one** Grok Bot
+  and hand it a bounded job with an approval on send. Watch the shared
+  computer. Do not point it at production secrets.
+- Do not confuse that teammate with Origin or with a start-from-scratch
+  cloud agent. Try Origin on a non-critical repo only after the Bot
+  experiment, if you want a git host next to Cursor.
+- Price **GLM-5.3-Flash** against your current coding/multimodal API
+  **before 9 Sep 2026 24:00 UTC+8**. After that, use the list rate.
+- Eligible students: redeem Google AI Pro/Plus before 31 Dec 2026, then
+  set a cancel reminder.
+- If anything still calls the Assistants API, it is already broken.
+  Move it.
+- For private docs, try Mistral Agentic Search on your own index rather
+  than another chat window.
+- Open weights: Granite 4.2 or GLM-5.3-Flash (MIT) if you need a
+  permissive license. Read Qwen Community License 1.0 before you
+  productize Flash-Next. Hy4 only if you have multi-GPU hardware and
+  accept preview behavior.
 
 ## Sources and watchlist
 
-- [Z.ai: GLM-5.3 — Frontier Coding with Emergent Cyber Capabilities](https://z.ai/blog/glm-5.3)
-- [Z.ai: GLM-5.3 API documentation](https://docs.z.ai/guides/llm/glm-5.3)
-- [Z.ai: Security Disclosure Ledger](https://cvd.z.ai/)
-- [NVIDIA: Nemotron 3.5 Lightning and NeMo Switchyard](https://blogs.nvidia.com/blog/nemotron-lightning-switchyard-rtx-dgx/)
-- [NVIDIA NeMo: Switchyard repository](https://github.com/NVIDIA-NeMo/Switchyard)
-- [Meta: Introducing Muse Code and Muse Spark 1.2](https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2)
-- [Qwen: Qwen-Image 3.0](https://qwen.ai/blog?id=56cf5a94-052c-4e8f-8d9c-e05ff75a1133)
-- [SpaceXAI: Introducing Grok Bot](https://x.ai/news/introducing-grok-bot)
-- [SpaceXAI: Grok Bot docs](https://docs.x.ai/grok-bot/overview)
-- [SpaceXAI: Grok Bot approvals, security, and privacy](https://docs.x.ai/grok-bot/approvals-security-and-privacy)
-- [SpaceXAI: Introducing Grok 4.6](https://x.ai/news/grok-4-6)
-- [Google: Gemini 3.7 Flash](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/)
-- [OpenAI: Improving GPT-5.6 Sol in ChatGPT](https://openai.com/index/improving-gpt-5-6-sol-in-chatgpt/)
-- [OpenAI: Previewing Ultrafast](https://openai.com/index/previewing-ultrafast/)
-- [Meta: Introducing Muse Glimmer](https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model)
-- [Hugging Face: Muse Glimmer](https://huggingface.co/blog/muse-glimmer)
-- [Artificial Analysis: Muse Glimmer](https://artificialanalysis.ai/articles/muse-glimmer)
-- [Hugging Face: Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)
-- [Anthropic: Claude's mathematical capabilities](https://www.anthropic.com/research/riemann-zeta)
-- [OpenAI: Ten advances in mathematics](https://openai.com/index/ten-advances-in-mathematics/)
-- [Google DeepMind: WeatherNext cyclones](https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/)
-- [Nature: Operational Tropical Cyclone Forecasting with AI](https://www.nature.com/articles/s41586-026-10953-2)
-- [TrendForce: TSMC Arizona 1H26 profit](https://www.trendforce.com/news/2026/08/17/news-tsmc-arizona-profit-soars-663-yoy-in-1h26-u-s-earnings-pull-back-8-2-qoq-in-2q-as-depreciation-bites/)
-- [TrendForce: DDR5 August price surge](https://www.trendforce.com/news/2026/08/17/news-germany-ddr5-prices-near-5x-yoy-in-august-china-reportedly-sees-14-wow-jump-as-global-rally-continues/)
+- [SpaceXAI: Grok Bot is now included with more plans (26 Aug)](https://x.ai/news/grok-bot-more-plans)
+- [Cursor docs: Grok Bot](https://cursor.com/docs/grok-bot)
+- [SpaceXAI: Introducing Grok Bot (11 Aug, context)](https://x.ai/news/introducing-grok-bot)
+- [Z.ai: GLM-5.3-Flash](https://z.ai/blog/glm-5.3-flash)
+- [Z.ai: pricing](https://docs.z.ai/guides/overview/pricing)
+- [Hugging Face: GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash)
+- [Cursor: Origin code hosting](https://cursor.com/changelog/origin-code-hosting)
+- [Cursor: 19 Aug cloud agents](https://cursor.com/changelog/08-19-26)
+- [Cursor: Start from scratch](https://cursor.com/changelog/start-from-scratch)
+- [Vercel for Origin](https://vercel.com/docs/git/vercel-for-origin)
+- [Google: student offer](https://blog.google/innovation-and-ai/products/gemini-app/student-offer-google-ai/)
+- [xAI: Grok 4.6 on Amazon Bedrock](https://x.ai/news/grok-4-6-amazon-bedrock)
+- [Mistral: Agentic Search](https://mistral.ai/news/agentic-search/)
+- [IBM Research: Granite 4.2 and Speech 5.0](https://research.ibm.com/blog/introducing-granite-4-2)
+- [IBM: Granite 4.2 docs](https://www.ibm.com/granite/docs/models/granite4-2)
+- [Hugging Face: Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next)
+- [Qwen3.8-Flash-Next license](https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/LICENSE)
+- [Qwen blog: Flash-Next](https://qwen.ai/blog?id=qwen3.8-flash-next)
+- [Google: Gemini 3.5 Transcribe](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5-transcribe/)
+- [Google: Gemini Omni 1.1 Flash](https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/)
+- [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing)
+- [Tencent: Hy4 preview](https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/)
+- [Hugging Face: Hy4-preview](https://huggingface.co/tencent/Hy4-preview)
+- [AWS: Glimmer 30B and Qwen 3.8-27B on SageMaker JumpStart](https://aws.amazon.com/about-aws/whats-new/2026/01/muse-glimmer-30b-qwen-3-8-27b-on-sagemaker-jumpstart/)
+- [OpenAI: Hugging Face incident](https://openai.com/index/hugging-face-incident-and-the-road-ahead/)

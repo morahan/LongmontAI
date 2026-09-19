@@ -2,9 +2,13 @@ import React, { useLayoutEffect, useRef } from 'react';
 import {
     advanceEasterEggClickSequence,
     CONSTELLATION_WINDOW_SECONDS,
+    FAR_DEPTH,
+    NEAR_DEPTH,
     createConstellationGeometry,
     createConstellationGeometryForPhrase,
     createEasterEggTargetStyles,
+    createEmbeddedGalaxySystems,
+    createNeuralContagionState,
     createPlanetSystem,
     createSpaceScene,
     getConstellationPhase,
@@ -15,10 +19,15 @@ import {
     getEasterEggStrength,
     getEasterEggStarFieldStyles,
     getElapsedSecondsSinceMount,
+    getEmbeddedGalaxySystemOpacity,
+    getEmbeddedGalaxySystemState,
+    getNeuralSignalSlot,
     getNeuralSignals,
+    getNeuralEndpointTransmission,
     getOrbitingMoon,
     getOrbitingPlanets,
     getPlanetLightingStyle,
+    getPlanetRenderRadius,
     getPlanetSurfaceDetailLevel,
     PLANET_RENDER_SCALE,
     PLANET_RING_LINE_WIDTH,
@@ -31,7 +40,9 @@ import {
     getSystemOpacity,
     getSystemOwnerDiscLocalRadius,
     getSystemScale,
+    getGalaxyAnimationState,
     getGalaxyAppearance,
+    getGalaxyParticleState,
     getTravelerAppearance,
     getTravelerStarRenderPolicy,
     getTravelerVariant,
@@ -40,12 +51,14 @@ import {
     isPlanetBehindSystemStar,
     isStarRenderable,
     projectTraveler,
-    remapAmbientStarsToFirstGlyphSlots,
+    remapAmbientStarsToTextSlots,
     scaleConstellationGeometry,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
     shouldTriggerEasterEgg,
+    syncNeuralContagionState,
     travelerCountForWidth,
+    updateNeuralContagionForSignal,
     type ConstellationGeometry,
     type ConstellationPhrase,
     type EasterEggClickSequence,
@@ -57,6 +70,15 @@ import {
     type StarVisualStyle,
     type Traveler,
 } from './spaceBackgroundModel';
+
+import {
+    createNebulaField,
+    getNebulaDepthTransmission,
+    getNebulaOffset,
+    getNebulaTextTransmission,
+    NEBULA_WORLD_SIZE,
+    sampleNebulaTransmission,
+} from './spaceNebulaModel';
 
 const TAU = Math.PI * 2;
 const INTERACTIVE_TARGET_SELECTOR = [
@@ -223,8 +245,11 @@ const drawPlanet = (
     simulationSeconds: number,
     opacity: number,
     systemScale: number,
+    ownerDiscLocalRadius: number,
 ) => {
-    const renderedPlanet = { ...planet, radius: planet.radius * PLANET_RENDER_SCALE };
+    const renderedPlanet = { ...planet, radius: getPlanetRenderRadius(planet.radius, ownerDiscLocalRadius) };
+    if (renderedPlanet.radius <= 0) return;
+    const bodyScale = renderedPlanet.radius / (planet.radius * PLANET_RENDER_SCALE);
     ctx.save();
     ctx.globalAlpha = opacity;
     if (renderedPlanet.hasRing) drawPlanetRing(ctx, renderedPlanet, Math.PI, TAU);
@@ -279,18 +304,16 @@ const drawPlanet = (
     if (renderedPlanet.hasRing) drawPlanetRing(ctx, renderedPlanet, 0, Math.PI);
     ctx.restore();
     planet.moons.forEach((moon) =>
-        drawMoon(ctx, getOrbitingMoon(planet, moon, simulationSeconds), opacity));
+        drawMoon(ctx, getOrbitingMoon(planet, { ...moon, radius: moon.radius * bodyScale }, simulationSeconds), opacity));
 };
 
 const drawNeuralSignal = (
     ctx: CanvasRenderingContext2D,
     from: ProjectedTraveler,
     to: ProjectedTraveler,
-    opacity: number,
-    pulseProgress: number,
-    lineWidth: number,
-    bend: number,
+    signal: ReturnType<typeof getNeuralSignals>[number],
 ) => {
+    const { opacity, pulseProgress, lineWidth, bend, color, sparkles } = signal;
     if (opacity <= 0) return;
     const deltaX = to.x - from.x;
     const deltaY = to.y - from.y;
@@ -298,7 +321,7 @@ const drawNeuralSignal = (
     const controlY = (from.y + to.y) * 0.5 + deltaX * bend;
 
     ctx.save();
-    ctx.strokeStyle = `rgba(116, 202, 236, ${opacity})`;
+    ctx.strokeStyle = `rgba(${color}, ${opacity})`;
     ctx.lineWidth = lineWidth;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -306,21 +329,35 @@ const drawNeuralSignal = (
     ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
     ctx.stroke();
 
-    const inverse = 1 - pulseProgress;
-    const pulseX = inverse * inverse * from.x
-        + 2 * inverse * pulseProgress * controlX
-        + pulseProgress * pulseProgress * to.x;
-    const pulseY = inverse * inverse * from.y
-        + 2 * inverse * pulseProgress * controlY
-        + pulseProgress * pulseProgress * to.y;
-    const glint = ctx.createRadialGradient(pulseX, pulseY, 0, pulseX, pulseY, 4.5);
-    glint.addColorStop(0, `rgba(218, 246, 255, ${opacity * 1.7})`);
-    glint.addColorStop(0.35, `rgba(133, 215, 242, ${opacity * 0.7})`);
-    glint.addColorStop(1, 'rgba(99, 190, 226, 0)');
-    ctx.fillStyle = glint;
-    ctx.beginPath();
-    ctx.arc(pulseX, pulseY, 4.5, 0, TAU);
-    ctx.fill();
+    const pointAt = (progress: number) => {
+        const inverse = 1 - progress;
+        return {
+            x: inverse * inverse * from.x + 2 * inverse * progress * controlX + progress * progress * to.x,
+            y: inverse * inverse * from.y + 2 * inverse * progress * controlY + progress * progress * to.y,
+        };
+    };
+    const pulse = pointAt(pulseProgress);
+    // A broad wash travels along the same smooth curve, not a sharp lightning head.
+    const washRadius = Math.min(70, Math.hypot(deltaX, deltaY) * 0.28);
+    const wash = ctx.createRadialGradient(pulse.x, pulse.y, 0, pulse.x, pulse.y, washRadius);
+    wash.addColorStop(0, `rgba(${color}, ${opacity * 0.8})`);
+    wash.addColorStop(1, `rgba(${color}, 0)`);
+    ctx.strokeStyle = wash;
+    ctx.lineWidth = lineWidth * 2;
+    ctx.stroke();
+
+    for (const bead of [{ progress: pulseProgress, opacity: 1, radius: 5 }, ...sparkles]) {
+        if (bead.opacity <= 0) continue;
+        const point = pointAt(bead.progress);
+        const glint = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, bead.radius);
+        glint.addColorStop(0, `rgba(${color}, ${opacity * bead.opacity * 1.4})`);
+        glint.addColorStop(0.4, `rgba(${color}, ${opacity * bead.opacity * 0.5})`);
+        glint.addColorStop(1, `rgba(${color}, 0)`);
+        ctx.fillStyle = glint;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, bead.radius, 0, TAU);
+        ctx.fill();
+    }
     ctx.restore();
 };
 
@@ -480,72 +517,64 @@ const drawGalaxy = (
     projection: ProjectedTraveler,
     simulationSeconds: number,
 ) => {
-    const appearance = getGalaxyAppearance(traveler, projection.progress);
+    const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
+    const animation = getGalaxyAnimationState(traveler, projection.cycle, simulationSeconds);
     const { x, y, opacity } = projection;
-    const rotation = surfaceValue(traveler.seed, projection.cycle) * TAU
-        + simulationSeconds * 0.055;
-
-    const halo = ctx.createRadialGradient(x, y, 0, x, y, appearance.outerRadius);
-    halo.addColorStop(0, `rgba(245, 226, 198, ${opacity * 0.5})`);
-    halo.addColorStop(0.38, `rgba(126, 177, 221, ${opacity * 0.2})`);
-    halo.addColorStop(1, 'rgba(77, 119, 180, 0)');
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(x, y, appearance.outerRadius, 0, TAU);
-    ctx.fill();
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(rotation);
-    ctx.strokeStyle = `rgba(171, 205, 235, ${opacity * 0.23})`;
-    ctx.lineWidth = Math.max(0.25, appearance.outerRadius * 0.045);
-    for (let arm = 0; arm < appearance.armCount; arm += 1) {
-        ctx.beginPath();
-        for (let step = 0; step <= 18; step += 1) {
-            const radialProgress = step / 18;
-            const radius = appearance.coreRadius
-                + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.9;
-            const angle = arm * TAU / appearance.armCount + radialProgress * TAU * 1.45;
-            const armX = Math.cos(angle) * radius;
-            const armY = Math.sin(angle) * radius * 0.58;
-            if (step === 0) ctx.moveTo(armX, armY);
-            else ctx.lineTo(armX, armY);
-        }
-        ctx.stroke();
-    }
+    ctx.rotate(animation.rotation);
 
+    // Formation identity comes entirely from seeded point positions, colors, and density.
     for (let star = 0; star < appearance.internalStarCount; star += 1) {
-        const arm = star % appearance.armCount;
-        const radialProgress = (Math.floor(star / appearance.armCount) + 0.45
-            + surfaceValue(traveler.seed, star + 41) * 0.5)
-            / Math.ceil(appearance.internalStarCount / appearance.armCount);
-        const radius = appearance.coreRadius
-            + radialProgress * (appearance.outerRadius - appearance.coreRadius) * 0.88;
-        const angle = arm * TAU / appearance.armCount
-            + radialProgress * TAU * 1.45
-            + (surfaceValue(traveler.seed, star + 83) - 0.5) * 0.42;
-        ctx.fillStyle = `rgba(232, 242, 255, ${opacity * (0.55
-            + surfaceValue(traveler.seed, star + 127) * 0.45)})`;
-        ctx.beginPath();
-        ctx.arc(
-            Math.cos(angle) * radius,
-            Math.sin(angle) * radius * 0.58,
-            Math.max(0.18, Math.min(0.58, appearance.outerRadius * 0.035)),
-            0,
-            TAU,
+        const particle = getGalaxyParticleState(
+            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
         );
+        const color = particle.kind === 'dust' ? '111, 86, 83'
+            : particle.kind === 'young-star' ? '151, 211, 255' : '238, 242, 247';
+        ctx.fillStyle = `rgba(${color}, ${opacity * particle.opacity})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
         ctx.fill();
     }
 
-    ctx.fillStyle = `rgba(2, 3, 8, ${Math.min(1, opacity * 1.3)})`;
-    ctx.beginPath();
-    ctx.arc(0, 0, appearance.coreRadius, 0, TAU);
-    ctx.fill();
-    ctx.strokeStyle = `rgba(255, 205, 133, ${opacity * 0.9})`;
-    ctx.lineWidth = Math.max(0.3, appearance.coreRadius * 0.35);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, appearance.coreRadius * 1.75, appearance.coreRadius * 0.52, 0, 0, TAU);
-    ctx.stroke();
+    if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
+        ctx.fillStyle = `rgba(2, 3, 7, ${Math.min(1, opacity * 0.9)})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.min(0.72, appearance.coreRadius * 0.2), 0, TAU);
+        ctx.fill();
+    }
+
+    // Miniature systems use only filled points. Planets are ordered around their moving host.
+    const embeddedSystemOpacity = opacity * getEmbeddedGalaxySystemOpacity(appearance.outerRadius);
+    if (embeddedSystemOpacity > 0) {
+        const systems = createEmbeddedGalaxySystems(traveler, projection.cycle, appearance);
+        ctx.globalAlpha = embeddedSystemOpacity;
+        for (let systemIndex = 0; systemIndex < systems.length; systemIndex += 1) {
+            const system = systems[systemIndex];
+            const state = getEmbeddedGalaxySystemState(system, simulationSeconds);
+            for (let planetIndex = 0; planetIndex < state.planets.length; planetIndex += 1) {
+                const planet = state.planets[planetIndex];
+                if (planet.z >= 0) continue;
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+                ctx.fill();
+            }
+            ctx.fillStyle = system.hostColor;
+            ctx.beginPath();
+            ctx.arc(state.host.x, state.host.y, system.hostRadius, 0, TAU);
+            ctx.fill();
+            for (let planetIndex = 0; planetIndex < state.planets.length; planetIndex += 1) {
+                const planet = state.planets[planetIndex];
+                if (planet.z < 0) continue;
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planet.x, planet.y, planet.radius, 0, TAU);
+                ctx.fill();
+            }
+        }
+    }
     ctx.restore();
 };
 
@@ -715,14 +744,16 @@ const drawPlanetarySystem = (
     traveler: Traveler,
     projection: ProjectedTraveler,
     simulationSeconds: number,
+    nebulaTransmission: number,
 ) => {
-    const opacity = getSystemOpacity(projection, traveler.alpha);
+    const opacity = getSystemOpacity(projection, traveler.alpha) * nebulaTransmission;
     if (opacity <= 0) return;
     const scale = getSystemScale(projection);
     const planets = createPlanetSystem(traveler.seed, projection.cycle);
     const orbiting = getOrbitingPlanets(planets, simulationSeconds);
     const ownerAppearance = getTravelerAppearance(traveler, projection.progress);
     const ownerPolicy = getTravelerStarRenderPolicy(true);
+    const ownerDiscLocalRadius = getSystemOwnerDiscLocalRadius(ownerAppearance.radius, scale);
 
     ctx.save();
     ctx.translate(projection.x, projection.y);
@@ -730,20 +761,20 @@ const drawPlanetarySystem = (
 
     // The textured owner disc is the occlusion boundary: negative z behind, non-negative z in front.
     orbiting.filter((planet) => isPlanetBehindSystemStar(planet.z))
-        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale));
+        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale, ownerDiscLocalRadius));
     if (ownerPolicy.renderDisc) {
         drawTravelerDisc(
             ctx,
             ownerAppearance,
             0,
             0,
-            getSystemOwnerDiscLocalRadius(ownerAppearance.radius, scale),
+            ownerDiscLocalRadius,
             opacity,
             ownerPolicy.renderShadowGlow,
         );
     }
     orbiting.filter((planet) => !isPlanetBehindSystemStar(planet.z))
-        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale));
+        .forEach((planet) => drawPlanet(ctx, planet, simulationSeconds, opacity, scale, ownerDiscLocalRadius));
     ctx.restore();
 };
 
@@ -755,8 +786,39 @@ const SpaceNeuralBackground: React.FC = () => {
         const ctx = canvas?.getContext('2d');
         if (!canvas || !ctx) return;
 
-        // The refresh seed prefers Web Crypto and has a one-sample legacy fallback.
-        const scene = createSpaceScene();
+        // The refresh seed prefers Web Crypto. A development-only query override makes Canvas
+        // motion reviews repeatable without changing production randomness or the simulation clock.
+        const requestedSeedValue = import.meta.env.DEV
+            ? new URLSearchParams(window.location.search).get('spaceSeed')
+            : null;
+        const requestedSeed = requestedSeedValue === null ? Number.NaN : Number(requestedSeedValue);
+        const scene = createSpaceScene(
+            Number.isInteger(requestedSeed) && requestedSeed >= 0 && requestedSeed <= 0xffffffff
+                ? requestedSeed
+                : undefined,
+        );
+        const nebula = createNebulaField(scene.seed);
+        const nebulaCanvas = document.createElement('canvas');
+        nebulaCanvas.width = nebulaCanvas.height = nebula.size + 2;
+        const nebulaCtx = nebulaCanvas.getContext('2d');
+        if (nebulaCtx) {
+            const image = nebulaCtx.createImageData(nebula.size + 2, nebula.size + 2);
+            for (let y = 0; y < nebula.size + 2; y += 1) {
+                for (let x = 0; x < nebula.size + 2; x += 1) {
+                    const transmission = nebula.transmission[
+                        ((y - 1 + nebula.size) % nebula.size) * nebula.size
+                        + (x - 1 + nebula.size) % nebula.size
+                    ];
+                    const index = (y * (nebula.size + 2) + x) * 4;
+                    // Black absorbing dust against barely luminous interstellar haze.
+                    image.data[index] = Math.round(11 * transmission);
+                    image.data[index + 1] = Math.round(14 * transmission);
+                    image.data[index + 2] = Math.round(20 * transmission);
+                    image.data[index + 3] = 255;
+                }
+            }
+            nebulaCtx.putImageData(image, 0, 0);
+        }
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         const mountedAt = performance.now();
         let width = 0;
@@ -765,13 +827,13 @@ const SpaceNeuralBackground: React.FC = () => {
         let isOnscreen = typeof IntersectionObserver === 'undefined';
         let pageIsVisible = !document.hidden;
         let reducedMotion = motionQuery.matches;
-        let backdropGlow: CanvasGradient | null = null;
         let constellationGeometry: ReturnType<typeof createConstellationGeometry> | null = null;
         let constellationEvent = -1;
         let prominentSystemOwner: ProminentSystemOwner | null = null;
         let easterEgg: EasterEggTransition | null = null;
         let easterEggClickSequence: EasterEggClickSequence | null = null;
         let easterEggTriggerCount = 0;
+        let neuralContagion = createNeuralContagionState();
 
         const clearEasterEggDataset = () => {
             delete canvas.dataset.constellationPhrase;
@@ -793,7 +855,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     ? [{ geometry: constellationGeometry, strength }]
                     : [],
                 positions: getStarFieldPositions(scene.seed, elapsed, width, height),
-                styles: getStarFieldStyles(scene.seed, elapsed),
+                styles: getStarFieldStyles(scene.seed, elapsed, reducedMotion),
             };
         };
 
@@ -836,7 +898,6 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endVelocities,
                             { x: width, y: height },
                             {
-                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
                                 endpointVisible: easterEgg.endVisibility,
                             },
@@ -847,7 +908,6 @@ const SpaceNeuralBackground: React.FC = () => {
                             easterEgg.endStyles,
                             age,
                             {
-                                firstGlyphCount: easterEgg.geometry.glyphs[0].indices.length,
                                 targetCount: easterEgg.geometry.points.length,
                                 endpointVisible: easterEgg.endVisibility,
                             },
@@ -863,12 +923,24 @@ const SpaceNeuralBackground: React.FC = () => {
         const drawScene = (elapsed: number, renderDetails = true) => {
             if (width <= 0 || height <= 0) return;
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#050508';
+            // The canvas owns an opaque, unmodulated black backdrop on every frame.
+            ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, width, height);
 
-            if (backdropGlow) {
-                ctx.fillStyle = backdropGlow;
-                ctx.fillRect(0, 0, width, height);
+            const nebulaSeconds = getSimulationTime(elapsed);
+            const nebulaAt = (x: number, y: number) => sampleNebulaTransmission(
+                nebula, x, y, nebulaSeconds, reducedMotion,
+            );
+            if (nebulaCtx) {
+                const offset = getNebulaOffset(nebulaSeconds, reducedMotion);
+                ctx.imageSmoothingEnabled = true;
+                // A one-texel gutter avoids transparent seams between scaled tiles.
+                for (let y = offset.y - NEBULA_WORLD_SIZE; y < height; y += NEBULA_WORLD_SIZE) {
+                    for (let x = offset.x - NEBULA_WORLD_SIZE; x < width; x += NEBULA_WORLD_SIZE) {
+                        ctx.drawImage(nebulaCanvas, 1, 1, nebula.size, nebula.size,
+                            x, y, NEBULA_WORLD_SIZE, NEBULA_WORLD_SIZE);
+                    }
+                }
             }
 
             const frame = getRenderedStarFrame(elapsed);
@@ -888,7 +960,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     const toPoint = positions[to];
                     const fromStyle = styles[from];
                     const toStyle = styles[to];
-                    // Connections follow revealed nodes; hidden burst destinations never leak.
+                    // Connections follow revealed nodes; hidden target destinations never leak.
                     if (!fromPoint || !toPoint || !fromStyle || !toStyle
                         || fromStyle.opacity <= 0 || toStyle.opacity <= 0
                         || fromStyle.strength <= 0 || toStyle.strength <= 0) return;
@@ -904,7 +976,10 @@ const SpaceNeuralBackground: React.FC = () => {
                 const position = positions[index];
                 const [red, green, blue] = getStarRgb(style.strength);
                 ctx.globalAlpha = 1;
-                ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${style.opacity})`;
+                const transmission = getNebulaTextTransmission(
+                    nebulaAt(position.x, position.y), style.strength,
+                );
+                ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${style.opacity * transmission})`;
                 ctx.beginPath();
                 ctx.arc(position.x, position.y, style.radius, 0, TAU);
                 ctx.fill();
@@ -922,6 +997,10 @@ const SpaceNeuralBackground: React.FC = () => {
             const travelers = scene.travelers.slice(0, travelerCount);
             const projections = travelers.map((traveler) =>
                 projectTraveler(traveler, simulationSeconds, width, height));
+            const nebulaTransmissions = projections.map((projection) => getNebulaDepthTransmission(
+                nebulaAt(projection.x, projection.y),
+                (projection.depth - NEAR_DEPTH) / (FAR_DEPTH - NEAR_DEPTH),
+            ));
             prominentSystemOwner = selectProminentSystemOwner(
                 travelers,
                 projections,
@@ -931,20 +1010,45 @@ const SpaceNeuralBackground: React.FC = () => {
             );
 
             // Filaments sit below traveler stars; their endpoints are always current projections.
-            getNeuralSignals(scene.seed, elapsed, projections, width, height, reducedMotion)
-                .forEach((signal) => drawNeuralSignal(
+            neuralContagion = syncNeuralContagionState(
+                neuralContagion, projections, width, height,
+            );
+            const neuralSignals = getNeuralSignals(
+                scene.seed, elapsed, projections, width, height, reducedMotion, neuralContagion,
+            );
+            if (neuralSignals[0]) {
+                neuralContagion = updateNeuralContagionForSignal(
+                    neuralContagion,
+                    getNeuralSignalSlot(elapsed),
+                    neuralSignals[0],
+                    projections,
+                    width,
+                    height,
+                );
+            }
+            neuralSignals.forEach((signal) => {
+                // Attenuate only the rendered light; never recycle pairs or mutate contagion in dust.
+                const endpointTransmission = Math.min(...[
+                    signal.fromTravelerIndex, signal.toTravelerIndex,
+                ].map((index) => getNeuralEndpointTransmission(
+                    projections[index].opacity,
+                    projections[index].opacity * nebulaTransmissions[index],
+                )));
+                drawNeuralSignal(
                     ctx,
                     projections[signal.fromTravelerIndex],
                     projections[signal.toTravelerIndex],
-                    signal.opacity,
-                    signal.pulseProgress,
-                    signal.lineWidth,
-                    signal.bend,
-                ));
+                    { ...signal, opacity: signal.opacity * endpointTransmission },
+                );
+            });
 
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
-                const projection = projections[index];
+                const originalProjection = projections[index];
+                const transmission = nebulaTransmissions[index];
+                // Keep geometry/owner selection/neural timing unchanged; attenuate all stellar light.
+                const projection = { ...originalProjection,
+                    opacity: originalProjection.opacity * transmission };
                 if (projection.opacity > 0.01) {
                     const previous = projectTraveler(
                         traveler,
@@ -985,7 +1089,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
 
                 if (index === prominentSystemOwner?.travelerIndex) {
-                    drawPlanetarySystem(ctx, traveler, projection, simulationSeconds);
+                    drawPlanetarySystem(ctx, traveler, projection, simulationSeconds, transmission);
                 }
             }
             ctx.globalAlpha = 1;
@@ -1025,13 +1129,6 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.width = Math.max(1, Math.round(width * dpr));
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            backdropGlow = ctx.createRadialGradient(
-                width * 0.5, height * 0.42, 0,
-                width * 0.5, height * 0.42, Math.max(width, height) * 0.62,
-            );
-            backdropGlow.addColorStop(0, 'rgba(19, 49, 68, 0.1)');
-            backdropGlow.addColorStop(0.52, 'rgba(35, 25, 59, 0.035)');
-            backdropGlow.addColorStop(1, 'rgba(5, 5, 8, 0)');
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
             const resizePhase = getConstellationPhase(elapsed);
             constellationEvent = resizePhase.event;
@@ -1074,6 +1171,7 @@ const SpaceNeuralBackground: React.FC = () => {
             reducedMotion = event.matches;
             if (reducedMotion) {
                 easterEgg = null;
+                neuralContagion = createNeuralContagionState();
                 clearEasterEggDataset();
             }
             syncAnimation();
@@ -1170,17 +1268,14 @@ const SpaceNeuralBackground: React.FC = () => {
             let startStyles = fillStyles(currentFrame.styles);
             const endStyles = fillStyles(rawEndStyles);
             if (currentFrame.phase.name === 'ambient') {
-                const remapped = remapAmbientStarsToFirstGlyphSlots(
-                    startPositions,
-                    startStyles,
-                    geometry.glyphs[0].indices.length,
+                const remapped = remapAmbientStarsToTextSlots(
+                    startPositions, startStyles, geometry.points.length,
                 );
                 startPositions = remapped.positions;
                 startStyles = remapped.styles;
-                remapped.sourceIndices.slice(0, geometry.glyphs[0].indices.length)
-                    .forEach((sourceIndex) => {
-                        targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
-                    });
+                remapped.sourceIndices.forEach((sourceIndex) => {
+                    targetStyles[sourceIndex] = { ...startStyles[sourceIndex] };
+                });
             }
             easterEgg = {
                 startedAt: elapsed,

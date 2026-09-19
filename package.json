@@ -30,7 +30,11 @@
     "site:update:preflight": "node scripts/update-site-preflight.mjs",
     "test:update-site": "node scripts/tests/update-site-preflight.test.mjs",
     "model-watch:update": "node scripts/update-model-watch.mjs",
+    "content:update": "node scripts/update-content.mjs",
+    "test:content": "node --experimental-strip-types --test scripts/tests/content-*.test.mjs",
     "test:model-watch": "node scripts/tests/model-watch-contract.test.mjs",
+    "test:model-watch-api": "node --test scripts/tests/content-model-watch-api.test.mjs",
+    "test:content-gpt6": "node --experimental-strip-types --test scripts/tests/content-gpt6.test.mjs",
     "newsletter:check": "node scripts/newsletter-setup-check.mjs",
     "newsletter:draft": "node scripts/generate-newsletter-draft.mjs",
     "newsletter:setup-listmonk": "node scripts/setup-listmonk-newsletter.mjs",
@@ -38,33 +42,37 @@
     "test:mobile-contract": "node scripts/tests/mobile-audit-contract.test.mjs",
     "test:flows-contract": "node scripts/tests/flow-lanes-contract.test.mjs",
     "test:tools-matrix": "node scripts/tests/tools-matrix-contract.test.mjs",
-    "test:space-background": "node --experimental-strip-types --test scripts/tests/space-background.test.mjs",
+    "test:space-background": "node --experimental-strip-types --test scripts/tests/space-background.test.mjs scripts/tests/space-nebula.test.mjs",
     "audit:mobile": "bash scripts/run-mobile-browser-audit.sh",
     "test:mobile": "bash scripts/run-mobile-audit.sh",
     "preview": "vite preview"
   },
   "dependencies": {
-    "framer-motion": "^12.42.2",
-    "lucide-react": "^1.24.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "framer-motion": "~12.43.0",
+    "lucide-react": "^1.39.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.18.2",
+    "react-router-dom": "7.18.3",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
-    "eslint": "^10.7.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.9.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
-    "svelte": "^5.56.10",
+    "svelte": "~5.57.0",
     "typescript": "^7.0.2",
-    "vite": "^8.1.4"
-  }
+    "vite": "8.2.2"
+  },
+  "engines": {
+    "node": ">=22.12.0 <25"
+  },
+  "packageManager": "npm@10.9.3"
 }

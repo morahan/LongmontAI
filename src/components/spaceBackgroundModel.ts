@@ -13,28 +13,47 @@ export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
 export const DESKTOP_TRAVELER_COUNT = 24;
 export const MOBILE_TRAVELER_COUNT = 15;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
-export const GALAXY_CREATION_CHANCE = 0.1;
+export const GALAXY_CREATION_CHANCE = 0.2;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
-export const GALAXY_INTERNAL_STAR_COUNT = 36;
+export const GALAXY_INTERNAL_STAR_COUNT = 72;
+export const GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE = [2, 3] as const;
+export const GALAXY_EMBEDDED_PLANET_COUNT_RANGE = [1, 2] as const;
+/** Historical/default spiral arm count; individual formations deliberately vary this. */
 export const GALAXY_SPIRAL_ARM_COUNT = 3;
+export const GALAXY_FORMATIONS = [
+    'spiral',
+    'barred-spiral',
+    'elliptical',
+    'irregular',
+] as const;
+export const GALAXY_ROTATION_RATE_RANGE = [0.09, 0.15] as const;
+export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> = {
+    spiral: 1,
+    'barred-spiral': 0.92,
+    elliptical: 0.78,
+    irregular: 1.12,
+};
 export const UFO_BASIS_POINTS = 300;
 export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
 export const MOBILE_BREAKPOINT = 640;
 export const NEURAL_SIGNAL_SLOT_SECONDS = 24;
-export const NEURAL_SIGNAL_DURATION_RANGE = [2.4, 3.2] as const;
+export const NEURAL_SIGNAL_DURATION_RANGE = [4.2, 5] as const;
+export const NEURAL_SIGNAL_FADE_SECONDS = [1.3, 1.9] as const;
+export const NEURAL_SIGNAL_COLORS = ['155, 213, 239', '183, 188, 239', '151, 185, 236'] as const;
 export const NEURAL_SIGNAL_MAX_CONCURRENT = 1;
-export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.32;
-export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.2;
-export const NEURAL_SIGNAL_MAX_OPACITY = 0.12;
+export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.48;
+export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.30;
+export const NEURAL_SIGNAL_MAX_OPACITY = 0.075;
 export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
+export const NEURAL_CONTAGION_OPPORTUNITIES = 3;
+export const NEURAL_CONTAGION_AFFINITY_BOOST = 4;
+export const NEURAL_CONTAGION_MAX_ENTRIES = 8;
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
-/** The intro spends four seconds making the first glyph readable, then six seconds bursting. */
-export const STAR_TEXT_FIRST_GLYPH_SECONDS = 4;
-export const STAR_TEXT_BURST_SECONDS = MORPH_SECONDS - STAR_TEXT_FIRST_GLYPH_SECONDS;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
+/** @deprecated Historical event window; ambient twinkle now uses independent continuous periods. */
 export const TWINKLE_WINDOW_SECONDS = 120;
 export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
@@ -50,7 +69,7 @@ export const TRAVELER_PALETTE = [
 ] as const;
 export const TRAVELER_SURFACE_TEXTURES = ['bands', 'speckles', 'facets', 'swirls', 'mottled'] as const;
 export const SMALL_TRAVELER_RED_CHANCE = 0.06;
-export const LARGE_TRAVELER_RED_CHANCE = 0.7;
+export const LARGE_TRAVELER_RED_CHANCE = 0.35;
 export const TRAVELER_GLOW_BLUR_RANGE = [1.5, 12] as const;
 export const TRAVELER_GLOW_OPACITY_RANGE = [0.06, 0.22] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
@@ -221,6 +240,8 @@ export interface UfoAppearance {
 }
 
 export type TravelerVariant = 'star' | 'ufo' | 'comet' | 'galaxy';
+export type GalaxyFormation = typeof GALAXY_FORMATIONS[number];
+export type GalaxyMatterKind = 'star' | 'young-star' | 'dust';
 export type CometTrailParticleKind = 'asteroid' | 'stardust';
 
 export interface CometTrailParticle {
@@ -241,10 +262,53 @@ export interface CometAppearance {
 }
 
 export interface GalaxyAppearance {
+    formation: GalaxyFormation;
     outerRadius: number;
     coreRadius: number;
     armCount: number;
+    flattening: number;
+    barLength: number;
+    rotationRate: number;
     internalStarCount: number;
+}
+
+export interface EmbeddedGalaxyPlanet {
+    orbitRadius: number;
+    radius: number;
+    phase: number;
+    speed: number;
+    color: string;
+}
+
+export interface EmbeddedGalaxySystem {
+    orbitRadius: number;
+    phase: number;
+    speed: number;
+    hostRadius: number;
+    hostColor: string;
+    planets: EmbeddedGalaxyPlanet[];
+}
+
+export interface EmbeddedGalaxyPlanetState extends EmbeddedGalaxyPlanet, Point {
+    angle: number;
+    z: number;
+}
+
+export interface EmbeddedGalaxySystemState {
+    host: Point;
+    planets: EmbeddedGalaxyPlanetState[];
+}
+
+export interface GalaxyAnimationState {
+    rotation: number;
+    corePulse: number;
+    dustDrift: number;
+}
+
+export interface GalaxyParticleState extends Point {
+    radius: number;
+    opacity: number;
+    kind: GalaxyMatterKind;
 }
 
 export interface ProjectedTraveler {
@@ -269,6 +333,27 @@ export interface NeuralSignal {
     pulseProgress: number;
     lineWidth: number;
     bend: number;
+    color: string;
+    sparkles: { progress: number; opacity: number; radius: number }[];
+}
+
+export interface NeuralContagionEntry {
+    travelerIndex: number;
+    cycle: number;
+    remainingOpportunities: number;
+    lastStruckSlot: number;
+}
+
+export interface NeuralContagionState {
+    entries: NeuralContagionEntry[];
+    lastSignalSlot: number | null;
+    lastSignalPair: readonly [number, number] | null;
+    lastSignalCycles: readonly [number, number] | null;
+}
+
+export interface NeuralSignalPair {
+    fromTravelerIndex: number;
+    toTravelerIndex: number;
 }
 
 export interface ConstellationPhase {
@@ -279,13 +364,11 @@ export interface ConstellationPhase {
 }
 
 export interface StarTextIntroProgress {
-    stage: 'first-glyph' | 'burst' | 'complete';
-    firstGlyph: number;
-    burst: number;
+    stage: 'morph-in' | 'complete';
+    progress: number;
 }
 
 export interface StarTextTransitionOptions {
-    firstGlyphCount: number;
     targetCount: number;
     /** End-frame visibility decides whether a slot fades in place or converges to live content. */
     endpointVisible?: readonly boolean[];
@@ -410,7 +493,7 @@ export const starCountForWidth = (_width: number) => AMBIENT_STAR_COUNT;
 export const travelerCountForWidth = (width: number) =>
     width < MOBILE_BREAKPOINT ? MOBILE_TRAVELER_COUNT : DESKTOP_TRAVELER_COUNT;
 
-/** The half-open threshold gives every newly created traveler one exact 10% galaxy roll. */
+/** The half-open threshold gives every newly created traveler one exact 20% galaxy roll. */
 export const isGalaxyCreationRoll = (roll: number) => roll >= 0 && roll < GALAXY_CREATION_CHANCE;
 
 /** Every sixth moving star is eligible to carry a prominent planetary system. */
@@ -543,30 +626,28 @@ export const getDriftedStarVelocity = (
     };
 };
 
+/** Separate seed channels preserve layout/drift randomness and never reseed on a frame or cycle. */
+export const getStarTwinkleParameters = (star: Pick<DistantStar, 'twinkleSeed'>) => ({
+    periodSeconds: 8 + hashRandom(star.twinkleSeed, 0, 0) * 10,
+    phase: hashRandom(star.twinkleSeed, 0, 1) * TAU,
+    dim: 0.82 + hashRandom(star.twinkleSeed, 0, 2) * 0.1,
+    bright: 1.04 + hashRandom(star.twinkleSeed, 0, 3) * 0.08,
+});
+
 const getAmbientTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
-    const elapsed = Math.max(0, elapsedSeconds);
-    const cycle = Math.floor(elapsed / TWINKLE_WINDOW_SECONDS);
-    const cycleTime = elapsed - cycle * TWINKLE_WINDOW_SECONDS;
-    const fallDuration = 2 + hashRandom(star.twinkleSeed, cycle, 1) * 3;
-    const restDuration = 0.35 + hashRandom(star.twinkleSeed, cycle, 2) * 1.4;
-    const riseDuration = 2 + hashRandom(star.twinkleSeed, cycle, 3) * 3;
-    const totalDuration = fallDuration + restDuration + riseDuration;
-    const start = hashRandom(star.twinkleSeed, cycle, 0) * (TWINKLE_WINDOW_SECONDS - totalDuration);
-    const target = 0.4 + hashRandom(star.twinkleSeed, cycle, 4) * 0.2;
-    const eventTime = cycleTime - start;
-    if (eventTime < 0 || eventTime >= totalDuration) return 1;
-    if (eventTime < fallDuration) return 1 - (1 - target) * smoothstep(eventTime / fallDuration);
-    if (eventTime < fallDuration + restDuration) return target;
-    return target + (1 - target) * smoothstep(
-        (eventTime - fallDuration - restDuration) / riseDuration,
-    );
+    const { periodSeconds, phase, dim, bright } = getStarTwinkleParameters(star);
+    const wave = (1 + Math.sin(Math.max(0, elapsedSeconds) * TAU / periodSeconds + phase)) / 2;
+    return dim + (bright - dim) * wave;
 };
 
-/** One independently seeded full-dim-full event per <=120s cycle. */
-export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) =>
-    getConstellationPhase(elapsedSeconds).name === 'ambient'
-        ? getAmbientTwinkleBrightness(star, elapsedSeconds)
-        : 1;
+/** Slow, independent dim/bright variation; constellation choreography retains its own styles. */
+export const getTwinkleBrightness = (
+    star: DistantStar,
+    elapsedSeconds: number,
+    prefersReducedMotion = false,
+) => !prefersReducedMotion && getConstellationPhase(elapsedSeconds).name === 'ambient'
+    ? getAmbientTwinkleBrightness(star, elapsedSeconds)
+    : 1;
 
 export const getConstellationStrength = (phase: ConstellationPhase) => {
     if (phase.name === 'morph-in') return phase.progress;
@@ -575,26 +656,14 @@ export const getConstellationStrength = (phase: ConstellationPhase) => {
     return 0;
 };
 
-/** Explicit, shared choreography for scheduled and user-triggered Star Text. */
+/** Explicit, shared choreography: every glyph morphs for the same complete ten seconds. */
 export const getStarTextIntroProgress = (eventElapsed: number): StarTextIntroProgress => {
     const elapsed = Math.max(0, eventElapsed);
-    if (elapsed < STAR_TEXT_FIRST_GLYPH_SECONDS) {
-        return {
-            stage: 'first-glyph',
-            firstGlyph: smoothstep(elapsed / STAR_TEXT_FIRST_GLYPH_SECONDS),
-            burst: 0,
-        };
-    }
-    if (elapsed < MORPH_SECONDS) {
-        return {
-            stage: 'burst',
-            firstGlyph: 1,
-            burst: smoothstep(
-                (elapsed - STAR_TEXT_FIRST_GLYPH_SECONDS) / STAR_TEXT_BURST_SECONDS,
-            ),
-        };
-    }
-    return { stage: 'complete', firstGlyph: 1, burst: 1 };
+    const progress = smoothstep(elapsed / MORPH_SECONDS);
+    return {
+        stage: elapsed < MORPH_SECONDS ? 'morph-in' : 'complete',
+        progress,
+    };
 };
 
 /** Line strength also starts from the exact rendered frame when a trigger restarts. */
@@ -652,8 +721,12 @@ const hiddenStarStyle = (radius = 1): StarVisualStyle => ({
     alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0,
 });
 
-const ambientVisualStyle = (star: DistantStar, elapsedSeconds: number): StarVisualStyle => {
-    const twinkle = getAmbientTwinkleBrightness(star, elapsedSeconds);
+const ambientVisualStyle = (
+    star: DistantStar,
+    elapsedSeconds: number,
+    prefersReducedMotion = false,
+): StarVisualStyle => {
+    const twinkle = prefersReducedMotion ? 1 : getAmbientTwinkleBrightness(star, elapsedSeconds);
     return {
         alpha: star.alpha,
         twinkle,
@@ -663,7 +736,13 @@ const ambientVisualStyle = (star: DistantStar, elapsedSeconds: number): StarVisu
     };
 };
 
-export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): StarVisualStyle[] => {
+export const getStarFieldStyles = (
+    sceneSeed: number,
+    elapsedSeconds: number,
+    prefersReducedMotion = false,
+): StarVisualStyle[] => {
+    // Match the Canvas lifecycle's static time-zero frame, including redraws after resize.
+    if (prefersReducedMotion) elapsedSeconds = 0;
     const phase = getConstellationPhase(elapsedSeconds);
     const ambient = createAmbientLayout(sceneSeed, phase.event);
     if (phase.name === 'ambient') {
@@ -676,17 +755,17 @@ export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): S
         return [
             ...Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) =>
                 hiddenStarStyle(hiddenSource[index]?.size ? hiddenSource[index].size * 1.18 : 1)),
-            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds)),
+            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds, prefersReducedMotion)),
         ];
     }
 
     const phrase = selectConstellationPhrase(sceneSeed, phase.event);
     const counts = getConstellationGlyphAnchorCounts(phrase, sceneSeed, phase.event);
     const anchorCount = counts.reduce((total, count) => total + count, 0);
-    const firstGlyphCount = counts[0];
     const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), anchorCount);
     const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
     const intro = getStarTextIntroProgress(phase.eventElapsed);
+    const ambientSources = getStarTextAmbientSources(anchorCount);
     const targetStyles = previous.map((star) => ({
         alpha: star.alpha,
         twinkle: 1,
@@ -703,26 +782,22 @@ export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): S
                 opacity: target.opacity * visible };
         }
         if (phase.name === 'hold') return target;
-        const reveal = index < firstGlyphCount ? intro.firstGlyph : intro.burst;
-        const start = index < firstGlyphCount
-            ? ambientVisualStyle(previous[index], eventStart - 0.000001)
-            : hiddenStarStyle(target.radius);
-        const style = mixStarVisualStyle(start, target, reveal);
-        return { ...style, strength: reveal };
+        const source = ambientSources[index];
+        const start = source.visible
+            ? ambientVisualStyle(previous[source.index], eventStart - 0.000001)
+            : hiddenStarStyle(previous[source.index].size * 1.18);
+        const style = mixStarVisualStyle(start, target, intro.progress);
+        return { ...style, strength: intro.progress };
     });
 
     const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
     const ambientStyles = ambient.map((star, index) => {
         const from = ambientVisualStyle(previousAmbient[index], eventStart - 0.000001);
         const to = ambientVisualStyle(star, eventStart + CONSTELLATION_WINDOW_SECONDS);
-        const held = index >= Math.max(firstGlyphCount, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT)
-            ? from
-            : hiddenStarStyle(from.radius);
+        const consumedCount = AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT;
+        const held = index >= consumedCount ? from : hiddenStarStyle(from.radius);
         if (phase.name === 'morph-out') return mixStarVisualStyle(held, to, phase.progress);
-        if (index < firstGlyphCount) return hiddenStarStyle(from.radius);
-        if (index >= AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT) return from;
-        const fade = 1 - intro.firstGlyph;
-        return { ...from, alpha: from.alpha * fade, opacity: from.opacity * fade };
+        return index < consumedCount ? hiddenStarStyle(from.radius) : from;
     });
     return [...textStyles, ...ambientStyles];
 };
@@ -1120,53 +1195,82 @@ const mixPoint = (from: Point, to: Point, amount: number): Point => ({
     y: from.y + (to.y - from.y) * amount,
 });
 
+const getDistributedTextSourceSlots = (targetCount: number) => {
+    const count = Math.max(0, Math.trunc(targetCount));
+    const visibleSourceCount = Math.min(
+        AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT,
+        count,
+    );
+    const sourceByDestination = Array<number>(count).fill(-1);
+    for (let sourceIndex = 0; sourceIndex < visibleSourceCount; sourceIndex += 1) {
+        const destination = Math.floor((sourceIndex + 0.5) * count / visibleSourceCount);
+        sourceByDestination[destination] = sourceIndex;
+    }
+    let hiddenSource = visibleSourceCount;
+    return sourceByDestination.map((source) => source >= 0 ? source : hiddenSource++);
+};
+
+const getStarTextAmbientSources = (targetCount: number) => {
+    const visibleSourceCount = Math.min(
+        AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT,
+        Math.max(0, targetCount),
+    );
+    return getDistributedTextSourceSlots(targetCount).map((sourceSlot) => ({
+        index: sourceSlot < visibleSourceCount
+            ? sourceSlot
+            : positiveModulo(sourceSlot * 17 + 7, AMBIENT_STAR_COUNT),
+        visible: sourceSlot < visibleSourceCount,
+    }));
+};
+
 /**
- * Move production ambient slots into the first glyph before an Easter transition starts. Each
- * visible default star is transferred once and its old slot is hidden, preserving the exact frame
- * without duplicate stars. Any density beyond the available ambient field spawns hidden.
+ * Deterministically fan ambient positions across every destination glyph. Existing visible stars
+ * occupy evenly distributed destination slots; extra nodes share ambient origins but start hidden.
  */
-export const remapAmbientStarsToFirstGlyphSlots = (
+export const createStarTextAmbientOrigins = (
+    ambientSources: Point[],
+    targetCount: number,
+): Point[] => {
+    const count = Math.max(0, Math.trunc(targetCount));
+    const fallback = ambientSources[0] ?? { x: 0, y: 0 };
+    return getStarTextAmbientSources(count).map((source) =>
+        ({ ...(ambientSources[source.index % Math.max(1, ambientSources.length)] ?? fallback) }));
+};
+
+/** Transfer ambient sources into text slots without changing the rendered trigger frame. */
+export const remapAmbientStarsToTextSlots = (
     positions: Point[],
     styles: StarVisualStyle[],
-    firstGlyphCount: number,
+    targetCount: number,
     ambientStartIndex = MAX_STAR_TEXT_ANCHOR_COUNT,
 ): { positions: Point[]; styles: StarVisualStyle[]; sourceIndices: number[] } => {
     const remappedPositions = positions.map((point) => ({ ...point }));
     const remappedStyles = styles.map((style) => ({ ...style }));
-    const sourceIndices = styles
+    const ambientSourceIndices = styles
         .map((style, index) => ({ style, index }))
         .filter(({ style, index }) => index >= ambientStartIndex
             && style.strength === 0 && style.opacity > 0)
         .map(({ index }) => index);
-    if (sourceIndices.length === 0) {
-        return { positions: remappedPositions, styles: remappedStyles, sourceIndices };
+    const sourceIndices = ambientSourceIndices.slice(
+        0, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT,
+    );
+    if (ambientSourceIndices.length > 0) {
+        getStarTextAmbientSources(targetCount).forEach((source, destinationIndex) => {
+            const sourceIndex = ambientSourceIndices[
+                positiveModulo(source.index, ambientSourceIndices.length)
+            ];
+            remappedPositions[destinationIndex] = { ...positions[sourceIndex] };
+            remappedStyles[destinationIndex] = source.visible
+                ? { ...styles[sourceIndex] }
+                : hiddenStarStyle(styles[sourceIndex].radius);
+        });
     }
-    for (let index = 0; index < firstGlyphCount; index += 1) {
-        const sourceIndex = sourceIndices[index % sourceIndices.length];
-        remappedPositions[index] = { ...positions[sourceIndex] };
-        remappedStyles[index] = index < sourceIndices.length
-            ? { ...styles[sourceIndex] }
-            : hiddenStarStyle(styles[sourceIndex].radius);
-    }
-    sourceIndices.slice(0, firstGlyphCount).forEach((sourceIndex) => {
+    sourceIndices.forEach((sourceIndex) => {
         remappedStyles[sourceIndex] = hiddenStarStyle(styles[sourceIndex].radius);
     });
     return { positions: remappedPositions, styles: remappedStyles, sourceIndices };
 };
 
-/** Every post-first-glyph node has a deterministic, visible first-glyph burst origin. */
-export const createStarTextBurstOrigins = (
-    targets: Point[],
-    firstGlyphCount: number,
-    targetCount = targets.length,
-): Point[] => {
-    const safeFirstCount = Math.max(1, Math.min(firstGlyphCount, targetCount, targets.length));
-    return Array.from({ length: targetCount }, (_, index) => {
-        if (index < safeFirstCount) return { ...targets[index] };
-        // A coprime stride fans adjacent destination stars from different first-glyph nodes.
-        return { ...targets[((index - safeFirstCount) * 17 + 7) % safeFirstCount] };
-    });
-};
 
 const quarticPoint = (controls: readonly Point[], amount: number): Point => {
     const t = clamp01(amount);
@@ -1275,19 +1379,11 @@ export const getEasterEggStarFieldPositions = (
         return end;
     }
     const targetCount = Math.min(options.targetCount, targets.length);
-    const firstGlyphCount = Math.min(options.firstGlyphCount, targetCount);
-    const origins = createStarTextBurstOrigins(targets, firstGlyphCount, targetCount);
     const targetFor = (point: Point, index: number) => targets[index] ?? point;
     if (phase.name === 'morph-in') {
-        const intro = getStarTextIntroProgress(phase.eventElapsed);
-        return start.map((point, index) => {
-            if (index >= targetCount) return point;
-            if (index < firstGlyphCount) {
-                return mixPoint(point, targetFor(point, index), intro.firstGlyph);
-            }
-            if (intro.stage === 'first-glyph') return point;
-            return mixPoint(origins[index], targetFor(point, index), intro.burst);
-        });
+        return start.map((point, index) => index < targetCount
+            ? mixPoint(point, targetFor(point, index), phase.progress)
+            : point);
     }
     if (phase.name === 'hold') return start.map(targetFor);
     const endpointIsVisible = (index: number) => options.endpointVisible?.[index] ?? false;
@@ -1341,20 +1437,10 @@ export const getEasterEggStarFieldStyles = (
         return end;
     }
     const targetCount = Math.min(options.targetCount, targets.length);
-    const firstGlyphCount = Math.min(options.firstGlyphCount, targetCount);
     if (phase.name === 'morph-in') {
-        const intro = getStarTextIntroProgress(phase.eventElapsed);
-        return start.map((style, index) => {
-            if (index >= targetCount) return style;
-            if (index < firstGlyphCount) {
-                return mixStarVisualStyle(style, targetFor(style, index), intro.firstGlyph);
-            }
-            const hidden = hiddenStarStyle(targetFor(style, index).radius);
-            if (intro.stage === 'first-glyph') {
-                return mixStarVisualStyle(style, hidden, intro.firstGlyph);
-            }
-            return mixStarVisualStyle(hidden, targetFor(style, index), intro.burst);
-        });
+        return start.map((style, index) => index < targetCount
+            ? mixStarVisualStyle(style, targetFor(style, index), phase.progress)
+            : style);
     }
     if (phase.name === 'hold') return start.map(targetFor);
     const endpointIsVisible = (index: number) => options.endpointVisible?.[index] ?? false;
@@ -1431,8 +1517,6 @@ export const getStarFieldPositions = (
 
     const geometry = createConstellationGeometry(width, height, sceneSeed, phase.event);
     const targets = geometry.points;
-    const firstGlyphCount = geometry.glyphs[0].indices.length;
-    const origins = createStarTextBurstOrigins(targets, firstGlyphCount);
     const previous = createAmbientLayout(
         sceneSeed, Math.max(0, phase.event - 1), targets.length,
     );
@@ -1441,19 +1525,18 @@ export const getStarFieldPositions = (
         ? CONSTELLATION_INTERVAL_SECONDS
         : CONSTELLATION_INTERVAL_SECONDS - CONSTELLATION_WINDOW_SECONDS;
     const intro = getStarTextIntroProgress(phase.eventElapsed);
+    const textSources = getStarTextAmbientSources(targets.length);
     const fallback = targets[0] ?? { x: width * 0.5, y: height * 0.5 };
     const textPositions = Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) => {
         if (index >= targets.length) return { ...fallback };
         if (phase.name === 'hold' || phase.name === 'morph-out') return { ...targets[index] };
-        if (index < firstGlyphCount) {
-            const point = getDriftedStar(previous[index], previousDriftTime);
-            return mixPoint(
-                { x: point.x * width, y: point.y * height },
-                targets[index],
-                intro.firstGlyph,
-            );
-        }
-        return mixPoint(origins[index], targets[index], intro.burst);
+        const source = textSources[index];
+        const point = getDriftedStar(previous[source.index], previousDriftTime);
+        return mixPoint(
+            { x: point.x * width, y: point.y * height },
+            targets[index],
+            intro.progress,
+        );
     });
     const backgroundPositions = ambientPositions.map((point, index) => {
         const previousPoint = getDriftedStar(previousAmbient[index], previousDriftTime);
@@ -1598,17 +1681,233 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     };
 };
 
+const GALAXY_DUST_DRIFT_MULTIPLIERS: Record<GalaxyFormation, number> = {
+    spiral: 0.32,
+    'barred-spiral': -0.22,
+    elliptical: 0.12,
+    irregular: -0.16,
+};
+
+/** Formation identity is stable for one traveler lifecycle and every class is equiprobable. */
+export const getGalaxyFormation = (seed: number, cycle = 0): GalaxyFormation =>
+    GALAXY_FORMATIONS[hashUint(seed, Math.max(0, Math.trunc(cycle)), 521) % GALAXY_FORMATIONS.length];
+
+/** Formation-specific magnitudes and seeded direction keep the population varied but legible. */
+export const getGalaxyRotationRate = (seed: number, cycle = 0) => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const formation = getGalaxyFormation(seed, stableCycle);
+    const magnitude = mix(
+        GALAXY_ROTATION_RATE_RANGE[0],
+        GALAXY_ROTATION_RATE_RANGE[1],
+        hashRandom(seed, stableCycle, 524),
+    ) * GALAXY_FORMATION_RATE_MULTIPLIERS[formation];
+    return magnitude * (hashUint(seed, stableCycle, 525) % 2 === 0 ? -1 : 1);
+};
+
 /** Galaxies stay recognizable without ever exceeding seven times the replaced moving-star radius. */
-export const getGalaxyAppearance = (traveler: Traveler, progress: number): GalaxyAppearance => {
+export const getGalaxyAppearance = (
+    traveler: Traveler,
+    progress: number,
+    cycle = 0,
+): GalaxyAppearance => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const formation = getGalaxyFormation(traveler.seed, stableCycle);
     const starRadius = getTravelerAppearance(traveler, progress).radius;
-    const outerRadius = starRadius * (4.6 + smoothstep(progress) * 2.4);
+    const outerRadius = Math.min(
+        starRadius * GALAXY_MAX_RADIUS_MULTIPLIER,
+        starRadius * (4.6 + smoothstep(progress) * 2.4),
+    );
+    const profiles: Record<GalaxyFormation, Pick<GalaxyAppearance,
+        'coreRadius' | 'armCount' | 'flattening' | 'barLength'>> = {
+        spiral: { coreRadius: 0.14, armCount: 3 + hashUint(traveler.seed, stableCycle, 522) % 2,
+            flattening: 0.62, barLength: 0 },
+        'barred-spiral': { coreRadius: 0.13, armCount: 2,
+            flattening: 0.54, barLength: 0.48 },
+        elliptical: { coreRadius: 0.3, armCount: 0,
+            flattening: 0.7 + hashRandom(traveler.seed, stableCycle, 523) * 0.16,
+            barLength: 0 },
+        irregular: { coreRadius: 0.11, armCount: 0,
+            flattening: 0.82, barLength: 0 },
+    };
+    const profile = profiles[formation];
     return {
-        outerRadius: Math.min(starRadius * GALAXY_MAX_RADIUS_MULTIPLIER, outerRadius),
-        coreRadius: outerRadius * 0.15,
-        armCount: GALAXY_SPIRAL_ARM_COUNT,
+        formation,
+        outerRadius,
+        coreRadius: outerRadius * profile.coreRadius,
+        armCount: profile.armCount,
+        flattening: profile.flattening,
+        barLength: outerRadius * profile.barLength,
+        rotationRate: getGalaxyRotationRate(traveler.seed, stableCycle),
         internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
     };
 };
+
+/** Visible whole-formation motion plus independent core and dust rhythms, all on simulation time. */
+export const getGalaxyAnimationState = (
+    traveler: Pick<Traveler, 'seed'>,
+    cycle: number,
+    simulationSeconds: number,
+): GalaxyAnimationState => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const elapsed = Math.max(0, simulationSeconds);
+    const formation = getGalaxyFormation(traveler.seed, stableCycle);
+    const rotationRate = getGalaxyRotationRate(traveler.seed, stableCycle);
+    return {
+        rotation: hashRandom(traveler.seed, stableCycle, 526) * TAU + elapsed * rotationRate,
+        corePulse: 0.92 + 0.08 * Math.sin(
+            elapsed * (0.34 + hashRandom(traveler.seed, stableCycle, 527) * 0.18)
+            + hashRandom(traveler.seed, stableCycle, 528) * TAU,
+        ),
+        dustDrift: elapsed * rotationRate * GALAXY_DUST_DRIFT_MULTIPLIERS[formation],
+    };
+};
+
+/**
+ * Bounded local-space matter for Canvas rendering. Differential angular speeds make the interior
+ * lively without allocating random generators or particle objects outside this small fixed set.
+ */
+export const getGalaxyParticleState = (
+    traveler: Traveler,
+    cycle: number,
+    progress: number,
+    simulationSeconds: number,
+    index: number,
+    resolvedAppearance?: GalaxyAppearance,
+): GalaxyParticleState => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const particleIndex = positiveModulo(Math.trunc(index), GALAXY_INTERNAL_STAR_COUNT);
+    const appearance = resolvedAppearance ?? getGalaxyAppearance(traveler, progress, stableCycle);
+    const elapsed = Math.max(0, simulationSeconds);
+    const unit = hashRandom(traveler.seed, stableCycle, 540 + particleIndex * 4);
+    const jitter = hashRandom(traveler.seed, stableCycle, 541 + particleIndex * 4) - 0.5;
+    const phase = hashRandom(traveler.seed, stableCycle, 542 + particleIndex * 4) * TAU;
+    const twinklePhase = hashRandom(traveler.seed, stableCycle, 543 + particleIndex * 4) * TAU;
+    let radial = 0;
+    let angle = phase;
+    let kind: GalaxyMatterKind = particleIndex % 9 === 0 ? 'dust' : 'star';
+
+    if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
+        radial = 0.16 + Math.sqrt(unit) * 0.76;
+        const arm = particleIndex % appearance.armCount;
+        angle = arm * TAU / appearance.armCount + radial * TAU * 1.35 + jitter * 0.46
+            + elapsed * appearance.rotationRate * (0.72 - radial * 0.34);
+        if (particleIndex % 7 === 1) kind = 'young-star';
+        if (appearance.formation === 'barred-spiral' && radial < 0.38) {
+            angle = (particleIndex & 1) * Math.PI + jitter * 0.22
+                - elapsed * appearance.rotationRate * 0.16;
+        }
+    } else if (appearance.formation === 'elliptical') {
+        radial = 0.08 + unit ** 0.72 * 0.82;
+        angle += elapsed * appearance.rotationRate * (0.38 - radial * 0.12);
+        kind = particleIndex % 11 === 0 ? 'dust' : 'star';
+    } else {
+        const clump = particleIndex % 4;
+        const clumpAngle = hashRandom(traveler.seed, stableCycle, 610 + clump) * TAU;
+        const clumpRadius = 0.18 + hashRandom(traveler.seed, stableCycle, 620 + clump) * 0.42;
+        const localRadius = 0.04 + unit * 0.15;
+        const localAngle = phase + elapsed * appearance.rotationRate * (0.72 + clump * 0.1);
+        const rawX = Math.cos(clumpAngle) * clumpRadius + Math.cos(localAngle) * localRadius;
+        const rawY = Math.sin(clumpAngle) * clumpRadius + Math.sin(localAngle) * localRadius;
+        radial = Math.min(0.82, Math.hypot(rawX, rawY));
+        angle = Math.atan2(rawY, rawX)
+            + Math.sin(elapsed * 0.11 + clumpAngle) * 0.025;
+        kind = particleIndex % 9 === 0 ? 'dust'
+            : particleIndex % 4 === 0 ? 'young-star' : 'star';
+    }
+
+    const normalizedRadius = Math.min(0.94, Math.max(0.025, radial));
+    const pulse = 0.84 + 0.16 * Math.sin(elapsed * (0.55 + unit * 0.38) + twinklePhase);
+    return {
+        x: Math.cos(angle) * normalizedRadius * appearance.outerRadius,
+        y: Math.sin(angle) * normalizedRadius * appearance.outerRadius * appearance.flattening,
+        radius: Math.min(0.68, Math.max(
+            0.12,
+            appearance.outerRadius * (kind === 'dust' ? 0.009 : 0.011),
+        )),
+        opacity: (kind === 'dust' ? 0.32 : 0.58) * pulse,
+        kind,
+    };
+};
+
+const EMBEDDED_GALAXY_HOST_COLORS = ['#fff3cf', '#d9efff', '#ffd7a8'] as const;
+const EMBEDDED_GALAXY_PLANET_COLORS = ['#79b8d8', '#d2946f', '#9fc88c', '#b59bd6'] as const;
+
+/** Stable miniature systems remain comfortably inside the galaxy's seven-star-radius silhouette. */
+export const createEmbeddedGalaxySystems = (
+    traveler: Pick<Traveler, 'seed'>,
+    cycle: number,
+    appearance: Pick<GalaxyAppearance, 'outerRadius' | 'flattening'>,
+): EmbeddedGalaxySystem[] => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    const outerRadius = Number.isFinite(appearance.outerRadius)
+        ? Math.max(0, appearance.outerRadius) : 0;
+    const flattening = Number.isFinite(appearance.flattening)
+        ? Math.max(0.45, Math.min(1, appearance.flattening)) : 0.45;
+    const systemCount = GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[0]
+        + hashUint(traveler.seed, stableCycle, 701)
+        % (GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[1] - GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[0] + 1);
+    return Array.from({ length: systemCount }, (_, systemIndex) => {
+        const channel = 710 + systemIndex * 31;
+        const direction = hashUint(traveler.seed, stableCycle, channel + 3) % 2 === 0 ? -1 : 1;
+        const planetCount = GALAXY_EMBEDDED_PLANET_COUNT_RANGE[0]
+            + hashUint(traveler.seed, stableCycle, channel + 4)
+            % (GALAXY_EMBEDDED_PLANET_COUNT_RANGE[1] - GALAXY_EMBEDDED_PLANET_COUNT_RANGE[0] + 1);
+        return {
+            orbitRadius: outerRadius * flattening
+                * (0.27 + hashRandom(traveler.seed, stableCycle, channel) * 0.24),
+            phase: hashRandom(traveler.seed, stableCycle, channel + 1) * TAU,
+            speed: direction * (0.2 + hashRandom(traveler.seed, stableCycle, channel + 2) * 0.11),
+            hostRadius: Math.min(outerRadius * 0.04, Math.max(0.22, outerRadius * 0.03)),
+            hostColor: EMBEDDED_GALAXY_HOST_COLORS[
+                hashUint(traveler.seed, stableCycle, channel + 5) % EMBEDDED_GALAXY_HOST_COLORS.length
+            ],
+            planets: Array.from({ length: planetCount }, (_, planetIndex) => ({
+                orbitRadius: outerRadius * flattening
+                    * (0.052 + planetIndex * 0.035
+                        + hashRandom(traveler.seed, stableCycle, channel + 6 + planetIndex * 5) * 0.014),
+                radius: Math.min(outerRadius * 0.025, Math.max(0.13, outerRadius * (0.012
+                    + hashRandom(traveler.seed, stableCycle, channel + 7 + planetIndex * 5) * 0.006))),
+                phase: hashRandom(traveler.seed, stableCycle, channel + 8 + planetIndex * 5) * TAU,
+                speed: (planetIndex % 2 === 0 ? 1 : -1)
+                    * (1.35 + hashRandom(traveler.seed, stableCycle, channel + 9 + planetIndex * 5) * 1.1),
+                color: EMBEDDED_GALAXY_PLANET_COLORS[
+                    hashUint(traveler.seed, stableCycle, channel + 10 + planetIndex * 5)
+                    % EMBEDDED_GALAXY_PLANET_COLORS.length
+                ],
+            })),
+        } satisfies EmbeddedGalaxySystem;
+    });
+};
+
+/** Planet coordinates are host-relative, so moving hosts and their bound orbits share one clock. */
+export const getEmbeddedGalaxySystemState = (
+    system: EmbeddedGalaxySystem,
+    simulationSeconds: number,
+): EmbeddedGalaxySystemState => {
+    const elapsed = Number.isFinite(simulationSeconds) ? Math.max(0, simulationSeconds) : 0;
+    const hostAngle = system.phase + elapsed * system.speed;
+    const host = {
+        x: Math.cos(hostAngle) * system.orbitRadius,
+        y: Math.sin(hostAngle) * system.orbitRadius,
+    };
+    return {
+        host,
+        planets: system.planets.map((planet) => {
+            const angle = planet.phase + elapsed * planet.speed;
+            return {
+                ...planet,
+                angle,
+                z: Math.sin(angle),
+                x: host.x + Math.cos(angle) * planet.orbitRadius,
+                y: host.y + Math.sin(angle) * planet.orbitRadius,
+            };
+        }),
+    };
+};
+
+/** Miniature systems fade in only once their sub-pixel planets can resolve as distinct points. */
+export const getEmbeddedGalaxySystemOpacity = (outerRadius: number) =>
+    clamp01(((Number.isFinite(outerRadius) ? Math.max(0, outerRadius) : 0) - 4) / 5);
 
 /** System owners retain their resolved disc while suppressing every surrounding luminosity layer. */
 export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): TravelerStarRenderPolicy => ({
@@ -1628,14 +1927,15 @@ export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppea
     };
 };
 
-/** Stable local-space trail geometry; Canvas rotates its +distance axis opposite current motion. */
+/** Seeded local-space debris drifts continuously while widening along the motion-opposed wake. */
 export const getCometAppearance = (
     traveler: Traveler,
     cycle: number,
     progress: number,
 ): CometAppearance => {
     const stableCycle = Math.max(0, Math.trunc(cycle));
-    const headRadius = getTravelerAppearance(traveler, progress).radius * 1.35;
+    const boundedProgress = clamp01(progress);
+    const headRadius = getTravelerAppearance(traveler, boundedProgress).radius * 1.35;
     const trailLength = Math.max(18, headRadius * 12);
     const trailWidth = Math.max(3.5, headRadius * 2.8);
     const random = createSeededRandom(hashUint(traveler.seed, stableCycle, 401));
@@ -1644,18 +1944,33 @@ export const getCometAppearance = (
         index: number,
         count: number,
     ): CometTrailParticle => {
-        const distanceFraction = (index + 0.55 + random() * 0.35) / count;
-        const spread = trailWidth * (0.18 + distanceFraction * 0.82);
+        const baseDistance = (index + 0.55 + random() * 0.35) / count;
+        const distanceFraction = baseDistance * (0.88 + boundedProgress * 0.12);
+        const wakeAge = smoothstep(distanceFraction);
+        const lateralBias = random() * 2 - 1;
+        const flutterPhase = random() * TAU;
+        const flutterRate = 0.65 + random() * 0.65;
+        const spread = trailWidth * (0.12 + wakeAge * 0.88);
+        const flutter = Math.sin(flutterPhase + boundedProgress * TAU * flutterRate);
         const asteroid = kind === 'asteroid';
+        const radiusRoll = random();
+        const baseOpacity = asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42;
+        const opacityPulse = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(
+            flutterPhase + boundedProgress * TAU * (0.8 + flutterRate * 0.35),
+        ));
+        const rotation = positiveModulo(
+            random() * TAU + boundedProgress * TAU * (0.45 + random() * 1.1),
+            TAU,
+        );
         return {
             kind,
             distance: trailLength * distanceFraction,
-            lateralOffset: (random() * 2 - 1) * spread,
+            lateralOffset: spread * (lateralBias * 0.72 + flutter * 0.28),
             radius: asteroid
-                ? Math.max(0.35, headRadius * (0.13 + random() * 0.16))
-                : Math.max(0.1, headRadius * (0.035 + random() * 0.045)),
-            opacity: asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42,
-            rotation: random() * TAU,
+                ? Math.max(0.35, headRadius * (0.13 + radiusRoll * 0.16))
+                : Math.max(0.1, headRadius * (0.035 + radiusRoll * 0.045)),
+            opacity: baseOpacity * opacityPulse * (1 - wakeAge * 0.28),
+            rotation,
         };
     };
     return {
@@ -1719,9 +2034,212 @@ const isSensibleNeuralPair = (
     return distance >= minimumDistance && distance <= maximumDistance;
 };
 
+/** Approach every eligibility boundary at zero light, before hard offscreen suppression. */
+export const getNeuralPairVisibility = (
+    left: ProjectedTraveler, right: ProjectedTraveler, width: number, height: number,
+) => {
+    const minimumDistance = Math.min(72, Math.max(36, Math.min(width, height) * 0.09));
+    const maximumDistance = Math.hypot(width, height) * 0.48;
+    const distance = Math.hypot(right.x - left.x, right.y - left.y);
+    const edgeBand = Math.min(80, Math.min(width, height) * 0.12);
+    const endpointFade = (point: ProjectedTraveler) => smoothstep(
+        Math.min(point.x, width - point.x, point.y, height - point.y) / edgeBand,
+    ) * smoothstep((point.opacity - 0.08) / 0.27);
+    return Math.min(endpointFade(left), endpointFade(right))
+        * smoothstep((distance - minimumDistance) / 32)
+        * smoothstep((maximumDistance - distance) / 80);
+};
+
+/** Render-only extinction: preserve intrinsic scheduling while fading before an endpoint is hidden.
+ * The ratio replaces (rather than doubles) the intrinsic opacity fade already in the signal.
+ */
+export const getNeuralEndpointTransmission = (intrinsicOpacity: number, renderedOpacity: number) => {
+    const intrinsicFade = smoothstep((intrinsicOpacity - 0.08) / 0.27);
+    if (intrinsicFade <= 0) return 0;
+    return Math.min(1, smoothstep((renderedOpacity - 0.08) / 0.27) / intrinsicFade);
+};
+
+export const getNeuralSignalEnvelope = (elapsed: number, duration: number) =>
+    smoothstep(elapsed / NEURAL_SIGNAL_FADE_SECONDS[0])
+    * smoothstep((duration - elapsed) / NEURAL_SIGNAL_FADE_SECONDS[1]);
+
+/** Two fixed beads bloom once as the eased light passes; no per-frame random flicker. */
+export const getNeuralSignalSparkles = (progress: number) => [0.34, 0.68].map((position) => ({
+    progress: position,
+    opacity: 0.65 * smoothstep(1 - Math.abs(progress - position) / 0.26),
+    radius: 2.6,
+}));
+
+/** A small value object keeps recent traveler affinity bounded and independent from React. */
+export const createNeuralContagionState = (): NeuralContagionState => ({
+    entries: [],
+    lastSignalSlot: null,
+    lastSignalPair: null,
+    lastSignalCycles: null,
+});
+
+const isCurrentContagionEntry = (
+    entry: NeuralContagionEntry,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+) => entry.remainingOpportunities > 0
+    && projections[entry.travelerIndex]?.cycle === entry.cycle
+    && isTravelerEligibleForNeuralSignal(projections[entry.travelerIndex], width, height);
+
+/** Remove hidden or recycled travelers immediately instead of retaining stale index identities. */
+export const syncNeuralContagionState = (
+    state: NeuralContagionState,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+): NeuralContagionState => {
+    const entries = state.entries.filter((entry) =>
+        isCurrentContagionEntry(entry, projections, width, height));
+    return entries.length === state.entries.length
+        ? state
+        : { ...state, entries };
+};
+
+const getContagionAffinity = (
+    state: NeuralContagionState | undefined,
+    travelerIndex: number,
+    projection: ProjectedTraveler,
+) => {
+    const entry = state?.entries.find((candidate) =>
+        candidate.travelerIndex === travelerIndex && candidate.cycle === projection.cycle);
+    return entry ? entry.remainingOpportunities / NEURAL_CONTAGION_OPPORTUNITIES : 0;
+};
+
+const isLockedNeuralPairCurrent = (
+    state: NeuralContagionState,
+    slot: number,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+) => {
+    if (state.lastSignalSlot !== slot || !state.lastSignalPair || !state.lastSignalCycles) return false;
+    const [from, to] = state.lastSignalPair;
+    return projections[from]?.cycle === state.lastSignalCycles[0]
+        && projections[to]?.cycle === state.lastSignalCycles[1]
+        && isTravelerEligibleForNeuralSignal(projections[from], width, height)
+        && isTravelerEligibleForNeuralSignal(projections[to], width, height)
+        && isSensibleNeuralPair(projections[from], projections[to], width, height);
+};
+
 /**
- * Stateless deterministic schedule. Pair indices always address the supplied live traveler
- * projections, so Canvas endpoints track moving travelers without retaining stale coordinates.
+ * Select from every sensible pair with baseline weight one. Recent endpoints add a temporary
+ * weight, so ordinary pairs always retain a non-zero chance and contagion cannot hard-lock.
+ */
+export const selectNeuralSignalPair = (
+    sceneSeed: number,
+    slot: number,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+    contagionState?: NeuralContagionState,
+): NeuralSignalPair | null => {
+    if (contagionState && isLockedNeuralPairCurrent(
+        contagionState, slot, projections, width, height,
+    )) {
+        return {
+            fromTravelerIndex: contagionState.lastSignalPair![0],
+            toTravelerIndex: contagionState.lastSignalPair![1],
+        };
+    }
+    // An event whose locked endpoint went stale disappears rather than jumping to a new pair.
+    if (contagionState?.lastSignalSlot === slot) return null;
+
+    const pairs: Array<NeuralSignalPair & { weight: number }> = [];
+    let totalWeight = 0;
+    for (let from = 0; from < projections.length; from += 1) {
+        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
+        for (let to = from + 1; to < projections.length; to += 1) {
+            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
+                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
+            const weight = 1 + NEURAL_CONTAGION_AFFINITY_BOOST * (
+                getContagionAffinity(contagionState, from, projections[from])
+                + getContagionAffinity(contagionState, to, projections[to])
+            );
+            pairs.push({ fromTravelerIndex: from, toTravelerIndex: to, weight });
+            totalWeight += weight;
+        }
+    }
+    if (pairs.length === 0) return null;
+
+    let cursor = hashRandom(sceneSeed, Math.max(0, Math.trunc(slot)), 304) * totalWeight;
+    for (const pair of pairs) {
+        cursor -= pair.weight;
+        if (cursor < 0) return {
+            fromTravelerIndex: pair.fromTravelerIndex,
+            toTravelerIndex: pair.toTravelerIndex,
+        };
+    }
+    const fallback = pairs[pairs.length - 1];
+    return { fromTravelerIndex: fallback.fromTravelerIndex, toTravelerIndex: fallback.toTravelerIndex };
+};
+
+/**
+ * Decay one opportunity and reinforce both endpoints exactly once per logical signal slot.
+ * Oldest/weakest entries are discarded first if a chain spreads beyond the small fixed cap.
+ */
+export const updateNeuralContagionForSignal = (
+    state: NeuralContagionState,
+    slot: number,
+    signal: Pick<NeuralSignal, 'fromTravelerIndex' | 'toTravelerIndex'>,
+    projections: ProjectedTraveler[],
+    width: number,
+    height: number,
+): NeuralContagionState => {
+    const stableSlot = Math.max(0, Math.trunc(slot));
+    if (state.lastSignalSlot === stableSlot) return state;
+
+    const eligibleEndpoints = [signal.fromTravelerIndex, signal.toTravelerIndex]
+        .filter((travelerIndex, index, values) => values.indexOf(travelerIndex) === index)
+        .filter((travelerIndex) =>
+            isTravelerEligibleForNeuralSignal(projections[travelerIndex], width, height));
+    if (eligibleEndpoints.length !== 2) return syncNeuralContagionState(
+        state, projections, width, height,
+    );
+
+    const entries = state.entries
+        .filter((entry) => isCurrentContagionEntry(entry, projections, width, height))
+        .map((entry) => ({ ...entry, remainingOpportunities: entry.remainingOpportunities - 1 }))
+        .filter((entry) => entry.remainingOpportunities > 0);
+    for (const travelerIndex of eligibleEndpoints) {
+        const projection = projections[travelerIndex];
+        const existing = entries.findIndex((entry) =>
+            entry.travelerIndex === travelerIndex && entry.cycle === projection.cycle);
+        const reinforced: NeuralContagionEntry = {
+            travelerIndex,
+            cycle: projection.cycle,
+            remainingOpportunities: NEURAL_CONTAGION_OPPORTUNITIES,
+            lastStruckSlot: stableSlot,
+        };
+        if (existing >= 0) entries[existing] = reinforced;
+        else entries.push(reinforced);
+    }
+    entries.sort((left, right) => right.remainingOpportunities - left.remainingOpportunities
+        || right.lastStruckSlot - left.lastStruckSlot
+        || left.travelerIndex - right.travelerIndex);
+
+    return {
+        entries: entries.slice(0, NEURAL_CONTAGION_MAX_ENTRIES),
+        lastSignalSlot: stableSlot,
+        lastSignalPair: [signal.fromTravelerIndex, signal.toTravelerIndex],
+        lastSignalCycles: [
+            projections[signal.fromTravelerIndex].cycle,
+            projections[signal.toTravelerIndex].cycle,
+        ],
+    };
+};
+
+export const getNeuralSignalSlot = (elapsedSeconds: number) =>
+    Math.floor(getSimulationTime(elapsedSeconds) / NEURAL_SIGNAL_SLOT_SECONDS);
+
+/**
+ * Deterministic sparse schedule with optional bounded endpoint affinity. Pair indices always
+ * address current traveler projections, while a recorded event keeps its pair stable across RAFs.
  */
 export const getNeuralSignals = (
     sceneSeed: number,
@@ -1730,6 +2248,7 @@ export const getNeuralSignals = (
     width: number,
     height: number,
     reducedMotion = false,
+    contagionState?: NeuralContagionState,
 ): NeuralSignal[] => {
     if (reducedMotion
         || width <= 0
@@ -1737,7 +2256,7 @@ export const getNeuralSignals = (
         || getConstellationPhase(elapsedSeconds).name !== 'ambient') return [];
 
     const simulationSeconds = getSimulationTime(elapsedSeconds);
-    const slot = Math.floor(simulationSeconds / NEURAL_SIGNAL_SLOT_SECONDS);
+    const slot = getNeuralSignalSlot(elapsedSeconds);
     const isMobile = width < MOBILE_BREAKPOINT;
     const chance = isMobile ? NEURAL_SIGNAL_MOBILE_CHANCE : NEURAL_SIGNAL_DESKTOP_CHANCE;
     if (hashRandom(sceneSeed, slot, 301) >= chance) return [];
@@ -1753,45 +2272,24 @@ export const getNeuralSignals = (
     const signalElapsed = slotElapsed - start;
     if (signalElapsed < 0 || signalElapsed >= duration) return [];
 
-    let pairCount = 0;
-    for (let from = 0; from < projections.length; from += 1) {
-        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
-        for (let to = from + 1; to < projections.length; to += 1) {
-            if (isTravelerEligibleForNeuralSignal(projections[to], width, height)
-                && isSensibleNeuralPair(projections[from], projections[to], width, height)) pairCount += 1;
-        }
-    }
-    if (pairCount === 0) return [];
+    const pair = selectNeuralSignalPair(
+        sceneSeed, slot, projections, width, height, contagionState,
+    );
+    if (!pair) return [];
+    const { fromTravelerIndex, toTravelerIndex } = pair;
 
-    let selectedPair = hashUint(sceneSeed, slot, 304) % pairCount;
-    let fromTravelerIndex = -1;
-    let toTravelerIndex = -1;
-    pairSearch: for (let from = 0; from < projections.length; from += 1) {
-        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
-        for (let to = from + 1; to < projections.length; to += 1) {
-            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
-                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
-            if (selectedPair === 0) {
-                fromTravelerIndex = from;
-                toTravelerIndex = to;
-                break pairSearch;
-            }
-            selectedPair -= 1;
-        }
-    }
-    if (fromTravelerIndex < 0 || toTravelerIndex < 0) return [];
-
-    const fadeIn = smoothstep(signalElapsed / 0.48);
-    const fadeOut = smoothstep((duration - signalElapsed) / 0.68);
+    const pulseProgress = smoothstep(signalElapsed / duration);
     return [{
         fromTravelerIndex,
         toTravelerIndex,
-        opacity: NEURAL_SIGNAL_MAX_OPACITY * Math.min(fadeIn, fadeOut)
-            * clamp01(Math.min(projections[fromTravelerIndex].opacity, projections[toTravelerIndex].opacity) / 0.35),
-        pulseProgress: clamp01(signalElapsed / duration),
+        opacity: NEURAL_SIGNAL_MAX_OPACITY * getNeuralSignalEnvelope(signalElapsed, duration)
+            * getNeuralPairVisibility(projections[fromTravelerIndex], projections[toTravelerIndex], width, height),
+        pulseProgress,
         lineWidth: mix(NEURAL_SIGNAL_WIDTH_RANGE[0], NEURAL_SIGNAL_WIDTH_RANGE[1],
             hashRandom(sceneSeed, slot, 305)),
-        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.055,
+        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.12,
+        color: NEURAL_SIGNAL_COLORS[hashUint(sceneSeed, slot, 307) % NEURAL_SIGNAL_COLORS.length],
+        sparkles: getNeuralSignalSparkles(pulseProgress),
     }];
 };
 
@@ -1988,6 +2486,17 @@ export const getSystemOwnerDiscLocalRadius = (appearanceRadius: number, systemSc
         || appearanceRadius <= 0
         || systemScale <= 0) return 0;
     return appearanceRadius / systemScale;
+};
+
+/** Keeps planet bodies visibly smaller than their unchanged host disc. */
+export const MAX_PLANET_TO_HOST_RADIUS_RATIO = 0.75;
+
+/** Cap only the body, in system-local coordinates; no pixel floor may override the host limit. */
+export const getPlanetRenderRadius = (planetRadius: number, ownerDiscLocalRadius: number) => {
+    if (!Number.isFinite(planetRadius) || !Number.isFinite(ownerDiscLocalRadius)
+        || planetRadius <= 0 || ownerDiscLocalRadius <= 0) return 0;
+    return Math.min(planetRadius * PLANET_RENDER_SCALE,
+        ownerDiscLocalRadius * MAX_PLANET_TO_HOST_RADIUS_RATIO);
 };
 
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
