@@ -1,5 +1,10 @@
 #!/usr/bin/env node
-import { listmonkConfig } from './lib/newsletter/shared.mjs';
+import {
+  NEWSLETTER_OUTBOUND_LIMITS,
+  listmonkConfig,
+  newsletterFetch,
+  readBoundedResponseJson,
+} from './lib/newsletter/shared.mjs';
 
 const config = listmonkConfig(process.env);
 const listName = process.env.LISTMONK_NEWSLETTER_LIST_NAME || 'LongmontAI AI Briefing';
@@ -12,7 +17,7 @@ if (!config?.baseUrl || !config.username || !config.token) {
 const auth = { Authorization: `token ${config.username}:${config.token}` };
 
 async function listmonk(pathname, options = {}) {
-  const response = await fetch(`${config.baseUrl}${pathname}`, {
+  const outbound = await newsletterFetch(fetch, `${config.baseUrl}${pathname}`, {
     ...options,
     headers: {
       ...auth,
@@ -20,10 +25,12 @@ async function listmonk(pathname, options = {}) {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...options.headers,
     },
+  }, NEWSLETTER_OUTBOUND_LIMITS.setup);
+  const data = await readBoundedResponseJson(outbound.response, {
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.setup.maxBytes,
+    signal: outbound.signal,
   });
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${text}`);
+  if (!outbound.response.ok) throw new Error(`Listmonk setup request failed with HTTP ${outbound.response.status}.`);
   return data;
 }
 

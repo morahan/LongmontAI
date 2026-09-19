@@ -71,6 +71,7 @@ vercel env add LISTMONK_API_TOKEN production
 vercel env add RESEND_API_KEY production
 vercel env add NEWSLETTER_FROM_EMAIL production
 vercel env add NEWSLETTER_ALLOWED_ORIGINS production
+vercel env add NEWSLETTER_RATE_LIMIT_SECRET production
 vercel env add CRON_SECRET production
 vercel env add OPENAI_API_KEY production
 ```
@@ -83,15 +84,36 @@ vercel env add NEWSLETTER_NOTIFY_OWNER production
 vercel env add NEWSLETTER_CURATOR_MODEL production
 ```
 
+## Signup security
+
+Production signup requests must include an exact `http` or `https` `Origin` listed in `NEWSLETTER_ALLOWED_ORIGINS`. Missing, `null`, malformed, and foreign origins are rejected. `NEWSLETTER_ALLOW_MISSING_ORIGIN=1` is a local-development-only escape hatch; it defaults off and is ignored when `NODE_ENV=production`.
+
+The endpoint code accepts client identity only from Vercel's platform-owned `x-vercel-forwarded-for` header. It never trusts `x-forwarded-for`, `x-real-ip`, or a configurable/custom header, accepts exactly one valid IP, and fails closed when that identity is unavailable. Set `NEWSLETTER_RATE_LIMIT_SECRET` to an independently generated value of at least 32 bytes. It is used only as an HMAC key; Supabase stores keyed digests, never raw client IPs or emails, in the forced-RLS `newsletter_signup_rate_limits` table.
+
+The database RPC atomically enforces fixed-window limits before subscriber writes or Listmonk calls: five attempts per normalized email per hour and ten attempts per client IP per ten minutes. A denial returns `429`, `Cache-Control: no-store`, and a bounded `Retry-After`. Missing configuration, invalid identity, and database errors fail closed. Apply `20260825090000_newsletter_signup_rate_limit.sql` before enabling the production endpoint. Periodically delete expired counter buckets according to the site's retention policy; the endpoint does not require raw identity data for cleanup.
+
 ## Operating Model
 
 The weekly cron runs Mondays at 15:07 UTC. It collects LongmontAI website/article context, Model Watch status, monitored source highlights, and then uses the OpenAI Responses API when `OPENAI_API_KEY` is available. Without that key, it creates a deterministic draft from the same source bundle.
 
 By default the system creates a Listmonk draft campaign, not a live send. Keep review-on-draft as the default until source quality and deliverability are proven.
 
+## Provider data disclosures
+
+Outbound payloads are purpose-limited. API keys, service-role keys, Listmonk tokens, cron credentials, request headers, client IPs, and browser metadata are never placed in provider request bodies or newsletter event payloads.
+
+- **OpenAI Responses API:** receives the requested output schema plus a bounded curation projection: cadence and period, recent article title/summary/public URL/source links, aggregate Model Watch health and detected model names, matched live-source highlights, and the three public LongmontAI review surfaces. It does not receive repository paths, collection/provider errors, timestamps and internal metadata, the complete website snapshot, the monitored-source inventory, subscriber data, or credentials.
+- **Listmonk subscriber sync:** receives only normalized email, optional display name, and the required cadence list UUID for the public double-opt-in endpoint. The authenticated fallback receives those identity fields, the required list ID, `status: enabled`, and `preconfirm_subscriptions: false` so confirmation is not bypassed. It does not receive signup source, cadence attributes, page/client metadata, IP addresses, or internal subscriber records. Draft campaign creation separately receives the reviewed newsletter subject, HTML/plain-text bodies, sending identity, selected list ID, and required campaign settings.
+- **Resend HTTP owner notice:** receives the configured sender and owner routing addresses, a workflow tag, issue ID, a short HTML-escaped summary, and the fixed first-party review pointer `https://longmontai.com/newsletter`. It does not receive the complete newsletter HTML/text, item inventory, source snapshot, campaign identity, subscriber data, or credentials. Listmonk's separately configured Resend SMTP transport receives campaign mail only when an operator later sends an approved draft.
+- **Supabase:** stores subscriber consent and newsletter workflow records under the migration's forced-RLS/service-role controls. Delivery-event JSON is limited to operational status identifiers and does not duplicate credentials or subscriber profile metadata.
+
 ## Verification
 
+The newsletter contract suite deliberately includes migrated-Postgres concurrency and privilege checks. Docker Desktop and the local Supabase stack are required; unavailable infrastructure is a test failure rather than a skip. Reset the disposable local database before running it:
+
 ```bash
+supabase start
+supabase db reset --local --no-seed
 npm run test:newsletter
 npm run newsletter:draft -- --dry-run
 npm run build

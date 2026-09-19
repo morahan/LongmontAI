@@ -1,5 +1,6 @@
 import {
   NewsletterError,
+  enforceNewsletterSignupRateLimit,
   headerValue,
   isValidEmail,
   normalizeCadence,
@@ -13,6 +14,7 @@ import {
   sanitizeText,
   sendJson,
   syncSubscriberToListmonk,
+  trustedClientIp,
   upsertSubscriber,
 } from './shared.mjs';
 
@@ -32,13 +34,19 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
       requireAllowedOrigin(request, env);
       requireJsonRequest(request);
       const payload = await readJsonBody(request);
-      if (sanitizeText(payload.company, 120)) {
-        return sendJson(response, 202, { ok: true, status: 'accepted' });
-      }
-
       const email = normalizeEmail(payload.email);
       if (!isValidEmail(email)) {
         throw new NewsletterError('Enter a valid email address.', { status: 400, code: 'invalid_email' });
+      }
+
+      const requestTime = now();
+      await enforceNewsletterSignupRateLimit(
+        env,
+        { ip: trustedClientIp(request), email, now: requestTime },
+        fetchImpl,
+      );
+      if (sanitizeText(payload.company, 120)) {
+        return sendJson(response, 202, { ok: true, status: 'accepted' });
       }
 
       const name = sanitizeText(payload.name, 120) || null;
@@ -51,7 +59,7 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
           name,
           cadence,
           source,
-          consentedAt: now().toISOString(),
+          consentedAt: requestTime.toISOString(),
           metadata: clientMetadata(request, payload),
         },
         fetchImpl,
@@ -116,7 +124,10 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
       const status = error instanceof NewsletterError ? error.status : 500;
       const code = error instanceof NewsletterError ? error.code : 'newsletter_subscribe_failed';
       const message = status < 500 && error instanceof Error ? error.message : 'Newsletter signup is temporarily unavailable.';
-      return sendJson(response, status, { ok: false, error: code, message });
+      const headers = status === 429 && error instanceof NewsletterError
+        ? { 'Retry-After': String(error.retryAfter) }
+        : {};
+      return sendJson(response, status, { ok: false, error: code, message }, headers);
     }
   };
 }
