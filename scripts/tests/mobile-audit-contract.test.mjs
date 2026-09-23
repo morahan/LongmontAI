@@ -181,6 +181,90 @@ esac
   assert.match(invalidMode.stderr, /must be 0 or 1/);
 });
 
+test('mobile server owns an ephemeral listener, preserves audit environment and cleans up failures', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'longmont-mobile-server-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const bin = path.join(directory, 'bin');
+  const vite = path.join(directory, 'node_modules/vite');
+  await mkdir(bin);
+  await mkdir(vite, { recursive: true });
+  await writeFile(path.join(vite, 'package.json'), JSON.stringify({ type: 'module', exports: './index.js' }));
+  await writeFile(path.join(vite, 'index.js'), `
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import { appendFileSync } from 'node:fs';
+export async function createServer(config) {
+  assert.ok(Number.isInteger(config.server.port) && config.server.port > 0);
+  assert.deepEqual(config.server, { host: '127.0.0.1', port: config.server.port, strictPort: true, open: false });
+  if (process.env.TEST_START_FAIL) throw new Error('fixture startup failure');
+  let middleware;
+  const httpServer = http.createServer((req, res) => {
+    if (process.env.TEST_WRONG_READY) return res.end('unrelated server');
+    middleware(req, res, () => res.end('fixture app'));
+  });
+  const server = {
+    httpServer,
+    middlewares: { use(fn) { middleware = fn; } },
+    listen: () => new Promise(resolve => httpServer.listen(config.server.port, config.server.host, resolve)),
+    close: () => new Promise(resolve => {
+      httpServer.closeAllConnections();
+      httpServer.close(() => { appendFileSync(process.env.TEST_LOG, 'closed\\n'); resolve(); });
+    }),
+  };
+  config.plugins[0].configureServer(server);
+  return server;
+}
+`);
+  await writeFile(path.join(bin, 'git'), '#!/bin/sh\nexit 1\n');
+  await writeFile(path.join(bin, 'npm'), `#!${process.execPath}
+const fs = require('node:fs');
+fs.appendFileSync(process.env.TEST_LOG, JSON.stringify({
+  args: process.argv.slice(2), url: process.env.MOBILE_AUDIT_BASE_URL,
+  routes: process.env.MOBILE_AUDIT_ROUTES, headed: process.env.MOBILE_AUDIT_HEADED,
+}) + '\\n');
+setTimeout(() => process.exit(Number(process.env.TEST_AUDIT_STATUS || 0)), 300);
+`);
+  await chmod(path.join(bin, 'git'), 0o755);
+  await chmod(path.join(bin, 'npm'), 0o755);
+  let sequence = 0;
+  const run = async (extra = {}) => {
+    const log = path.join(directory, `run-${sequence++}.log`);
+    const child = spawn('bash', [path.join(root, 'scripts/run-mobile-audit.sh')], {
+      cwd: directory,
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, TEST_LOG: log,
+        MOBILE_AUDIT_ROUTES: '["/","/tools"]', MOBILE_AUDIT_HEADED: '0', ...extra },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stderr = '';
+    child.stderr.on('data', chunk => { stderr += chunk; });
+    const status = await new Promise(resolve => child.on('close', resolve));
+    const lines = await readFile(log, 'utf8').catch(() => '');
+    return { status, stderr, lines: lines.trim().split('\n').filter(Boolean) };
+  };
+  const results = await Promise.all([run(), run({ TEST_AUDIT_STATUS: '17' })]);
+  assert.deepEqual(results.map(result => result.status), [0, 17]);
+  const urls = [];
+  for (const result of results) {
+    assert.equal(result.lines.at(-1), 'closed');
+    const invocation = JSON.parse(result.lines[0]);
+    assert.deepEqual(invocation.args, ['run', 'audit:mobile']);
+    assert.equal(invocation.routes, '["/","/tools"]');
+    assert.equal(invocation.headed, '0');
+    assert.match(invocation.url, /^http:\/\/127\.0\.0\.1:\d+$/);
+    urls.push(invocation.url);
+    await assert.rejects(fetch(invocation.url));
+  }
+  assert.equal(new Set(urls).size, 2);
+  const wrong = await run({ TEST_WRONG_READY: '1' });
+  assert.equal(wrong.status, 1);
+  assert.deepEqual(wrong.lines, ['closed']);
+  assert.match(wrong.stderr, /did not match its own Vite instance/);
+  const failed = await run({ TEST_START_FAIL: '1' });
+  assert.equal(failed.status, 1);
+  assert.deepEqual(failed.lines, []);
+  assert.match(failed.stderr, /fixture startup failure/);
+});
+
 test('encoded targeted routes reach audit code before navigation and invalid transport fails closed', async () => {
   const source = await readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8');
   const audit = vm.runInNewContext(`(${source})`, { Error, JSON, Array, Math, Set });

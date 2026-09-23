@@ -5,34 +5,88 @@ umask 077
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-HOST="127.0.0.1"
-PORT="4173"
-BASE_URL="http://${HOST}:${PORT}"
-LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmontai-mobile-audit-${PORT}.XXXXXXXX")"
+# Keep Vite and its lifecycle in one process. Select an OS-assigned port;
+# strictPort and an instance-specific probe fail closed if it is taken meanwhile.
+exec node --input-type=module <<'NODE'
+import { randomUUID } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { createServer as createPortProbe } from 'node:net';
+import { createServer } from 'vite';
 
-cleanup() {
-  if [[ -n "${SERVER_PID:-}" ]]; then
-    kill "$SERVER_PID" 2>/dev/null || true
-    wait "$SERVER_PID" 2>/dev/null || true
-  fi
+const token = randomUUID();
+const readinessPath = `/__mobile_audit_ready_${token}`;
+let server;
+let audit;
+let stopping = false;
+
+async function cleanup() {
+  if (audit?.pid) {
+    try { process.kill(-audit.pid, 'SIGTERM'); } catch (error) {
+      if (error.code !== 'ESRCH') throw error;
+    }
+  }
+  await server?.close();
 }
-trap cleanup EXIT INT TERM
 
-npm run dev -- --host "$HOST" --port "$PORT" --strictPort >"$LOG_FILE" 2>&1 &
-SERVER_PID=$!
+for (const [signal, status] of [['SIGINT', 130], ['SIGTERM', 143]]) {
+  process.once(signal, async () => {
+    stopping = true;
+    try { await cleanup(); } finally { process.exit(status); }
+  });
+}
 
-for _ in {1..30}; do
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    echo "Mobile audit server exited before becoming ready. Log: $LOG_FILE" >&2
-    exit 1
-  fi
+const startupDeadline = setTimeout(() => {
+  console.error('Mobile audit server did not become ready within 30 seconds.');
+  process.kill(process.pid, 'SIGTERM');
+}, 30_000);
 
-  if curl --fail --silent "$BASE_URL" >/dev/null 2>&1; then
-    MOBILE_AUDIT_BASE_URL="$BASE_URL" npm run audit:mobile
-    exit 0
-  fi
-  sleep 1
-done
-
-echo "Mobile audit server did not become ready. Log: $LOG_FILE" >&2
-exit 1
+try {
+  // Vite treats port 0 as its default port, so obtain an explicit candidate.
+  const probe = createPortProbe();
+  await new Promise((resolve, reject) => {
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', resolve);
+  });
+  const port = probe.address().port;
+  await new Promise((resolve, reject) => probe.close(error => error ? reject(error) : resolve()));
+  server = await createServer({
+    server: { host: '127.0.0.1', port, strictPort: true, open: false },
+    plugins: [{
+      name: 'mobile-audit-readiness',
+      configureServer(vite) {
+        vite.middlewares.use((request, response, next) => {
+          if (request.url !== readinessPath) return next();
+          response.setHeader('Content-Type', 'text/plain');
+          response.end(token);
+        });
+      },
+    }],
+  });
+  await server.listen();
+  const address = server.httpServer?.address();
+  if (!address || typeof address === 'string') throw new Error('Vite has no TCP listener');
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const response = await fetch(`${baseUrl}${readinessPath}`, { signal: AbortSignal.timeout(5_000) });
+  if (!response.ok || await response.text() !== token) {
+    throw new Error('Mobile audit readiness did not match its own Vite instance');
+  }
+  clearTimeout(startupDeadline);
+  console.log(`Mobile audit server ready: ${baseUrl}`);
+  const status = await new Promise((resolve, reject) => {
+    audit = spawn('npm', ['run', 'audit:mobile'], {
+      stdio: 'inherit',
+      detached: true,
+      env: { ...process.env, MOBILE_AUDIT_BASE_URL: baseUrl },
+    });
+    audit.once('error', reject);
+    audit.once('exit', (code) => resolve(code ?? 1));
+  });
+  process.exitCode = status;
+} catch (error) {
+  console.error('Mobile audit failed:', error);
+  process.exitCode = 1;
+} finally {
+  clearTimeout(startupDeadline);
+  if (!stopping) await cleanup();
+}
+NODE
