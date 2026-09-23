@@ -1077,63 +1077,77 @@ const createUniformGlyphPoints = (
     event: number,
     glyphIndex: number,
 ): GlyphPoint[] => {
-    const dense = new Map<string, GlyphPoint>();
-    strokes.forEach(([from, to]) => {
-        const length = Math.hypot(to.x - from.x, to.y - from.y);
-        const steps = Math.max(2, Math.ceil(length * 48));
-        for (let step = 0; step <= steps; step += 1) {
-            const amount = step / steps;
-            const point = mixPoint(from, to, amount);
-            dense.set(`${point.x.toFixed(8)},${point.y.toFixed(8)}`, point);
+    // Reserve the graph vertices: even the sparsest glyph retains endpoints and ink
+    // junctions, with no singleton samples stranded on a source segment.
+    const vertices = new Map<string, GlyphPoint>();
+    strokes.forEach((stroke) => stroke.forEach((point) => {
+        vertices.set(`${point.x},${point.y}`, point);
+    }));
+    const points = [...vertices.values()];
+    if (points.length > count) throw new Error('Glyph vertices exceed anchor budget');
+    const segments = strokes.map(([from, to], index) => ({
+        from,
+        to,
+        length: Math.hypot(to.x - from.x, to.y - from.y),
+        divisions: 1,
+        tie: hashUint(sceneSeed ^ (glyphIndex + 1), event, 431 + index),
+    }));
+    // Spend each remaining anchor on the largest local gap, then distribute the
+    // segment's interior anchors uniformly (rather than leaving half/quarter clusters).
+    for (let remaining = count - points.length; remaining > 0; remaining -= 1) {
+        let best = segments[0];
+        for (const segment of segments) {
+            const gap = segment.length / segment.divisions;
+            const bestGap = best.length / best.divisions;
+            if (gap > bestGap + 1e-12
+                || (Math.abs(gap - bestGap) <= 1e-12 && segment.tie < best.tie)) {
+                best = segment;
+            }
+        }
+        best.divisions += 1;
+    }
+    segments.forEach(({ from, to, divisions }) => {
+        for (let step = 1; step < divisions; step += 1) {
+            points.push(mixPoint(from, to, step / divisions));
         }
     });
-    const candidates = [...dense.values()];
-    if (candidates.length < count) throw new Error('Insufficient unique glyph stroke samples');
-
-    // Farthest-point sampling maximizes the next nearest-neighbor distance. The seeded first
-    // sample changes texture between events without changing spacing quality or adding jitter.
-    const selected: GlyphPoint[] = [];
-    const used = new Set<number>();
-    let selectedIndex = hashUint(sceneSeed ^ (glyphIndex + 1), event, 431) % candidates.length;
-    while (selected.length < count) {
-        used.add(selectedIndex);
-        selected.push(candidates[selectedIndex]);
-        let bestIndex = -1;
-        let bestDistance = -1;
-        for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
-            if (used.has(candidateIndex)) continue;
-            const candidate = candidates[candidateIndex];
-            let nearest = Number.POSITIVE_INFINITY;
-            for (const point of selected) {
-                nearest = Math.min(nearest,
-                    (candidate.x - point.x) ** 2 + (candidate.y - point.y) ** 2);
-            }
-            if (nearest > bestDistance + 1e-12) {
-                bestDistance = nearest;
-                bestIndex = candidateIndex;
-            }
-        }
-        selectedIndex = bestIndex;
-    }
-    return selected;
+    return points;
 };
 
-const connectNearestTree = (points: GlyphPoint[]): ConstellationEdge[] => points
-    .slice(1)
-    .map((point, offset) => {
-        const to = offset + 1;
-        let from = 0;
-        let nearestDistance = Number.POSITIVE_INFINITY;
-        for (let candidate = 0; candidate < to; candidate += 1) {
-            const distance = (points[candidate].x - point.x) ** 2
-                + (points[candidate].y - point.y) ** 2;
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                from = candidate;
+/** Only consecutive samples on the same source segment may share a rendered line.
+ * Sampling order is deliberately irrelevant: proximity cannot establish glyph topology.
+ * Shared source vertices let junctions meet on ink, never across empty glyph space.
+ */
+const connectGlyphStrokeNeighbors = (
+    points: GlyphPoint[],
+    strokes: GlyphStroke[],
+): ConstellationEdge[] => {
+    const edges: ConstellationEdge[] = [];
+    const seen = new Set<string>();
+    for (const [start, end] of strokes) {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const lengthSquared = dx * dx + dy * dy;
+        const neighbors = points.flatMap((point, index) => {
+            const px = point.x - start.x;
+            const py = point.y - start.y;
+            const amount = (px * dx + py * dy) / lengthSquared;
+            return Math.abs(px * dy - py * dx) <= 1e-8
+                && amount >= -1e-8 && amount <= 1 + 1e-8
+                ? [{ index, amount }] : [];
+        }).sort((a, b) => a.amount - b.amount || a.index - b.index);
+        for (let index = 1; index < neighbors.length; index += 1) {
+            const from = Math.min(neighbors[index - 1].index, neighbors[index].index);
+            const to = Math.max(neighbors[index - 1].index, neighbors[index].index);
+            const key = `${from},${to}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                edges.push({ from, to });
             }
         }
-        return { from, to };
-    });
+    }
+    return edges;
+};
 
 const buildRawConstellationGeometry = (
     phrase: ConstellationPhrase,
@@ -1167,7 +1181,7 @@ const buildRawConstellationGeometry = (
             return points.length - 1;
         });
         if (includeEdges) {
-            connectNearestTree(glyphPoints).forEach(({ from, to }) => edges.push({
+            connectGlyphStrokeNeighbors(glyphPoints, strokes).forEach(({ from, to }) => edges.push({
                 from: glyphStart + from,
                 to: glyphStart + to,
             }));
