@@ -15,7 +15,11 @@ export const MOBILE_TRAVELER_COUNT = 15;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
 export const GALAXY_CREATION_CHANCE = 0.2;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
-export const GALAXY_INTERNAL_STAR_COUNT = 72;
+export const GALAXY_INTERNAL_STAR_COUNT = 144;
+export const GALAXY_DISTANT_STAR_COUNT = 18;
+/** Independent 8% rolls among galaxy lifecycles, never additional travelers. */
+export const GALAXY_DIRECT_APPROACH_CHANCE = 0.08;
+export const GALAXY_SOMBRERO_CHANCE = 0.08;
 export const GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE = [2, 3] as const;
 export const GALAXY_EMBEDDED_PLANET_COUNT_RANGE = [1, 2] as const;
 /** Historical/default spiral arm count; individual formations deliberately vary this. */
@@ -25,6 +29,7 @@ export const GALAXY_FORMATIONS = [
     'barred-spiral',
     'elliptical',
     'irregular',
+    'sombrero',
 ] as const;
 export const GALAXY_ROTATION_RATE_RANGE = [0.09, 0.15] as const;
 export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> = {
@@ -32,6 +37,7 @@ export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> 
     'barred-spiral': 0.92,
     elliptical: 0.78,
     irregular: 1.12,
+    sombrero: 0,
 };
 export const UFO_BASIS_POINTS = 300;
 export const COMET_BASIS_POINTS = 300;
@@ -1686,16 +1692,38 @@ const GALAXY_DUST_DRIFT_MULTIPLIERS: Record<GalaxyFormation, number> = {
     'barred-spiral': -0.22,
     elliptical: 0.12,
     irregular: -0.16,
+    sombrero: 0,
 };
 
-/** Formation identity is stable for one traveler lifecycle and every class is equiprobable. */
-export const getGalaxyFormation = (seed: number, cycle = 0): GalaxyFormation =>
-    GALAXY_FORMATIONS[hashUint(seed, Math.max(0, Math.trunc(cycle)), 521) % GALAXY_FORMATIONS.length];
+/** Stable half-open rare-event threshold; identity changes only at lifecycle boundaries. */
+export const isGalaxyDirectApproachRoll = (roll: number) =>
+    roll >= 0 && roll < GALAXY_DIRECT_APPROACH_CHANCE;
+
+export const isDirectApproachGalaxy = (traveler: Pick<Traveler, 'seed' | 'isGalaxy'>, cycle: number) =>
+    Boolean(traveler.isGalaxy) && isGalaxyDirectApproachRoll(
+        hashRandom(traveler.seed, Math.max(0, Math.trunc(cycle)), 529),
+    );
+
+/** Sombreros occupy 8% of cycles; the remaining four formations share the rest. */
+export const getGalaxyFormation = (seed: number, cycle = 0): GalaxyFormation => {
+    const stableCycle = Math.max(0, Math.trunc(cycle));
+    return hashRandom(seed, stableCycle, 530) < GALAXY_SOMBRERO_CHANCE ? 'sombrero'
+        : GALAXY_FORMATIONS[hashUint(seed, stableCycle, 521) % 4];
+};
+
+/** Fixed index ordering spreads the reveal across all arms and clumps without reshuffling. */
+export const getGalaxyVisibleStarCount = (progress: number) =>
+    mix(GALAXY_DISTANT_STAR_COUNT, GALAXY_INTERNAL_STAR_COUNT, smoothstep(clamp01(progress) / 0.82));
+
+export const getGalaxyStarReveal = (progress: number, index: number) =>
+    smoothstep((getGalaxyVisibleStarCount(progress)
+        + 8 * smoothstep(clamp01(progress) / 0.82) - index) / 8);
 
 /** Formation-specific magnitudes and seeded direction keep the population varied but legible. */
 export const getGalaxyRotationRate = (seed: number, cycle = 0) => {
     const stableCycle = Math.max(0, Math.trunc(cycle));
     const formation = getGalaxyFormation(seed, stableCycle);
+    if (formation === 'sombrero') return 0;
     const magnitude = mix(
         GALAXY_ROTATION_RATE_RANGE[0],
         GALAXY_ROTATION_RATE_RANGE[1],
@@ -1715,7 +1743,7 @@ export const getGalaxyAppearance = (
     const starRadius = getTravelerAppearance(traveler, progress).radius;
     const outerRadius = Math.min(
         starRadius * GALAXY_MAX_RADIUS_MULTIPLIER,
-        starRadius * (4.6 + smoothstep(progress) * 2.4),
+        starRadius * (6.8 + smoothstep(progress) * 0.2),
     );
     const profiles: Record<GalaxyFormation, Pick<GalaxyAppearance,
         'coreRadius' | 'armCount' | 'flattening' | 'barLength'>> = {
@@ -1728,6 +1756,8 @@ export const getGalaxyAppearance = (
             barLength: 0 },
         irregular: { coreRadius: 0.11, armCount: 0,
             flattening: 0.82, barLength: 0 },
+        sombrero: { coreRadius: 0.28, armCount: 0,
+            flattening: 0.16, barLength: 0 },
     };
     const profile = profiles[formation];
     return {
@@ -1763,8 +1793,8 @@ export const getGalaxyAnimationState = (
 };
 
 /**
- * Bounded local-space matter for Canvas rendering. Differential angular speeds make the interior
- * lively without allocating random generators or particle objects outside this small fixed set.
+ * Bounded local-space matter for Canvas rendering. Coherent centered revolution preserves
+ * the formation; Sombrero bulges alone churn independently within a stationary filled disk.
  */
 export const getGalaxyParticleState = (
     traveler: Traveler,
@@ -1789,42 +1819,49 @@ export const getGalaxyParticleState = (
     if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
         radial = 0.16 + Math.sqrt(unit) * 0.76;
         const arm = particleIndex % appearance.armCount;
-        angle = arm * TAU / appearance.armCount + radial * TAU * 1.35 + jitter * 0.46
-            + elapsed * appearance.rotationRate * (0.72 - radial * 0.34);
+        angle = arm * TAU / appearance.armCount + radial * TAU * 1.35 + jitter * 0.46;
         if (particleIndex % 7 === 1) kind = 'young-star';
         if (appearance.formation === 'barred-spiral' && radial < 0.38) {
-            angle = (particleIndex & 1) * Math.PI + jitter * 0.22
-                - elapsed * appearance.rotationRate * 0.16;
+            angle = (particleIndex & 1) * Math.PI + jitter * 0.22;
         }
     } else if (appearance.formation === 'elliptical') {
         radial = 0.08 + unit ** 0.72 * 0.82;
-        angle += elapsed * appearance.rotationRate * (0.38 - radial * 0.12);
         kind = particleIndex % 11 === 0 ? 'dust' : 'star';
+    } else if (appearance.formation === 'sombrero') {
+        // A filled edge-on disk, not an annulus. Interleaved central points form a round bulge.
+        const bulge = particleIndex % 3 === 0;
+        radial = bulge ? unit ** 0.8 * 0.28 : Math.sqrt(unit) * 0.92;
+        if (bulge) angle += elapsed * (0.12 + unit * 0.08);
+        kind = 'star';
     } else {
         const clump = particleIndex % 4;
         const clumpAngle = hashRandom(traveler.seed, stableCycle, 610 + clump) * TAU;
         const clumpRadius = 0.18 + hashRandom(traveler.seed, stableCycle, 620 + clump) * 0.42;
         const localRadius = 0.04 + unit * 0.15;
-        const localAngle = phase + elapsed * appearance.rotationRate * (0.72 + clump * 0.1);
+        const localAngle = phase;
         const rawX = Math.cos(clumpAngle) * clumpRadius + Math.cos(localAngle) * localRadius;
         const rawY = Math.sin(clumpAngle) * clumpRadius + Math.sin(localAngle) * localRadius;
         radial = Math.min(0.82, Math.hypot(rawX, rawY));
-        angle = Math.atan2(rawY, rawX)
-            + Math.sin(elapsed * 0.11 + clumpAngle) * 0.025;
+        angle = Math.atan2(rawY, rawX);
         kind = particleIndex % 9 === 0 ? 'dust'
             : particleIndex % 4 === 0 ? 'young-star' : 'star';
     }
 
-    const normalizedRadius = Math.min(0.94, Math.max(0.025, radial));
+    // Revolve in the same centered local plane BEFORE flattening; Canvas only applies
+    // the fixed seeded sky orientation. No double rotation or counter-rotating bars.
+    angle += elapsed * appearance.rotationRate;
+    const flattening = appearance.formation === 'sombrero' && particleIndex % 3 === 0
+        ? 0.85 : appearance.flattening;
+    const normalizedRadius = Math.min(0.94, Math.max(0.0, radial));
     const pulse = 0.84 + 0.16 * Math.sin(elapsed * (0.55 + unit * 0.38) + twinklePhase);
     return {
         x: Math.cos(angle) * normalizedRadius * appearance.outerRadius,
-        y: Math.sin(angle) * normalizedRadius * appearance.outerRadius * appearance.flattening,
-        radius: Math.min(0.68, Math.max(
+        y: Math.sin(angle) * normalizedRadius * appearance.outerRadius * flattening,
+        radius: Math.min(0.68, appearance.outerRadius * 0.04, Math.max(
             0.12,
             appearance.outerRadius * (kind === 'dust' ? 0.009 : 0.011),
         )),
-        opacity: (kind === 'dust' ? 0.32 : 0.58) * pulse,
+        opacity: (kind === 'dust' ? 0.32 : 0.58) * pulse * getGalaxyStarReveal(progress, particleIndex),
         kind,
     };
 };
@@ -1993,15 +2030,16 @@ export const projectTraveler = (
 ): ProjectedTraveler => {
     const { depth, cycle } = getTravelerDepth(traveler, simulationSeconds);
     const progress = (FAR_DEPTH - depth) / DEPTH_RANGE;
-    const laneX = hashRandom(traveler.seed, cycle, 5) * 2 - 1;
-    const laneY = hashRandom(traveler.seed, cycle, 6) * 2 - 1;
+    const directApproach = isDirectApproachGalaxy(traveler, cycle);
+    const laneX = directApproach ? 0 : hashRandom(traveler.seed, cycle, 5) * 2 - 1;
+    const laneY = directApproach ? 0 : hashRandom(traveler.seed, cycle, 6) * 2 - 1;
     const reciprocalScale = FAR_DEPTH / depth;
     const fadeIn = smoothstep(progress / 0.14);
     const fadeOut = 1 - smoothstep((progress - 0.82) / 0.18);
     const appearance = getTravelerAppearance(traveler, progress);
     return {
         x: width * 0.5 + laneX * width * 0.39 * reciprocalScale,
-        y: height * 0.45 + laneY * height * 0.37 * reciprocalScale,
+        y: height * (directApproach ? 0.5 : 0.45) + laneY * height * 0.37 * reciprocalScale,
         depth,
         progress,
         radius: appearance.radius,

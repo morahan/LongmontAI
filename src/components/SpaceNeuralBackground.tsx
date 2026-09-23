@@ -518,7 +518,8 @@ const drawGalaxy = (
     simulationSeconds: number,
 ) => {
     const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
-    const animation = getGalaxyAnimationState(traveler, projection.cycle, simulationSeconds);
+    // Particle motion is resolved before local-plane flattening; sky tilt stays fixed.
+    const animation = getGalaxyAnimationState(traveler, projection.cycle, 0);
     const { x, y, opacity } = projection;
 
     ctx.save();
@@ -530,6 +531,7 @@ const drawGalaxy = (
         const particle = getGalaxyParticleState(
             traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
         );
+        if (particle.opacity <= 0) continue;
         const color = particle.kind === 'dust' ? '111, 86, 83'
             : particle.kind === 'young-star' ? '151, 211, 255' : '238, 242, 247';
         ctx.fillStyle = `rgba(${color}, ${opacity * particle.opacity})`;
