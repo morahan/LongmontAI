@@ -24,8 +24,17 @@
 
 ## Publication
 
-- Commit coherent batches and run the configured pre-commit and pre-push
-  hooks. Never use `--no-verify`.
+- Always commit completed work in coherent batches and push automatically after
+  required checks pass, without another user prompt, unless an explicit
+  instruction or fail-closed condition prevents publication. Run the configured
+  pre-commit and pre-push hooks. Never use `--no-verify`.
+- Prefer committing directly onto main instead of opening a PR for small,
+  low-risk changes only where repository branch rules permit; use the required
+  PR path when direct main publication is forbidden. Required security checks,
+  reviews, hooks, and branch protection remain mandatory.
+- Fail closed on unmet or unavailable gates and explicitly report blocked or
+  unpublished work. Distinguish pushed work from verified live deployment;
+  never imply blocked or unpublished work is live.
 - Do not let an automated fixer commit or push its own changes.
 
 ## Multi-agent orchestration
