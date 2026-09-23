@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
+import { createHash } from 'node:crypto';
+import { createNebulaField, sampleNebulaTransmission, getNebulaDepthTransmission } from '../../src/components/spaceNebulaModel.ts';
 import * as spaceModel from '../../src/components/spaceBackgroundModel.ts';
 import {
   AMBIENT_STAR_COUNT,
@@ -181,6 +183,241 @@ const angularDistance = (left, right) => {
   return Math.min(direct, Math.PI * 2 - direct);
 };
 
+test('responsive tiers preserve fixed slots, seeded prefixes, and exact ambient/retained populations', () => {
+  const seed = 12345;
+  const scene = createSpaceScene(seed);
+  for (const width of [390, 639.999, 640, 1439.999, 1440, 1920, 390, 1440, 640]) {
+    const factor = width < 640 ? 1 : width < 1440 ? 3 : 10;
+    assert.equal(starCountForWidth(width), 56 * factor);
+    assert.equal(spaceModel.retainedAmbientCountForWidth(width), 28 * factor);
+    assert.equal(travelerCountForWidth(width), 17 * factor);
+    assert.deepEqual(createAmbientLayout(seed, 0, 56 * factor), scene.stars.slice(0, 56 * factor));
+    assert.deepEqual(createSpaceScene(seed).travelers.slice(0, 17 * factor), scene.travelers.slice(0, 17 * factor));
+    for (const time of [0, 47, 599.999, 600, 605, 610, 620, 625, 630]) {
+      const styles = getStarFieldStyles(seed, time, false, width);
+      const large = getStarFieldStyles(seed, time, false, 1920);
+      const positions = getStarFieldPositions(seed, time, width, 800);
+      const largePositions = getStarFieldPositions(seed, time, 1920, 800);
+      assert.equal(styles.length, STAR_FIELD_SLOT_COUNT);
+      assert.equal(positions.length, styles.length);
+      positions.forEach((point, index) => {
+        assert.ok(Number.isFinite(point.x) && Number.isFinite(point.y));
+        // Glyphs relayout with aspect ratio; ambient identities keep normalized positions.
+        if (index >= MAX_STAR_TEXT_ANCHOR_COUNT) {
+          closeTo(point.x / width, largePositions[index].x / 1920);
+          closeTo(point.y, largePositions[index].y);
+        }
+      });
+      styles.slice(MAX_STAR_TEXT_ANCHOR_COUNT, MAX_STAR_TEXT_ANCHOR_COUNT + 56 * factor)
+        .forEach((style, index) => assert.deepEqual(style, large[MAX_STAR_TEXT_ANCHOR_COUNT + index]));
+      if (time < 600 || time >= 630) assert.equal(styles.filter(isStarRenderable).length, 56 * factor);
+      if (time === 610 || time === 620) {
+        const anchors = createConstellationGeometry(width, 800, seed, 1).points.length;
+        assert.equal(styles.filter(isStarRenderable).length, anchors + 28 * factor);
+      }
+    }
+  }
+});
+
+test('all tiers preserve visible scheduled and click-trigger boundary frames, including short phrases', () => {
+  const visible = (positions, styles) => styles.flatMap((style, index) => style.opacity > 1e-10
+    ? [{ point: positions[index], opacity: style.opacity }] : []);
+  const compare = (left, right) => {
+    assert.equal(left.length, right.length);
+    for (const sample of left) assert.ok(right.some((other) =>
+      Math.hypot(sample.point.x - other.point.x, sample.point.y - other.point.y) < 1e-4
+      && Math.abs(sample.opacity - other.opacity) < 1e-5));
+  };
+  for (const seed of [0, 17, 777, 795936]) {
+    for (const width of [390, 1000, 1920]) {
+      const styles = (time) => getStarFieldStyles(seed, time, false, width);
+      const positions = (time) => getStarFieldPositions(seed, time, width, 800);
+      compare(visible(positions(599.999999), styles(599.999999)), visible(positions(600), styles(600)));
+      compare(visible(positions(629.999999), styles(629.999999)), visible(positions(630), styles(630)));
+      for (const phrase of EASTER_EGG_PHRASES) {
+        const count = createConstellationGeometryForPhrase(width, 800, phrase, seed, 1).points.length;
+        const remapped = remapAmbientStarsToTextSlots(positions(47), styles(47), count);
+        compare(visible(positions(47), styles(47)), visible(remapped.positions, remapped.styles));
+      }
+    }
+  }
+});
+
+test('seeded ambient cardinal flares stay near 10% in all tiers and retained layers', () => {
+  for (let seed = 0; seed < 24; seed += 1) {
+    for (const generation of [0, 1, 3]) {
+      for (const width of [390, 1000, 1920]) {
+        const stars = createAmbientLayout(seed, generation, starCountForWidth(width));
+        for (const layer of [stars, stars.filter((_, index) => index % 4 >= 2)]) {
+          assert.ok(Math.abs(layer.filter((star) => star.hasCardinalFlare).length - layer.length * 0.1) < 1);
+          assert.equal(layer.filter((star) => star.driftMode === 'wrap').length, layer.length / 2);
+        }
+      }
+    }
+  }
+  const styles = getStarFieldStyles(12345, 47);
+  const later = getStarFieldStyles(12345, 80);
+  styles.forEach((style, index) => {
+    const flare = spaceModel.getAmbientCardinalFlare(style);
+    assert.deepEqual(flare, spaceModel.getAmbientCardinalFlare(later[index]));
+    if (!flare) return;
+    assert.equal(flare.opacity, 1);
+    assert.deepEqual(flare.rays, [{ x: 0, y: -style.radius * 9 }, { x: 0, y: style.radius * 9 },
+      { x: style.radius * 9, y: 0 }, { x: -style.radius * 9, y: 0 }]);
+  });
+  getStarFieldStyles(12345, 610).slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style) =>
+    assert.equal(spaceModel.getAmbientCardinalFlare(style), null));
+  createEasterEggTargetStyles(12345, 0).forEach((style) => assert.equal(spaceModel.getAmbientCardinalFlare(style), null));
+});
+
+test('auras are varied and deterministic while cores are opaque outside lifecycle fades', () => {
+  const auras = createSpaceScene(9876).travelers.map((traveler) => spaceModel.getStarAura(traveler.seed));
+  for (const property of ['radiusMultiplier', 'opacity', 'softness']) {
+    assert.ok(new Set(auras.map((aura) => aura[property])).size > 100);
+  }
+  assert.ok(new Set(auras.map(({ rgb }) => rgb.join(','))).size > 50);
+  for (const width of [390, 1000, 1920]) {
+    for (const time of [0, 47, 610, 630]) {
+      getStarFieldStyles(9876, time, false, width).filter(isStarRenderable).forEach((style) => {
+        assert.equal(style.coreOpacity, 1);
+        assert.ok(style.aura.radiusMultiplier >= 2.1 && style.aura.radiusMultiplier <= 3.6);
+      });
+    }
+  }
+  for (const progress of [0.14, 0.28, 0.5, 0.68, 0.82]) assert.equal(spaceModel.getTravelerDiscOpacity(progress), 1);
+  for (const boundary of [0, 0.14, 0.28, 0.5, 0.68, 0.82, 1]) {
+    closeTo(spaceModel.getTravelerDiscOpacity(boundary - 1e-7), spaceModel.getTravelerDiscOpacity(boundary + 1e-7), 1e-5);
+  }
+});
+
+test('solar cells and seeded texture identities evolve fluidly without rerouting travelers', () => {
+  const flatten = (surface) => [surface.strength, surface.rotation, surface.prominence,
+    ...surface.cells.flatMap((cell) => [cell.x, cell.y, cell.radius, cell.intensity])];
+  for (const seed of [0, 17, 9876, 0xffffffff]) {
+    const traveler = { seed, initialDistance: 123, speed: 20, size: 1, alpha: 0.6 };
+    const samples = [2, 12, 22].map((time) => projectTraveler(traveler, time, 1920, 1080));
+    for (const time of [0, 1, 20, 120, 599.99, 600, 3600]) {
+      const surface = spaceModel.getSolarSurface(seed, time, 0.7);
+      assert.equal(surface.cells.length, 12);
+      assert.deepEqual(surface, spaceModel.getSolarSurface(seed, time, 0.7));
+      surface.cells.forEach((cell) => {
+        assert.ok(Math.hypot(cell.x, cell.y) < 0.84);
+        assert.ok(cell.radius >= 0.075 && cell.radius <= 0.235);
+        assert.ok(cell.intensity >= 0 && cell.intensity <= 1);
+      });
+      const next = flatten(spaceModel.getSolarSurface(seed, time + 1e-6, 0.7));
+      flatten(surface).forEach((value, index) => closeTo(value, next[index], 1e-5));
+    }
+    assert.deepEqual(samples, [2, 12, 22].map((time) => projectTraveler(traveler, time, 1920, 1080)));
+    for (const time of [600, 610, 620, 630]) assert.deepEqual(
+      spaceModel.getSolarSurface(seed, getSimulationTime(time), 0.7), spaceModel.getSolarSurface(seed, 600, 0.7));
+    for (const progress of [0, 0.14, 0.28, 0.5, 0.68, 0.84, 1]) {
+      const ordinary = getTravelerAppearance(traveler, progress);
+      const host = spaceModel.getSystemHostStarAppearance(traveler, progress);
+      for (const key of ['radius', 'haloRadius', 'coreRadius', 'flareLength']) assert.equal(host[key], ordinary[key] * 2);
+      for (const key of ['color', 'colorName', 'texture', 'surfaceSeed']) assert.equal(host[key], ordinary[key]);
+    }
+  }
+});
+
+test('mobile ambient prefixes feed every glyph without rerouting shared sources on resize', () => {
+  for (const seed of [0, 17, 777, 795936]) {
+    for (const phrase of CONSTELLATION_PHRASES) {
+      const geometry = createConstellationGeometryForPhrase(390, 800, phrase, seed, 1);
+      const positions = getStarFieldPositions(seed, 47, 390, 800);
+      const styles = getStarFieldStyles(seed, 47, false, 390);
+      const small = remapAmbientStarsToTextSlots(positions, styles, geometry.points.length);
+      const large = remapAmbientStarsToTextSlots(positions, getStarFieldStyles(seed, 47), geometry.points.length);
+      geometry.glyphs.forEach((glyph) => assert.ok(glyph.indices.some((index) => isStarRenderable(small.styles[index])),
+        `${seed}/${phrase}/${glyph.character} has no mobile ambient source`));
+      assert.deepEqual(small.positions, large.positions);
+      small.styles.slice(0, geometry.points.length).forEach((style, index) => {
+        if (isStarRenderable(style)) assert.deepEqual(style, large.styles[index]);
+      });
+      const target = small.styles.map((style, index) => index < geometry.points.length
+        ? createEasterEggTargetStyles(seed, 0, geometry.points.length)[index]
+        : index >= MAX_STAR_TEXT_ANCHOR_COUNT && (index - MAX_STAR_TEXT_ANCHOR_COUNT) % 4 >= 2
+          ? style : { ...style, opacity: 0, coreOpacity: 0 });
+      const options = { targetCount: geometry.points.length };
+      const beforeHold = getEasterEggStarFieldStyles(small.styles, target, styles, 10 - 1e-6, options);
+      const hold = getEasterEggStarFieldStyles(small.styles, target, styles, 10, options);
+      beforeHold.forEach((style, index) => closeTo(style.opacity, hold[index].opacity, 1e-8));
+    }
+  }
+});
+
+test('planetary data matches current-main digests and rare visitors never become enlarged hosts', () => {
+  for (const [seed, digest] of [
+    [0, '1f2912c262933618a4b0ed0d5e7c728dea316242534c70231c1b0fd0d5baf1f7'],
+    [17, '05d28cee2320d75b44c9369a383889683d0adbe5ea14fdb82ed833bdc7c34126'],
+    [9876, 'fdbccbdde48a7395527248777af0f795aa0eb82cfc0f6a86d320b41ccdecb095'],
+  ]) assert.equal(createHash('sha256').update(JSON.stringify(createPlanetSystem(seed, 3))).digest('hex'), digest);
+  for (const variant of ['ufo', 'comet']) {
+    let seed = 0;
+    while (getTravelerVariant({ seed }, 0) !== variant) seed += 1;
+    const traveler = { seed, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+    const travelers = [{ ...traveler, isGalaxy: true }, { ...traveler, isGalaxy: true }, traveler];
+    const projection = { x: 200, y: 200, depth: 400, progress: 0.5, radius: 2, opacity: 0.6, cycle: 0 };
+    assert.equal(isSystemCarrier(traveler, 2), true);
+    assert.equal(isSystemInViewport(traveler, projection, 1000, 600), true);
+    assert.equal(selectProminentSystem(travelers, travelers.map(() => projection), 1000, 600), -1);
+  }
+});
+
+test('opaque photospheres preserve nebula extinction without influencing simulation or emergence', () => {
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const start = source.indexOf('const drawTravelerDisc = (');
+  const compiled = stripTypeScriptTypes(source.slice(start, source.indexOf('\n};', start) + 3));
+  const gradients = [];
+  const alphas = [];
+  const surfaceOpacities = [];
+  const draw = runInNewContext(`${compiled}\ndrawTravelerDisc;`, {
+    ...spaceModel, TAU: Math.PI * 2, hexToRgb: () => [220, 180, 140],
+    drawTravelerSurface: (_, appearance, x, y, radius, opacity) => surfaceOpacities.push(opacity),
+  });
+  const ctx = new Proxy({}, {
+    get: (_, key) => key === 'createRadialGradient'
+      ? () => ({ addColorStop: (_, color) => gradients.push(color) }) : () => {},
+    set: (_, key, value) => { if (key === 'globalAlpha') alphas.push(value); return true; },
+  });
+  const traveler = { seed: 17, initialDistance: 123, speed: 20, size: 1, alpha: 0.6 };
+  const appearance = getTravelerAppearance(traveler, 0.7);
+  for (const transmission of [0.025, 0.3, 1]) draw(ctx, appearance, 0, 0, appearance.radius, 1, false, 12, 0.7, transmission);
+  assert.deepEqual(alphas, [1, 1, 1]);
+  assert.deepEqual(surfaceOpacities, [0.025, 0.3, 1]);
+  assert.ok(gradients.every((color) => color.startsWith('rgb(') && !color.startsWith('rgba(')));
+  assert.equal(gradients[0], 'rgb(6, 6, 6)');
+  assert.equal(gradients[6], 'rgb(255, 255, 255)');
+  const field = createNebulaField(12345);
+  const times = Array.from({ length: 120 }, (_, index) => index / 10);
+  const baseline = times.map((time) => projectTraveler(traveler, time, 1920, 1080));
+  const transmissions = baseline.map((projection, index) => getNebulaDepthTransmission(
+    sampleNebulaTransmission(field, projection.x, projection.y, times[index]),
+    (projection.depth - NEAR_DEPTH) / (FAR_DEPTH - NEAR_DEPTH)));
+  assert.ok(new Set(transmissions).size > 20);
+  assert.deepEqual(times.map((time) => projectTraveler(traveler, time, 1920, 1080)), baseline);
+  for (const dust of [0.025, 0.3, 1]) assert.equal(getNebulaDepthTransmission(dust, 0), 1);
+  assert.match(source, /ctx\.fillStyle = '#000000';/);
+  assert.match(source, /ctx\.drawImage\(nebulaCanvas/);
+  assert.match(source, /opacity \* appearance\.glowOpacity \* transmission/);
+});
+
+test('cached cycle budgets preserve source quadrature independently of query order', () => {
+  const fixtures = [
+    [0, [[125, 948.7518865015396, 5], [900, 954.2082140609372, 34], [3600, 534.6701578571401, 129]]],
+    [17, [[125, 263.77221419482464, 4], [900, 110.32613105040423, 32], [3600, 318.7159566117349, 132]]],
+    [9876, [[125, 183.46750782635434, 4], [900, 171.7327480942057, 31], [3600, 983.0692557912671, 132]]],
+  ];
+  for (const [seed, samples] of fixtures) {
+    const traveler = { seed, initialDistance: 123, speed: 20, size: 1, alpha: 0.6 };
+    for (const [time, depth, cycle] of [...samples].reverse().concat(samples)) {
+      const actual = getTravelerDepth(traveler, time);
+      closeTo(actual.depth, depth, 1e-7);
+      assert.equal(actual.cycle, cycle);
+    }
+  }
+});
+
 test('crypto seeding is preferred, falls back exactly once, and explicit scene seeds remain deterministic', () => {
   let cryptoCalls = 0;
   const fakeCrypto = {
@@ -233,14 +470,14 @@ test('100k deterministic samples match every reviewed planet percentage within t
   });
 });
 
-test('ambient remains 70 while variable Star Text retains 35 ambient stars', () => {
+test('large ambient pool has 560 stars while Star Text retains 280', () => {
   const stars = createAmbientLayout(12345, 0);
-  assert.equal(AMBIENT_STAR_COUNT, 70);
-  assert.equal(RETAINED_AMBIENT_STAR_COUNT, 35);
+  assert.equal(AMBIENT_STAR_COUNT, 560);
+  assert.equal(RETAINED_AMBIENT_STAR_COUNT, 280);
   assert.equal(stars.length, AMBIENT_STAR_COUNT);
-  assert.equal(starCountForWidth(320), 70);
-  assert.equal(starCountForWidth(1920), 70);
-  assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 70);
+  assert.equal(starCountForWidth(320), 56);
+  assert.equal(starCountForWidth(1920), 560);
+  assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 560);
 
   const anchorCount = createConstellationGeometry(1200, 600, 12345, 1).points.length;
   const hold = getStarFieldStyles(12345, 610);
@@ -249,8 +486,8 @@ test('ambient remains 70 while variable Star Text retains 35 ambient stars', () 
   assert.ok(holdBackground.filter(isStarRenderable).length <= RETAINED_AMBIENT_STAR_COUNT);
   assert.ok(holdBackground.some(isStarRenderable));
   assert.ok(holdBackground.every(({ strength }) => strength === 0));
-  assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 35);
-  assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 35);
+  assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 280);
+  assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 280);
   assert.ok(stars.every((star) => star.driftSpeed >= 0.0007 && star.driftSpeed <= 0.0017));
   assert.deepEqual(AMBIENT_STAR_RADIUS_RANGE, [0.825, 2.09]);
   assert.ok(stars.every((star) => star.size >= 0.825 && star.size <= 2.09));
@@ -327,7 +564,7 @@ test('each star has stable independent speed, phase and subtle dim/bright bounds
   const stars = createAmbientLayout(6789, 0);
   const parameters = stars.map(getStarTwinkleParameters);
   assert.deepEqual(parameters, createAmbientLayout(6789, 0).map(getStarTwinkleParameters));
-  assert.deepEqual(createAmbientLayout(6789, 0, 140).slice(0, 70), stars);
+  assert.deepEqual(createAmbientLayout(6789, 0, 1120).slice(0, AMBIENT_STAR_COUNT), stars);
   for (const key of ['periodSeconds', 'phase', 'dim', 'bright']) {
     assert.equal(new Set(parameters.map((value) => value[key])).size, stars.length, key);
   }
@@ -1223,8 +1460,7 @@ test('constellation-only stars fade with strength while retained background stay
   assert.ok(heldAmbient.filter(isStarRenderable).length <= RETAINED_AMBIENT_STAR_COUNT);
   assert.ok(heldAmbient.filter(isStarRenderable).length > 0);
   assert.ok(heldAmbient.every(({ strength }) => strength === 0));
-  assert.ok(RETAINED_AMBIENT_STAR_COUNT < anchorCount / 2,
-    'background density overwhelms the letter allocation');
+  assert.equal(RETAINED_AMBIENT_STAR_COUNT, AMBIENT_STAR_COUNT / 2);
 
   assert.deepEqual(getStarRgb(0), AMBIENT_STAR_RGB);
   assert.deepEqual(getStarRgb(1), CONSTELLATION_STAR_RGB);
@@ -1266,10 +1502,9 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
   const morphStart = getStarFieldPositions(seed, 600, width, height);
   const beforeMorph = getStarFieldPositions(seed, 599.999999, width, height);
   const afterMorph = getStarFieldPositions(seed, 630, width, height);
-  const beforePositionKeys = new Set(beforeMorph.slice(MAX_STAR_TEXT_ANCHOR_COUNT)
-    .map(({ x, y }) => `${x.toFixed(3)},${y.toFixed(3)}`));
+  const beforeAmbient = beforeMorph.slice(MAX_STAR_TEXT_ANCHOR_COUNT);
   morphStart.slice(0, targets.length).forEach(({ x, y }) => {
-    assert.ok(beforePositionKeys.has(`${x.toFixed(3)},${y.toFixed(3)}`));
+    assert.ok(beforeAmbient.some((point) => Math.hypot(point.x - x, point.y - y) < 0.0001));
   });
   for (let index = 0; index < AMBIENT_STAR_COUNT; index += 1) {
     const regenerated = getDriftedStar(createAmbientLayout(seed, 1)[index], 0);
@@ -1332,7 +1567,7 @@ test('scheduled outro is fade-only for text while ambient crossfades without bou
   }
 });
 
-test('ordinary wrap and bounce behavior resumes exactly after 7,000 fade boundaries', () => {
+test('ordinary wrap and bounce behavior resumes exactly after every fade boundary', () => {
   const width = 1200;
   const height = 600;
   const epsilon = 0.0001;
@@ -1359,9 +1594,9 @@ test('ordinary wrap and bounce behavior resumes exactly after 7,000 fade boundar
       checked += 1;
     }
   }
-  assert.equal(checked, 7000);
-  assert.equal(wraps, 3500);
-  assert.equal(bounces, 3500);
+  assert.equal(checked, 100 * AMBIENT_STAR_COUNT);
+  assert.equal(wraps, checked / 2);
+  assert.equal(bounces, checked / 2);
 });
 
 test('radial traveler speed uses a clamped endpoint-preserving exponential curve', () => {
@@ -1438,7 +1673,8 @@ test('travelers grow strongly on approach and reveal detail at exact monotonic t
   assert.ok(samples.every(({ radius }, index) => index === 0 || radius >= samples[index - 1].radius));
   assert.ok(samples.at(-1).radius > samples[0].radius * 10, 'near traveler is not visibly larger');
   assert.ok(samples.every(({ haloRadius, radius }) => haloRadius > radius));
-  assert.equal(samples[5].flareLength, 0);
+  assert.equal(samples[4].flareLength, 0);
+  assert.ok(samples[5].flareLength > 0);
   assert.ok(samples[6].flareLength > samples[6].radius * 2);
 
   const projected = projectTraveler(traveler, 0, 1000, 600);
@@ -1495,7 +1731,7 @@ test('starscape source contracts an opaque black backdrop and disc-clipped star 
   assert.match(homeScene, /\.home-hero-scene[\s\S]*?background: #000000;/);
 
   assert.match(travelerSurface, /ctx\.save\(\);\s*ctx\.beginPath\(\);\s*ctx\.arc\(x, y, radius, 0, TAU\);\s*ctx\.clip\(\);/);
-  assert.match(componentSource, /drawTravelerSurface\(ctx, appearance, x, y, radius, opacity\);/);
+  assert.match(componentSource, /drawTravelerSurface\(ctx, appearance, x, y, radius, opacity \* transmission, simulationSeconds, progress\);/);
   assert.match(planetarySystem, /drawTravelerDisc\(\s*ctx,\s*ownerAppearance,/);
 
   const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
@@ -1996,14 +2232,14 @@ test('galaxy matter is deterministic, bounded, gently animated, and frozen by si
   assert.notDeepEqual(getGalaxyAnimationState(traveler, 0, 20), getGalaxyAnimationState(traveler, 0, 0));
 });
 
-test('one equiprobable basis-point roll reserves disjoint exact 3% UFO and comet bands', () => {
-  assert.equal(UFO_BASIS_POINTS, 300);
-  assert.equal(COMET_BASIS_POINTS, 300);
+test('one equiprobable basis-point roll reserves disjoint exact 0.5% UFO and comet bands', () => {
+  assert.equal(UFO_BASIS_POINTS, 50);
+  assert.equal(COMET_BASIS_POINTS, 50);
   const variants = Array.from({ length: 10000 }, (_, basisPoint) =>
     getTravelerVariantForBasisPoint(basisPoint));
-  assert.equal(variants.filter((variant) => variant === 'ufo').length, 300);
-  assert.equal(variants.filter((variant) => variant === 'comet').length, 300);
-  assert.equal(variants.filter((variant) => variant === 'star').length, 9400);
+  assert.equal(variants.filter((variant) => variant === 'ufo').length, 50);
+  assert.equal(variants.filter((variant) => variant === 'comet').length, 50);
+  assert.equal(variants.filter((variant) => variant === 'star').length, 9900);
   variants.forEach((variant, basisPoint) => {
     assert.equal(isUfoBasisPoint(basisPoint), variant === 'ufo');
     assert.equal(isCometBasisPoint(basisPoint), variant === 'comet');
@@ -2104,18 +2340,19 @@ test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at 
   }
 });
 
-test('20% galaxy probability preserves moving star radii and desktop/mobile traveler counts', () => {
+test('20% galaxy probability and moving radii survive the responsive count change', () => {
   const scene = createSpaceScene(9876);
-  assert.equal(AMBIENT_STAR_COUNT, 70);
+  assert.equal(AMBIENT_STAR_COUNT, 560);
   assert.deepEqual(TRAVELER_RADIUS_RANGE, [0.66, 1.21]);
   assert.ok(scene.travelers.every((traveler) =>
     traveler.size >= TRAVELER_RADIUS_RANGE[0] && traveler.size <= TRAVELER_RADIUS_RANGE[1]));
-  assert.equal(DESKTOP_TRAVELER_COUNT, 24);
-  assert.equal(MOBILE_TRAVELER_COUNT, 15);
-  assert.equal(scene.travelers.length, 24);
-  assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 15);
-  assert.equal(travelerCountForWidth(639), 15);
-  assert.equal(travelerCountForWidth(640), 24);
+  assert.equal(DESKTOP_TRAVELER_COUNT, 170);
+  assert.equal(MOBILE_TRAVELER_COUNT, 17);
+  assert.equal(scene.travelers.length, 170);
+  assert.equal(scene.travelers.slice(0, MOBILE_TRAVELER_COUNT).length, 17);
+  assert.equal(travelerCountForWidth(639), 17);
+  assert.equal(travelerCountForWidth(640), 51);
+  assert.equal(travelerCountForWidth(1440), 170);
 });
 
 test('neural signals use a deterministic sparse schedule with bounded fades, pulse, and mobile density', () => {
@@ -2505,7 +2742,9 @@ test('the expanded deterministic carrier minority still selects one nearest usef
     isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0);
   // The 20% roll makes slot 14 a galaxy; galaxies remain excluded from carriers.
   assert.equal(scene.travelers[14].isGalaxy, true);
-  assert.deepEqual(carrierIndices, [2, 8, 20]);
+  assert.deepEqual(carrierIndices, [2, 8, 20, 26, 32, 38, 50, 56, 62, 74, 92, 98,
+    110, 116, 128, 140, 152, 158, 164]);
+  assert.ok(carrierIndices.every((index) => index % 6 === 2 && !scene.travelers[index].isGalaxy));
   const mobileTravelers = scene.travelers.slice(0, MOBILE_TRAVELER_COUNT);
   assert.deepEqual(mobileTravelers.map((traveler, index) =>
     isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8]);
@@ -2553,10 +2792,10 @@ test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', (
   assert.notDeepEqual(createPlanetSystem(0xface, 3), createPlanetSystem(0xface, 4));
 });
 
-test('planet bodies remain half-sized while prominent system stars are exactly 10% larger', () => {
+test('planet bodies remain half-sized while active host stellar geometry doubles', () => {
   assert.deepEqual(PLANET_RADIUS_RANGE, [1.45, 2.3]);
   assert.equal(PLANET_RENDER_SCALE, 0.5);
-  assert.equal(SYSTEM_STAR_RADIUS, 11.55);
+  assert.equal(spaceModel.SYSTEM_HOST_RADIUS_MULTIPLIER, 2);
   assert.deepEqual(PLANET_SURFACE_LOD_DIAMETERS, [5, 10]);
   assert.equal(getPlanetSurfaceDetailLevel(2, 1.2), 0);
   assert.equal(getPlanetSurfaceDetailLevel(2.5, 1), 1);
@@ -2607,7 +2846,7 @@ test('planet body sizing respects tiny hosts and perspective without a minimum-s
   assert.equal(getPlanetRenderRadius(1, 1), 0.5, 'smaller bodies stay unchanged');
 });
 
-test('canvas uses the same unchanged host radius to cap both orbital halves and moon bodies', () => {
+test('canvas doubles the host disc but retains ordinary-host caps for both orbital halves and moons', () => {
   const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
   const declarations = ['drawPlanet', 'drawPlanetarySystem'].map((name) => {
     const start = source.indexOf(`const ${name} = (`);
@@ -2653,13 +2892,13 @@ test('canvas uses the same unchanged host radius to cap both orbital halves and 
         })),
       });
       draw(ctx, traveler, projection, 1, nebulaTransmission);
-      closeTo(drawnHost, hostRadius);
+      closeTo(drawnHost, hostRadius * 2);
       const expectedOpacity = getSystemOpacity(projection, traveler.alpha) * nebulaTransmission;
-      closeTo(drawnHostOpacity, expectedOpacity);
+      closeTo(drawnHostOpacity, spaceModel.getTravelerDiscOpacity(progress));
       moonOpacities.forEach((opacity) => closeTo(opacity, expectedOpacity));
       assert.equal(bodies.length, 6, 'both planets draw their body, shadow, and highlight arcs');
       assert.ok(bodies.every((radius) => radius > 0 && radius < drawnHost
-        && radius <= drawnHost * MAX_PLANET_TO_HOST_RADIUS_RATIO + 1e-12));
+        && radius <= hostRadius * MAX_PLANET_TO_HOST_RADIUS_RATIO + 1e-12));
       assert.equal(moons.length, 2);
       assert.ok(moons.every((radius) => radius <= bodies[0] * MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO));
     }
@@ -2793,12 +3032,10 @@ test('system safety margins are exact and include bodies, moons, rings, atmosphe
     20 + 2 * PLANET_RENDER_SCALE * ATMOSPHERE_HALO_RADIUS_MULTIPLIER);
   const traveler = createSpaceScene(44).travelers[2];
   const projection = { x: 200, y: 200, depth: 300, progress: 0.8, radius: 2, opacity: 0.5, cycle: 0 };
-  const appearance = getTravelerAppearance(traveler, projection.progress);
+  const appearance = spaceModel.getSystemHostStarAppearance(traveler, projection.progress);
   const expected = Math.max(
     getPlanetSystemExtent(createPlanetSystem(traveler.seed, 0)) * getSystemScale(projection),
-    SYSTEM_STAR_RADIUS * getSystemScale(projection),
-    appearance.haloRadius,
-    appearance.flareLength,
+    appearance.radius,
   ) + 0.5;
   closeTo(getSystemSafetyMargin(traveler, projection), expected);
 });
@@ -2817,6 +3054,7 @@ test('desktop and mobile visibility sweeps select only nearest eligible in-bound
       const eligible = travelers.map((traveler, index) => ({ traveler, projection: projections[index], index }))
         .filter(({ traveler, projection, index }) =>
           isSystemCarrier(traveler, index) &&
+          getTravelerVariant(traveler, projection.cycle) === 'star' &&
           projection.progress >= SYSTEM_MIN_PROGRESS &&
           projection.progress <= SYSTEM_MAX_PROGRESS &&
           doesSystemExitViewportBeforeCycle(traveler, projection, width, height) &&
@@ -3033,7 +3271,7 @@ test('orbital phase and deterministic surface detail freeze throughout constella
 
   const traveler = createSpaceScene(42).travelers[0];
   assert.equal(travelerCountForWidth(390), MOBILE_TRAVELER_COUNT);
-  assert.equal(travelerCountForWidth(1200), DESKTOP_TRAVELER_COUNT);
+  assert.equal(travelerCountForWidth(1200), 51);
   for (let elapsed = 0; elapsed < 1000; elapsed += 0.37) {
     const { depth } = getTravelerDepth(traveler, elapsed);
     assert.ok(depth >= NEAR_DEPTH && depth <= FAR_DEPTH);

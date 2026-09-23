@@ -1,17 +1,18 @@
-export const AMBIENT_STAR_COUNT = 70;
+// Maximum pool; all responsive tiers share deterministic prefixes.
+export const AMBIENT_STAR_COUNT = 560;
 // Kept as the historical density reference for consumers that use the exported constant.
 // Actual Star Text anchor totals are phrase/event dependent.
 export const CONSTELLATION_STAR_COUNT = 144;
 export const MIN_GLYPH_STAR_COUNT = 37;
 export const MAX_GLYPH_STAR_COUNT = 73;
-export const RETAINED_AMBIENT_STAR_COUNT = 35;
+export const RETAINED_AMBIENT_STAR_COUNT = 280;
 export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
-export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
+export const MOBILE_STAR_COUNT = 56;
 export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
 export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
 export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
-export const DESKTOP_TRAVELER_COUNT = 24;
-export const MOBILE_TRAVELER_COUNT = 15;
+export const DESKTOP_TRAVELER_COUNT = 170;
+export const MOBILE_TRAVELER_COUNT = 17;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
 export const GALAXY_CREATION_CHANCE = 0.2;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
@@ -39,10 +40,12 @@ export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> 
     irregular: 1.12,
     sombrero: 0,
 };
-export const UFO_BASIS_POINTS = 300;
-export const COMET_BASIS_POINTS = 300;
+export const UFO_BASIS_POINTS = 50;
+export const COMET_BASIS_POINTS = 50;
 export const UFO_SIZE_MULTIPLIER = 1.5;
 export const MOBILE_BREAKPOINT = 640;
+export const LARGE_BREAKPOINT = 1440;
+export const SYSTEM_HOST_RADIUS_MULTIPLIER = 2;
 export const NEURAL_SIGNAL_SLOT_SECONDS = 24;
 export const NEURAL_SIGNAL_DURATION_RANGE = [4.2, 5] as const;
 export const NEURAL_SIGNAL_FADE_SECONDS = [1.3, 1.9] as const;
@@ -133,12 +136,22 @@ export interface ConstellationGeometry {
     glyphs: ConstellationGlyph[];
 }
 
+export interface StarAura {
+    radiusMultiplier: number;
+    opacity: number;
+    softness: number;
+    rgb: readonly [number, number, number];
+}
+
 export interface StarVisualStyle {
     alpha: number;
     twinkle: number;
     strength: number;
     radius: number;
     opacity: number;
+    cardinalFlare?: number;
+    coreOpacity?: number;
+    aura?: StarAura;
 }
 
 export interface PlanetLightingStyle {
@@ -165,6 +178,7 @@ export interface DistantStar {
     driftSpeed: number;
     driftAngle: number;
     twinkleSeed: number;
+    hasCardinalFlare: boolean;
 }
 
 export interface Moon {
@@ -408,7 +422,7 @@ const hashRandom = (seed: number, cycle: number, channel: number) =>
 
 const TRAVELER_VARIANT_BASIS_POINT_RANGE = 10000;
 
-/** One shared equiprobable roll makes the 3% UFO and 3% comet bands disjoint by construction. */
+/** One shared equiprobable roll makes the two 0.5% visitor bands disjoint by construction. */
 export const getTravelerVariantForBasisPoint = (basisPoint: number): TravelerVariant => {
     const outcome = positiveModulo(Math.trunc(basisPoint), TRAVELER_VARIANT_BASIS_POINT_RANGE);
     if (outcome < UFO_BASIS_POINTS) return 'ufo';
@@ -416,11 +430,11 @@ export const getTravelerVariantForBasisPoint = (basisPoint: number): TravelerVar
     return 'star';
 };
 
-/** Exactly 300 of 10,000 equiprobable outcomes classify as spacecraft. */
+/** Exactly 50 of 10,000 equiprobable outcomes classify as spacecraft. */
 export const isUfoBasisPoint = (basisPoint: number) =>
     getTravelerVariantForBasisPoint(basisPoint) === 'ufo';
 
-/** Exactly 300 different outcomes classify as comets. */
+/** Exactly 50 different outcomes classify as comets. */
 export const isCometBasisPoint = (basisPoint: number) =>
     getTravelerVariantForBasisPoint(basisPoint) === 'comet';
 
@@ -495,9 +509,11 @@ export const createCryptoSeed = (
 export const getElapsedSecondsSinceMount = (mountedAt: number, now: number) =>
     Math.max(0, now - mountedAt) / 1000;
 
-export const starCountForWidth = (_width: number) => AMBIENT_STAR_COUNT;
-export const travelerCountForWidth = (width: number) =>
-    width < MOBILE_BREAKPOINT ? MOBILE_TRAVELER_COUNT : DESKTOP_TRAVELER_COUNT;
+export const starDensityMultiplierForWidth = (width: number) =>
+    width < MOBILE_BREAKPOINT ? 1 : width < LARGE_BREAKPOINT ? 3 : 10;
+export const starCountForWidth = (width: number) => MOBILE_STAR_COUNT * starDensityMultiplierForWidth(width);
+export const retainedAmbientCountForWidth = (width: number) => starCountForWidth(width) / 2;
+export const travelerCountForWidth = (width: number) => MOBILE_TRAVELER_COUNT * starDensityMultiplierForWidth(width);
 
 /** The half-open threshold gives every newly created traveler one exact 20% galaxy roll. */
 export const isGalaxyCreationRoll = (roll: number) => roll >= 0 && roll < GALAXY_CREATION_CHANCE;
@@ -548,10 +564,23 @@ export const getSimulationTime = (elapsedSeconds: number) => {
         - Math.min(inInterval, CONSTELLATION_WINDOW_SECONDS);
 };
 
+// Paired layers preserve balanced drift and near-10% flares in every tier prefix.
+const morphingAmbientIndex = (index: number) => index + 2 * Math.floor(index / 2);
+const ambientFlareIndexForBlock = (seed: number, generation: number, block: number) => {
+    const layer = (block & 1) ^ (hashUint(seed, generation, 701) & 1);
+    const candidates = Array.from({ length: 10 }, (_, offset) => block * 10 + offset)
+        .filter((candidate) => (candidate % 4 >= 2 ? 1 : 0) === layer);
+    return candidates[hashUint(seed, generation, 702 + block) % candidates.length];
+};
+export const hasAmbientCardinalFlare = (seed: number, generation: number, index: number) =>
+    index === ambientFlareIndexForBlock(seed, generation, Math.floor(index / 10));
+
 const createStarLayout = (seed: number, generation: number, count: number, channel: number) => {
+    const flares = new Set(Array.from({ length: Math.ceil(count / 10) },
+        (_, block) => ambientFlareIndexForBlock(seed, generation, block)));
     const modeOffset = hashUint(seed, generation, channel + 1) & 1;
     return Array.from({ length: count }, (_, index) => {
-        // Per-index streams keep the first 70 stars identical when a display temporarily needs
+        // Per-index streams keep all shared prefix stars identical when a display temporarily needs
         // hundreds more anchors. Density changes therefore cannot perturb the ambient frame.
         const random = createSeededRandom(hashUint(seed, generation, channel + 2 + index));
         return {
@@ -563,6 +592,7 @@ const createStarLayout = (seed: number, generation: number, count: number, chann
             driftSpeed: between(random, 0.0007, 0.0017),
             driftAngle: between(random, 0, TAU),
             twinkleSeed: Math.floor(random() * UINT32_RANGE),
+            hasCardinalFlare: flares.has(index),
         } satisfies DistantStar;
     });
 };
@@ -687,6 +717,41 @@ export const getEasterEggStrength = (
 
 const mix = (from: number, to: number, amount: number) => from + (to - from) * amount;
 
+const starAuras = new Map<number, StarAura>();
+export const getStarAura = (seed: number): StarAura => {
+    const cached = starAuras.get(seed);
+    if (cached) return cached;
+    const warmth = hashRandom(seed, 0, 811);
+    const aura: StarAura = {
+        radiusMultiplier: 2.1 + hashRandom(seed, 0, 812) * 1.5,
+        opacity: 0.16 + hashRandom(seed, 0, 813) * 0.16,
+        softness: 0.22 + hashRandom(seed, 0, 814) * 0.34,
+        rgb: [Math.round(mix(160, 255, warmth)), Math.round(mix(211, 216, warmth)),
+            Math.round(mix(255, 174, warmth))],
+    };
+    if (starAuras.size >= 4096) starAuras.delete(starAuras.keys().next().value!);
+    starAuras.set(seed, aura);
+    return aura;
+};
+
+const mixStarAura = (from: StarAura, to: StarAura, amount: number): StarAura => ({
+    radiusMultiplier: mix(from.radiusMultiplier, to.radiusMultiplier, amount),
+    opacity: mix(from.opacity, to.opacity, amount),
+    softness: mix(from.softness, to.softness, amount),
+    rgb: [mix(from.rgb[0], to.rgb[0], amount), mix(from.rgb[1], to.rgb[1], amount),
+        mix(from.rgb[2], to.rgb[2], amount)],
+});
+
+export const getAmbientCardinalFlare = (style: StarVisualStyle) => {
+    const opacity = clamp01(style.cardinalFlare ?? 0);
+    if (opacity <= 0 || style.opacity <= 0) return null;
+    const rayLength = style.radius * 9;
+    return { opacity, rayLength, rayWidth: Math.max(0.45, style.radius * 0.55),
+        coreRadius: style.radius * 0.85,
+        rays: [{ x: 0, y: -rayLength }, { x: 0, y: rayLength },
+            { x: rayLength, y: 0 }, { x: -rayLength, y: 0 }] };
+};
+
 /** Pure visual style interpolation with no alpha, radius, or twinkle pops at phase boundaries. */
 export const getStarVisualStyle = (
     previous: DistantStar,
@@ -724,7 +789,7 @@ export const getStarVisualStyle = (
 };
 
 const hiddenStarStyle = (radius = 1): StarVisualStyle => ({
-    alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0,
+    alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0, coreOpacity: 0,
 });
 
 const ambientVisualStyle = (
@@ -739,6 +804,9 @@ const ambientVisualStyle = (
         strength: 0,
         radius: star.size,
         opacity: Math.min(1, star.alpha * twinkle),
+        coreOpacity: 1,
+        cardinalFlare: star.hasCardinalFlare ? 1 : 0,
+        aura: getStarAura(star.twinkleSeed),
     };
 };
 
@@ -746,6 +814,7 @@ export const getStarFieldStyles = (
     sceneSeed: number,
     elapsedSeconds: number,
     prefersReducedMotion = false,
+    densityWidth = LARGE_BREAKPOINT,
 ): StarVisualStyle[] => {
     // Match the Canvas lifecycle's static time-zero frame, including redraws after resize.
     if (prefersReducedMotion) elapsedSeconds = 0;
@@ -761,23 +830,26 @@ export const getStarFieldStyles = (
         return [
             ...Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) =>
                 hiddenStarStyle(hiddenSource[index]?.size ? hiddenSource[index].size * 1.18 : 1)),
-            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds, prefersReducedMotion)),
+            ...ambient.map((star, index) => index < starCountForWidth(densityWidth)
+                ? ambientVisualStyle(star, elapsedSeconds, prefersReducedMotion) : hiddenStarStyle(star.size)),
         ];
     }
 
     const phrase = selectConstellationPhrase(sceneSeed, phase.event);
     const counts = getConstellationGlyphAnchorCounts(phrase, sceneSeed, phase.event);
     const anchorCount = counts.reduce((total, count) => total + count, 0);
-    const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), anchorCount);
+    const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), Math.max(anchorCount, AMBIENT_STAR_COUNT));
     const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
     const intro = getStarTextIntroProgress(phase.eventElapsed);
     const ambientSources = getStarTextAmbientSources(anchorCount);
-    const targetStyles = previous.map((star) => ({
+    const targetStyles = previous.slice(0, anchorCount).map((star) => ({
         alpha: star.alpha,
         twinkle: 1,
         strength: 1,
         radius: star.size * 1.18,
         opacity: Math.min(1, star.alpha * 1.28),
+        coreOpacity: 1,
+        aura: getStarAura(star.twinkleSeed),
     }));
     const textStyles = Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) => {
         if (index >= anchorCount) return hiddenStarStyle();
@@ -785,11 +857,11 @@ export const getStarFieldStyles = (
         if (phase.name === 'morph-out') {
             const visible = 1 - phase.progress;
             return { ...target, alpha: target.alpha * visible, strength: visible,
-                opacity: target.opacity * visible };
+                opacity: target.opacity * visible, coreOpacity: visible };
         }
         if (phase.name === 'hold') return target;
         const source = ambientSources[index];
-        const start = source.visible
+        const start = source.visible && source.index < starCountForWidth(densityWidth)
             ? ambientVisualStyle(previous[source.index], eventStart - 0.000001)
             : hiddenStarStyle(previous[source.index].size * 1.18);
         const style = mixStarVisualStyle(start, target, intro.progress);
@@ -797,13 +869,20 @@ export const getStarFieldStyles = (
     });
 
     const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
+    const transferredSources = new Set(ambientSources.filter((source) => source.visible).map((source) => source.index));
     const ambientStyles = ambient.map((star, index) => {
         const from = ambientVisualStyle(previousAmbient[index], eventStart - 0.000001);
         const to = ambientVisualStyle(star, eventStart + CONSTELLATION_WINDOW_SECONDS);
-        const consumedCount = AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT;
-        const held = index >= consumedCount ? from : hiddenStarStyle(from.radius);
+        if (index >= starCountForWidth(densityWidth)) return hiddenStarStyle(from.radius);
+        const consumed = index % 4 < 2;
+        const held = consumed ? hiddenStarStyle(from.radius) : from;
         if (phase.name === 'morph-out') return mixStarVisualStyle(held, to, phase.progress);
-        return index < consumedCount ? hiddenStarStyle(from.radius) : from;
+        // Short phrases fade excess sources without losing their boundary frame.
+        const transferred = transferredSources.has(index);
+        if (consumed && !transferred && phase.name === 'morph-in') {
+            return mixStarVisualStyle(from, hiddenStarStyle(from.radius), intro.progress);
+        }
+        return held;
     });
     return [...textStyles, ...ambientStyles];
 };
@@ -1208,9 +1287,18 @@ const getDistributedTextSourceSlots = (targetCount: number) => {
         count,
     );
     const sourceByDestination = Array<number>(count).fill(-1);
-    for (let sourceIndex = 0; sourceIndex < visibleSourceCount; sourceIndex += 1) {
-        const destination = Math.floor((sourceIndex + 0.5) * count / visibleSourceCount);
-        sourceByDestination[destination] = sourceIndex;
+    // Distribute the mobile prefix across the entire phrase first, then fill remaining slots
+    // at larger tiers. Shared stars never switch glyph destinations at a breakpoint.
+    let assigned = 0;
+    for (const tierCount of [28, 84, RETAINED_AMBIENT_STAR_COUNT]) {
+        const stageCount = Math.min(tierCount, visibleSourceCount) - assigned;
+        const available = sourceByDestination.map((source, index) => source < 0 ? index : -1)
+            .filter((index) => index >= 0);
+        for (let index = 0; index < stageCount; index += 1) {
+            const destination = available[Math.floor((index + 0.5) * available.length / stageCount)];
+            sourceByDestination[destination] = assigned + index;
+        }
+        assigned += stageCount;
     }
     let hiddenSource = visibleSourceCount;
     return sourceByDestination.map((source) => source >= 0 ? source : hiddenSource++);
@@ -1223,7 +1311,7 @@ const getStarTextAmbientSources = (targetCount: number) => {
     );
     return getDistributedTextSourceSlots(targetCount).map((sourceSlot) => ({
         index: sourceSlot < visibleSourceCount
-            ? sourceSlot
+            ? morphingAmbientIndex(sourceSlot)
             : positiveModulo(sourceSlot * 17 + 7, AMBIENT_STAR_COUNT),
         visible: sourceSlot < visibleSourceCount,
     }));
@@ -1257,14 +1345,13 @@ export const remapAmbientStarsToTextSlots = (
         .filter(({ style, index }) => index >= ambientStartIndex
             && style.strength === 0 && style.opacity > 0)
         .map(({ index }) => index);
-    const sourceIndices = ambientSourceIndices.slice(
-        0, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT,
-    );
+    const sources = getStarTextAmbientSources(targetCount);
+    const sourceIndices = sources.filter((source) => source.visible)
+        .map((source) => ambientStartIndex + source.index)
+        .filter((index) => styles[index]?.opacity > 0);
     if (ambientSourceIndices.length > 0) {
-        getStarTextAmbientSources(targetCount).forEach((source, destinationIndex) => {
-            const sourceIndex = ambientSourceIndices[
-                positiveModulo(source.index, ambientSourceIndices.length)
-            ];
+        sources.forEach((source, destinationIndex) => {
+            const sourceIndex = ambientStartIndex + source.index;
             remappedPositions[destinationIndex] = { ...positions[sourceIndex] };
             remappedStyles[destinationIndex] = source.visible
                 ? { ...styles[sourceIndex] }
@@ -1411,12 +1498,17 @@ const mixStarVisualStyle = (
     from: StarVisualStyle,
     to: StarVisualStyle,
     amount: number,
-): StarVisualStyle => ({
+): StarVisualStyle => amount <= 0 ? { ...from } : amount >= 1 ? { ...to } : ({
     alpha: mix(from.alpha, to.alpha, amount),
     twinkle: mix(from.twinkle, to.twinkle, amount),
     strength: mix(from.strength, to.strength, amount),
     radius: mix(from.radius, to.radius, amount),
     opacity: mix(from.opacity, to.opacity, amount),
+    ...(from.coreOpacity !== undefined || to.coreOpacity !== undefined
+        ? { coreOpacity: mix(from.coreOpacity ?? from.opacity, to.coreOpacity ?? to.opacity, amount) } : {}),
+    ...(from.cardinalFlare !== undefined || to.cardinalFlare !== undefined
+        ? { cardinalFlare: mix(from.cardinalFlare ?? 0, to.cardinalFlare ?? 0, amount) } : {}),
+    ...(from.aura || to.aura ? { aura: mixStarAura(from.aura ?? to.aura!, to.aura ?? from.aura!, amount) } : {}),
 });
 
 export const getEasterEggStarFieldStyles = (
@@ -1444,9 +1536,11 @@ export const getEasterEggStarFieldStyles = (
     }
     const targetCount = Math.min(options.targetCount, targets.length);
     if (phase.name === 'morph-in') {
-        return start.map((style, index) => index < targetCount
-            ? mixStarVisualStyle(style, targetFor(style, index), phase.progress)
-            : style);
+        // Retained styles are identical; surplus ambient and old-phrase slots fade smoothly
+        // instead of vanishing at the hold boundary when a short phrase uses fewer sources.
+        return start.map((style, index) => mixStarVisualStyle(
+            style, targetFor(style, index), phase.progress,
+        ));
     }
     if (phase.name === 'hold') return start.map(targetFor);
     const endpointIsVisible = (index: number) => options.endpointVisible?.[index] ?? false;
@@ -1459,6 +1553,8 @@ export const getEasterEggStarFieldStyles = (
         alpha: mix(target.alpha, endpoint.alpha, amount),
         strength: mix(target.strength, endpoint.strength, amount),
         opacity: mix(target.opacity, endpoint.opacity, amount),
+        ...(target.coreOpacity !== undefined || endpoint.coreOpacity !== undefined
+            ? { coreOpacity: mix(target.coreOpacity ?? target.opacity, endpoint.coreOpacity ?? endpoint.opacity, amount) } : {}),
     });
     if (phase.name === 'morph-out') {
         return start.map((style, index) => {
@@ -1491,6 +1587,8 @@ export const createEasterEggTargetStyles = (
         strength: 1,
         radius: star.size * 1.18,
         opacity: Math.min(1, star.alpha * 1.28),
+        coreOpacity: 1,
+        aura: getStarAura(star.twinkleSeed),
     }));
 
 export const getStarFieldPositions = (
@@ -1524,7 +1622,7 @@ export const getStarFieldPositions = (
     const geometry = createConstellationGeometry(width, height, sceneSeed, phase.event);
     const targets = geometry.points;
     const previous = createAmbientLayout(
-        sceneSeed, Math.max(0, phase.event - 1), targets.length,
+        sceneSeed, Math.max(0, phase.event - 1), Math.max(targets.length, AMBIENT_STAR_COUNT),
     );
     const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
     const previousDriftTime = phase.event <= 1
@@ -1596,7 +1694,9 @@ const getTravelerSpeedTable = (traveler: Traveler, cycle: number) => {
         table[index] = table[index - 1] + (previous + current) * step * 0.5;
         previous = current;
     }
-    if (travelerSpeedTables.size >= 4096) travelerSpeedTables.clear();
+    if (travelerSpeedTables.size >= 4096) {
+        travelerSpeedTables.delete(travelerSpeedTables.keys().next().value!);
+    }
     travelerSpeedTables.set(key, table);
     return table;
 };
@@ -1607,26 +1707,45 @@ const travelerBudgetAtDistance = (table: Float64Array, distance: number) => {
     return mix(table[index], table[index + 1], tablePosition - index);
 };
 
+// Scalar cycle boundaries avoid replaying every historical quadrature table each RAF.
+const travelerCycleBudgets = new Map<number, number[]>();
+const getTravelerCycleBudgets = (traveler: Traveler) => {
+    const cached = travelerCycleBudgets.get(traveler.seed);
+    if (cached) return cached;
+    const budgets = [0];
+    if (travelerCycleBudgets.size >= 512) travelerCycleBudgets.delete(travelerCycleBudgets.keys().next().value!);
+    travelerCycleBudgets.set(traveler.seed, budgets);
+    return budgets;
+};
+
 export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) => {
     const initialDistance = Math.max(0, traveler.initialDistance);
     let cycle = Math.floor(initialDistance / DEPTH_RANGE);
     let localDistance = initialDistance - cycle * DEPTH_RANGE;
-    let distanceBudget = Math.max(0, simulationSeconds) * Math.max(0, traveler.speed);
+    const distanceBudget = Math.max(0, simulationSeconds) * Math.max(0, traveler.speed);
     if (traveler.speed <= 0 || distanceBudget === 0) {
         return { depth: FAR_DEPTH - localDistance, cycle };
     }
 
-    let table = getTravelerSpeedTable(traveler, cycle);
-    let startingBudget = travelerBudgetAtDistance(table, localDistance);
-    while (distanceBudget >= table[TRAVELER_SPEED_TABLE_STEPS] - startingBudget) {
-        distanceBudget -= table[TRAVELER_SPEED_TABLE_STEPS] - startingBudget;
-        cycle += 1;
-        localDistance = 0;
-        startingBudget = 0;
-        table = getTravelerSpeedTable(traveler, cycle);
+    const budgets = getTravelerCycleBudgets(traveler);
+    const appendCycle = () => {
+        const table = getTravelerSpeedTable(traveler, budgets.length - 1);
+        budgets.push(budgets[budgets.length - 1] + table[TRAVELER_SPEED_TABLE_STEPS]);
+    };
+    while (budgets.length <= cycle) appendCycle();
+    const absoluteBudget = budgets[cycle]
+        + travelerBudgetAtDistance(getTravelerSpeedTable(traveler, cycle), localDistance) + distanceBudget;
+    while (budgets[budgets.length - 1] <= absoluteBudget) appendCycle();
+    let first = cycle;
+    let last = budgets.length - 1;
+    while (first + 1 < last) {
+        const middle = Math.floor((first + last) / 2);
+        if (budgets[middle] <= absoluteBudget) first = middle;
+        else last = middle;
     }
-
-    const targetBudget = startingBudget + distanceBudget;
+    cycle = first;
+    const table = getTravelerSpeedTable(traveler, cycle);
+    const targetBudget = absoluteBudget - budgets[cycle];
     let lower = 0;
     let upper = TRAVELER_SPEED_TABLE_STEPS;
     while (lower + 1 < upper) {
@@ -1638,6 +1757,27 @@ export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) 
     const fraction = budgetSpan > 0 ? (targetBudget - table[lower]) / budgetSpan : 0;
     localDistance = (lower + fraction) * DEPTH_RANGE / TRAVELER_SPEED_TABLE_STEPS;
     return { depth: FAR_DEPTH - localDistance, cycle };
+};
+
+export const getTravelerDiscOpacity = (progress: number) =>
+    smoothstep(progress / 0.14) * (1 - smoothstep((progress - 0.82) / 0.18));
+export const SOLAR_SURFACE_CELL_COUNT = 12;
+
+/** Seeded, continuous solar dynamics on the frozen simulation clock. */
+export const getSolarSurface = (seed: number, simulationSeconds: number, progress: number) => {
+    const time = Math.max(0, simulationSeconds);
+    const strength = smoothstep((progress - TRAVELER_DETAIL_THRESHOLDS[0]) / 0.4);
+    const rotation = time * 0.09 + hashRandom(seed, 0, 511) * TAU;
+    const cells = Array.from({ length: SOLAR_SURFACE_CELL_COUNT }, (_, index) => {
+        const phase = hashRandom(seed, index, 512) * TAU;
+        const angle = phase + time * (0.04 + hashRandom(seed, index, 513) * 0.035);
+        const distance = 0.15 + hashRandom(seed, index, 514) * 0.65 + Math.sin(time * 0.23 + phase) * 0.035;
+        return { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance,
+            radius: 0.1 + hashRandom(seed, index, 515) * 0.11 + Math.sin(time * 0.37 + phase) * 0.025,
+            intensity: 0.5 + Math.sin(time * 0.31 + phase) * 0.5 };
+    });
+    return { strength, rotation, cells,
+        prominence: 0.5 + Math.sin(time * 0.19 + hashRandom(seed, 0, 516) * TAU) * 0.5 };
 };
 
 /** Intrinsically larger travelers trend red; all non-red palette entries share the remainder. */
@@ -1673,9 +1813,9 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     return {
         radius,
         detailLevel,
-        haloRadius: radius * (1.65 + detailLevel * 0.18),
-        coreRadius: radius * (detailLevel >= 2 ? 0.58 : 0.4),
-        flareLength: detailLevel === 3 ? radius * 2.6 : 0,
+        haloRadius: radius * (1.65 + smoothstep(progress / 0.68) * 0.54),
+        coreRadius: radius * (0.4 + smoothstep((progress - 0.28) / 0.4) * 0.18),
+        flareLength: radius * 2.6 * smoothstep((progress - 0.5) / 0.18),
         colorName: selectedColor.name,
         color: selectedColor.color,
         texture: TRAVELER_SURFACE_TEXTURES[
@@ -1685,6 +1825,14 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
         glowBlur: mix(TRAVELER_GLOW_BLUR_RANGE[0], TRAVELER_GLOW_BLUR_RANGE[1], proximity),
         glowOpacity: mix(TRAVELER_GLOW_OPACITY_RANGE[0], TRAVELER_GLOW_OPACITY_RANGE[1], proximity),
     };
+};
+
+export const getSystemHostStarAppearance = (traveler: Traveler, progress: number): TravelerAppearance => {
+    const ordinary = getTravelerAppearance(traveler, progress);
+    return { ...ordinary, radius: ordinary.radius * SYSTEM_HOST_RADIUS_MULTIPLIER,
+        haloRadius: ordinary.haloRadius * SYSTEM_HOST_RADIUS_MULTIPLIER,
+        coreRadius: ordinary.coreRadius * SYSTEM_HOST_RADIUS_MULTIPLIER,
+        flareLength: ordinary.flareLength * SYSTEM_HOST_RADIUS_MULTIPLIER };
 };
 
 const GALAXY_DUST_DRIFT_MULTIPLIERS: Record<GalaxyFormation, number> = {
@@ -2557,12 +2705,9 @@ export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((larg
 export const getSystemSafetyMargin = (traveler: Traveler, projection: ProjectedTraveler) => {
     const systemExtent = getPlanetSystemExtent(createPlanetSystem(traveler.seed, projection.cycle))
         * getSystemScale(projection);
-    const appearance = getTravelerAppearance(traveler, projection.progress);
-    const starExtent = Math.max(
-        SYSTEM_STAR_RADIUS * getSystemScale(projection),
-        appearance.haloRadius,
-        appearance.flareLength,
-    );
+    const appearance = getSystemHostStarAppearance(traveler, projection.progress);
+    // Current-main hosts suppress glows; only the doubled disc contributes stellar bounds.
+    const starExtent = appearance.radius;
     return Math.max(systemExtent, starExtent) + 0.5;
 };
 
@@ -2623,6 +2768,7 @@ export const selectProminentSystem = (
         const projection = projections[index];
         if (!isSystemCarrier(travelers[index], index)
             || !projection
+            || getTravelerVariant(travelers[index], projection.cycle) !== 'star'
             || projection.progress < SYSTEM_MIN_PROGRESS
             || projection.progress > SYSTEM_MAX_PROGRESS
             || !doesSystemExitViewportBeforeCycle(travelers[index], projection, width, height)
