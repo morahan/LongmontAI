@@ -57,7 +57,7 @@ const Edition: React.FC = () => {
                         </button>
                     </div>
 
-                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight text-center">
                         {edition.title}
                     </h1>
 

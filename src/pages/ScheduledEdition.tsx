@@ -33,7 +33,7 @@ const ScheduledEdition: React.FC = () => {
                             <Share2 size={20} />
                         </button>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">{edition.title}</h1>
+                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight text-center">{edition.title}</h1>
                     <div className="h-1 w-20 bg-[var(--accent-cyan)] mb-8 rounded-full" />
                 </motion.div>
             </div>
