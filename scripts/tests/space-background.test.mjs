@@ -684,7 +684,7 @@ test('Easter-egg endpoints and active-transition restarts preserve exact rendere
   const renderedStylesAtRestart = getEasterEggStarFieldStyles(startStyles, targetStyles, endStyles, 4.25);
   const nextPhrase = createConstellationGeometryForPhrase(1200, 600, EASTER_EGG_PHRASES[1]);
   assert.ok(nextPhrase.points.length >= MIN_GLYPH_STAR_COUNT);
-  assert.equal(nextPhrase.edges.length, nextPhrase.points.length - nextPhrase.glyphs.length);
+  assert.ok(nextPhrase.edges.length > 0);
   assert.deepEqual(
     getEasterEggStarFieldPositions(renderedAtRestart, nextPhrase.points, end, 0),
     renderedAtRestart,
@@ -1067,8 +1067,7 @@ test('every glyph receives deterministic variable density with unique readable a
       assert.ok(points.every(({ x, y }) =>
         x > width * 0.05 && x < width * 0.95 && y > height * minimumY && y < height * 0.58),
       `${phrase} escaped ${width}x${height} safe bounds`);
-      assert.equal(edges.length, points.length - glyphs.length,
-        'lines must connect inside glyphs without bridging future letters');
+      assert.ok(edges.length > 0, 'glyph strokes must have rendered lines');
       assert.ok(edges.every(({ from, to }) =>
         from >= 0 && from < points.length && to >= 0 && to < points.length && from !== to));
 
@@ -1082,14 +1081,8 @@ test('every glyph receives deterministic variable density with unique readable a
         assert.ok(glyph.indices.every((index) => neighbors[index].length > 0));
         assert.ok(glyph.indices.every((index) => neighbors[index].every((neighbor) => glyphSet.has(neighbor))),
           `${phrase}/${glyph.character} has a cross-glyph edge`);
-        const reached = new Set([glyph.indices[0]]);
-        const queue = [glyph.indices[0]];
-        while (queue.length > 0) {
-          neighbors[queue.shift()].forEach((neighbor) => {
-            if (!reached.has(neighbor)) { reached.add(neighbor); queue.push(neighbor); }
-          });
-        }
-        assert.equal(reached.size, glyph.indices.length, `${phrase}/${glyph.character} disconnected`);
+        // Disconnected source-graph components must not be joined merely to force
+        // a spanning tree. Stroke containment and coverage are checked below.
 
         const nearest = glyph.indices.map((index) => Math.min(...glyph.indices
           .filter((candidate) => candidate !== index)
@@ -1111,6 +1104,124 @@ test('every glyph receives deterministic variable density with unique readable a
           `${phrase}/${glyph.character} nearest-neighbor spacing is clustered`);
       }
     }
+  }
+});
+
+// Read the actual private source graph without adding a production testing API.
+const sourceGlyphGraph = runInNewContext(`${stripTypeScriptTypes(readFileSync(
+  new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8',
+)).replace(/^export /gm, '')}\n({ GLYPHS, createGlyphStrokes });`);
+
+const liesOnStroke = (point, [start, end]) => {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const px = point.x - start.x;
+  const py = point.y - start.y;
+  const dot = px * dx + py * dy;
+  return Math.abs(px * dy - py * dx) < 1e-7
+    && dot >= -1e-7 && dot <= dx * dx + dy * dy + 1e-7;
+};
+
+const glyphSpacePoints = (geometry, width, height) => {
+  const lineWidth = [...geometry.phrase].reduce((sum, char) => sum + (char === ' ' ? 4 : 6), 0) - 1;
+  const cell = Math.min(width * 0.84 / lineWidth, height * 0.22 / 6);
+  const centerY = height * (width < height ? 0.45 : 0.34);
+  return geometry.points.map(({ x, y }) => ({
+    x: (x - width * 0.5 + lineWidth * cell * 0.5) / cell,
+    y: (y - centerY) / cell + 3,
+  }));
+};
+
+test('all phrase edges follow source strokes and only join local consecutive samples', () => {
+  for (const phrase of CONSTELLATION_PHRASES) {
+    for (let seed = 0; seed < 64; seed += 1) {
+      const event = seed * 7 + 1;
+      const [width, height] = seed % 2 ? [390, 844] : [1200, 600];
+      const geometry = createConstellationGeometryForPhrase(width, height, phrase, seed, event);
+      assert.deepEqual(geometry,
+        createConstellationGeometryForPhrase(width, height, phrase, seed, event));
+      const points = glyphSpacePoints(geometry, width, height);
+      assert.deepEqual(geometry.glyphs.map(({ indices }) => indices.length),
+        getConstellationGlyphAnchorCounts(phrase, seed, event));
+      assert.equal(new Set(points.map(({ x, y }) => `${x},${y}`)).size, points.length);
+      const degree = points.map(() => 0);
+      const edgeKeys = new Set();
+      let cursor = 0;
+      let glyphIndex = 0;
+      for (const character of phrase) {
+        if (character === ' ') { cursor += 4; continue; }
+        const glyph = geometry.glyphs[glyphIndex++];
+        const indices = new Set(glyph.indices);
+        const strokes = sourceGlyphGraph.createGlyphStrokes(
+          sourceGlyphGraph.GLYPHS[character.toUpperCase()],
+        ).map((stroke) => stroke.map(({ x, y }) => ({ x: x + cursor, y })));
+        for (const { from, to } of geometry.edges.filter((edge) => indices.has(edge.from))) {
+          const label = `${phrase}/${character} seed=${seed} event=${event} edge=${from},${to}`;
+          assert.ok(indices.has(to), `${label}: bridged letters`);
+          assert.notEqual(from, to, label);
+          const key = [from, to].sort((a, b) => a - b).join(',');
+          assert.ok(!edgeKeys.has(key), `${label}: duplicate edge`);
+          edgeKeys.add(key);
+          degree[from] += 1;
+          degree[to] += 1;
+          const a = points[from];
+          const b = points[to];
+          assert.ok(strokes.some((stroke) => liesOnStroke(a, stroke) && liesOnStroke(b, stroke)),
+            `${label}: edge not contained by one actual source stroke`);
+          assert.ok(Math.hypot(a.x - b.x, a.y - b.y) <= Math.SQRT2 + 1e-7,
+            `${label}: exceeded one bitmap segment`);
+          assert.ok(!glyph.indices.some((index) => index !== from && index !== to
+            && liesOnStroke(points[index], [a, b])), `${label}: skipped a local neighbor`);
+        }
+        // Every source segment must be covered end-to-end, not just a safe subset.
+        for (const [start, end] of strokes) {
+          const local = glyph.indices.filter((index) => liesOnStroke(points[index], [start, end]))
+            .sort((a, b) => Math.hypot(points[a].x - start.x, points[a].y - start.y)
+              - Math.hypot(points[b].x - start.x, points[b].y - start.y));
+          assert.ok(local.length >= 2, `${phrase}/${character}: missing stroke`);
+          closeTo(points[local[0]].x, start.x);
+          closeTo(points[local[0]].y, start.y);
+          closeTo(points[local.at(-1)].x, end.x);
+          closeTo(points[local.at(-1)].y, end.y);
+          for (let index = 1; index < local.length; index += 1) {
+            assert.ok(edgeKeys.has([local[index - 1], local[index]].sort((a, b) => a - b).join(',')),
+              `${phrase}/${character}: missing local connection`);
+          }
+        }
+        cursor += 6;
+      }
+      assert.equal(edgeKeys.size, geometry.edges.length, 'unowned edge');
+      assert.ok(degree.every((value) => value > 0), `${phrase}/${seed}: isolated star`);
+    }
+  }
+});
+
+test('T edges stay on its top bar or stem, never crossbar-to-stem chords', () => {
+  for (let seed = 0; seed < 32; seed += 1) {
+    const phrase = 'Attention';
+    const geometry = createConstellationGeometryForPhrase(1200, 600, phrase, seed, seed + 1);
+    const points = glyphSpacePoints(geometry, 1200, 600);
+    geometry.glyphs.forEach((glyph, glyphIndex) => {
+      if (glyph.character.toUpperCase() !== 'T') return;
+      const indices = new Set(glyph.indices);
+      const edges = geometry.edges.filter(({ from }) => indices.has(from));
+      let bar = 0;
+      let stem = 0;
+      for (const { from, to } of edges) {
+        assert.ok(indices.has(to));
+        const a = { x: points[from].x - glyphIndex * 6, y: points[from].y };
+        const b = { x: points[to].x - glyphIndex * 6, y: points[to].y };
+        const onBar = liesOnStroke(a, [{ x: 0, y: 0 }, { x: 4, y: 0 }])
+          && liesOnStroke(b, [{ x: 0, y: 0 }, { x: 4, y: 0 }]);
+        const onStem = liesOnStroke(a, [{ x: 2, y: 0 }, { x: 2, y: 6 }])
+          && liesOnStroke(b, [{ x: 2, y: 0 }, { x: 2, y: 6 }]);
+        assert.ok(onBar || onStem, `T shortcut at seed ${seed}: ${JSON.stringify({ a, b })}`);
+        assert.ok(Math.hypot(a.x - b.x, a.y - b.y) <= 1 + 1e-7);
+        bar += Number(onBar);
+        stem += Number(onStem);
+      }
+      assert.ok(bar > 0 && stem > 0, 'T must retain both readable strokes');
+    });
   }
 });
 
