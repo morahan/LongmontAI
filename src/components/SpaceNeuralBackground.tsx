@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useRef } from 'react';
+import { createBlackHole, stepBlackHole, type BlackHoleState } from './blackHoleModel';
 import {
     advanceEasterEggClickSequence,
     CONSTELLATION_WINDOW_SECONDS,
@@ -896,6 +897,7 @@ const SpaceNeuralBackground: React.FC = () => {
             nebulaCtx.putImageData(image, 0, 0);
         }
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
         const mountedAt = performance.now();
         let width = 0;
         let height = 0;
@@ -911,6 +913,36 @@ const SpaceNeuralBackground: React.FC = () => {
         let easterEggClickSequence: EasterEggClickSequence | null = null;
         let easterEggTriggerCount = 0;
         let neuralContagion = createNeuralContagionState();
+        let blackHole: BlackHoleState | null = null;
+        let holeCenter = { x: 0, y: 0 };
+        let holeLastElapsed: number | null = null;
+        let lastPointerType = 'mouse';
+        let cursorOwner: HTMLElement | null = null;
+        let previousCursor = '';
+        let previousCursorPriority = '';
+        const restoreCursor = () => {
+            if (cursorOwner) {
+                if (previousCursor) cursorOwner.style.setProperty('cursor', previousCursor, previousCursorPriority);
+                else cursorOwner.style.removeProperty('cursor');
+            }
+            cursorOwner = null;
+        };
+        const hideSurfaceCursor = (target: EventTarget | null) => {
+            if (target === cursorOwner) return;
+            restoreCursor();
+            if (!(target instanceof HTMLElement)) return;
+            cursorOwner = target;
+            previousCursor = target.style.getPropertyValue('cursor');
+            previousCursorPriority = target.style.getPropertyPriority('cursor');
+            target.style.setProperty('cursor', 'none');
+        };
+        const clearBlackHole = () => {
+            restoreCursor();
+            blackHole = null;
+            holeLastElapsed = null;
+            delete canvas.dataset.blackHole;
+            delete canvas.dataset.blackHoleCaptures;
+        };
 
         const clearEasterEggDataset = () => {
             delete canvas.dataset.constellationPhrase;
@@ -1025,7 +1057,43 @@ const SpaceNeuralBackground: React.FC = () => {
             }
 
             const frame = getRenderedStarFrame(elapsed);
-            const { phase, positions, styles, lineLayers } = frame;
+            const { phase, styles, lineLayers } = frame;
+            // Preserve responsive pools/clocks/variants; only unowned stars enter gravity.
+            const simulationSeconds = getSimulationTime(elapsed);
+            const travelerCount = travelerCountForWidth(viewportWidth);
+            const travelers = scene.travelers.slice(0, travelerCount);
+            const projections = travelers.map((traveler) =>
+                projectTraveler(traveler, simulationSeconds, width, height));
+            prominentSystemOwner = selectProminentSystemOwner(
+                travelers, projections, width, height, prominentSystemOwner,
+            );
+            let positions = frame.positions;
+            if (blackHole) {
+                blackHole = stepBlackHole(blackHole, [
+                    ...positions.map((point, index) => ({
+                        ...point, visible: Boolean(styles[index] && isStarRenderable(styles[index])),
+                    })),
+                    ...projections.map((projection, index) => ({
+                        ...projection, id: -1 - index,
+                        visible: projection.opacity * getNebulaDepthTransmission(
+                            nebulaAt(projection.x, projection.y),
+                            (projection.depth - NEAR_DEPTH) / (FAR_DEPTH - NEAR_DEPTH),
+                        ) > 0.01
+                            && index !== prominentSystemOwner?.travelerIndex
+                            && getTravelerVariant(travelers[index], projection.cycle) === 'star',
+                    })),
+                ], holeCenter, holeLastElapsed === null ? 0 : elapsed - holeLastElapsed);
+                projections.forEach((projection, index) => {
+                    const star = blackHole?.stars.get(-1 - index);
+                    if (!star) return;
+                    projection.x = star.x;
+                    projection.y = star.y;
+                    if (star.consumed) projection.opacity = 0;
+                });
+                holeLastElapsed = elapsed;
+                positions = positions.map((point, index) => blackHole?.stars.get(index) ?? point);
+                canvas.dataset.blackHoleCaptures = String(blackHole.captures);
+            }
             if (easterEgg) {
                 canvas.dataset.constellationPhrase = easterEgg.phrase;
                 canvas.dataset.easterEggState = phase.name;
@@ -1042,7 +1110,8 @@ const SpaceNeuralBackground: React.FC = () => {
                     const fromStyle = styles[from];
                     const toStyle = styles[to];
                     // Connections follow revealed nodes; hidden target destinations never leak.
-                    if (!fromPoint || !toPoint || !fromStyle || !toStyle
+                    if (blackHole?.stars.get(from)?.consumed || blackHole?.stars.get(to)?.consumed
+                        || !fromPoint || !toPoint || !fromStyle || !toStyle
                         || fromStyle.opacity <= 0 || toStyle.opacity <= 0
                         || fromStyle.strength <= 0 || toStyle.strength <= 0) return;
                     ctx.moveTo(fromPoint.x, fromPoint.y);
@@ -1053,7 +1122,7 @@ const SpaceNeuralBackground: React.FC = () => {
 
             for (let index = 0; index < positions.length; index += 1) {
                 const style = styles[index];
-                if (!style || !isStarRenderable(style)) continue;
+                if (!style || !isStarRenderable(style) || blackHole?.stars.get(index)?.consumed) continue;
                 const position = positions[index];
                 const [red, green, blue] = getStarRgb(style.strength);
                 ctx.globalAlpha = 1;
@@ -1080,23 +1149,10 @@ const SpaceNeuralBackground: React.FC = () => {
             }
             if (!renderDetails) return;
 
-            // These clocks stop for all 30 seconds of every constellation lifecycle.
-            const simulationSeconds = getSimulationTime(elapsed);
-            const travelerCount = travelerCountForWidth(viewportWidth);
-            const travelers = scene.travelers.slice(0, travelerCount);
-            const projections = travelers.map((traveler) =>
-                projectTraveler(traveler, simulationSeconds, width, height));
             const nebulaTransmissions = projections.map((projection) => getNebulaDepthTransmission(
                 nebulaAt(projection.x, projection.y),
                 (projection.depth - NEAR_DEPTH) / (FAR_DEPTH - NEAR_DEPTH),
             ));
-            prominentSystemOwner = selectProminentSystemOwner(
-                travelers,
-                projections,
-                width,
-                height,
-                prominentSystemOwner,
-            );
 
             // Filaments sit below traveler stars; their endpoints are always current projections.
             neuralContagion = syncNeuralContagionState(
@@ -1146,8 +1202,9 @@ const SpaceNeuralBackground: React.FC = () => {
                         height,
                     );
                     const sameCycle = previous.cycle === projection.cycle;
-                    const deltaX = sameCycle ? projection.x - previous.x : 0;
-                    const deltaY = sameCycle ? projection.y - previous.y : 0;
+                    const pulledStar = blackHole?.stars.get(-1 - index);
+                    const deltaX = pulledStar ? pulledStar.vx * 0.1 : sameCycle ? projection.x - previous.x : 0;
+                    const deltaY = pulledStar ? pulledStar.vy * 0.1 : sameCycle ? projection.y - previous.y : 0;
                     const variant = getTravelerVariant(traveler, projection.cycle);
                     if (variant === 'galaxy') {
                         drawGalaxy(ctx, traveler, projection, simulationSeconds);
@@ -1181,6 +1238,28 @@ const SpaceNeuralBackground: React.FC = () => {
                     drawPlanetarySystem(ctx, traveler, projection, simulationSeconds, transmission);
                 }
             }
+            if (blackHole) {
+                // Tiny paired flecks, not a broad particle fountain or continuous emitter.
+                blackHole.sparks.forEach((spark, index) => {
+                    ctx.globalAlpha = (1 - spark.age / spark.lifetime) * 0.8;
+                    ctx.fillStyle = ['#bde9ff', '#f9d9b7', '#d7cbff'][index % 3];
+                    ctx.fillRect(spark.x - 0.5, spark.y - 1, 1, spark.returning ? 1 : 2);
+                });
+                ctx.globalAlpha = 1;
+                const rim = ctx.createRadialGradient(holeCenter.x, holeCenter.y, 3,
+                    holeCenter.x, holeCenter.y, 10);
+                rim.addColorStop(0, 'rgba(181, 220, 255, 0)');
+                rim.addColorStop(0.45, 'rgba(181, 220, 255, 0.48)');
+                rim.addColorStop(1, 'rgba(181, 220, 255, 0)');
+                ctx.fillStyle = rim;
+                ctx.beginPath();
+                ctx.arc(holeCenter.x, holeCenter.y, 10, 0, TAU);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(holeCenter.x, holeCenter.y, 4, 0, TAU);
+                ctx.fill();
+            }
             ctx.globalAlpha = 1;
             if (canvas.dataset.spaceDetailReady !== 'true') {
                 canvas.dataset.spaceDetailReady = 'true';
@@ -1192,7 +1271,7 @@ const SpaceNeuralBackground: React.FC = () => {
         const animate = (timestamp: number) => {
             animationFrameId = null;
             drawScene(getElapsedSecondsSinceMount(mountedAt, timestamp));
-            animationFrameId = window.requestAnimationFrame(animate);
+            if (shouldAnimate()) animationFrameId = window.requestAnimationFrame(animate);
         };
 
         const shouldAnimate = () => !reducedMotion && pageIsVisible && isOnscreen;
@@ -1203,12 +1282,14 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
                 return;
             }
+            clearBlackHole();
             if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
             if (reducedMotion) drawScene(0);
         };
 
         const handleResize = () => {
+            clearBlackHole();
             const previousWidth = width;
             const previousHeight = height;
             const rect = canvas.getBoundingClientRect();
@@ -1288,6 +1369,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 reducedMotion,
             )) return;
             easterEggClickSequence = null;
+            clearBlackHole();
 
             const elapsed = getElapsedSecondsSinceMount(mountedAt, performance.now());
             const currentFrame = getRenderedStarFrame(elapsed, LARGE_BREAKPOINT);
@@ -1403,6 +1485,49 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.dataset.easterEggState = 'morph-in';
             drawScene(elapsed);
         };
+        // Passive document listeners leave selection, links, forms, and click sequences intact.
+        const isHoleSurface = (event: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const target = event.target instanceof Element ? event.target : null;
+            return event.clientX >= rect.left && event.clientX <= rect.right
+                && event.clientY >= rect.top && event.clientY <= rect.bottom
+                && !target?.closest(`${INTERACTIVE_TARGET_SELECTOR},[contenteditable]:not([contenteditable="false"]),[role="textbox"],p,h1,h2,h3,h4,h5,h6,span,li,pre,code,blockquote`);
+        };
+        const handleDoubleClick = (event: MouseEvent) => {
+            // The fourth click can emit another dblclick; don't undo the triple-click Easter egg.
+            if (event.detail > 2 || event.button !== 0 || event.ctrlKey || event.metaKey
+                || event.altKey || event.shiftKey || reducedMotion || !finePointerQuery.matches
+                || lastPointerType !== 'mouse' || !shouldAnimate() || !isHoleSurface(event)) return;
+            // Browsers can select the nearest heading even on blank section space.
+            // Only this accepted blank-surface gesture clears that incidental selection.
+            window.getSelection()?.removeAllRanges();
+            if (blackHole) { clearBlackHole(); return; }
+            const rect = canvas.getBoundingClientRect();
+            holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+            blackHole = createBlackHole();
+            holeLastElapsed = null;
+            canvas.dataset.blackHole = 'active';
+            hideSurfaceCursor(event.target);
+        };
+        const handlePointerMove = (event: PointerEvent) => {
+            lastPointerType = event.pointerType;
+            if (!blackHole) return;
+            if (event.pointerType !== 'mouse' || !isHoleSurface(event)) { clearBlackHole(); return; }
+            hideSurfaceCursor(event.target);
+            const rect = canvas.getBoundingClientRect();
+            holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        };
+        const handlePointerDown = (event: PointerEvent) => {
+            lastPointerType = event.pointerType;
+            if (event.pointerType !== 'mouse') clearBlackHole();
+        };
+        const handlePointerOut = (event: PointerEvent) => {
+            if (!event.relatedTarget) clearBlackHole();
+        };
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') clearBlackHole();
+        };
+        const handlePointerCapability = () => { if (!finePointerQuery.matches) clearBlackHole(); };
         const intersectionObserver = typeof IntersectionObserver === 'undefined' ? null
             : new IntersectionObserver(([entry]) => {
                 isOnscreen = entry?.isIntersecting ?? false;
@@ -1410,6 +1535,13 @@ const SpaceNeuralBackground: React.FC = () => {
             }, { threshold: 0.01 });
 
         window.addEventListener('resize', handleResize);
+        window.addEventListener('blur', clearBlackHole);
+        document.addEventListener('dblclick', handleDoubleClick, { passive: true });
+        document.addEventListener('pointermove', handlePointerMove, { passive: true });
+        document.addEventListener('pointerdown', handlePointerDown, { passive: true });
+        document.addEventListener('pointerout', handlePointerOut, { passive: true });
+        document.addEventListener('keydown', handleEscape);
+        finePointerQuery.addEventListener('change', handlePointerCapability);
         document.addEventListener('click', handleDocumentClick, { passive: true });
         document.addEventListener('visibilitychange', handleVisibilityChange);
         motionQuery.addEventListener('change', handleMotionChange);
@@ -1418,6 +1550,14 @@ const SpaceNeuralBackground: React.FC = () => {
         syncAnimation();
 
         return () => {
+            clearBlackHole();
+            window.removeEventListener('blur', clearBlackHole);
+            document.removeEventListener('dblclick', handleDoubleClick);
+            document.removeEventListener('pointermove', handlePointerMove);
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('pointerout', handlePointerOut);
+            document.removeEventListener('keydown', handleEscape);
+            finePointerQuery.removeEventListener('change', handlePointerCapability);
             if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
             intersectionObserver?.disconnect();
             motionQuery.removeEventListener('change', handleMotionChange);
