@@ -2209,7 +2209,7 @@ iframe {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
-    rgba(9, 9, 11, 0.72);
+    rgb(9, 9, 11);
   backdrop-filter: blur(22px) saturate(145%);
   -webkit-backdrop-filter: blur(22px) saturate(145%);
   box-shadow: 0 24px 55px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.12);
