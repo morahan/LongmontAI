@@ -188,10 +188,10 @@ test('responsive tiers preserve fixed slots, seeded prefixes, and exact ambient/
   const scene = createSpaceScene(seed);
   for (const width of [390, 639.999, 640, 1439.999, 1440, 1920, 390, 1440, 640]) {
     const factor = width < 640 ? 1 : width < 1440 ? 3 : 10;
-    assert.equal(starCountForWidth(width), 56 * factor);
-    assert.equal(spaceModel.retainedAmbientCountForWidth(width), 28 * factor);
+    assert.equal(starCountForWidth(width), 112 * factor);
+    assert.equal(spaceModel.retainedAmbientCountForWidth(width), 56 * factor);
     assert.equal(travelerCountForWidth(width), 17 * factor);
-    assert.deepEqual(createAmbientLayout(seed, 0, 56 * factor), scene.stars.slice(0, 56 * factor));
+    assert.deepEqual(createAmbientLayout(seed, 0, 112 * factor), scene.stars.slice(0, 112 * factor));
     assert.deepEqual(createSpaceScene(seed).travelers.slice(0, 17 * factor), scene.travelers.slice(0, 17 * factor));
     for (const time of [0, 47, 599.999, 600, 605, 610, 620, 625, 630]) {
       const styles = getStarFieldStyles(seed, time, false, width);
@@ -208,14 +208,76 @@ test('responsive tiers preserve fixed slots, seeded prefixes, and exact ambient/
           closeTo(point.y, largePositions[index].y);
         }
       });
-      styles.slice(MAX_STAR_TEXT_ANCHOR_COUNT, MAX_STAR_TEXT_ANCHOR_COUNT + 56 * factor)
+      styles.slice(MAX_STAR_TEXT_ANCHOR_COUNT, MAX_STAR_TEXT_ANCHOR_COUNT + 112 * factor)
         .forEach((style, index) => assert.deepEqual(style, large[MAX_STAR_TEXT_ANCHOR_COUNT + index]));
-      if (time < 600 || time >= 630) assert.equal(styles.filter(isStarRenderable).length, 56 * factor);
+      if (time < 600 || time >= 630) assert.equal(styles.filter(isStarRenderable).length, 112 * factor);
       if (time === 610 || time === 620) {
         const anchors = createConstellationGeometry(width, 800, seed, 1).points.length;
-        assert.equal(styles.filter(isStarRenderable).length, anchors + 28 * factor);
+        assert.equal(styles.filter(isStarRenderable).length, anchors + 56 * factor);
       }
     }
+  }
+});
+
+test('all five seeded ambient colors and varied radii reach the actual Canvas loop at every tier', () => {
+  const palette = spaceModel.AMBIENT_STAR_PALETTE;
+  assert.deepEqual(palette.map(({ name }) => name), ['blue', 'white', 'yellow', 'red', 'orange']);
+  assert.equal(new Set(palette.map(({ rgb }) => rgb.join(','))).size, 5);
+  const byName = Object.fromEntries(palette.map(({ name, rgb }) => [name, rgb]));
+  assert.ok(byName.blue[2] > byName.blue[0]);
+  assert.ok(Math.max(...byName.white) - Math.min(...byName.white) <= 15);
+  assert.ok(byName.yellow[1] > byName.yellow[2] + 40);
+  assert.ok(byName.red[0] > byName.red[1] + 70 && byName.red[2] > byName.red[1]);
+  assert.ok(byName.orange[0] > byName.orange[1] + 40 && byName.orange[1] > byName.orange[2] + 40);
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const start = source.indexOf('for (let index = 0; index < positions.length; index += 1) {');
+  assert.ok(start >= 0);
+  const loop = source.slice(start, source.indexOf("if (canvas.dataset.spaceReady", start));
+  for (const [width, height] of [[320, 568], [390, 844], [639, 800], [640, 800],
+    [1024, 768], [1439, 900], [1440, 900], [1920, 1080], [3840, 2160]]) {
+    for (const seed of [0, 17, 12345]) {
+      for (const time of [0, 47, 630]) {
+        const generation = getConstellationPhase(time).event;
+        const stars = createAmbientLayout(seed, generation, starCountForWidth(width));
+        const styles = getStarFieldStyles(seed, time, false, width);
+        const positions = getStarFieldPositions(seed, time, width, height);
+        const visible = styles.filter(isStarRenderable);
+        assert.equal(visible.length, width < 640 ? 112 : width < 1440 ? 336 : 1120);
+        assert.deepEqual(styles, getStarFieldStyles(seed, time, false, width));
+        assert.deepEqual(visible.map(({ radius }) => radius), stars.map(({ size }) => size));
+        assert.ok(Math.min(...visible.map(({ radius }) => radius)) < 0.95);
+        assert.ok(Math.max(...visible.map(({ radius }) => radius)) > 1.95);
+        assert.ok(visible.every(({ radius }) => radius >= 0.825 && radius <= 2.09));
+        assert.equal(new Set(visible.map(({ aura }) => aura.rgb.join(','))).size, 5);
+        for (const { rgb } of palette) {
+          const count = visible.filter(({ aura }) => aura.rgb.join(',') === rgb.join(',')).length;
+          assert.ok(count >= visible.length * 0.08 && count <= visible.length * 0.35);
+          assert.deepEqual(getStarRgb(0, rgb), rgb);
+          assert.deepEqual(getStarRgb(1, rgb), CONSTELLATION_STAR_RGB);
+        }
+        const arcs = [];
+        const fills = [];
+        const auras = [];
+        const ctx = { beginPath() {}, arc(x, y, radius) { arcs.push({ x, y, radius }); },
+          fill() { fills.push({ color: this.fillStyle, alpha: this.globalAlpha }); } };
+        runInNewContext(loop, { ...spaceModel, styles, positions, ctx, blackHole: null,
+          TAU: Math.PI * 2, nebulaAt: () => 0, getNebulaTextTransmission: () => 1,
+          drawStarAura: (_ctx, _x, _y, _radius, aura) => auras.push(aura.rgb.join(',')),
+          drawAmbientCardinalFlare: () => {} });
+        assert.equal(arcs.length, visible.length);
+        arcs.forEach(({ x, y, radius }, index) => {
+          assert.ok(x >= 0 && x <= width && y >= 0 && y <= height);
+          assert.equal(radius, visible[index].radius);
+          const style = visible[index];
+          const rgb = style.aura.rgb.map((channel) => Math.round(channel * style.opacity));
+          assert.deepEqual(fills[index], { color: `rgb(${rgb.join(', ')})`, alpha: 1 });
+          assert.equal(auras[index], style.aura.rgb.join(','));
+        });
+      }
+    }
+  }
+  for (const width of [1, 100, 639.999, 640, 1439.999, 1440, 10000]) {
+    assert.equal(starCountForWidth(width), width < 640 ? 112 : width < 1440 ? 336 : 1120);
   }
 });
 
@@ -470,14 +532,14 @@ test('100k deterministic samples match every reviewed planet percentage within t
   });
 });
 
-test('large ambient pool has 560 stars while Star Text retains 280', () => {
+test('large ambient pool has 1120 stars while Star Text retains 560', () => {
   const stars = createAmbientLayout(12345, 0);
-  assert.equal(AMBIENT_STAR_COUNT, 560);
-  assert.equal(RETAINED_AMBIENT_STAR_COUNT, 280);
+  assert.equal(AMBIENT_STAR_COUNT, 1120);
+  assert.equal(RETAINED_AMBIENT_STAR_COUNT, 560);
   assert.equal(stars.length, AMBIENT_STAR_COUNT);
-  assert.equal(starCountForWidth(320), 56);
-  assert.equal(starCountForWidth(1920), 560);
-  assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 560);
+  assert.equal(starCountForWidth(320), 112);
+  assert.equal(starCountForWidth(1920), 1120);
+  assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 1120);
 
   const anchorCount = createConstellationGeometry(1200, 600, 12345, 1).points.length;
   const hold = getStarFieldStyles(12345, 610);
@@ -486,8 +548,8 @@ test('large ambient pool has 560 stars while Star Text retains 280', () => {
   assert.ok(holdBackground.filter(isStarRenderable).length <= RETAINED_AMBIENT_STAR_COUNT);
   assert.ok(holdBackground.some(isStarRenderable));
   assert.ok(holdBackground.every(({ strength }) => strength === 0));
-  assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 280);
-  assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 280);
+  assert.equal(stars.filter((star) => star.driftMode === 'wrap').length, 560);
+  assert.equal(stars.filter((star) => star.driftMode === 'bounce').length, 560);
   assert.ok(stars.every((star) => star.driftSpeed >= 0.0007 && star.driftSpeed <= 0.0017));
   assert.deepEqual(AMBIENT_STAR_RADIUS_RANGE, [0.825, 2.09]);
   assert.ok(stars.every((star) => star.size >= 0.825 && star.size <= 2.09));
@@ -518,7 +580,8 @@ test('production ambient stars transfer into deterministic origins distributed a
   const remapped = remapAmbientStarsToTextSlots(
     positions, styles, geometry.points.length,
   );
-  assert.equal(remapped.sourceIndices.length, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT);
+  assert.equal(remapped.sourceIndices.length,
+    Math.min(geometry.points.length, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT));
   assert.ok(remapped.sourceIndices.every((index) => index >= MAX_STAR_TEXT_ANCHOR_COUNT));
 
   const visibleFrame = (framePositions, frameStyles) => frameStyles
@@ -2344,7 +2407,7 @@ test('UFO visual radius is exactly 1.5x its corresponding moving-star radius at 
 
 test('16% galaxy probability preserves moving radii and responsive traveler counts', () => {
   const scene = createSpaceScene(9876);
-  assert.equal(AMBIENT_STAR_COUNT, 560);
+  assert.equal(AMBIENT_STAR_COUNT, 1120);
   assert.deepEqual(TRAVELER_RADIUS_RANGE, [0.66, 1.21]);
   assert.ok(scene.travelers.every((traveler) =>
     traveler.size >= TRAVELER_RADIUS_RANGE[0] && traveler.size <= TRAVELER_RADIUS_RANGE[1]));
