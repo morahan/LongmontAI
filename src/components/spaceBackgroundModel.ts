@@ -58,6 +58,7 @@ export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
 export const NEURAL_CONTAGION_OPPORTUNITIES = 3;
 export const NEURAL_CONTAGION_AFFINITY_BOOST = 4;
 export const NEURAL_CONTAGION_MAX_ENTRIES = 8;
+/** Maximum idle wait; each event samples its own delay after the previous fade ends. */
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
@@ -540,13 +541,60 @@ const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPh
     return { name: 'ambient', event, progress: 0, eventElapsed };
 };
 
-export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhase => {
-    const elapsed = Math.max(0, elapsedSeconds);
-    if (elapsed < CONSTELLATION_INTERVAL_SECONDS) {
-        return { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed };
+/** Seed/event-local rejection sampling avoids uint32 modulo bias; events are one-indexed. */
+export const getConstellationIdleDelay = (sceneSeed: number, event = 1): number => {
+    const acceptedRange = UINT32_RANGE - UINT32_RANGE % CONSTELLATION_INTERVAL_SECONDS;
+    let channel = 503;
+    let roll = hashUint(sceneSeed, event, channel);
+    while (roll >= acceptedRange) roll = hashUint(sceneSeed, event, ++channel);
+    return 1 + roll % CONSTELLATION_INTERVAL_SECONDS;
+};
+
+export const getInitialConstellationDelay = (sceneSeed: number): number =>
+    getConstellationIdleDelay(sceneSeed, 1);
+
+// Cache only event starts, not frames. A warm lookup is logarithmic; extending a schedule
+// generates each event once. Bound retained scene histories (resize never creates a new seed).
+const constellationSchedules = new Map<number, number[]>();
+const getConstellationSchedule = (sceneSeed: number): number[] => {
+    const seed = sceneSeed >>> 0;
+    let starts = constellationSchedules.get(seed);
+    if (!starts) {
+        if (constellationSchedules.size >= 16) {
+            constellationSchedules.delete(constellationSchedules.keys().next().value!);
+        }
+        starts = [getInitialConstellationDelay(seed)];
+        constellationSchedules.set(seed, starts);
     }
-    const event = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS);
-    return getLifecyclePhase(elapsed - event * CONSTELLATION_INTERVAL_SECONDS, event);
+    return starts;
+};
+
+export const getConstellationEventStart = (sceneSeed: number, event: number): number => {
+    const starts = getConstellationSchedule(sceneSeed);
+    while (starts.length < event) {
+        starts.push(starts[starts.length - 1] + CONSTELLATION_WINDOW_SECONDS
+            + getConstellationIdleDelay(sceneSeed, starts.length + 1));
+    }
+    return starts[event - 1];
+};
+
+export const getConstellationPhase = (elapsedSeconds: number, sceneSeed = 0): ConstellationPhase => {
+    const elapsed = Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0);
+    const starts = getConstellationSchedule(sceneSeed);
+    while (starts[starts.length - 1] <= elapsed) {
+        getConstellationEventStart(sceneSeed, starts.length + 1);
+    }
+    // Upper bound: the number of started events also preserves phrase/geometry numbering.
+    let low = 0;
+    let high = starts.length;
+    while (low < high) {
+        const middle = Math.floor((low + high) / 2);
+        if (starts[middle] <= elapsed) low = middle + 1;
+        else high = middle;
+    }
+    return low === 0
+        ? { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed }
+        : getLifecyclePhase(elapsed - starts[low - 1], low);
 };
 
 /** An explicit trigger gets the same exact 10s in / 10s hold / 10s out lifecycle. */
@@ -554,14 +602,12 @@ export const getEasterEggPhase = (elapsedSinceTrigger: number): ConstellationPha
     getLifecyclePhase(Math.max(0, elapsedSinceTrigger), 1);
 
 /** Traveler and planet clocks exclude every constellation window, including the active partial one. */
-export const getSimulationTime = (elapsedSeconds: number) => {
-    const elapsed = Math.max(0, elapsedSeconds);
-    if (elapsed < CONSTELLATION_INTERVAL_SECONDS) return elapsed;
-    const completedEvents = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS) - 1;
-    const inInterval = elapsed % CONSTELLATION_INTERVAL_SECONDS;
-    return elapsed
-        - completedEvents * CONSTELLATION_WINDOW_SECONDS
-        - Math.min(inInterval, CONSTELLATION_WINDOW_SECONDS);
+export const getSimulationTime = (elapsedSeconds: number, sceneSeed = 0) => {
+    const elapsed = Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0);
+    const phase = getConstellationPhase(elapsed, sceneSeed);
+    if (phase.event === 0) return elapsed;
+    return elapsed - (phase.event - 1) * CONSTELLATION_WINDOW_SECONDS
+        - Math.min(phase.eventElapsed, CONSTELLATION_WINDOW_SECONDS);
 };
 
 // Paired layers preserve balanced drift and near-10% flares in every tier prefix.
@@ -681,7 +727,8 @@ export const getTwinkleBrightness = (
     star: DistantStar,
     elapsedSeconds: number,
     prefersReducedMotion = false,
-) => !prefersReducedMotion && getConstellationPhase(elapsedSeconds).name === 'ambient'
+    sceneSeed = 0,
+) => !prefersReducedMotion && getConstellationPhase(elapsedSeconds, sceneSeed).name === 'ambient'
     ? getAmbientTwinkleBrightness(star, elapsedSeconds)
     : 1;
 
@@ -757,8 +804,9 @@ export const getStarVisualStyle = (
     previous: DistantStar,
     next: DistantStar,
     elapsedSeconds: number,
+    sceneSeed = 0,
 ): StarVisualStyle => {
-    const phase = getConstellationPhase(elapsedSeconds);
+    const phase = getConstellationPhase(elapsedSeconds, sceneSeed);
     const strength = getConstellationStrength(phase);
     if (phase.name === 'ambient') {
         const twinkle = getAmbientTwinkleBrightness(next, elapsedSeconds);
@@ -774,7 +822,7 @@ export const getStarVisualStyle = (
     const styleProgress = phase.name === 'morph-out' ? phase.progress : 0;
     const alpha = mix(previous.alpha, next.alpha, styleProgress);
     const size = mix(previous.size, next.size, styleProgress);
-    const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
+    const eventStart = getConstellationEventStart(sceneSeed, phase.event);
     const ambientTwinkle = phase.name === 'morph-out'
         ? getAmbientTwinkleBrightness(next, eventStart + CONSTELLATION_WINDOW_SECONDS)
         : getAmbientTwinkleBrightness(previous, eventStart - 0.000001);
@@ -818,7 +866,7 @@ export const getStarFieldStyles = (
 ): StarVisualStyle[] => {
     // Match the Canvas lifecycle's static time-zero frame, including redraws after resize.
     if (prefersReducedMotion) elapsedSeconds = 0;
-    const phase = getConstellationPhase(elapsedSeconds);
+    const phase = getConstellationPhase(elapsedSeconds, sceneSeed);
     const ambient = createAmbientLayout(sceneSeed, phase.event);
     if (phase.name === 'ambient') {
         const hiddenEvent = Math.max(1, phase.event);
@@ -839,7 +887,7 @@ export const getStarFieldStyles = (
     const counts = getConstellationGlyphAnchorCounts(phrase, sceneSeed, phase.event);
     const anchorCount = counts.reduce((total, count) => total + count, 0);
     const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), Math.max(anchorCount, AMBIENT_STAR_COUNT));
-    const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
+    const eventStart = getConstellationEventStart(sceneSeed, phase.event);
     const intro = getStarTextIntroProgress(phase.eventElapsed);
     const ambientSources = getStarTextAmbientSources(anchorCount);
     const targetStyles = previous.slice(0, anchorCount).map((star) => ({
@@ -1611,7 +1659,7 @@ export const getStarFieldPositions = (
     width: number,
     height: number,
 ): Point[] => {
-    const phase = getConstellationPhase(elapsedSeconds);
+    const phase = getConstellationPhase(elapsedSeconds, sceneSeed);
     const ambientLayout = createAmbientLayout(sceneSeed, phase.event);
     const currentDriftTime = phase.event === 0
         ? elapsedSeconds
@@ -1639,9 +1687,7 @@ export const getStarFieldPositions = (
         sceneSeed, Math.max(0, phase.event - 1), Math.max(targets.length, AMBIENT_STAR_COUNT),
     );
     const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
-    const previousDriftTime = phase.event <= 1
-        ? CONSTELLATION_INTERVAL_SECONDS
-        : CONSTELLATION_INTERVAL_SECONDS - CONSTELLATION_WINDOW_SECONDS;
+    const previousDriftTime = getConstellationIdleDelay(sceneSeed, phase.event);
     const intro = getStarTextIntroProgress(phase.eventElapsed);
     const textSources = getStarTextAmbientSources(targets.length);
     const fallback = targets[0] ?? { x: width * 0.5, y: height * 0.5 };
@@ -1673,7 +1719,7 @@ export const getStarPosition = (
     height: number,
 ): Point => {
     const positions = getStarFieldPositions(sceneSeed, elapsedSeconds, width, height);
-    return positions[getConstellationPhase(elapsedSeconds).name === 'ambient'
+    return positions[getConstellationPhase(elapsedSeconds, sceneSeed).name === 'ambient'
         ? MAX_STAR_TEXT_ANCHOR_COUNT + starIndex
         : starIndex];
 };
@@ -2434,8 +2480,8 @@ export const updateNeuralContagionForSignal = (
     };
 };
 
-export const getNeuralSignalSlot = (elapsedSeconds: number) =>
-    Math.floor(getSimulationTime(elapsedSeconds) / NEURAL_SIGNAL_SLOT_SECONDS);
+export const getNeuralSignalSlot = (elapsedSeconds: number, sceneSeed = 0) =>
+    Math.floor(getSimulationTime(elapsedSeconds, sceneSeed) / NEURAL_SIGNAL_SLOT_SECONDS);
 
 /**
  * Deterministic sparse schedule with optional bounded endpoint affinity. Pair indices always
@@ -2453,10 +2499,10 @@ export const getNeuralSignals = (
     if (reducedMotion
         || width <= 0
         || height <= 0
-        || getConstellationPhase(elapsedSeconds).name !== 'ambient') return [];
+        || getConstellationPhase(elapsedSeconds, sceneSeed).name !== 'ambient') return [];
 
-    const simulationSeconds = getSimulationTime(elapsedSeconds);
-    const slot = getNeuralSignalSlot(elapsedSeconds);
+    const simulationSeconds = getSimulationTime(elapsedSeconds, sceneSeed);
+    const slot = getNeuralSignalSlot(elapsedSeconds, sceneSeed);
     const isMobile = width < MOBILE_BREAKPOINT;
     const chance = isMobile ? NEURAL_SIGNAL_MOBILE_CHANCE : NEURAL_SIGNAL_DESKTOP_CHANCE;
     if (hashRandom(sceneSeed, slot, 301) >= chance) return [];

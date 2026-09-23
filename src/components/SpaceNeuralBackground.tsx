@@ -950,7 +950,7 @@ const SpaceNeuralBackground: React.FC = () => {
         };
 
         const getScheduledStarFrame = (elapsed: number, densityWidth = viewportWidth) => {
-            const phase = getConstellationPhase(elapsed);
+            const phase = getConstellationPhase(elapsed, scene.seed);
             if (phase.name !== 'ambient'
                 && (!constellationGeometry || constellationEvent !== phase.event)) {
                 constellationGeometry = createConstellationGeometry(width, height, scene.seed, phase.event);
@@ -1040,7 +1040,7 @@ const SpaceNeuralBackground: React.FC = () => {
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, width, height);
 
-            const nebulaSeconds = getSimulationTime(elapsed);
+            const nebulaSeconds = getSimulationTime(elapsed, scene.seed);
             const nebulaAt = (x: number, y: number) => sampleNebulaTransmission(
                 nebula, x, y, nebulaSeconds, reducedMotion,
             );
@@ -1059,7 +1059,7 @@ const SpaceNeuralBackground: React.FC = () => {
             const frame = getRenderedStarFrame(elapsed);
             const { phase, styles, lineLayers } = frame;
             // Preserve responsive pools/clocks/variants; only unowned stars enter gravity.
-            const simulationSeconds = getSimulationTime(elapsed);
+            const simulationSeconds = getSimulationTime(elapsed, scene.seed);
             const travelerCount = travelerCountForWidth(viewportWidth);
             const travelers = scene.travelers.slice(0, travelerCount);
             const projections = travelers.map((traveler) =>
@@ -1164,7 +1164,7 @@ const SpaceNeuralBackground: React.FC = () => {
             if (neuralSignals[0]) {
                 neuralContagion = updateNeuralContagionForSignal(
                     neuralContagion,
-                    getNeuralSignalSlot(elapsed),
+                    getNeuralSignalSlot(elapsed, scene.seed),
                     neuralSignals[0],
                     projections,
                     width,
@@ -1301,7 +1301,7 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
-            const resizePhase = getConstellationPhase(elapsed);
+            const resizePhase = getConstellationPhase(elapsed, scene.seed);
             constellationEvent = resizePhase.event;
             constellationGeometry = resizePhase.name === 'ambient'
                 ? null
@@ -1378,7 +1378,7 @@ const SpaceNeuralBackground: React.FC = () => {
             const geometry = createConstellationGeometryForPhrase(
                 width, height, phrase, scene.seed, densityEvent,
             );
-            const endpointPhase = getConstellationPhase(elapsed + CONSTELLATION_WINDOW_SECONDS);
+            const endpointPhase = getConstellationPhase(elapsed + CONSTELLATION_WINDOW_SECONDS, scene.seed);
             const rawEndPositions = getStarFieldPositions(
                 scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS, width, height,
             );

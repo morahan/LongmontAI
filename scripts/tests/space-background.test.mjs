@@ -90,6 +90,9 @@ import {
   createStarTextAmbientOrigins,
   doesSystemExitViewportBeforeCycle,
   getConstellationPhase,
+  getConstellationIdleDelay,
+  getInitialConstellationDelay,
+  getConstellationEventStart,
   getConstellationGlyphAnchorCounts,
   getConstellationPhraseForBucket,
   getConstellationStrength,
@@ -173,6 +176,20 @@ import {
 const closeTo = (actual, expected, epsilon = 1e-8) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} is not within ${epsilon} of ${expected}`);
 
+// Existing choreography fixtures label the first morph at t=600. Translate only those
+// fixtures to the seed's real start, retaining their detailed geometry/continuity assertions.
+const firstEventChoreography = (seed = 0) => {
+  const time = (reference) => getInitialConstellationDelay(seed) + reference - 600;
+  return {
+    getStarFieldStyles: (sceneSeed, reference, reduced = false, densityWidth) =>
+      spaceModel.getStarFieldStyles(sceneSeed, time(reference), reduced, densityWidth),
+    getStarFieldPositions: (sceneSeed, reference, width, height) =>
+      spaceModel.getStarFieldPositions(sceneSeed, time(reference), width, height),
+    getConstellationPhase: (reference) => spaceModel.getConstellationPhase(time(reference), seed),
+    getSimulationTime: (reference) => spaceModel.getSimulationTime(time(reference), seed),
+  };
+};
+
 const circularDistance = (left, right) => {
   const direct = Math.abs(left - right);
   return Math.min(direct, 1 - direct);
@@ -185,6 +202,7 @@ const angularDistance = (left, right) => {
 
 test('responsive tiers preserve fixed slots, seeded prefixes, and exact ambient/retained populations', () => {
   const seed = 12345;
+  const { getStarFieldStyles, getStarFieldPositions } = firstEventChoreography(seed);
   const scene = createSpaceScene(seed);
   for (const width of [390, 639.999, 640, 1439.999, 1440, 1920, 390, 1440, 640]) {
     const factor = width < 640 ? 1 : width < 1440 ? 3 : 10;
@@ -230,6 +248,7 @@ test('all tiers preserve visible scheduled and click-trigger boundary frames, in
   };
   for (const seed of [0, 17, 777, 795936]) {
     for (const width of [390, 1000, 1920]) {
+      const { getStarFieldStyles, getStarFieldPositions } = firstEventChoreography(seed);
       const styles = (time) => getStarFieldStyles(seed, time, false, width);
       const positions = (time) => getStarFieldPositions(seed, time, width, 800);
       compare(visible(positions(599.999999), styles(599.999999)), visible(positions(600), styles(600)));
@@ -265,7 +284,7 @@ test('seeded ambient cardinal flares stay near 10% in all tiers and retained lay
     assert.deepEqual(flare.rays, [{ x: 0, y: -style.radius * 9 }, { x: 0, y: style.radius * 9 },
       { x: style.radius * 9, y: 0 }, { x: -style.radius * 9, y: 0 }]);
   });
-  getStarFieldStyles(12345, 610).slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style) =>
+  getStarFieldStyles(12345, getInitialConstellationDelay(12345) + 10).slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style) =>
     assert.equal(spaceModel.getAmbientCardinalFlare(style), null));
   createEasterEggTargetStyles(12345, 0).forEach((style) => assert.equal(spaceModel.getAmbientCardinalFlare(style), null));
 });
@@ -309,8 +328,10 @@ test('solar cells and seeded texture identities evolve fluidly without rerouting
       flatten(surface).forEach((value, index) => closeTo(value, next[index], 1e-5));
     }
     assert.deepEqual(samples, [2, 12, 22].map((time) => projectTraveler(traveler, time, 1920, 1080)));
-    for (const time of [600, 610, 620, 630]) assert.deepEqual(
-      spaceModel.getSolarSurface(seed, getSimulationTime(time), 0.7), spaceModel.getSolarSurface(seed, 600, 0.7));
+    const start = getInitialConstellationDelay(seed);
+    for (const age of [0, 10, 20, 30]) assert.deepEqual(
+      spaceModel.getSolarSurface(seed, getSimulationTime(start + age, seed), 0.7),
+      spaceModel.getSolarSurface(seed, start, 0.7));
     for (const progress of [0, 0.14, 0.28, 0.5, 0.68, 0.84, 1]) {
       const ordinary = getTravelerAppearance(traveler, progress);
       const host = spaceModel.getSystemHostStarAppearance(traveler, progress);
@@ -480,7 +501,7 @@ test('large ambient pool has 560 stars while Star Text retains 280', () => {
   assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 560);
 
   const anchorCount = createConstellationGeometry(1200, 600, 12345, 1).points.length;
-  const hold = getStarFieldStyles(12345, 610);
+  const hold = getStarFieldStyles(12345, getInitialConstellationDelay(12345) + 10);
   assert.equal(hold.length, STAR_FIELD_SLOT_COUNT);
   const holdBackground = hold.slice(MAX_STAR_TEXT_ANCHOR_COUNT);
   assert.ok(holdBackground.filter(isStarRenderable).length <= RETAINED_AMBIENT_STAR_COUNT);
@@ -598,12 +619,13 @@ test('each star has stable independent speed, phase and subtle dim/bright bounds
 test('twinkle is smooth across frames and old window boundaries, and reaches rendered opacity only', () => {
   const seed = 6789;
   const stars = createAmbientLayout(seed, 0);
-  for (const time of [0, 8, 18, 119.999, 120, 239.999, 240, 479.999]) {
+  const start = getInitialConstellationDelay(seed);
+  for (const time of [0, 8, 18, 119.999, 120, 239.999, 240, 479.999].filter((time) => time < start)) {
     const styles = getStarFieldStyles(seed, time).slice(MAX_STAR_TEXT_ANCHOR_COUNT);
     stars.forEach((star, index) => {
-      const value = getTwinkleBrightness(star, time);
+      const value = getTwinkleBrightness(star, time, false, seed);
       // Maximum sine slope is (1.12 - 0.82) * PI / 8 per second.
-      assert.ok(Math.abs(getTwinkleBrightness(star, time + 1 / 60) - value) < 0.002);
+      assert.ok(Math.abs(getTwinkleBrightness(star, time + 1 / 60, false, seed) - value) < 0.002);
       closeTo(styles[index].twinkle, value);
       closeTo(styles[index].opacity, star.alpha * value);
       assert.equal(styles[index].alpha, star.alpha);
@@ -611,8 +633,8 @@ test('twinkle is smooth across frames and old window boundaries, and reaches ren
       assert.equal(styles[index].strength, 0);
     });
   }
-  for (const time of [600, 605, 610, 619.9, 620, 625, 629.9, 1200]) {
-    assert.ok(stars.every((star) => getTwinkleBrightness(star, time) === 1));
+  for (const time of [0, 5, 10, 19.9, 20, 25, 29.9].map((age) => start + age)) {
+    assert.ok(stars.every((star) => getTwinkleBrightness(star, time, false, seed) === 1));
   }
 });
 
@@ -635,19 +657,116 @@ test('reduced motion disables twinkle and preserves a static ambient frame acros
   assert.match(component, /if \(reducedMotion\) drawScene\(0\)/);
 });
 
-test('constellation phases and frozen simulation clocks have exact boundaries', () => {
-  assert.equal(getConstellationPhase(599.999).name, 'ambient');
-  assert.equal(getConstellationPhase(600).name, 'morph-in');
-  closeTo(getConstellationPhase(605).progress, 0.5);
-  assert.equal(getConstellationPhase(610).name, 'hold');
-  assert.equal(getConstellationPhase(620).name, 'morph-out');
-  closeTo(getConstellationPhase(625).progress, 0.5);
-  assert.equal(getConstellationPhase(630).name, 'ambient');
-  assert.equal(getConstellationPhase(1200).name, 'morph-in');
+test('seeded waits cover inclusive endpoints with broad uniform distribution and varied consecutive waits', () => {
+  const counts = Array(600).fill(0);
+  for (let seed = 0; seed < 1000; seed += 1) {
+    const waits = Array.from({ length: 600 }, (_, index) => {
+      const wait = getConstellationIdleDelay(seed, index + 1);
+      assert.ok(Number.isInteger(wait) && wait >= 1 && wait <= 600);
+      assert.equal(wait, getConstellationIdleDelay(seed, index + 1));
+      counts[wait - 1] += 1;
+      return wait;
+    });
+    assert.equal(waits[0], getInitialConstellationDelay(seed));
+    assert.ok(new Set(waits).size > 300);
+  }
+  assert.ok(counts.every((count) => count > 850 && count < 1150), counts.join(','));
+});
+
+test('every event waits until after full fade, with exact phases and frozen clocks', () => {
   assert.equal(CONSTELLATION_INTERVAL_SECONDS, 600);
   assert.equal(CONSTELLATION_WINDOW_SECONDS, 30);
-  for (const [wall, simulation] of [[599, 599], [600, 600], [620, 600], [630, 600], [631, 601], [1200, 1170], [1230, 1170]]) {
-    closeTo(getSimulationTime(wall), simulation);
+  for (const seed of [0, 1, 777, 0xffffffff]) {
+    let previousEnd = 0;
+    for (let event = 1; event <= 100; event += 1) {
+      const start = getConstellationEventStart(seed, event);
+      const wait = getConstellationIdleDelay(seed, event);
+      assert.equal(start, previousEnd + wait);
+      assert.equal(getConstellationPhase(previousEnd, seed).name, 'ambient');
+      assert.equal(getConstellationPhase(start - 0.001, seed).name, 'ambient');
+      for (const [age, name, progress] of [
+        [0, 'morph-in', 0], [5, 'morph-in', 0.5], [10, 'hold', 1],
+        [20, 'morph-out', 0], [25, 'morph-out', 0.5], [30, 'ambient', 0],
+      ]) {
+        const phase = getConstellationPhase(start + age, seed);
+        assert.equal(phase.event, event);
+        assert.equal(phase.name, name);
+        closeTo(phase.progress, progress);
+        closeTo(getSimulationTime(start + age, seed), start - (event - 1) * 30);
+      }
+      closeTo(getSimulationTime(start + 30.5, seed), start - (event - 1) * 30 + 0.5);
+      previousEnd = start + 30;
+    }
+    // Out-of-order replay, including a long hidden-tab gap, must not change the schedule.
+    const far = getConstellationEventStart(seed, 10000);
+    assert.equal(getConstellationPhase(far, seed).event, 10000);
+    assert.equal(getConstellationPhase(getInitialConstellationDelay(seed), seed).event, 1);
+    assert.equal(getConstellationEventStart(seed, 10000), far);
+  }
+});
+
+test('Canvas scheduled frames share seeded model phases, geometry and clocks across redraws', () => {
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('const getScheduledStarFrame ='),
+    source.indexOf('const getRenderedStarFrame ='));
+  // Execute the actual Canvas frame builder, not a duplicate of its timing logic.
+  for (const seed of [0, 1, 777, 0xffffffff]) {
+    const context = { ...spaceModel, scene: { seed }, width: 1200, height: 600, viewportWidth: 1920,
+      reducedMotion: false, constellationGeometry: null, constellationEvent: -1 };
+    const frameAt = runInNewContext(`${stripTypeScriptTypes(body)}\ngetScheduledStarFrame`, context);
+    for (const event of [1, 2, 3, 17]) {
+      const start = getConstellationEventStart(seed, event);
+      for (const age of [-0.001, 0, 5, 10, 20, 29.999, 30, 30.5]) {
+        const elapsed = start + age;
+        const frame = frameAt(elapsed);
+        const phase = getConstellationPhase(elapsed, seed);
+        assert.deepEqual(frame.phase, phase);
+        assert.deepEqual(frame.positions, getStarFieldPositions(seed, elapsed, 1200, 600));
+        assert.deepEqual(frame.styles, getStarFieldStyles(seed, elapsed));
+        assert.equal(frame.lineLayers.length, phase.name === 'ambient' ? 0 : 1);
+        if (age === 0) {
+          const previousAmbient = createAmbientLayout(seed, event - 1).map((star) => {
+            const point = getDriftedStar(star, getConstellationIdleDelay(seed, event));
+            return { x: point.x * 1200, y: point.y * 600 };
+          });
+          const count = createConstellationGeometry(1200, 600, seed, event).points.length;
+          assert.deepEqual(frame.positions.slice(0, count),
+            createStarTextAmbientOrigins(previousAmbient, count));
+        }
+        if (age >= 30) {
+          assert.equal(frame.styles.filter(isStarRenderable).length, AMBIENT_STAR_COUNT);
+          assert.ok(frame.styles.every((style) => style.strength === 0));
+          const ambient = createAmbientLayout(seed, event);
+          frame.positions.slice(MAX_STAR_TEXT_ANCHOR_COUNT).forEach((point, index) => {
+            const expected = getDriftedStar(ambient[index], age - 30);
+            closeTo(point.x, expected.x * 1200);
+            closeTo(point.y, expected.y * 600);
+          });
+        }
+        if (frame.lineLayers.length) {
+          assert.equal(frame.lineLayers[0].geometry.phrase, selectConstellationPhrase(seed, event));
+          closeTo(frame.lineLayers[0].strength, getConstellationStrength(phase));
+        }
+      }
+      context.width = 390;
+      context.viewportWidth = 390;
+      context.height = 844;
+      context.constellationGeometry = null;
+      const resized = frameAt(start + 10);
+      assert.deepEqual(resized.lineLayers[0].geometry, createConstellationGeometry(390, 844, seed, event));
+      context.reducedMotion = true;
+      assert.equal(frameAt(0).phase.name, 'ambient');
+      assert.deepEqual(frameAt(0).styles, getStarFieldStyles(seed, 0, true, 390));
+      context.reducedMotion = false;
+      context.width = 1200;
+      context.viewportWidth = 1920;
+      context.height = 600;
+      context.constellationGeometry = null;
+    }
+  }
+  // Resize, Easter endpoints, nebula/traveler freezes and neural slots must pass the scene seed too.
+  for (const match of source.matchAll(/get(?:ConstellationPhase|SimulationTime|NeuralSignalSlot)\(([^;]+?)\)/g)) {
+    assert.match(match[1], /scene\.seed$/);
   }
 });
 
@@ -740,17 +859,18 @@ test('scheduled and Easter intros share all-glyph progress and exact morph bound
   );
   const targetPositions = remapped.positions.map((point, index) =>
     ({ ...(geometry.points[index] ?? point) }));
-  const scheduledHoldStyles = getStarFieldStyles(seed, 610);
+  const start = getInitialConstellationDelay(seed);
+  const scheduledHoldStyles = getStarFieldStyles(seed, start + 10);
   const targetStyles = remapped.styles.map((style, index) =>
     ({ ...(scheduledHoldStyles[index] ?? style) }));
   const options = { targetCount };
 
   for (const age of [0, 0.001, 2.5, 5, 7.5, 9.999, 10]) {
-    const scheduledStyles = getStarFieldStyles(seed, 600 + age);
+    const scheduledStyles = getStarFieldStyles(seed, start + age);
     const easterStyles = getEasterEggStarFieldStyles(
       remapped.styles, targetStyles, ambientStyles, age, options,
     );
-    const expected = age < 10 ? getConstellationPhase(600 + age).progress : 1;
+    const expected = age < 10 ? getConstellationPhase(start + age, seed).progress : 1;
     geometry.glyphs.forEach((glyph) => glyph.indices.forEach((index) => {
       closeTo(scheduledStyles[index].strength, expected);
       closeTo(easterStyles[index].strength, expected);
@@ -764,7 +884,7 @@ test('scheduled and Easter intros share all-glyph progress and exact morph bound
     geometry.points,
   );
   assert.deepEqual(
-    getStarFieldPositions(seed, 610, width, height).slice(0, targetCount),
+    getStarFieldPositions(seed, start + 10, width, height).slice(0, targetCount),
     geometry.points,
   );
 });
@@ -852,7 +972,7 @@ test('production transition options preserve the exact frame when retriggered mi
   const width = 1200;
   const height = 600;
   const seed = 0x72a7;
-  for (const elapsed of [600, 605, 610, 615, 620, 625]) {
+  for (const elapsed of [0, 5, 10, 15, 20, 25].map((age) => getInitialConstellationDelay(seed) + age)) {
     const startPositions = getStarFieldPositions(seed, elapsed, width, height);
     const startStyles = getStarFieldStyles(seed, elapsed);
     const geometry = createConstellationGeometryForPhrase(
@@ -1032,7 +1152,7 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
 
     let startPositions = rawStartPositions;
     let startStyles = rawStartStyles;
-    if (getConstellationPhase(triggerElapsed).name === 'ambient') {
+    if (getConstellationPhase(triggerElapsed, seed).name === 'ambient') {
       const remapped = remapAmbientStarsToTextSlots(
         rawStartPositions, rawStartStyles, geometry.points.length,
       );
@@ -1100,7 +1220,7 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
   }
   assert.ok(checkedVisible > 1000, `only ${checkedVisible} live endpoint slots checked`);
 
-  const overlap = createProductionTransition(580);
+  const overlap = createProductionTransition(getConstellationEventStart(seed, 2) - 20);
   const holdEndpointVisible = overlap.endStyles
     .slice(0, overlap.geometry.points.length).filter(isStarRenderable).length;
   assert.ok(holdEndpointVisible > 0, 'trigger 580 fixture no longer ends in scheduled hold');
@@ -1499,6 +1619,7 @@ test('glyph density varies independently by seed/event and reaches both inclusiv
 });
 
 test('constellation strength and pure star styles are continuous at every phase boundary', () => {
+  const { getStarFieldStyles, getConstellationPhase } = firstEventChoreography(0x51a7);
   assert.equal(getConstellationStrength(getConstellationPhase(600)), 0);
   assert.equal(getConstellationStrength(getConstellationPhase(610)), 1);
   assert.equal(getConstellationStrength(getConstellationPhase(620)), 1);
@@ -1533,6 +1654,7 @@ test('constellation strength and pure star styles are continuous at every phase 
 
 test('constellation-only stars fade with strength while retained background stays warm and legible', () => {
   const seed = 0x72;
+  const { getStarFieldStyles, getConstellationPhase } = firstEventChoreography(seed);
   const ambient = getStarFieldStyles(seed, 599);
   const morphStart = getStarFieldStyles(seed, 600);
   const morphMiddle = getStarFieldStyles(seed, 605);
@@ -1581,6 +1703,7 @@ test('constellation-only stars fade with strength while retained background stay
 });
 
 test('morph boundaries are continuous and morph-out lands on a newly seeded star field', () => {
+  const { getStarFieldPositions } = firstEventChoreography(777);
   const width = 1200;
   const height = 600;
   const seed = 777;
@@ -1593,7 +1716,7 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
     selectConstellationPhrase(seed, 1));
   const geometry = createConstellationGeometry(width, height, seed, 1);
   const ambientAtBoundary = createAmbientLayout(seed, 0).map((star) => {
-    const point = getDriftedStar(star, CONSTELLATION_INTERVAL_SECONDS);
+    const point = getDriftedStar(star, getInitialConstellationDelay(seed));
     return { x: point.x * width, y: point.y * height };
   });
   const origins = createStarTextAmbientOrigins(ambientAtBoundary, targets.length);
@@ -1626,6 +1749,7 @@ test('morph boundaries are continuous and morph-out lands on a newly seeded star
 });
 
 test('scheduled outro is fade-only for text while ambient crossfades without boundary pops', () => {
+  const { getStarFieldPositions, getStarFieldStyles } = firstEventChoreography(777);
   const width = 1200;
   const height = 600;
   const seed = 777;
@@ -1686,6 +1810,7 @@ test('ordinary wrap and bounce behavior resumes exactly after every fade boundar
   let wraps = 0;
   let bounces = 0;
   for (let seed = 0; seed < 100; seed += 1) {
+    const { getStarFieldPositions } = firstEventChoreography(seed);
     const at = getStarFieldPositions(seed, 630, width, height);
     const after = getStarFieldPositions(seed, 630 + epsilon, width, height);
     const ambient = createAmbientLayout(seed, 1);
@@ -2194,6 +2319,7 @@ test('enlarged galaxies include every rendered point and miniature body within t
 });
 
 test('embedded galaxy systems are deterministic, bounded, orbiting, and host-relative', () => {
+  const { getSimulationTime } = firstEventChoreography();
   assert.deepEqual(GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE, [2, 3]);
   assert.deepEqual(GALAXY_EMBEDDED_PLANET_COUNT_RANGE, [1, 2]);
   assert.equal(getEmbeddedGalaxySystemOpacity(Number.NaN), 0);
@@ -2311,6 +2437,7 @@ test('non-Sombrero formations revolve coherently in their centered flattened pla
 });
 
 test('galaxy matter is deterministic, bounded, gently animated, and frozen by simulation time', () => {
+  const { getSimulationTime } = firstEventChoreography();
   let movingParticles = 0;
   for (let seed = 0; seed < 128; seed += 1) {
     const traveler = { seed, initialDistance: 0, speed: 20, size: 1.1, alpha: 0.6, isGalaxy: true };
@@ -2703,7 +2830,9 @@ test('neural contagion resets recycled and stale travelers and locks one logical
   assert.equal(afterStale.entries.length, 0);
 
   assert.equal(getNeuralSignalSlot(48.1), 2);
-  assert.equal(getNeuralSignalSlot(605), 25, 'frozen simulation advanced the signal slot');
+  const start = getInitialConstellationDelay(0);
+  assert.equal(getNeuralSignalSlot(start + 5), Math.floor(start / 24),
+    'frozen simulation advanced the signal slot');
 });
 
 test('neural endpoints are exclusively live eligible travelers and constellation/reduced-motion states suppress them', () => {
@@ -2722,7 +2851,7 @@ test('neural endpoints are exclusively live eligible travelers and constellation
 
   let activeSample;
   for (let elapsed = 0; elapsed < 590 && !activeSample; elapsed += 0.05) {
-    const simulation = getSimulationTime(elapsed);
+    const simulation = getSimulationTime(elapsed, scene.seed);
     const projections = travelers.map((traveler) => projectTraveler(traveler, simulation, width, height));
     const signals = getNeuralSignals(scene.seed, elapsed, projections, width, height);
     if (signals.length > 0) activeSample = { elapsed, projections, signal: signals[0] };
@@ -2741,12 +2870,13 @@ test('neural endpoints are exclusively live eligible travelers and constellation
     candidate.fromTravelerIndex !== signal.fromTravelerIndex
     && candidate.toTravelerIndex !== signal.fromTravelerIndex));
 
+  const start = getInitialConstellationDelay(scene.seed);
   const frozen = travelers.map((traveler) => projectTraveler(
-    traveler, getSimulationTime(600), width, height));
-  for (const elapsed of [600, 605, 610, 620, 629.999]) {
-    assert.equal(getSimulationTime(elapsed), 600);
+    traveler, getSimulationTime(start, scene.seed), width, height));
+  for (const elapsed of [0, 5, 10, 20, 29.999].map((age) => start + age)) {
+    assert.equal(getSimulationTime(elapsed, scene.seed), start);
     assert.deepEqual(travelers.map((traveler) => projectTraveler(
-      traveler, getSimulationTime(elapsed), width, height)), frozen);
+      traveler, getSimulationTime(elapsed, scene.seed), width, height)), frozen);
     assert.deepEqual(getNeuralSignals(scene.seed, elapsed, frozen, width, height), []);
   }
   assert.deepEqual(getNeuralSignals(scene.seed, activeSample.elapsed, projections, width, height, true), []);
@@ -3356,6 +3486,7 @@ test('radius-derived periods are distinct, monotonic, visible, and include a det
 });
 
 test('orbital phase and deterministic surface detail freeze throughout constellation windows', () => {
+  const { getSimulationTime } = firstEventChoreography();
   const planets = createPlanetSystem(2468, 2);
   const beforeFreeze = getOrbitingPlanets(planets, getSimulationTime(600));
   for (const wallTime of [610, 620, 629.999, 630]) {
