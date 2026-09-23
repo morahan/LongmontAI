@@ -14,7 +14,7 @@ export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
 export const DESKTOP_TRAVELER_COUNT = 170;
 export const MOBILE_TRAVELER_COUNT = 17;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
-export const GALAXY_CREATION_CHANCE = 0.2;
+export const GALAXY_CREATION_CHANCE = 0.16;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
 export const GALAXY_INTERNAL_STAR_COUNT = 144;
 export const GALAXY_DISTANT_STAR_COUNT = 18;
@@ -515,7 +515,7 @@ export const starCountForWidth = (width: number) => MOBILE_STAR_COUNT * starDens
 export const retainedAmbientCountForWidth = (width: number) => starCountForWidth(width) / 2;
 export const travelerCountForWidth = (width: number) => MOBILE_TRAVELER_COUNT * starDensityMultiplierForWidth(width);
 
-/** The half-open threshold gives every newly created traveler one exact 20% galaxy roll. */
+/** One galaxy roll in [0, 0.16): a 20% relative reduction from the former 20% chance. */
 export const isGalaxyCreationRoll = (roll: number) => roll >= 0 && roll < GALAXY_CREATION_CHANCE;
 
 /** Every sixth moving star is eligible to carry a prominent planetary system. */
