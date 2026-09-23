@@ -1,4 +1,5 @@
 import React from 'react';
+import { videoMime } from '../lib/videoEmbed';
 
 import { ExternalLink, Code, Play } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -81,13 +82,13 @@ const markdownComponents = {
     ),
 };
 
-const embedPattern = /\{\{(slideshow|pdf|video):([a-z0-9./-]+)\}\}|\{\{(chinese-model-release-widgets)\}\}/g;
+const embedPattern = /\{\{(slideshow|pdf):([a-z0-9./-]+)\}\}|\{\{(chinese-model-release-widgets)\}\}|\{\{video:([^{}]*)\}\}/g;
 
-function VideoEmbed({ src }: { src: string }): React.ReactNode {
+function VideoEmbed({ src, mime }: { src: string; mime: string }): React.ReactNode {
     return (
         <figure className="article-media article-video">
             <video controls preload="metadata" playsInline>
-                <source src={src} type="video/mp4" />
+                <source src={src} type={mime} />
                 Your browser does not support embedded video.
             </video>
             <figcaption>Demo video. Playback is user initiated.</figcaption>
@@ -113,6 +114,8 @@ function renderMarkdownContent(
     let matchNumber = 0;
 
     for (const match of content.matchAll(embedPattern)) {
+        const mime = match[4] === undefined ? null : videoMime(match[4]);
+        if (match[4] !== undefined && !mime) continue;
         const matchIndex = match.index ?? 0;
         const markdownBefore = content.slice(lastIndex, matchIndex);
 
@@ -133,7 +136,7 @@ function renderMarkdownContent(
         } else if (match[1] === 'pdf') {
             blocks.push(<DocumentEmbed key={`${keyPrefix}-pdf-${matchNumber}`} documentId={match[2]} />);
         } else {
-            blocks.push(<VideoEmbed key={`${keyPrefix}-video-${matchNumber}`} src={match[2]} />);
+            blocks.push(<VideoEmbed key={`${keyPrefix}-video-${matchNumber}`} src={match[4]} mime={mime!} />);
         }
 
         lastIndex = matchIndex + match[0].length;

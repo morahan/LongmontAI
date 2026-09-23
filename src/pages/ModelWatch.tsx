@@ -111,7 +111,7 @@ const ModelWatch: React.FC = () => {
               <Radar size={16} />
               August 19 briefing
             </div>
-            <h2 id="briefing-models-heading">Models Covered in the Latest Edition</h2>
+            <h2 id="briefing-models-heading">Models Covered in the August 19 Briefing</h2>
           </div>
         </div>
         <div className="model-watch-release-list model-watch-briefing-list">

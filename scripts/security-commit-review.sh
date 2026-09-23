@@ -558,7 +558,7 @@ control_plane_scan() {
 security_policy_contract() {
   if [[ "$MODE" == "staged" ]]; then
     local policy_pattern
-    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/security\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
+    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/(security|webpack)\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
     if staged_scope_matches "$policy_pattern"; then
       :
     else
