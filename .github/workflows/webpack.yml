@@ -63,6 +63,32 @@ jobs:
           install -m 0755 "$RUNNER_TEMP/gitleaks" "$RUNNER_TEMP/bin/gitleaks"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
+      - name: Install OSV Scanner
+        shell: bash
+        env:
+          OSV_VERSION: 2.3.6
+          OSV_SHA256: f689e183ef0d573d2459738aae457d411a26241ae58b5088de1af288b3355604
+        run: |
+          set -euo pipefail
+          binary="osv-scanner_linux_amd64"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            --output "$RUNNER_TEMP/$binary" \
+            "https://github.com/google/osv-scanner/releases/download/v${OSV_VERSION}/$binary"
+          echo "${OSV_SHA256}  $RUNNER_TEMP/$binary" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/bin"
+          install -m 0755 "$RUNNER_TEMP/$binary" "$RUNNER_TEMP/bin/osv-scanner"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Provision fresh OSV advisory cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache_root="$(mktemp -d "$RUNNER_TEMP/osv-cache.XXXXXXXX")"
+          chmod 700 "$cache_root"
+          export XDG_CACHE_HOME="$cache_root"
+          osv-scanner scan source --offline --download-offline-databases --no-resolve --lockfile package-lock.json
+          printf 'XDG_CACHE_HOME=%s\n' "$cache_root" >> "$GITHUB_ENV"
+
       - name: Security review
         env:
           CI: "true"
