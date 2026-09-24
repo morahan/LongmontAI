@@ -44,7 +44,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId, deck: providedDeck }) => 
                             title={`Download ${deck.title}`}
                         >
                             <Download size={16} aria-hidden="true" />
-                            <span>Download PPTX</span>
+                            <span>Download {deck.sourceUrl.split('.').pop()?.toUpperCase()}</span>
                         </a>
                     )}
                 </div>
@@ -107,7 +107,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ deckId, deck: providedDeck }) => 
                             title={`Download ${deck.title}`}
                         >
                             <Download size={16} aria-hidden="true" />
-                            <span>Download PPTX</span>
+                            <span>Download {deck.sourceUrl.split('.').pop()?.toUpperCase()}</span>
                         </a>
                     )}
             </div>

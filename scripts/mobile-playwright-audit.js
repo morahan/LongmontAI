@@ -97,6 +97,10 @@ async (page) => {
     for (const route of routes) {
       const url = `${baseUrl}${route}`;
       await navigateToRenderedRoute(url);
+      // Below-the-fold lazy images never start loading without scrolling; load them so every image is still audited.
+      await page.evaluate(() => {
+        document.querySelectorAll('img[loading="lazy"]').forEach((image) => { image.loading = 'eager'; });
+      });
       await page.waitForFunction(
         () => Array.from(document.images).every((image) => image.complete),
         undefined,
