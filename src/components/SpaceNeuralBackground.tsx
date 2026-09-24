@@ -87,6 +87,7 @@ import {
     getNebulaDepthTransmission,
     getNebulaOffset,
     getNebulaTextTransmission,
+    getNebulaTexelRgba,
     NEBULA_WORLD_SIZE,
     sampleNebulaTransmission,
 } from './spaceNebulaModel';
@@ -887,11 +888,8 @@ const SpaceNeuralBackground: React.FC = () => {
                         + (x - 1 + nebula.size) % nebula.size
                     ];
                     const index = (y * (nebula.size + 2) + x) * 4;
-                    // Black absorbing dust against barely luminous interstellar haze.
-                    image.data[index] = Math.round(11 * transmission);
-                    image.data[index + 1] = Math.round(14 * transmission);
-                    image.data[index + 2] = Math.round(20 * transmission);
-                    image.data[index + 3] = 255;
+                    // Exact opaque black except for sparse neutral charcoal traces.
+                    image.data.set(getNebulaTexelRgba(scene.seed, x - 1, y - 1, transmission), index);
                 }
             }
             nebulaCtx.putImageData(image, 0, 0);
