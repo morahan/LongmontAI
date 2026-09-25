@@ -2751,13 +2751,157 @@ test('traveler variants are lifecycle-stable, mutually exclusive, cycle-seeded, 
   });
 });
 
+test('comet mist widens, overlaps and dissolves with bounded deterministic animated flow', () => {
+  for (const seed of [0, 1, 99, 0x51a7, 0xffffffff]) {
+    const traveler = { seed, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+    for (const cycle of [0, 3, 17]) {
+      for (const progress of [0, 0.28, 0.68, 0.9999, 1]) {
+        const plume = getCometAppearance(traveler, cycle, progress);
+        assert.deepEqual(plume, getCometAppearance(traveler, cycle, progress));
+        assert.notDeepEqual(plume.wisps, getCometAppearance(traveler, cycle + 1, progress).wisps);
+        assert.equal(plume.wisps.length, 22);
+        const first = plume.wisps[0];
+        const last = plume.wisps.at(-1);
+        assert.ok(last.widthRadius > first.widthRadius * 3);
+        assert.ok(last.opacity < first.opacity * 0.01);
+        assert.ok(first.opacity > 0.65);
+        assert.ok(plume.wisps[10].opacity > 0.18);
+        assert.ok(plume.wisps.some((wisp) => Math.abs(wisp.lateralOffset) > plume.trailWidth * 0.03));
+        plume.wisps.forEach((wisp, index) => {
+          assert.ok(Object.values(wisp).every(Number.isFinite));
+          assert.ok(wisp.lengthRadius > 0 && wisp.widthRadius > 0);
+          assert.ok(wisp.distance - wisp.lengthRadius >= 0);
+          assert.ok(wisp.distance + wisp.lengthRadius < plume.trailLength * 1.12);
+          assert.ok(Math.abs(wisp.lateralOffset) < plume.trailWidth * 0.36);
+          assert.ok(wisp.opacity > 0 && wisp.opacity < 1);
+          if (index > 0) {
+            const previous = plume.wisps[index - 1];
+            assert.ok(wisp.distance > previous.distance);
+            assert.ok(wisp.opacity < previous.opacity);
+            assert.ok(wisp.distance - wisp.lengthRadius < previous.distance + previous.lengthRadius);
+          }
+        });
+        if (progress < 1) {
+          const next = getCometAppearance(traveler, cycle, progress + 0.0001);
+          const normalized = (appearance) => appearance.wisps.map((wisp) => [
+            wisp.lateralOffset / appearance.trailWidth, wisp.widthRadius / appearance.trailWidth,
+          ]);
+          const before = normalized(plume);
+          const after = normalized(next);
+          assert.notDeepEqual(after, before);
+          before.forEach((pair, index) => pair.forEach((value, axis) =>
+            assert.ok(Math.abs(after[index][axis] - value) < 0.002)));
+        }
+      }
+    }
+    assert.deepEqual(getCometAppearance(traveler, -1, -1), getCometAppearance(traveler, 0, 0));
+    assert.deepEqual(getCometAppearance(traveler, 3.9, 2), getCometAppearance(traveler, 3, 1));
+  }
+});
+
+test('comet oval glow has stable seeded proportions and trails the nucleus', () => {
+  const signatures = new Set();
+  for (let seed = 0; seed < 24; seed += 1) {
+    for (const cycle of [0, 1, 9]) {
+      const traveler = { seed, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+      const appearance = getCometAppearance(traveler, cycle, 0.68);
+      const { glow, headRadius, trailLength, trailWidth } = appearance;
+      assert.ok(glow.lengthRadius / glow.widthRadius > 1.7);
+      assert.ok(glow.lengthRadius / glow.widthRadius < 4.8);
+      assert.ok(glow.lag / glow.lengthRadius >= 0.38 && glow.lag / glow.lengthRadius <= 0.6);
+      assert.ok(glow.opacity >= 0.75 && glow.opacity <= 0.95);
+      assert.ok(glow.lengthRadius - glow.lag > headRadius);
+      assert.ok(glow.lengthRadius + glow.lag > (glow.lengthRadius - glow.lag) * 2.2);
+      signatures.add([
+        glow.lengthRadius / headRadius, glow.widthRadius / headRadius,
+        glow.lag / headRadius, trailLength / headRadius, trailWidth / headRadius,
+        appearance.wisps[10].opacity,
+      ].map((value) => value.toFixed(3)).join(','));
+      const next = getCometAppearance(traveler, cycle, 0.6801);
+      for (const property of ['lengthRadius', 'widthRadius', 'lag']) {
+        closeTo(glow[property] / headRadius, next.glow[property] / next.headRadius);
+      }
+      assert.equal(glow.opacity, next.glow.opacity);
+    }
+  }
+  assert.equal(signatures.size, 72);
+});
+
+test('Canvas comet patches use local gradients, motion-opposed transforms and isolated alpha', () => {
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('const drawComet ='), source.indexOf('const drawPlanetarySystem ='));
+  const draw = runInNewContext(`${stripTypeScriptTypes(body)}\ndrawComet;`, {
+    getCometAppearance, TAU: Math.PI * 2,
+  });
+  const traveler = { seed: 99, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
+  const projection = { x: 100, y: 200, opacity: 0.7, progress: 0.68, cycle: 3 };
+  const appearance = getCometAppearance(traveler, projection.cycle, projection.progress);
+  for (const [dx, dy, fallback, angle] of [
+    [3, 4, { x: 1, y: 0 }, Math.atan2(4 / 5, 3 / 5)],
+    [-1, 0, { x: 1, y: 0 }, Math.PI],
+    [0, 0, { x: 0, y: -2 }, -Math.PI / 2],
+    [0, 0, { x: 0, y: 0 }, 0],
+  ]) {
+    const render = () => {
+      const gradients = [];
+      const fills = [];
+      const stack = [];
+      let state = { globalAlpha: 1, fillStyle: 'initial', transforms: [] };
+      const ctx = {
+        save() { stack.push({ ...state, transforms: [...state.transforms] }); },
+        restore() { assert.ok(stack.length > 0); state = stack.pop(); },
+        translate(...args) { state.transforms.push(['translate', ...args]); },
+        rotate(...args) { state.transforms.push(['rotate', ...args]); },
+        scale(...args) { state.transforms.push(['scale', ...args]); },
+        createRadialGradient(...args) {
+          const gradient = { args, transforms: [...state.transforms], stops: [],
+            addColorStop(...stop) { this.stops.push(stop); } };
+          gradients.push(gradient);
+          return gradient;
+        },
+        set fillStyle(value) { state.fillStyle = value; },
+        set globalAlpha(value) { state.globalAlpha = value; },
+        beginPath() {}, arc() {}, moveTo() {}, lineTo() {}, closePath() {}, stroke() {},
+        fill() { fills.push({ ...state, transforms: [...state.transforms] }); },
+      };
+      draw(ctx, traveler, projection, dx, dy, fallback);
+      assert.equal(stack.length, 0);
+      assert.equal(state.globalAlpha, 1);
+      assert.equal(state.fillStyle, 'initial');
+      assert.equal(gradients.length, 24, '22 mist patches, oval glow, nucleus; no linear spine');
+      appearance.wisps.forEach((wisp, index) => {
+        const gradient = gradients[index];
+        assert.deepEqual(gradient.args, [0, 0, 0, 0, 0, 1]);
+        assert.deepEqual(gradient.transforms, [
+          ['translate', 100, 200], ['rotate', angle],
+          ['translate', -wisp.distance, wisp.lateralOffset],
+          ['scale', wisp.lengthRadius, wisp.widthRadius],
+        ]);
+        assert.deepEqual(gradient.stops.at(-1), [1, 'rgba(105, 174, 205, 0)']);
+        closeTo(fills[index].globalAlpha, projection.opacity * wisp.opacity);
+      });
+      const glow = gradients[22];
+      assert.deepEqual(glow.transforms, [
+        ['translate', 100, 200], ['rotate', angle], ['translate', -appearance.glow.lag, 0],
+        ['scale', appearance.glow.lengthRadius, appearance.glow.widthRadius],
+      ]);
+      closeTo(glow.args[0], appearance.glow.lag / appearance.glow.lengthRadius * 0.65);
+      assert.deepEqual(glow.stops.at(-1), [1, 'rgba(91, 177, 215, 0)']);
+      assert.deepEqual(gradients[23].transforms, [], 'nucleus remains in world coordinates');
+      assert.ok(fills.slice(22).every((fill) => fill.globalAlpha === 1), 'mist alpha must not leak');
+      return JSON.stringify({ gradients, fills });
+    };
+    assert.equal(render(), render(), 'frozen simulation frames render identically');
+  }
+});
+
 test('comet debris animates deterministically and gradually widens behind its motion', () => {
   const traveler = { seed: 0x51a7, initialDistance: 0, speed: 20, size: 1, alpha: 0.6 };
   const trail = getCometAppearance(traveler, 3, 0.68);
   assert.deepEqual(trail, getCometAppearance(traveler, 3, 0.68));
   assert.notDeepEqual(trail, getCometAppearance(traveler, 4, 0.68));
   assert.ok(trail.headRadius > getTravelerAppearance(traveler, 0.68).radius);
-  assert.ok(trail.glowRadius > trail.headRadius);
+  assert.ok(trail.glow.lengthRadius > trail.headRadius);
   assert.ok(trail.trailLength >= 18);
   assert.ok(trail.trailWidth >= 3.5);
   assert.equal(trail.particles.filter(({ kind }) => kind === 'asteroid').length, 6);
