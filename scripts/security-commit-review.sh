@@ -106,6 +106,68 @@ append_unique_tip() {
   scan_tips+=("$tip")
 }
 
+verify_snapshot() {
+  local tip="$1" snapshot="$2"
+  node --input-type=module - "$tip" "$snapshot" <<'NODE'
+import { spawnSync } from 'node:child_process';
+import { lstatSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+
+try {
+  const [, , tip, snapshot] = process.argv;
+  const git = args => {
+    const result = spawnSync('git', args, { env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' },
+      stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 128 * 1024 * 1024 });
+    if (result.error || result.signal || result.status !== 0) throw new Error('Git object');
+    return result.stdout;
+  };
+  const entries = git(['ls-tree', '-rz', '--full-tree', tip]);
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const expected = new Map();
+  const directories = new Set();
+  for (let offset = 0; offset < entries.length;) {
+    const end = entries.indexOf(0, offset);
+    if (end < 0) throw new Error('tree entry');
+    const entry = entries.subarray(offset, end);
+    offset = end + 1;
+    const tab = entry.indexOf(9);
+    if (tab < 0) throw new Error('tree entry');
+    const match = /^(100644|100755) blob ([a-f0-9]{40}|[a-f0-9]{64})$/.exec(entry.subarray(0, tab).toString('ascii'));
+    if (!match) throw new Error('unsupported tree entry');
+    const path = decoder.decode(entry.subarray(tab + 1));
+    const parts = path.split('/');
+    if (!path || parts.some(part => !part || part === '.' || part === '..' || part === '.git')
+      || expected.has(path)) throw new Error('unsafe tree path');
+    expected.set(path, { mode: match[1] === '100755' ? 0o755 : 0o644, oid: match[2] });
+    for (let i = 1; i < parts.length; i++) directories.add(parts.slice(0, i).join('/'));
+  }
+  const seen = new Set();
+  const visit = (directory, prefix = '') => {
+    for (const name of readdirSync(directory)) {
+      const path = prefix ? `${prefix}/${name}` : name;
+      const absolute = join(directory, name);
+      const stat = lstatSync(absolute);
+      if (stat.isDirectory()) {
+        if (!directories.has(path)) throw new Error('extra directory');
+        visit(absolute, path);
+        continue;
+      }
+      const entry = expected.get(path);
+      if (!entry || !stat.isFile() || (stat.mode & 0o777) !== entry.mode
+        || git(['hash-object', '--no-filters', '--', absolute]).toString('ascii').trim() !== entry.oid) {
+        throw new Error('snapshot mismatch');
+      }
+      seen.add(path);
+    }
+  };
+  visit(snapshot);
+  if (seen.size !== expected.size) throw new Error('missing snapshot entry');
+} catch {
+  process.exitCode = 1;
+}
+NODE
+}
+
 prepare_scan_scope() {
   if [[ "$MODE" == "staged" ]]; then
     return 0
@@ -175,7 +237,8 @@ prepare_scan_scope() {
     index=$((index + 1))
     snapshot="$gate_temp_dir/tracked-snapshot-$index"
     mkdir -m 700 "$snapshot"
-    if ! git archive --format=tar "$tip" | tar -xf - -C "$snapshot"; then
+    if ! node "$ROOT/scripts/lib/local-required-gate/run.mjs" --materialize "$tip" "$snapshot" \
+      || ! verify_snapshot "$tip" "$snapshot"; then
       echo "security-commit-review: failed to create exact snapshot for $tip." >&2
       return 1
     fi
@@ -558,7 +621,7 @@ control_plane_scan() {
 security_policy_contract() {
   if [[ "$MODE" == "staged" ]]; then
     local policy_pattern
-    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/security\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
+    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/(security|webpack)\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
     if staged_scope_matches "$policy_pattern"; then
       :
     else

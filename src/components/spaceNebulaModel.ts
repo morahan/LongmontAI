@@ -44,6 +44,27 @@ export const createNebulaField = (seed: number): NebulaField => {
     return { size, transmission };
 };
 
+/** Opaque neutral dust tone; light is exceptional, never a full-field haze.
+ * One seeded soft trace per 16×16 texel cell, with radius <= 2 texels.
+ * Even bilinear support occupies at most 6×6 / 16×16 (<15%) of a cell.
+ * Optical transmission remains independent: black banks still absorb stellar light.
+ */
+export const NEBULA_MAX_CHARCOAL = 4;
+export const getNebulaTexelRgba = (seed: number, x: number, y: number, transmission: number) => {
+    const cell = 16;
+    const tx = wrap(x, NEBULA_TEXTURE_SIZE);
+    const ty = wrap(y, NEBULA_TEXTURE_SIZE);
+    let hash = seed ^ Math.imul(Math.floor(tx / cell), 374761393)
+        ^ Math.imul(Math.floor(ty / cell), 668265263);
+    hash = Math.imul(hash ^ (hash >>> 13), 1274126177) >>> 0;
+    const cx = 4 + (hash & 7);
+    const cy = 4 + ((hash >>> 3) & 7);
+    const distance = Math.hypot(tx % cell - cx, ty % cell - cy);
+    const tone = Math.round(NEBULA_MAX_CHARCOAL * smooth(1 - distance / 2)
+        * smooth((transmission - 0.35) / 0.65));
+    return [tone, tone, tone, 255] as const;
+};
+
 export const getNebulaOffset = (seconds: number, reducedMotion = false) => {
     const time = reducedMotion ? 0 : Math.max(0, seconds);
     return { x: wrap(time * NEBULA_DRIFT.x, NEBULA_WORLD_SIZE),

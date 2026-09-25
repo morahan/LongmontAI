@@ -54,4 +54,8 @@ assert.match(source, /category: isMergedAudioCell[\s\S]*?: tool\.category,/);
 assert.doesNotMatch(source, /Screenshot → Grok Imagine \/ Midjourney/);
 assert.doesNotMatch(source, /Midjourney \(prompt from code\)/);
 
+for (const label of ['Close tool preview', 'Close tool details']) {
+  assert.ok(source.includes(`<button type="button" onClick={onClose} aria-label="${label}"`), `${label} must be a named non-submit button`);
+}
+
 console.log('tools matrix contract: PASS');

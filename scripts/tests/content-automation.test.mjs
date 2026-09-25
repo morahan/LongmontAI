@@ -387,7 +387,7 @@ test('VAL-CONTENT-06 workflow exact artifacts, isolated writer, no-op checks and
   assert.equal(new Set(contentFiles).size, contentFiles.length);
   assert.equal(manifest.scripts['test:content-gpt6'], 'node --experimental-strip-types --test scripts/tests/content-gpt6.test.mjs');
   assert.equal(manifest.scripts['test:model-watch-api'], 'node --test scripts/tests/content-model-watch-api.test.mjs');
-  assert.equal(manifest.scripts['test:space-background'], 'node --experimental-strip-types --test scripts/tests/space-background.test.mjs scripts/tests/space-nebula.test.mjs');
+  assert.equal(manifest.scripts['test:space-background'], 'node --experimental-strip-types --test scripts/tests/space-background.test.mjs scripts/tests/space-nebula.test.mjs scripts/tests/black-hole.test.mjs');
 });
 
 test('VAL-CONTENT-06 actual workflow writer rejects size/count/depth/symlinks before any copy', async () => {
