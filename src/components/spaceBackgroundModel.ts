@@ -741,6 +741,19 @@ export const getStarAura = (seed: number): StarAura => {
     return aura;
 };
 
+// Keep palette variants separate so cached traveler/text auras retain their original RGB.
+// Bound retained identities across scene seeds and generations, just like getStarAura.
+const ambientStarAuras = new Map<number, StarAura>();
+const getAmbientStarAura = (seed: number): StarAura => {
+    const cached = ambientStarAuras.get(seed);
+    if (cached) return cached;
+    const aura: StarAura = { ...getStarAura(seed),
+        rgb: AMBIENT_STAR_PALETTE[hashUint(seed, 0, 815) % AMBIENT_STAR_PALETTE.length].rgb };
+    if (ambientStarAuras.size >= 4096) ambientStarAuras.delete(ambientStarAuras.keys().next().value!);
+    ambientStarAuras.set(seed, aura);
+    return aura;
+};
+
 const mixStarAura = (from: StarAura, to: StarAura, amount: number): StarAura => ({
     radiusMultiplier: mix(from.radiusMultiplier, to.radiusMultiplier, amount),
     opacity: mix(from.opacity, to.opacity, amount),
@@ -814,9 +827,7 @@ const ambientVisualStyle = (
         coreOpacity: 1,
         cardinalFlare: star.hasCardinalFlare ? 1 : 0,
         // Independent hashing leaves radius, drift, twinkle and traveler streams untouched.
-        aura: { ...getStarAura(star.twinkleSeed),
-            rgb: AMBIENT_STAR_PALETTE[hashUint(star.twinkleSeed, 0, 815)
-                % AMBIENT_STAR_PALETTE.length].rgb },
+        aura: getAmbientStarAura(star.twinkleSeed),
     };
 };
 

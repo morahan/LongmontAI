@@ -281,6 +281,39 @@ test('all five seeded ambient colors and varied radii reach the actual Canvas lo
   }
 });
 
+test('ambient frames reuse palette-colored auras instead of allocating per star per frame', () => {
+  for (const width of [390, 1000, 1920]) {
+    for (const start of [47, 630]) {
+      const first = getStarFieldStyles(12345, start, false, width).filter(isStarRenderable);
+      const identities = new Set(first.map(({ aura }) => aura));
+      for (let frame = 1; frame <= 60; frame += 1) {
+        const styles = getStarFieldStyles(12345, start + frame / 60, false, width)
+          .filter(isStarRenderable);
+        styles.forEach(({ aura }, index) => {
+          assert.strictEqual(aura, first[index].aura);
+          identities.add(aura);
+        });
+      }
+      assert.equal(identities.size, starCountForWidth(width));
+    }
+  }
+});
+
+test('aura caching preserves pre-fix visual data through tiers, transitions and reduced motion', () => {
+  // Captured before caching: includes every style property, not only aura colors.
+  const hash = createHash('sha256');
+  for (const seed of [0, 17, 12345]) {
+    for (const width of [390, 1000, 1920]) {
+      for (const time of [0, 47, 599.999, 600, 605, 610, 620, 625, 630, 1205]) {
+        for (const reduced of [false, true]) {
+          hash.update(JSON.stringify(getStarFieldStyles(seed, time, reduced, width)));
+        }
+      }
+    }
+  }
+  assert.equal(hash.digest('hex'), 'fe727d921f9d249bc1700d0112d1b984ab1b42f162409f90d085cf129a41a87c');
+});
+
 test('all tiers preserve visible scheduled and click-trigger boundary frames, including short phrases', () => {
   const visible = (positions, styles) => styles.flatMap((style, index) => style.opacity > 1e-10
     ? [{ point: positions[index], opacity: style.opacity }] : []);
