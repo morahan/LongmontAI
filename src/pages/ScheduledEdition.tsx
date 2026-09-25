@@ -4,16 +4,39 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
 import { ScheduledEditionResponse } from '../articles/types';
 import { watchScheduledEdition } from '../articles/scheduledEdition';
+import type { ScheduledEditionPhase } from '../lib/scheduledEditionState';
 import ContentBlock from '../components/ContentBlock';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
 
 const ScheduledEdition: React.FC = () => {
     const [result, setResult] = useState<ScheduledEditionResponse | undefined>(undefined);
 
-    useEffect(() => watchScheduledEdition(setResult), []);
+    const [phase, setPhase] = useState<ScheduledEditionPhase>('checking');
+
+    useEffect(() => watchScheduledEdition(setResult, setPhase), []);
 
     if (result === undefined) {
-        return null;
+        const heading = phase === 'waiting'
+            ? 'Edition not available yet'
+            : phase === 'retrying' ? 'Edition temporarily unavailable' : 'Checking edition availability';
+        const message = phase === 'waiting'
+            ? 'This edition has not been released. We will check again when it is scheduled to be available.'
+            : phase === 'retrying'
+                ? 'We will keep checking. You can leave this page open or return to the editions.'
+                : 'Please wait while we check for this edition.';
+        return (
+            <section className="article-layout text-center py-20" aria-labelledby="scheduled-edition-status-title">
+                <div role="status" aria-live="polite">
+                    <h1 id="scheduled-edition-status-title" className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        {heading}
+                    </h1>
+                    <p className="text-[var(--text-secondary)] mb-8">{message}</p>
+                </div>
+                <Link to="/" className="inline-block px-6 py-3 rounded-full border border-[var(--glass-border)] hover:bg-[var(--accent-cyan)] hover:text-black hover:border-[var(--accent-cyan)] transition-all duration-300 font-medium">
+                    Back to editions
+                </Link>
+            </section>
+        );
     }
 
     const { edition, slideshows } = result;

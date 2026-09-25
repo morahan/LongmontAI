@@ -1,6 +1,11 @@
 import { Edition, ScheduledEditionResponse } from './types';
 import { SlideshowDeck } from './slideshows';
 import {
+    unavailableScheduledEditionPhase,
+    type ScheduledEditionPhase,
+} from '../lib/scheduledEditionState';
+import { watchRetryingResource } from '../lib/retryingWatcher';
+import {
     scheduledEditionPublishAt,
     scheduledEditionSlug,
 } from '../generated/scheduled-release/client';
@@ -65,84 +70,21 @@ export async function fetchScheduledEdition(signal?: AbortSignal): Promise<Sched
  */
 export function watchScheduledEdition(
     onEdition: (result: ScheduledEditionResponse) => void,
+    onStatus?: (status: ScheduledEditionPhase) => void,
 ): () => void {
     if (!scheduledEditionSlug || !Number.isFinite(scheduledEditionPublishAt)) {
         return () => undefined;
     }
 
-    const controller = new AbortController();
-    let timer: number | undefined;
-    let retryAttempt = 0;
-    let requestInFlight = false;
-
-    const clearTimer = (): void => {
-        if (timer !== undefined) {
-            window.clearTimeout(timer);
-            timer = undefined;
-        }
-    };
-
-    const schedule = (delay: number): void => {
-        clearTimer();
-        timer = window.setTimeout(run, Math.min(Math.max(delay, 0), MAX_TIMER_DELAY_MS));
-    };
-
-    const scheduleNextAttempt = (): void => {
-        const untilPublication = scheduledEditionPublishAt - Date.now();
-        if (untilPublication > 0) {
-            schedule(untilPublication);
-            return;
-        }
-
-        const delay = RETRY_DELAYS_MS[Math.min(retryAttempt, RETRY_DELAYS_MS.length - 1)];
-        retryAttempt += 1;
-        schedule(delay);
-    };
-
-    const run = async (): Promise<void> => {
-        if (controller.signal.aborted || requestInFlight) {
-            return;
-        }
-
-        clearTimer();
-        requestInFlight = true;
-        try {
-            const result = await fetchScheduledEdition(controller.signal);
-            if (result) {
-                retryAttempt = 0;
-                onEdition(result);
-                return;
-            }
-        } catch (error: unknown) {
-            if (error instanceof DOMException && error.name === 'AbortError') {
-                return;
-            }
-        } finally {
-            requestInFlight = false;
-        }
-
-        if (!controller.signal.aborted) {
-            scheduleNextAttempt();
-        }
-    };
-
-    const recover = (): void => {
-        if (document.visibilityState === 'visible') {
-            void run();
-        }
-    };
-
-    const recoverOnline = (): void => void run();
-    document.addEventListener('visibilitychange', recover);
-    window.addEventListener('focus', recover);
-    window.addEventListener('online', recoverOnline);
-    void run();
-
-    return () => {
-        controller.abort();
-        clearTimer();
-        document.removeEventListener('visibilitychange', recover);
-        window.removeEventListener('focus', recover);
-        window.removeEventListener('online', recoverOnline);
-    };
+    onStatus?.('checking');
+    return watchRetryingResource({
+        publicationAt: scheduledEditionPublishAt,
+        retryDelays: RETRY_DELAYS_MS,
+        maxTimerDelay: MAX_TIMER_DELAY_MS,
+        attempt: fetchScheduledEdition,
+        onResult: onEdition,
+        onUnavailable: (now, publishAt) => {
+            onStatus?.(unavailableScheduledEditionPhase(now, publishAt));
+        },
+    });
 }
