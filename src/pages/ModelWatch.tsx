@@ -2,6 +2,7 @@ import React from 'react';
 import { Activity, ArrowRight, CheckCircle2, Clock3, Radar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import modelWatchStatus from '../data/modelWatch.generated.json';
+import { countDistinctModels } from '../lib/modelWatchPresentation';
 import {
   latestBriefingModelIds,
   modelWatchModels,
@@ -17,10 +18,10 @@ const ModelWatch: React.FC = () => {
     .filter((model) => model.releaseDateSort && !briefingModelIds.has(model.id))
     .sort((a, b) => (b.releaseDateSort ?? '').localeCompare(a.releaseDateSort ?? ''))
     .slice(0, 8);
-  const detectedModelCount = new Set([
+  const detectedModelCount = countDistinctModels([
     ...modelWatchStatus.detectedModels,
     ...modelWatchModels.map((model) => model.name),
-  ]).size;
+  ]);
   const checkedAt = new Date(modelWatchStatus.checkedAt);
   const checkedLabel = Number.isNaN(checkedAt.getTime())
     ? 'Awaiting first check'

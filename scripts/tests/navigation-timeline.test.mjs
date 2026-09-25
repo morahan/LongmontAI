@@ -53,6 +53,13 @@ test('filter reconciliation retains visible selection and otherwise selects firs
   assert.equal(reconcileVisibleSelection({ id: 'dartmouth', stale: true }, visible), visible[1]);
 });
 
+test('timeline controls expose their selected state to assistive technology', () => {
+  const timeline = readFileSync(new URL('../../src/pages/Timeline.tsx', import.meta.url), 'utf8');
+  for (const expression of ['activeRange === item.id', 'activeCategories.includes(category)', "view === 'timeline'", "view === 'matrix'"]) {
+    assert.ok(timeline.includes(`aria-pressed={${expression}}`), expression);
+  }
+});
+
 test('empty results clear selection; broadening filters recovers a visible detail', () => {
   const old = { id: 'future' };
   const cleared = reconcileVisibleSelection(old, []);
