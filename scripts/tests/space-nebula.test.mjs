@@ -5,11 +5,56 @@ import { getNeuralEndpointTransmission, getSystemOpacity } from '../../src/compo
 import {
   createNebulaField, getNebulaDepthTransmission, getNebulaOffset,
   getNebulaTextTransmission, NEBULA_DRIFT, NEBULA_TEXTURE_SIZE,
-  NEBULA_WORLD_SIZE, sampleNebulaTransmission,
+  NEBULA_WORLD_SIZE, sampleNebulaTransmission, getNebulaTexelRgba, NEBULA_MAX_CHARCOAL,
 } from '../../src/components/spaceNebulaModel.ts';
 
 const close = (a, b, epsilon = 1e-8) => assert.ok(Math.abs(a - b) < epsilon, `${a} != ${b}`);
 const field = createNebulaField(12345);
+
+test('opaque texture is exact-black dominant with only sparse bounded neutral charcoal', () => {
+  for (const seed of [0, 17, 12345, 54321, 0xffffffff]) {
+    const dust = createNebulaField(seed);
+    let nonzero = 0;
+    for (let y = 0; y < dust.size; y += 1) {
+      for (let x = 0; x < dust.size; x += 1) {
+        const transmission = dust.transmission[y * dust.size + x];
+        const rgba = getNebulaTexelRgba(seed, x, y, transmission);
+        const [r, g, b, a] = rgba;
+        assert.equal(r, g);
+        assert.equal(g, b);
+        assert.equal(a, 255);
+        assert.ok(Number.isInteger(r) && r >= 0 && r <= NEBULA_MAX_CHARCOAL);
+        assert.deepEqual(rgba, getNebulaTexelRgba(seed, x + dust.size, y - dust.size, transmission));
+        if (transmission <= 0.35) assert.equal(r, 0, 'absorbing banks merge into black');
+        if (r > 0) nonzero += 1;
+      }
+    }
+    assert.ok(nonzero > 0 && nonzero / dust.transmission.length < 0.02);
+    // Conservative support bound counts ANY nonzero neighbor as illuminated,
+    // including sub-byte values that Canvas will actually round to exact black.
+    for (const [width, height] of [[390, 844], [1366, 900], [1920, 1080]]) {
+      for (const seconds of [0, 47, 600, 3600]) {
+        const offset = getNebulaOffset(seconds);
+        let lit = 0;
+        let total = 0;
+        for (let y = 0; y < height; y += 4) {
+          for (let x = 0; x < width; x += 4) {
+            const u = Math.floor((x - offset.x) / NEBULA_WORLD_SIZE * dust.size - 0.5);
+            const v = Math.floor((y - offset.y) / NEBULA_WORLD_SIZE * dust.size - 0.5);
+            // Transmission=1 gives worst-case luminous support for every seed.
+            if ([ [u, v], [u + 1, v], [u, v + 1], [u + 1, v + 1] ]
+              .some(([tx, ty]) => getNebulaTexelRgba(seed, tx, ty, 1)[0] > 0)) lit += 1;
+            total += 1;
+          }
+        }
+        assert.ok(1 - lit / total >= 0.8, `${seed}/${width}/${seconds}: ${lit}/${total}`);
+      }
+    }
+  }
+  assert.equal(NEBULA_MAX_CHARCOAL, 4);
+  const renderer = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  assert.match(renderer, /image\.data\.set\(getNebulaTexelRgba\(scene\.seed, x - 1, y - 1, transmission\), index\)/);
+});
 
 test('integrated renderer keeps intrinsic geometry and applies system extinction exactly once', () => {
   const projection = { x: 300, y: 300, depth: 200, progress: 0.8, radius: 3, opacity: 0.6, cycle: 0 };
