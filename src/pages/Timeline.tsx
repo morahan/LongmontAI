@@ -147,7 +147,7 @@ export default function Timeline() {
         <div className="timeline-control-group">
           <span>Range</span>
           <div className="timeline-segmented" role="group" aria-label="Date range">
-            {ranges.map((item) => <button key={item.id} type="button" onClick={() => selectRange(item.id)} className={activeRange === item.id ? 'is-active' : ''}>{item.label}</button>)}
+            {ranges.map((item) => <button key={item.id} type="button" onClick={() => selectRange(item.id)} aria-pressed={activeRange === item.id} className={activeRange === item.id ? 'is-active' : ''}>{item.label}</button>)}
           </div>
         </div>
         <div className="timeline-control-group">
@@ -155,7 +155,7 @@ export default function Timeline() {
           <div className="timeline-filter-row">
             {timelineCategories.map((category) => {
               const Icon = iconForCategory(category);
-              return <button key={category} type="button" onClick={() => toggleCategory(category)} className={activeCategories.includes(category) ? 'is-active' : ''}><Icon size={13} aria-hidden="true" />{category}</button>;
+              return <button key={category} type="button" onClick={() => toggleCategory(category)} aria-pressed={activeCategories.includes(category)} className={activeCategories.includes(category) ? 'is-active' : ''}><Icon size={13} aria-hidden="true" />{category}</button>;
             })}
           </div>
         </div>
@@ -167,8 +167,8 @@ export default function Timeline() {
           </select>
         </label>
         <div className="timeline-view-switch" role="group" aria-label="Display mode">
-          <button type="button" className={view === 'timeline' ? 'is-active' : ''} onClick={() => setView('timeline')}><Network size={15} /> Timeline</button>
-          <button type="button" className={view === 'matrix' ? 'is-active' : ''} onClick={() => setView('matrix')}><Layers3 size={15} /> Matrix</button>
+          <button type="button" aria-pressed={view === 'timeline'} className={view === 'timeline' ? 'is-active' : ''} onClick={() => setView('timeline')}><Network size={15} /> Timeline</button>
+          <button type="button" aria-pressed={view === 'matrix'} className={view === 'matrix' ? 'is-active' : ''} onClick={() => setView('matrix')}><Layers3 size={15} /> Matrix</button>
         </div>
       </section>
 
