@@ -15,6 +15,7 @@ import {
   UnlockKeyhole,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { reconcileVisibleSelection } from '../lib/timelineSelection';
 import {
   timelineCategories,
   timelineEvents,
@@ -96,7 +97,7 @@ export default function Timeline() {
   const [organization, setOrganization] = useState('All organizations');
   const [view, setView] = useState<View>('timeline');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent>(timelineEvents[timelineEvents.length - 1]);
+  const [selection, setSelectedEvent] = useState<TimelineEvent | null>(timelineEvents[timelineEvents.length - 1] ?? null);
 
   const range = ranges.find((item) => item.id === activeRange) ?? ranges[0];
   const filteredEvents = useMemo(() => timelineEvents.filter((event) => (
@@ -105,6 +106,9 @@ export default function Timeline() {
     && (activeCategories.length === 0 || activeCategories.includes(event.category))
     && (organization === 'All organizations' || event.organization === organization)
   )), [activeCategories, organization, range]);
+  const selectedEvent = reconcileVisibleSelection(selection, filteredEvents);
+  if (selectedEvent !== selection) setSelectedEvent(selectedEvent);
+
   const eventGroups = useMemo(() => groupEvents(filteredEvents, activeRange), [activeRange, filteredEvents]);
   const expandedEvents = eventGroups.find((group) => group.key === selectedGroup)?.events ?? [];
   const yearLabels = useMemo(() => yearLabelsForRange(range.start, range.end), [range.start, range.end]);
@@ -195,7 +199,9 @@ export default function Timeline() {
           <p>The x-axis is fixed to the selected time range. Dense periods collapse into count nodes; select one to inspect every event inside it.</p>
         </div>
 
-        {view === 'timeline' ? (
+        {filteredEvents.length === 0 ? (
+          <p role="status">No events match these filters. Try another range, focus, or organization.</p>
+        ) : view === 'timeline' ? (
           <div className="timeline-canvas-wrap" tabIndex={0} aria-label="Scrollable historical AI timeline">
             <div className="timeline-canvas" style={{ '--timeline-years': yearLabels.length } as CSSProperties}>
               <div className="timeline-year-ruler" aria-hidden="true">
@@ -245,18 +251,18 @@ export default function Timeline() {
         <section className="timeline-expanded" aria-live="polite" aria-label={`Events in ${selectedGroup}`}>
           <div className="timeline-expanded-heading"><div><div className="timeline-eyebrow">Expanded cluster</div><h2>{expandedEvents.length} events in {selectedGroup}</h2></div><button type="button" onClick={() => setSelectedGroup(null)}>Close</button></div>
           <div className="timeline-expanded-list">
-            {expandedEvents.map((event) => <button key={event.id} type="button" onClick={() => setSelectedEvent(event)} className={selectedEvent.id === event.id ? 'is-active' : ''}>
+            {expandedEvents.map((event) => <button key={event.id} type="button" onClick={() => setSelectedEvent(event)} className={selectedEvent?.id === event.id ? 'is-active' : ''}>
               <time dateTime={event.date}>{formatDate(event.date)}</time><strong>{event.title}</strong><span>{event.organization}</span>
             </button>)}
           </div>
         </section>
       )}
 
-      <aside className="timeline-detail" aria-label="Selected event">
+      {selectedEvent && <aside className="timeline-detail" aria-label="Selected event" aria-live="polite">
         <div className="timeline-detail-icon">{(() => { const Icon = iconForCategory(selectedEvent.category); return <Icon size={20} />; })()}</div>
         <div className="timeline-detail-copy"><div><span>{selectedEvent.category}</span><time dateTime={selectedEvent.date}>{formatDate(selectedEvent.date)}</time></div><h2>{selectedEvent.title}</h2><p>{selectedEvent.summary}</p><strong>{selectedEvent.organization}</strong></div>
         <div className="timeline-source"><span>Source: {selectedEvent.source}</span><a href={selectedEvent.sourceUrl} target="_blank" rel="noopener noreferrer">Link to Source<ArrowUpRight size={15} /></a></div>
-      </aside>
+      </aside>}
     </div>
   );
 }
