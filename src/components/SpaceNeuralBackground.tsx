@@ -770,22 +770,28 @@ const drawComet = (
     const { x, y, opacity } = projection;
 
     ctx.save();
-    const tail = ctx.createLinearGradient(
-        x - directionX * appearance.trailLength,
-        y - directionY * appearance.trailLength,
-        x,
-        y,
-    );
-    tail.addColorStop(0, 'rgba(105, 174, 205, 0)');
-    tail.addColorStop(0.5, `rgba(142, 211, 234, ${opacity * 0.16})`);
-    tail.addColorStop(1, `rgba(218, 244, 250, ${opacity * 0.68})`);
-    ctx.strokeStyle = tail;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = appearance.trailWidth;
-    ctx.beginPath();
-    ctx.moveTo(x - directionX * appearance.trailLength, y - directionY * appearance.trailLength);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(directionY, directionX));
+    for (const wisp of appearance.wisps) {
+        ctx.save();
+        ctx.translate(-wisp.distance, wisp.lateralOffset);
+        ctx.scale(wisp.lengthRadius, wisp.widthRadius);
+        // Define the fill in this wisp's coordinate frame, never a shared head-space frame.
+        // A fixed patch budget bounds gradient work without any canvas blur/filter pass.
+        const mist = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+        mist.addColorStop(0, 'rgba(198, 235, 246, 1)');
+        mist.addColorStop(0.35, 'rgba(156, 215, 236, 0.7)');
+        mist.addColorStop(0.7, 'rgba(105, 174, 205, 0.22)');
+        mist.addColorStop(1, 'rgba(105, 174, 205, 0)');
+        ctx.fillStyle = mist;
+        ctx.globalAlpha = opacity * wisp.opacity;
+        ctx.beginPath();
+        ctx.arc(0, 0, 1, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+    }
+    ctx.restore();
 
     appearance.particles.forEach((particle) => {
         const particleX = x - directionX * particle.distance
@@ -816,14 +822,24 @@ const drawComet = (
         }
     });
 
-    const glow = ctx.createRadialGradient(x, y, 0, x, y, appearance.glowRadius);
-    glow.addColorStop(0, `rgba(255, 251, 229, ${opacity})`);
-    glow.addColorStop(0.28, `rgba(177, 226, 242, ${opacity * 0.62})`);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(directionY, directionX));
+    ctx.translate(-appearance.glow.lag, 0);
+    ctx.scale(appearance.glow.lengthRadius, appearance.glow.widthRadius);
+    // The outer oval lags the nucleus; its warm inner focus stays closer to the head.
+    const glow = ctx.createRadialGradient(
+        appearance.glow.lag / appearance.glow.lengthRadius * 0.65, 0, 0,
+        0, 0, 1,
+    );
+    glow.addColorStop(0, `rgba(255, 251, 229, ${opacity * appearance.glow.opacity})`);
+    glow.addColorStop(0.28, `rgba(177, 226, 242, ${opacity * appearance.glow.opacity * 0.62})`);
     glow.addColorStop(1, 'rgba(91, 177, 215, 0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(x, y, appearance.glowRadius, 0, TAU);
+    ctx.arc(0, 0, 1, 0, TAU);
     ctx.fill();
+    ctx.restore();
 
     const head = ctx.createRadialGradient(
         x - appearance.headRadius * 0.24,

@@ -294,11 +294,22 @@ export interface CometTrailParticle {
     rotation: number;
 }
 
+/** Elliptical, transparent-edged patches in motion-opposed local coordinates. */
+export interface CometPlumeWisp {
+    distance: number;
+    lateralOffset: number;
+    lengthRadius: number;
+    widthRadius: number;
+    opacity: number;
+}
+
 export interface CometAppearance {
     headRadius: number;
-    glowRadius: number;
+    /** Motion-aligned ellipse centered `lag` pixels behind the nucleus. */
+    glow: { lengthRadius: number; widthRadius: number; lag: number; opacity: number };
     trailLength: number;
     trailWidth: number;
+    wisps: CometPlumeWisp[];
     particles: CometTrailParticle[];
 }
 
@@ -2263,9 +2274,41 @@ export const getCometAppearance = (
     const stableCycle = Math.max(0, Math.trunc(cycle));
     const boundedProgress = clamp01(progress);
     const headRadius = getTravelerAppearance(traveler, boundedProgress).radius * 1.35;
-    const trailLength = Math.max(18, headRadius * 12);
-    const trailWidth = Math.max(3.5, headRadius * 2.8);
+    const trait = (channel: number) => hashRandom(traveler.seed, stableCycle, channel);
+    const trailLength = Math.max(18, headRadius * (10 + trait(410) * 6));
+    const trailWidth = Math.max(3.5, headRadius * (2.3 + trait(411) * 1.4));
+    const glowLength = headRadius * (3.2 + trait(412) * 2.2);
+    const glow = {
+        lengthRadius: glowLength,
+        widthRadius: headRadius * (1.15 + trait(413) * 0.65),
+        lag: glowLength * (0.38 + trait(414) * 0.22),
+        opacity: 0.75 + trait(415) * 0.2,
+    };
+    const bend = 0.14 + trait(416) * 0.15;
+    const turbulence = 4.5 + trait(417) * 3;
+    const density = 0.78 + trait(418) * 0.18;
+    const falloff = 1.35 + trait(419) * 0.5;
     const random = createSeededRandom(hashUint(traveler.seed, stableCycle, 401));
+    const flowPhase = hashRandom(traveler.seed, stableCycle, 402) * TAU;
+    // Progress is the existing simulation clock: frozen frames never acquire wall-clock drift.
+    const flowTime = boundedProgress * TAU * (2.4 + trait(420) * 1.2);
+    const flow = (age: number) => trailWidth * age * (
+        Math.sin(flowPhase + age * turbulence - flowTime) * bend
+        + Math.sin(flowPhase * 1.7 + age * turbulence * 1.9 - flowTime * 0.7) * 0.07
+    );
+    // Fixed overlapping patches avoid both a hard silhouette and per-frame blur/filter passes.
+    const wisps = Array.from({ length: 22 }, (_, index): CometPlumeWisp => {
+        const age = (index + 0.4) / 22;
+        const ripple = Math.sin(flowPhase + age * 13 - flowTime);
+        const distance = trailLength * age;
+        return {
+            distance,
+            lateralOffset: flow(age),
+            lengthRadius: Math.min(distance, trailLength * (0.07 + age * 0.035)),
+            widthRadius: trailWidth * (0.2 + age * 0.95) * (1 + ripple * 0.14),
+            opacity: density * (1 - age) ** falloff,
+        };
+    });
     const createParticle = (
         kind: CometTrailParticleKind,
         index: number,
@@ -2292,7 +2335,8 @@ export const getCometAppearance = (
         return {
             kind,
             distance: trailLength * distanceFraction,
-            lateralOffset: spread * (lateralBias * 0.72 + flutter * 0.28),
+            lateralOffset: flow(distanceFraction)
+                + spread * (lateralBias * 0.45 + flutter * 0.18),
             radius: asteroid
                 ? Math.max(0.35, headRadius * (0.13 + radiusRoll * 0.16))
                 : Math.max(0.1, headRadius * (0.035 + radiusRoll * 0.045)),
@@ -2302,9 +2346,10 @@ export const getCometAppearance = (
     };
     return {
         headRadius,
-        glowRadius: headRadius * 3.1,
+        glow,
         trailLength,
         trailWidth,
+        wisps,
         particles: [
             ...Array.from({ length: 6 }, (_, index) => createParticle('asteroid', index, 6)),
             ...Array.from({ length: 18 }, (_, index) => createParticle('stardust', index, 18)),
