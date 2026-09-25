@@ -147,6 +147,7 @@ import {
   getTravelerVariantForBasisPoint,
   getTwinkleBrightness,
   getUfoAppearance,
+  getUfoTraitsForBucket,
   isGalaxyCreationRoll,
   isPlanetBehindSystemStar,
   isStarRenderable,
@@ -189,6 +190,116 @@ const firstEventChoreography = (seed = 0) => {
     getSimulationTime: (reference) => spaceModel.getSimulationTime(time(reference), seed),
   };
 };
+
+test('UFO-only outcome space gives exactly 25% triangles and 5% aliens in each shape', () => {
+  const outcomes = Array.from({ length: 80 }, (_, bucket) => getUfoTraitsForBucket(bucket));
+  assert.equal(outcomes.filter(({ shape }) => shape === 'triangle').length, 20);
+  assert.equal(outcomes.filter(({ hasAlien }) => hasAlien).length, 4);
+  for (const shape of ['triangle', 'saucer']) {
+    const craft = outcomes.filter((outcome) => outcome.shape === shape);
+    assert.equal(craft.filter(({ hasAlien }) => hasAlien).length / craft.length, 0.05);
+  }
+});
+
+test('UFO traits are stable through approach, reseed across cycles, and all combinations occur among UFOs', () => {
+  const seen = new Set();
+  let changed = false;
+  for (let seed = 0; seed < 20000; seed += 1) {
+    const traveler = { seed, size: 1, speed: 10, initialDistance: 0, alpha: 1 };
+    for (let cycle = 0; cycle < 4; cycle += 1) {
+      if (!isUfoTraveler(traveler, cycle)) continue;
+      const first = getUfoAppearance(traveler, 0, cycle);
+      assert.deepEqual(first, getUfoAppearance(traveler, 0, cycle));
+      for (const progress of [0.2, 0.5, 0.99]) {
+        const next = getUfoAppearance(traveler, progress, cycle, 27);
+        assert.equal(next.shape, first.shape);
+        assert.equal(next.hasAlien, first.hasAlien);
+      }
+      seen.add(`${first.shape}:${first.hasAlien}`);
+      const nextCycle = getUfoAppearance(traveler, 0, cycle + 1);
+      changed ||= nextCycle.shape !== first.shape || nextCycle.hasAlien !== first.hasAlien;
+    }
+  }
+  assert.equal(changed, true);
+  assert.deepEqual(seen, new Set(['saucer:false', 'saucer:true', 'triangle:false', 'triangle:true']));
+});
+
+test('shared UFO geometry scales within the unchanged 1.5x radius, including waving hand', () => {
+  for (const size of TRAVELER_RADIUS_RANGE) {
+    const traveler = { seed: 42, size, speed: 10, initialDistance: 0, alpha: 1 };
+    for (const progress of [0, 0.2, 0.5, 0.8, 1]) {
+      for (let time = 0; time <= 7; time += 0.1) {
+        const craft = getUfoAppearance(traveler, progress, 3, time);
+        const { alien, radius } = craft;
+        closeTo(radius, getTravelerAppearance(traveler, progress).radius * 1.5);
+        for (const point of craft.triangle) assert.ok(Math.hypot(point.x, point.y) <= radius);
+        for (const point of [...alien.body, ...alien.arm]) {
+          assert.ok(Math.hypot(point.x, point.y) + alien.lineWidth / 2 < radius);
+        }
+        assert.ok(Math.hypot(alien.head.x, alien.head.y) + alien.headRadiusY < radius);
+        assert.ok(alien.headRadiusX > 0 && alien.headRadiusY > alien.headRadiusX);
+        assert.ok(alien.arm[2].y < alien.head.y, 'raised hand reaches above head center');
+        for (const eye of alien.eyes) {
+          assert.ok(Math.abs(eye.x - alien.head.x) + alien.eyeRadius < alien.headRadiusX);
+          assert.ok(Math.abs(eye.y - alien.head.y) + alien.eyeRadius * 1.4 < alien.headRadiusY);
+        }
+      }
+    }
+    assert.notDeepEqual(getUfoAppearance(traveler, 0.5, 3, 0).alien.arm,
+      getUfoAppearance(traveler, 0.5, 3, 0.25).alien.arm);
+  }
+});
+
+test('Canvas renders every UFO shape/passenger combination using cycle and frozen seeded simulation time', () => {
+  const source = readFileSync(new URL('../../src/components/SpaceNeuralBackground.tsx', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('const drawUfo ='), source.indexOf('const drawComet ='));
+  const draw = runInNewContext(`${stripTypeScriptTypes(body)}\ndrawUfo;`, {
+    getUfoAppearance, TAU: Math.PI * 2,
+  });
+  assert.match(source, /drawUfo\(ctx, traveler, projection, deltaX, deltaY, simulationSeconds\)/);
+  const fixtures = new Map();
+  for (let seed = 0; seed < 20000 && fixtures.size < 4; seed += 1) {
+    const traveler = { seed, size: 1, speed: 10, initialDistance: 0, alpha: 1 };
+    for (let cycle = 0; cycle < 4; cycle += 1) {
+      if (!isUfoTraveler(traveler, cycle)) continue;
+      const craft = getUfoAppearance(traveler, 0.5, cycle);
+      fixtures.set(`${craft.shape}:${craft.hasAlien}`, { traveler, cycle });
+    }
+  }
+  assert.equal(fixtures.size, 4);
+  for (const { traveler, cycle } of fixtures.values()) {
+    const render = (time) => {
+      const calls = [];
+      const ctx = new Proxy({}, {
+        get: (_, key) => key === 'createLinearGradient' || key === 'createRadialGradient'
+          ? () => ({ addColorStop() {} })
+          : (...args) => calls.push([key, ...args]),
+      });
+      draw(ctx, traveler, { x: 100, y: 200, opacity: 0.7, progress: 0.5, cycle }, 3, 4, time);
+      return calls;
+    };
+    const craft = getUfoAppearance(traveler, 0.5, cycle, 27);
+    const calls = render(27);
+    assert.equal(calls.filter(([key]) => key === 'closePath').length, craft.shape === 'triangle' ? 1 : 0);
+    assert.equal(calls.filter(([key]) => key === 'ellipse').length,
+      1 + (craft.shape === 'saucer' ? 1 : 0) + (craft.hasAlien ? 3 : 0));
+    assert.equal(calls.filter(([key]) => key === 'stroke').length, craft.hasAlien ? 4 : 2);
+    assert.equal(calls.filter(([key]) => key === 'save').length, 1);
+    assert.equal(calls.filter(([key]) => key === 'restore').length, 1);
+    if (craft.hasAlien) {
+      assert.ok(calls.some(([key, x, y]) => key === 'lineTo'
+        && x === craft.alien.arm[2].x && y === craft.alien.arm[2].y));
+      assert.notDeepEqual(render(0), render(0.25));
+    } else assert.deepEqual(render(0), render(0.25));
+    for (const event of [1, 2, 3]) {
+      const start = getConstellationEventStart(traveler.seed, event);
+      const frozen = render(getSimulationTime(start, traveler.seed));
+      for (const age of [5, 10, 20, 25, 30]) {
+        assert.deepEqual(render(getSimulationTime(start + age, traveler.seed)), frozen);
+      }
+    }
+  }
+});
 
 const circularDistance = (left, right) => {
   const direct = Math.abs(left - right);

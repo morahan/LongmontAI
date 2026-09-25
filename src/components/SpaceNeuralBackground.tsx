@@ -656,8 +656,9 @@ const drawUfo = (
     projection: ProjectedTraveler,
     deltaX: number,
     deltaY: number,
+    simulationSeconds: number,
 ) => {
-    const appearance = getUfoAppearance(traveler, projection.progress);
+    const appearance = getUfoAppearance(traveler, projection.progress, projection.cycle, simulationSeconds);
     const distance = Math.hypot(deltaX, deltaY);
     const directionX = distance > 0 ? deltaX / distance : 1;
     const directionY = distance > 0 ? deltaY / distance : 0;
@@ -693,7 +694,15 @@ const drawUfo = (
     ctx.rotate(angle);
     ctx.fillStyle = `rgba(206, 230, 239, ${opacity})`;
     ctx.beginPath();
-    ctx.ellipse(0, 0, appearance.radius, appearance.radius * 0.38, 0, 0, TAU);
+    if (appearance.shape === 'triangle') {
+        appearance.triangle.forEach((point, index) => {
+            if (index === 0) ctx.moveTo(point.x, point.y);
+            else ctx.lineTo(point.x, point.y);
+        });
+        ctx.closePath();
+    } else {
+        ctx.ellipse(0, 0, appearance.radius, appearance.radius * 0.38, 0, 0, TAU);
+    }
     ctx.fill();
     ctx.fillStyle = `rgba(102, 205, 236, ${opacity * 0.95})`;
     ctx.beginPath();
@@ -713,6 +722,29 @@ const drawUfo = (
     ctx.moveTo(-appearance.radius * 0.72, appearance.radius * 0.08);
     ctx.lineTo(appearance.radius * 0.72, appearance.radius * 0.08);
     ctx.stroke();
+    if (appearance.hasAlien) {
+        const alien = appearance.alien;
+        ctx.strokeStyle = ctx.fillStyle = `rgba(132, 255, 117, ${opacity})`;
+        ctx.lineWidth = alien.lineWidth;
+        ctx.lineCap = 'round';
+        for (const points of [alien.body, alien.arm]) {
+            ctx.beginPath();
+            points.forEach((point, index) => {
+                if (index === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
+            });
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.ellipse(alien.head.x, alien.head.y, alien.headRadiusX, alien.headRadiusY, 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = `rgba(15, 48, 31, ${opacity})`;
+        for (const eye of alien.eyes) {
+            ctx.beginPath();
+            ctx.ellipse(eye.x, eye.y, alien.eyeRadius, alien.eyeRadius * 1.4, 0, 0, TAU);
+            ctx.fill();
+        }
+    }
     ctx.restore();
 };
 
@@ -1207,7 +1239,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     if (variant === 'galaxy') {
                         drawGalaxy(ctx, traveler, projection, simulationSeconds);
                     } else if (variant === 'ufo') {
-                        drawUfo(ctx, traveler, projection, deltaX, deltaY);
+                        drawUfo(ctx, traveler, projection, deltaX, deltaY, simulationSeconds);
                     } else if (variant === 'comet') {
                         drawComet(ctx, traveler, projection, deltaX, deltaY, {
                             x: projection.x - width * 0.5,

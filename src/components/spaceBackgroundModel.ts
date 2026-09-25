@@ -262,6 +262,19 @@ export interface TravelerStarRenderPolicy {
 }
 
 export interface UfoAppearance {
+    shape: 'saucer' | 'triangle';
+    hasAlien: boolean;
+    triangle: Point[];
+    alien: {
+        head: Point;
+        headRadiusX: number;
+        headRadiusY: number;
+        body: Point[];
+        arm: Point[];
+        eyes: Point[];
+        eyeRadius: number;
+        lineWidth: number;
+    };
     radius: number;
     glowRadius: number;
     streakLength: number;
@@ -2186,10 +2199,55 @@ export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): Trave
     renderFlare: !ownsPlanetarySystem,
 });
 
-/** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth. */
-export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppearance => {
+/** 80 equiprobable UFO-only outcomes: 4 shape slots x 20 passenger slots.
+ * Exactly 25% triangles and 5% aliens, including 5% within EACH shape.
+ */
+export const getUfoTraitsForBucket = (bucket: number) => {
+    const outcome = positiveModulo(Math.trunc(bucket), 80);
+    return {
+        shape: outcome % 4 === 0 ? 'triangle' as const : 'saucer' as const,
+        hasAlien: Math.floor(outcome / 4) === 0,
+    };
+};
+
+/** Separate from traveler classification; rejection removes uint32 modulo bias. */
+const getUfoTraits = (seed: number, cycle: number) => {
+    const acceptedRange = UINT32_RANGE - UINT32_RANGE % 80;
+    let channel = 509;
+    let roll = hashUint(seed, cycle, channel);
+    while (roll >= acceptedRange) {
+        roll = hashUint(seed, cycle, ++channel);
+    }
+    return getUfoTraitsForBucket(roll % 80);
+};
+
+/** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth.
+ * Passenger and triangle geometry stay inside that radius; no minimum pixel-size inflation.
+ * Only the raised hand animates; identity depends solely on seed and depth cycle.
+ */
+export const getUfoAppearance = (
+    traveler: Traveler,
+    progress: number,
+    cycle = 0,
+    simulationSeconds = 0,
+): UfoAppearance => {
     const radius = getTravelerAppearance(traveler, progress).radius * UFO_SIZE_MULTIPLIER;
     return {
+        ...getUfoTraits(traveler.seed, Math.max(0, Math.trunc(cycle))),
+        triangle: [{ x: radius, y: 0 }, { x: -radius * 0.7, y: radius * 0.7 },
+            { x: -radius * 0.7, y: -radius * 0.7 }],
+        alien: {
+            head: { x: 0, y: -radius * 0.55 },
+            headRadiusX: radius * 0.18,
+            headRadiusY: radius * 0.22,
+            body: [{ x: 0, y: -radius * 0.36 }, { x: 0, y: -radius * 0.12 }],
+            arm: [{ x: 0, y: -radius * 0.3 }, { x: radius * 0.28, y: -radius * 0.38 },
+                { x: radius * (0.32 + Math.sin(simulationSeconds * 5) * 0.08), y: -radius * 0.72 }],
+            eyes: [{ x: -radius * 0.07, y: -radius * 0.58 },
+                { x: radius * 0.07, y: -radius * 0.58 }],
+            eyeRadius: radius * 0.045,
+            lineWidth: radius * 0.09,
+        },
         radius,
         glowRadius: radius * 2.4,
         streakLength: Math.max(6, radius * 5),
