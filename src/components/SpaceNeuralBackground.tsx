@@ -1122,7 +1122,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 const style = styles[index];
                 if (!style || !isStarRenderable(style) || blackHole?.stars.get(index)?.consumed) continue;
                 const position = positions[index];
-                const [red, green, blue] = getStarRgb(style.strength);
+                const [red, green, blue] = getStarRgb(style.strength, style.aura?.rgb);
                 ctx.globalAlpha = 1;
                 const transmission = getNebulaTextTransmission(
                     nebulaAt(position.x, position.y), style.strength,

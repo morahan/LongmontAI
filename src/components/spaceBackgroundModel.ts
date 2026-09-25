@@ -1,14 +1,21 @@
 // Maximum pool; all responsive tiers share deterministic prefixes.
-export const AMBIENT_STAR_COUNT = 560;
+export const AMBIENT_STAR_COUNT = 1120;
 // Kept as the historical density reference for consumers that use the exported constant.
 // Actual Star Text anchor totals are phrase/event dependent.
 export const CONSTELLATION_STAR_COUNT = 144;
 export const MIN_GLYPH_STAR_COUNT = 37;
 export const MAX_GLYPH_STAR_COUNT = 73;
-export const RETAINED_AMBIENT_STAR_COUNT = 280;
+export const RETAINED_AMBIENT_STAR_COUNT = 560;
 export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
-export const MOBILE_STAR_COUNT = 56;
+export const MOBILE_STAR_COUNT = 112;
 export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
+export const AMBIENT_STAR_PALETTE = [
+    { name: 'blue', rgb: [174, 207, 255] },
+    { name: 'white', rgb: [240, 242, 255] },
+    { name: 'yellow', rgb: [255, 235, 174] },
+    { name: 'red', rgb: [255, 157, 164] },
+    { name: 'orange', rgb: [255, 193, 143] },
+] as const;
 export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
 export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
 export const DESKTOP_TRAVELER_COUNT = 170;
@@ -734,6 +741,19 @@ export const getStarAura = (seed: number): StarAura => {
     return aura;
 };
 
+// Keep palette variants separate so cached traveler/text auras retain their original RGB.
+// Bound retained identities across scene seeds and generations, just like getStarAura.
+const ambientStarAuras = new Map<number, StarAura>();
+const getAmbientStarAura = (seed: number): StarAura => {
+    const cached = ambientStarAuras.get(seed);
+    if (cached) return cached;
+    const aura: StarAura = { ...getStarAura(seed),
+        rgb: AMBIENT_STAR_PALETTE[hashUint(seed, 0, 815) % AMBIENT_STAR_PALETTE.length].rgb };
+    if (ambientStarAuras.size >= 4096) ambientStarAuras.delete(ambientStarAuras.keys().next().value!);
+    ambientStarAuras.set(seed, aura);
+    return aura;
+};
+
 const mixStarAura = (from: StarAura, to: StarAura, amount: number): StarAura => ({
     radiusMultiplier: mix(from.radiusMultiplier, to.radiusMultiplier, amount),
     opacity: mix(from.opacity, to.opacity, amount),
@@ -806,7 +826,8 @@ const ambientVisualStyle = (
         opacity: Math.min(1, star.alpha * twinkle),
         coreOpacity: 1,
         cardinalFlare: star.hasCardinalFlare ? 1 : 0,
-        aura: getStarAura(star.twinkleSeed),
+        // Independent hashing leaves radius, drift, twinkle and traveler streams untouched.
+        aura: getAmbientStarAura(star.twinkleSeed),
     };
 };
 
@@ -890,12 +911,15 @@ export const getStarFieldStyles = (
 /** Shared by tests and the Canvas loop so ambient draw counts cover the rendered path. */
 export const isStarRenderable = (style: StarVisualStyle) => style.opacity > 0;
 
-export const getStarRgb = (strength: number): readonly [number, number, number] => {
+export const getStarRgb = (
+    strength: number,
+    ambientRgb: readonly [number, number, number] = AMBIENT_STAR_RGB,
+): readonly [number, number, number] => {
     const amount = clamp01(strength);
     return [
-        Math.round(mix(AMBIENT_STAR_RGB[0], CONSTELLATION_STAR_RGB[0], amount)),
-        Math.round(mix(AMBIENT_STAR_RGB[1], CONSTELLATION_STAR_RGB[1], amount)),
-        Math.round(mix(AMBIENT_STAR_RGB[2], CONSTELLATION_STAR_RGB[2], amount)),
+        Math.round(mix(ambientRgb[0], CONSTELLATION_STAR_RGB[0], amount)),
+        Math.round(mix(ambientRgb[1], CONSTELLATION_STAR_RGB[1], amount)),
+        Math.round(mix(ambientRgb[2], CONSTELLATION_STAR_RGB[2], amount)),
     ];
 };
 
@@ -1290,7 +1314,7 @@ const getDistributedTextSourceSlots = (targetCount: number) => {
     // Distribute the mobile prefix across the entire phrase first, then fill remaining slots
     // at larger tiers. Shared stars never switch glyph destinations at a breakpoint.
     let assigned = 0;
-    for (const tierCount of [28, 84, RETAINED_AMBIENT_STAR_COUNT]) {
+    for (const tierCount of [MOBILE_STAR_COUNT / 2, MOBILE_STAR_COUNT * 3 / 2, RETAINED_AMBIENT_STAR_COUNT]) {
         const stageCount = Math.min(tierCount, visibleSourceCount) - assigned;
         const available = sourceByDestination.map((source, index) => source < 0 ? index : -1)
             .filter((index) => index >= 0);
