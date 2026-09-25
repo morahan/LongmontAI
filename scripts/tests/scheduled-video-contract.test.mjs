@@ -79,6 +79,18 @@ test('scheduled video stage -> API -> ContentBlock transport, rendering and iner
       assert.match(staticHtml, /<video controls="" preload="metadata" playsInline="">/);
       assert.ok(staticHtml.includes(`type="${mime}"`));
     }
+    // Extension matching is case-insensitive; URL spelling must remain intact.
+    const { videoMime } = await server.ssrLoadModule('/src/lib/videoEmbed.ts');
+    for (const [extension, mime] of [
+      ['mp4', 'video/mp4'], ['MP4', 'video/mp4'], ['mP4', 'video/mp4'],
+      ['webm', 'video/webm'], ['WEBM', 'video/webm'], ['WeBm', 'video/webm'],
+    ]) {
+      for (const source of [`media/demo.${extension}`, `/media/demo.${extension}`, url(`clips/demo.${extension}`)]) {
+        assert.equal(videoMime(source), mime, source);
+        const caseHtml = render(token(source));
+        assert.ok(caseHtml.includes(`<source src="${source.replaceAll('&', '&amp;')}" type="${mime}"`), source);
+      }
+    }
     const valid = url('demo.mp4');
     const invalid = [
       'https://evil.example/demo.mp4', '//evil.example/demo.mp4', 'javascript:demo.mp4', 'data:video/mp4,demo', 'blob:demo.mp4',
@@ -96,7 +108,8 @@ test('scheduled video stage -> API -> ContentBlock transport, rendering and iner
       '/media/demo.mp4" onerror="alert(1)', '/media/de}mo.mp4<script>alert(1)</script>',
       valid.replace(`edition=${FIRST_ID}&revision=${release.releaseRevision}`, `revision=${release.releaseRevision}&edition=${FIRST_ID}`),
     ];
-    for (const source of invalid) {
+    for (const source of invalid.flatMap((source) => [source, source.replaceAll('.mp4', '.MP4').replaceAll('.webm', '.WeBm')])) {
+      assert.equal(videoMime(source), null, source);
       const unsafeHtml = render(`Safe before\n\n${token(source)}\n\nSafe after`);
       assert.doesNotMatch(unsafeHtml, /<(?:video|source|script|iframe)\b/i, source);
       assert.ok(unsafeHtml.includes('Safe before') && unsafeHtml.includes('Safe after'), source);

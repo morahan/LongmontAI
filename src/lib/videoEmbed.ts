@@ -19,9 +19,11 @@ export function videoMime(src: string): 'video/mp4' | 'video/webm' | null {
     } else {
         // Preserve local static token paths, without schemes, traversal or queries.
         mediaPath = src.startsWith('/') ? src.slice(1) : src;
-        if (!/^[a-z0-9./-]+$/.test(src) || !MEDIA_PATH.test(mediaPath)) return null;
+        if (!/^[a-z0-9./-]+$/i.test(src) || !MEDIA_PATH.test(mediaPath)) return null;
     }
-    if (mediaPath.endsWith('.mp4')) return 'video/mp4';
-    if (mediaPath.endsWith('.webm')) return 'video/webm';
+    // Normalize only for MIME recognition, never for URL validation or output.
+    const normalizedPath = mediaPath.toLowerCase();
+    if (normalizedPath.endsWith('.mp4')) return 'video/mp4';
+    if (normalizedPath.endsWith('.webm')) return 'video/webm';
     return null;
 }
