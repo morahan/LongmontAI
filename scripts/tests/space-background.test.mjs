@@ -254,8 +254,12 @@ test('all five seeded ambient colors and varied radii reach the actual Canvas lo
   for (const [width, height] of [[320, 568], [390, 844], [639, 800], [640, 800],
     [1024, 768], [1439, 900], [1440, 900], [1920, 1080], [3840, 2160]]) {
     for (const seed of [0, 17, 12345]) {
-      for (const time of [0, 47, 630]) {
-        const generation = getConstellationPhase(time).event;
+      // Sample generation zero and completed events, not historical fixed-clock windows.
+      for (const time of [0, ...[1, 2, 3].map((event) =>
+        getConstellationEventStart(seed, event) + CONSTELLATION_WINDOW_SECONDS)]) {
+        const phase = getConstellationPhase(time, seed);
+        assert.equal(phase.name, 'ambient');
+        const generation = phase.event;
         const stars = createAmbientLayout(seed, generation, starCountForWidth(width));
         const styles = getStarFieldStyles(seed, time, false, width);
         const positions = getStarFieldPositions(seed, time, width, height);
@@ -301,12 +305,20 @@ test('all five seeded ambient colors and varied radii reach the actual Canvas lo
 
 test('ambient frames reuse palette-colored auras instead of allocating per star per frame', () => {
   for (const width of [390, 1000, 1920]) {
-    for (const start of [47, 630]) {
+    for (const start of [0, ...[1, 2, 3].map((event) =>
+      getConstellationEventStart(12345, event) + CONSTELLATION_WINDOW_SECONDS)]) {
+      const phase = getConstellationPhase(start, 12345);
+      assert.equal(phase.name, 'ambient');
       const first = getStarFieldStyles(12345, start, false, width).filter(isStarRenderable);
+      assert.equal(first.length, starCountForWidth(width));
       const identities = new Set(first.map(({ aura }) => aura));
+      // Even the minimum one-second seeded idle wait contains these 60 frames.
       for (let frame = 1; frame <= 60; frame += 1) {
-        const styles = getStarFieldStyles(12345, start + frame / 60, false, width)
-          .filter(isStarRenderable);
+        const time = start + frame / 120;
+        assert.equal(getConstellationPhase(time, 12345).name, 'ambient');
+        assert.equal(getConstellationPhase(time, 12345).event, phase.event);
+        const styles = getStarFieldStyles(12345, time, false, width).filter(isStarRenderable);
+        assert.equal(styles.length, first.length);
         styles.forEach(({ aura }, index) => {
           assert.strictEqual(aura, first[index].aura);
           identities.add(aura);
@@ -317,19 +329,40 @@ test('ambient frames reuse palette-colored auras instead of allocating per star 
   }
 });
 
-test('aura caching preserves pre-fix visual data through tiers, transitions and reduced motion', () => {
-  // Captured before caching: includes every style property, not only aura colors.
-  const hash = createHash('sha256');
+test('aura caching preserves uncached visual data through seeded events, tiers and reduced motion', () => {
+  // Keep the integrated choreography, but independently restore the pre-cache palette
+  // allocation. A fixed-clock digest from before seeded scheduling is no longer an oracle.
+  const source = readFileSync(new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8');
+  const start = source.indexOf('const getAmbientStarAura =');
+  const end = source.indexOf('\nconst mixStarAura =', start);
+  assert.ok(start >= 0 && end > start);
+  const uncachedSource = source.slice(0, start) + `
+    const getAmbientStarAura = (seed: number): StarAura => ({
+      ...getStarAura(seed),
+      rgb: AMBIENT_STAR_PALETTE[hashUint(seed, 0, 815) % AMBIENT_STAR_PALETTE.length].rgb,
+    });
+  ` + source.slice(end);
+  const uncachedStyles = runInNewContext(
+    `${stripTypeScriptTypes(uncachedSource).replace(/^export /gm, '')}\ngetStarFieldStyles;`,
+  );
+  const phases = new Set();
   for (const seed of [0, 17, 12345]) {
+    const times = [0, ...[1, 2, 3].flatMap((event) =>
+      [-0.001, 0, 5, 10, 20, 25, 29.999, 30].map((age) =>
+        getConstellationEventStart(seed, event) + age))];
     for (const width of [390, 1000, 1920]) {
-      for (const time of [0, 47, 599.999, 600, 605, 610, 620, 625, 630, 1205]) {
+      for (const time of times) {
+        phases.add(getConstellationPhase(time, seed).name);
         for (const reduced of [false, true]) {
-          hash.update(JSON.stringify(getStarFieldStyles(seed, time, reduced, width)));
+          // JSON normalizes VM realm prototypes and includes every visual property.
+          assert.deepEqual(JSON.parse(JSON.stringify(getStarFieldStyles(seed, time, reduced, width))),
+            JSON.parse(JSON.stringify(uncachedStyles(seed, time, reduced, width))),
+            `seed=${seed}, width=${width}, time=${time}, reduced=${reduced}`);
         }
       }
     }
   }
-  assert.equal(hash.digest('hex'), 'fe727d921f9d249bc1700d0112d1b984ab1b42f162409f90d085cf129a41a87c');
+  assert.deepEqual([...phases].sort(), ['ambient', 'hold', 'morph-in', 'morph-out']);
 });
 
 test('all tiers preserve visible scheduled and click-trigger boundary frames, including short phrases', () => {
