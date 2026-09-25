@@ -114,7 +114,7 @@ assert.match(script, /sandbox_workspace_write\.network_access=false/, 'fixer net
 assert.match(script, /read -r local_ref local_oid remote_ref remote_oid extra/, 'push scope must come from hook stdin')
 assert.match(script, /history_ranges\+=\("\$local_commit"\)/, 'new refs must scan all reachable history')
 assert.match(script, /history_ranges\+=\("\$\{remote_commit\}\.\.\$\{local_commit\}"\)/, 'updates and force pushes must use exact endpoints')
-assert.match(script, /git archive --format=tar "\$tip"/, 'full scans must use exact ref-tip snapshots')
+assert.match(script, /--materialize "\$tip" "\$snapshot"/, 'full scans must materialize exact ref-tip trees')
 assert.match(script, /--name-only --diff-filter=ACMRD -z/, 'staged scope matching must be NUL-delimited and include deletions')
 assert.match(script, /pre-push ref-update input is required/, 'missing push scope must fail closed')
 assert.match(script, /remote baseline is unavailable locally/, 'unprovable history must fail closed')
@@ -192,6 +192,11 @@ try {
   await Promise.all([mkdir(bin, { recursive: true }), mkdir(home, { recursive: true }), mkdir(join(repo, 'scripts/tests'), { recursive: true })])
   await copyFile(new URL('../security-commit-review.sh', import.meta.url), reviewScript)
   await chmod(reviewScript, 0o755)
+  await mkdir(join(repo, 'scripts/lib/local-required-gate'), { recursive: true })
+  await copyFile(new URL('../lib/local-required-gate/run.mjs', import.meta.url), join(repo, 'scripts/lib/local-required-gate/run.mjs'))
+  await writeFile(join(repo, '.gitattributes'), 'omitted.txt export-ignore\nsubstituted.txt export-subst\n')
+  await writeFile(join(repo, 'omitted.txt'), 'must-scan\n')
+  await writeFile(join(repo, 'substituted.txt'), '$Format:%H$\n')
   await writeFile(join(repo, 'tracked.txt'), 'base\n')
   await writeFile(join(repo, 'package-lock.json'), '{}\n')
   await writeFile(join(repo, 'vercel.json'), '{}\n')
@@ -204,6 +209,8 @@ if [[ "\${1:-}" == "dir" ]]; then
   target="\${!#}"
   record="$record:content=$(tr -d '\\n' <"$target/tracked.txt")"
   [[ ! -e "$target/untracked.txt" ]]
+  [[ $(<"$target/omitted.txt") == must-scan ]]
+  [[ $(<"$target/substituted.txt") == '$Format:%H$' ]]
 fi
 printf '%s\\n' "$record" >>"$SECURITY_TEST_LOG"
 printf '%s\\n' "SYNTHETIC-PRIVATE-SCANNER-CONTENT" >&2
@@ -215,6 +222,9 @@ printf 'osv:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
 `)
   await writeFile(join(bin, 'node'), `#!/usr/bin/env bash
 set -eu
+if [[ "\${1:-}" == */scripts/lib/local-required-gate/run.mjs || "\${1:-}" == --input-type=module ]]; then
+  exec ${JSON.stringify(process.execPath)} "$@"
+fi
 printf 'node:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
 case "$1" in
   scripts/tests/security-review-chain.test.mjs) exit "$SECURITY_TEST_CHAIN_STATUS" ;;
@@ -456,8 +466,14 @@ printf 'worker-status=%s\\n' "$status"
   let allLines = await scannerLines()
   assert.equal(allLines.filter((line) => line.startsWith('gitleaks:dir ')).length, 1, 'all mode performs one exact HEAD snapshot scan')
   assert.ok(allLines.some((line) => line.includes('content=side-tip')), 'all mode excludes mutable worktree content')
-  assert.equal(occurrences(allLines, 'osv:'), 1, 'all mode audits the archived HEAD snapshot')
+  assert.equal(occurrences(allLines, 'osv:'), 1, 'all mode audits the exact HEAD snapshot')
   assert.equal(occurrences(allLines, 'node:'), 2, 'all mode runs both contracts from archived HEAD')
+  await git(['reset', '--hard', 'HEAD'])
+
+  await writeFile(join(repo, 'scripts/lib/local-required-gate/run.mjs'), 'process.exit(0)\n')
+  await clearLog()
+  await assert.rejects(runReview('all'), 'a helper claiming success with an incomplete snapshot must block review')
+  assert.deepEqual(await scannerLines(), [], 'no scanner may run after incomplete materialization')
   await git(['reset', '--hard', 'HEAD'])
 
   await clearLog()

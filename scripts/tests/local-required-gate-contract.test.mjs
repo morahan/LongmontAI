@@ -22,7 +22,10 @@ function fixture(options = {}) {
   git('init', '-q');
   cpSync(join(repo, 'scripts/lib/local-required-gate'), join(work, 'scripts/lib/local-required-gate'), { recursive: true });
   cpSync(join(repo, 'scripts/local-required-gate.sh'), join(work, 'scripts/local-required-gate.sh'));
-  writeFileSync(join(work, 'scripts/security-commit-review.sh'), `#!/bin/bash\n[[ "$CI" == true && "$SECURITY_COMMIT_AUTO_FIX" == 0 && -z "\${SECURITY_COMMIT_BREAK_GLASS:-}" ]] || exit 7\necho ${secret}\nexit ${options.securityFail ? 1 : 0}\n`);
+  writeFileSync(join(work, '.gitattributes'), 'scripts/security-commit-review.sh export-ignore\nsubstituted.txt export-subst\n');
+  writeFileSync(join(work, 'substituted.txt'), '$Format:%H$\n');
+  writeFileSync(join(work, 'scripts/security-commit-review.sh'), `#!/bin/bash\n[[ "$CI" == true && "$SECURITY_COMMIT_AUTO_FIX" == 0 && -z "\${SECURITY_COMMIT_BREAK_GLASS:-}" ]] || exit 7\n[[ $(<"\${0%/*}/../substituted.txt") == '$Format:%H$' ]] || exit 8\necho ${secret}\nexit ${options.securityFail ? 1 : 0}\n`);
+  if (options.treeLink) symlinkSync('../outside-snapshot', join(work, 'unsafe-link'));
   git('add', '.');
   git('-c', 'user.name=Gate Test', '-c', 'user.email=gate@example.invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'fixture');
   const sha = git('rev-parse', 'HEAD');
@@ -86,6 +89,16 @@ scenario('success: exact snapshot, both Linux lanes, scanners and CodeQL; metada
     assert.ok(!call.args.includes('-v'));
   }
   assert.ok(calls.some(call => call.tool === 'codeql' && call.args.includes('javascript-security-extended.qls')));
+});
+scenario('export-ignore and export-subst cannot omit or rewrite scanner input', {}, f => {
+  const result = f.invoke();
+  assert.equal(result.status, 0);
+  assert.equal(result.evidence.status, 'pass');
+  assert.ok(f.calls().some(call => call.tool === 'gitleaks'));
+});
+scenario('symlink tree entry fails before scanners', { treeLink: true }, f => {
+  blocked(f.invoke(), 'immutable-snapshot');
+  assert.ok(!f.calls().some(call => call.tool === 'docker' && call.args[0] === 'run'));
 });
 scenario('wrong SHA', {}, f => blocked(f.invoke(['--sha', '0'.repeat(40)]), 'exact-clean-attached-tree'));
 for (const kind of ['tracked', 'untracked', 'staged', 'detached']) {

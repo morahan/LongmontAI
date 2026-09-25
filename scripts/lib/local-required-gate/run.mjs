@@ -1,8 +1,55 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, openSync, closeSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, lstatSync,
+  chmodSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+
+function materializeTree(sha, destination) {
+  if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)
+    || !lstatSync(destination).isDirectory() || readdirSync(destination).length) throw new Error('snapshot input');
+  const git = (args, options = {}) => {
+    const result = spawnSync('git', args, { env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' },
+      stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 128 * 1024 * 1024, ...options });
+    if (result.error || result.signal || result.status !== 0) throw new Error('Git object');
+    return result.stdout;
+  };
+  const entries = git(['ls-tree', '-rz', '--full-tree', sha]);
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const seen = new Set();
+  let offset = 0;
+  while (offset < entries.length) {
+    const end = entries.indexOf(0, offset);
+    if (end < 0) throw new Error('tree entry');
+    const entry = entries.subarray(offset, end);
+    offset = end + 1;
+    const tab = entry.indexOf(9);
+    if (tab < 0) throw new Error('tree entry');
+    const header = entry.subarray(0, tab).toString('ascii');
+    const match = /^(100644|100755) blob ([a-f0-9]{40}|[a-f0-9]{64})$/.exec(header);
+    if (!match) throw new Error('unsupported tree entry');
+    const path = decoder.decode(entry.subarray(tab + 1));
+    const parts = path.split('/');
+    if (!path || parts.some(part => !part || part === '.' || part === '..' || part === '.git')
+      || seen.has(path)) throw new Error('unsafe tree path');
+    seen.add(path);
+    const target = join(destination, ...parts);
+    mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
+    const file = openSync(target, 'wx', 0o600);
+    try { git(['cat-file', 'blob', match[2]], { stdio: ['ignore', file, 'ignore'] }); }
+    finally { closeSync(file); }
+    chmodSync(target, match[1] === '100755' ? 0o755 : 0o644);
+  }
+}
+
+if (process.argv[2] === '--materialize') {
+  try {
+    if (process.argv.length !== 5) throw new Error('arguments');
+    materializeTree(process.argv[3], process.argv[4]);
+  } catch {
+    process.exitCode = 1;
+  }
+} else {
 
 // Only fixed labels and validated object IDs enter evidence. Child output is never evidence.
 const evidence = { schema: 'local-required-gate/v1', sha: null, status: 'fail', gates: [], remoteReported: false };
@@ -55,11 +102,11 @@ try {
   const archive = join(scratch, 'source.tar');
   mkdirSync(source, { mode: 0o700 });
   gate('immutable-snapshot', () => {
-    run('git', ['archive', '--format=tar', `--output=${archive}`, evidence.sha]);
-    run('tar', ['-xf', archive, '-C', source]);
+    run(process.execPath, [join(root, 'scripts/lib/local-required-gate/run.mjs'), '--materialize', evidence.sha, source]);
+    run('tar', ['-cf', archive, '-C', source, '.']);
   });
   gate('repository-security-review', () => {
-    // Existing all-mode semantics: archived HEAD gitleaks + offline OSV + policy contracts.
+    // Existing all-mode semantics: exact HEAD gitleaks + offline OSV + policy contracts.
     // No inherited bypass, agent, remediation or evidence-path environment variables.
     env.SECURITY_REVIEW_EVIDENCE_DIR = join(scratch, 'security-evidence');
     run('bash', [join(source, 'scripts/security-commit-review.sh'), 'all']);
@@ -112,4 +159,5 @@ try {
   }
   process.stdout.write(`${JSON.stringify(evidence)}\n`);
   process.exitCode = evidence.status === 'pass' ? 0 : 1;
+}
 }

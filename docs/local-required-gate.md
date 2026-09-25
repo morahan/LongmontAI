@@ -10,7 +10,7 @@ protection. Existing CI and hook requirements remain in force.
 
 Use a trusted, exclusively held checkout on an attached branch, with no staged,
 unstaged, or untracked files. Ignored build products are not included. Submodules
-are rejected because Git archives omit their contents. Commit the tooling before
+are rejected because their contents are outside the named tree. Commit the tooling before
 using it to validate that commit. Never change HEAD or the checkout during a run.
 
 Requirements on PATH: Node 22.12+ (or 24), Bash, Git, tar, a working Docker daemon,
@@ -37,9 +37,12 @@ the existing pre-push review still checks the actual outgoing ranges.
 ## What runs
 
 1. Exact-SHA/clean-tree/attached-branch checks and required-tool probes.
-2. A private temporary `git archive` of the supplied commit (standard Git archive
-   attributes apply, as in the existing security review).
-3. The existing archived `scripts/security-commit-review.sh all`, against the
+2. A private temporary snapshot materialized from the supplied commit's Git tree
+   blobs. Export attributes do not omit or substitute source bytes. Symlinks,
+   unsupported tree entries, and materialization errors block scanners. The
+   all/push security review independently verifies paths, modes, and blob bytes
+   against the named tree before starting scanners.
+3. The existing `scripts/security-commit-review.sh all`, against the
    checkout's HEAD: gitleaks redacted tracked-snapshot semantics, OSV
    `scan source --offline-vulnerabilities --recursive --verbosity error`, frontend
    and control-plane scans, and security contracts. Agent remediation/review is
@@ -48,7 +51,7 @@ the existing pre-push review still checks the actual outgoing ranges.
 4. Offline zizmor with pedantic persona and medium severity/confidence thresholds,
    matching the Actions security lane.
 5. Separate disposable `linux/amd64` Docker runs using
-   `node:22.20.0-bookworm` and `node:24-bookworm`. Each receives only the archive on
+   `node:22.20.0-bookworm` and `node:24-bookworm`. Each receives only a tar stream of the snapshot on
    stdin, with no host bind mounts, host environment, Git credentials, or Docker
    socket. Capabilities are dropped and privilege escalation is disabled. Each
    installs npm 10.9.3 inside the container, runs `npm ci --ignore-scripts`, lint,
@@ -76,7 +79,7 @@ schema, validated SHA (or null for malformed input), overall pass/fail, fixed ga
 names/statuses, and `remoteReported: false`. It contains no file paths, branch
 names, arguments, environment values, scanner messages, source, or SARIF details.
 Tool stdout/stderr is discarded, not copied into the evidence. Temporary SARIF,
-databases, archives, and scanner evidence are removed on normal completion or
+databases, snapshot tar streams, and scanner evidence are removed on normal completion or
 caught failure. Process termination before cleanup produces no usable success
 claim. This unsigned JSON is not an authenticated attestation.
 
