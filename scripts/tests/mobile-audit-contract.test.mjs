@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -274,6 +274,20 @@ test('concurrent configs are private JSON paths and success/failure cleanup pres
   await mkdir(bin, { recursive: true });
   const stale = path.join(temporary, 'longmont-mobile-audit-playwright.XXXXXXXX.json');
   await writeFile(stale, 'unrelated stale config');
+  const nativeMktemp = execFileSync('which', ['mktemp'], { encoding: 'utf8' }).trim();
+  // Reproduce BSD's literal suffix-template behavior on Linux too. The native
+  // mktemp still allocates every valid trailing-X template, including -d.
+  await writeFile(path.join(bin, 'mktemp'), `#!/usr/bin/env bash
+set -eu
+template="\${!#}"
+if [[ "$template" == *.XXXXXXXX.json ]]; then
+  (set -C; : >"$template")
+  printf '%s\\n' "$template"
+else
+  exec ${JSON.stringify(nativeMktemp)} "$@"
+fi
+`);
+  await chmod(path.join(bin, 'mktemp'), 0o755);
   const cli = path.join(bin, 'playwright_cli.sh');
   await writeFile(cli, `#!${process.execPath}
 const fs = require('node:fs');
@@ -299,7 +313,7 @@ if (command === 'open') {
   const runs = ['one', 'two'].map((id) => {
     const child = spawn('bash', [path.join(root, 'scripts/run-mobile-browser-audit.sh')], {
       cwd: directory,
-      env: { PATH: process.env.PATH, HOME: directory, CODEX_HOME: directory, TMPDIR: temporary,
+      env: { PATH: `${bin}${path.delimiter}${process.env.PATH}`, HOME: directory, CODEX_HOME: directory, TMPDIR: temporary,
         MOBILE_AUDIT_TEST_ID: id, MOBILE_AUDIT_BASE_URL: 'http://audit.test', MOBILE_AUDIT_HEADED: '0' },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -335,12 +349,13 @@ if (command === 'open') {
     assert.equal(path.basename(config), 'config.json');
     assert.equal((await stat(path.dirname(config))).mode & 0o777, 0o700);
     assert.deepEqual(contents, { browser: { browserName: 'chromium', launchOptions: { headless: true } } });
+    await access(config); // Both configs coexist while both launchers are open.
   }
   await writeFile(release, 'continue');
   const results = await Promise.all(runs.map(({ done }) => done));
   assert.deepEqual(results.map(({ status }) => status), [0, 17], JSON.stringify(results));
   for (const { id } of runs) assert.equal(await readFile(path.join(directory, `${id}.events`), 'utf8'), 'open\nrun-code\nclose\n');
-  assert.deepEqual(await readdir(temporary), [path.basename(stale)]);
+  assert.deepEqual(await readdir(temporary), [path.basename(stale)], 'success/failure cleanup must remove only owned temporary paths');
   assert.equal(await readFile(stale, 'utf8'), 'unrelated stale config');
 });
 
