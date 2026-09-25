@@ -8,14 +8,14 @@ BASE_URL="${MOBILE_AUDIT_BASE_URL:-http://localhost:5173}"
 PLAYWRIGHT_CLI="${CODEX_HOME:-$HOME/.codex}/skills/playwright/scripts/playwright_cli.sh"
 SESSION="longmont-mobile-audit-$$-$RANDOM"
 OPEN_ERROR="$(mktemp "${TMPDIR:-/tmp}/longmont-mobile-audit-open.XXXXXXXX")"
-CONFIG_FILE=""
+CONFIG_DIR=""
 
 cleanup() {
   local status=$?
   trap - EXIT
   "$PLAYWRIGHT_CLI" --session "$SESSION" close >/dev/null 2>&1 || true
   rm -f "$OPEN_ERROR"
-  [[ -z "$CONFIG_FILE" ]] || rm -f "$CONFIG_FILE"
+  [[ -z "$CONFIG_DIR" ]] || rm -rf -- "$CONFIG_DIR"
   exit "$status"
 }
 trap cleanup EXIT
@@ -37,7 +37,9 @@ fi
 
 case "${MOBILE_AUDIT_HEADED:-0}" in
   0|"")
-    CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmont-mobile-audit-playwright.XXXXXXXX")"
+    # Keep the JSON extension inside a private directory with a BSD-safe template.
+    CONFIG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/longmont-mobile-audit-playwright.XXXXXXXX")"
+    CONFIG_FILE="$CONFIG_DIR/config.json"
     cat >"$CONFIG_FILE" <<'JSON'
 {"browser":{"browserName":"chromium","launchOptions":{"headless":true}}}
 JSON

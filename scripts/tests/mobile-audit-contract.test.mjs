@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -263,6 +263,85 @@ setTimeout(() => process.exit(Number(process.env.TEST_AUDIT_STATUS || 0)), 300);
   assert.equal(failed.status, 1);
   assert.deepEqual(failed.lines, []);
   assert.match(failed.stderr, /fixture startup failure/);
+});
+
+test('concurrent configs are private JSON paths and success/failure cleanup preserves stale files', { timeout: 15_000 }, async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'longmont-mobile-config-'));
+  const temporary = path.join(directory, 'temp with spaces');
+  const bin = path.join(directory, 'skills/playwright/scripts');
+  const release = path.join(directory, 'release');
+  await mkdir(temporary);
+  await mkdir(bin, { recursive: true });
+  const stale = path.join(temporary, 'longmont-mobile-audit-playwright.XXXXXXXX.json');
+  await writeFile(stale, 'unrelated stale config');
+  const cli = path.join(bin, 'playwright_cli.sh');
+  await writeFile(cli, `#!${process.execPath}
+const fs = require('node:fs');
+const path = require('node:path');
+const args = process.argv.slice(2);
+const id = process.env.MOBILE_AUDIT_TEST_ID;
+const directory = process.env.CODEX_HOME;
+const command = args[2];
+fs.appendFileSync(path.join(directory, id + '.events'), command + '\\n');
+if (command === 'open') {
+  const config = args[args.indexOf('--config') + 1];
+  fs.writeFileSync(path.join(directory, id + '.json'), JSON.stringify({
+    config, session: args[1], contents: JSON.parse(fs.readFileSync(config, 'utf8')),
+  }));
+  const started = Date.now();
+  const timer = setInterval(() => {
+    if (fs.existsSync(path.join(directory, 'release'))) clearInterval(timer);
+    else if (Date.now() - started > 5000) { clearInterval(timer); process.exitCode = 9; }
+  }, 10);
+} else if (command === 'run-code' && id === 'two') process.exitCode = 17;
+`);
+  await chmod(cli, 0o755);
+  const runs = ['one', 'two'].map((id) => {
+    const child = spawn('bash', [path.join(root, 'scripts/run-mobile-browser-audit.sh')], {
+      cwd: directory,
+      env: { PATH: process.env.PATH, HOME: directory, CODEX_HOME: directory, TMPDIR: temporary,
+        MOBILE_AUDIT_TEST_ID: id, MOBILE_AUDIT_BASE_URL: 'http://audit.test', MOBILE_AUDIT_HEADED: '0' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let output = '';
+    child.stdout.on('data', chunk => { output += chunk; });
+    child.stderr.on('data', chunk => { output += chunk; });
+    const done = new Promise((resolve, reject) => {
+      child.on('error', reject);
+      child.on('close', status => resolve({ status, output }));
+    });
+    return { id, done };
+  });
+  t.after(async () => {
+    await writeFile(release, 'release');
+    await Promise.all(runs.map(({ done }) => done));
+    await rm(directory, { recursive: true, force: true });
+  });
+  const opened = [];
+  for (const { id } of runs) {
+    const deadline = Date.now() + 4000;
+    for (;;) {
+      try { opened.push(JSON.parse(await readFile(path.join(directory, `${id}.json`), 'utf8'))); break; }
+      catch (error) {
+        if (error.code !== 'ENOENT' || Date.now() >= deadline) throw error;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    }
+  }
+  assert.notEqual(opened[0].config, opened[1].config);
+  assert.notEqual(opened[0].session, opened[1].session);
+  for (const { config, contents } of opened) {
+    assert.equal(path.dirname(path.dirname(config)), temporary);
+    assert.equal(path.basename(config), 'config.json');
+    assert.equal((await stat(path.dirname(config))).mode & 0o777, 0o700);
+    assert.deepEqual(contents, { browser: { browserName: 'chromium', launchOptions: { headless: true } } });
+  }
+  await writeFile(release, 'continue');
+  const results = await Promise.all(runs.map(({ done }) => done));
+  assert.deepEqual(results.map(({ status }) => status), [0, 17], JSON.stringify(results));
+  for (const { id } of runs) assert.equal(await readFile(path.join(directory, `${id}.events`), 'utf8'), 'open\nrun-code\nclose\n');
+  assert.deepEqual(await readdir(temporary), [path.basename(stale)]);
+  assert.equal(await readFile(stale, 'utf8'), 'unrelated stale config');
 });
 
 test('encoded targeted routes reach audit code before navigation and invalid transport fails closed', async () => {

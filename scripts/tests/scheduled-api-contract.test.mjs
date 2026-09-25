@@ -194,7 +194,7 @@ test('released media rejects traversal, unsupported, unreferenced, directory, an
   });
 });
 
-test('a media correction changes revision, URL, and bytes without extending JSON freshness', async () => {
+for (const correctionTime of [FIRST_PUBLISH_AT, FIRST_PUBLISH_AT + 1]) test(`a media correction at ${correctionTime} changes revision, URL, and bytes without extending JSON freshness`, async () => {
   await withPrepared(async ({ root, stage, release: beforeRelease, api }) => {
     const beforeResponse = await requestHandler(api.edition, 'edition', {
       root, release: beforeRelease, now: FIRST_PUBLISH_AT, query: correctQuery(beforeRelease),
@@ -210,7 +210,7 @@ test('a media correction changes revision, URL, and bytes without extending JSON
 
     const assetPath = join(root, 'src/articles/drafts/assets/2026.09.02/private-hero.png');
     await writeFile(assetPath, '<svg xmlns="http://www.w3.org/2000/svg"><text>corrected bytes</text></svg>\n');
-    await stage({ root, manifest: manifestPath(root), now: TEST_NOW });
+    await stage({ root, manifest: manifestPath(root), now: correctionTime });
     const correctedPackages = await findGeneratedPackages(root);
     const afterRelease = await importGeneratedServer(correctedPackages.server.path);
     assert.notEqual(revisionOf(afterRelease), revisionOf(beforeRelease));
@@ -223,10 +223,17 @@ test('a media correction changes revision, URL, and bytes without extending JSON
       const afterResponse = await requestHandler(correctedApi.edition, 'edition', {
         root: redeployedRoot,
         release: afterRelease,
-        now: FIRST_PUBLISH_AT,
+        now: correctionTime,
         query: correctQuery(afterRelease),
       });
       assertReleasedJsonCache(afterResponse);
+      assertGenericNotFound(assert, await requestHandler(correctedApi.edition, 'edition', {
+        root: redeployedRoot, now: FIRST_PUBLISH_AT - 1, query: correctQuery(afterRelease),
+      }));
+      assertGenericNotFound(assert, await requestHandler(correctedApi.media, 'media', {
+        root: redeployedRoot, now: correctionTime,
+        query: correctQuery(beforeRelease, { path: 'private-hero.png' }),
+      }));
       const afterMediaUrl = collectUrls(afterResponse.json).find((url) => url.includes('private-hero.png'));
       assert.ok(afterMediaUrl, 'approved article media URL missing after correction');
       assert.notEqual(afterMediaUrl, beforeMediaUrl, 'corrected media reused an immutable URL');
@@ -234,7 +241,7 @@ test('a media correction changes revision, URL, and bytes without extending JSON
       const afterMedia = await requestHandler(correctedApi.media, 'media', {
         root: redeployedRoot,
         release: afterRelease,
-        now: FIRST_PUBLISH_AT,
+        now: correctionTime,
         query: correctQuery(afterRelease, { path: 'private-hero.png' }),
       });
       assert.notDeepEqual(afterMedia.body, beforeMedia.body);
