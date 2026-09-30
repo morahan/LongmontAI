@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { execFile, spawn } from 'node:child_process'
-import { chmod, copyFile, lstat, mkdir, mkdtemp, readFile, readdir, readlink, rm, symlink, writeFile } from 'node:fs/promises'
+import { chmod, copyFile, lstat, mkdir, mkdtemp, readFile, readdir, readlink, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
@@ -114,7 +115,7 @@ assert.match(script, /sandbox_workspace_write\.network_access=false/, 'fixer net
 assert.match(script, /read -r local_ref local_oid remote_ref remote_oid extra/, 'push scope must come from hook stdin')
 assert.match(script, /history_ranges\+=\("\$local_commit"\)/, 'new refs must scan all reachable history')
 assert.match(script, /history_ranges\+=\("\$\{remote_commit\}\.\.\$\{local_commit\}"\)/, 'updates and force pushes must use exact endpoints')
-assert.match(script, /git archive --format=tar "\$tip"/, 'full scans must use exact ref-tip snapshots')
+assert.match(script, /--materialize "\$tip" "\$snapshot"/, 'full scans must materialize exact ref-tip trees')
 assert.match(script, /--name-only --diff-filter=ACMRD -z/, 'staged scope matching must be NUL-delimited and include deletions')
 assert.match(script, /pre-push ref-update input is required/, 'missing push scope must fail closed')
 assert.match(script, /remote baseline is unavailable locally/, 'unprovable history must fail closed')
@@ -129,6 +130,152 @@ assert.equal(packageJson.scripts['security:remediate'], 'SECURITY_COMMIT_AUTO_FI
 assert.equal(packageJson.scripts['verify:local'], 'bash scripts/local-ci.sh')
 for (const skill of [agentSkill, codexSkill]) {
   assert.match(skill, /Automatic fixing is off by default/)
+}
+
+async function verifyOsvProvisioning() {
+  const workflow = await readFile(new URL('../../.github/workflows/webpack.yml', import.meta.url), 'utf8')
+  const buildStart = workflow.indexOf('\n  build:\n')
+  assert.ok(buildStart > 0)
+  assert.doesNotMatch(workflow.slice(0, buildStart), /Install OSV Scanner|Provision fresh OSV advisory cache/)
+  const build = workflow.slice(buildStart)
+  const steps = build.split(/^      - name: /m).slice(1)
+  const step = (name) => {
+    const matches = steps.filter((value) => value.startsWith(`${name}\n`))
+    assert.equal(matches.length, 1, `exactly one ${name} build step`)
+    assert.doesNotMatch(matches[0], /continue-on-error:|\n        if:/, 'required provisioning cannot be conditional or ignored')
+    return matches[0]
+  }
+  const installStep = step('Install OSV Scanner')
+  const cacheStep = step('Provision fresh OSV advisory cache')
+  const reviewStep = step('Security review')
+  assert.ok(steps.indexOf(installStep) < steps.indexOf(cacheStep))
+  assert.ok(steps.indexOf(cacheStep) < steps.indexOf(reviewStep))
+  assert.match(installStep, /OSV_VERSION: 2\.3\.6\n/)
+  assert.match(installStep, /OSV_SHA256: f689e183ef0d573d2459738aae457d411a26241ae58b5088de1af288b3355604\n/)
+  assert.match(installStep, /https:\/\/github\.com\/google\/osv-scanner\/releases\/download\/v\$\{OSV_VERSION\}\/\$binary/)
+  assert.match(installStep, /binary="osv-scanner_linux_amd64"/)
+  assert.match(installStep, /--proto '=https' --tlsv1\.2/)
+  assert.match(installStep, /sha256sum --check --strict/)
+  assert.doesNotMatch(build, /uses: actions\/cache|XDG_CACHE_HOME:/, 'no reused advisory cache or review-step override')
+  assert.match(reviewStep, /run: npm run security:review/)
+  const shellBody = (value) => {
+    assert.match(value, /shell: bash/)
+    const match = value.match(/^        run: \|\n((?:          .*\n)+)/m)
+    assert.ok(match, 'known literal shell block required')
+    return match[1].replace(/^          /gm, '')
+  }
+  const installBody = shellBody(installStep)
+  const cacheBody = shellBody(cacheStep)
+  assert.match(cacheBody, /osv-scanner scan source --offline --download-offline-databases --no-resolve --lockfile package-lock\.json\n/)
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'osv-provisioning-contract-')))
+  try {
+    const tools = join(directory, 'tools')
+    const workspace = join(directory, 'workspace')
+    await mkdir(tools)
+    await mkdir(workspace)
+    await writeFile(join(workspace, 'package-lock.json'), '{"lockfileVersion":3,"packages":{}}\n')
+    const artifact = join(directory, 'synthetic-scanner')
+    const scanner = `#!/usr/bin/env bash
+set -euo pipefail
+printf 'scanner:%s:%s:%s\\n' "$PWD" "$XDG_CACHE_HOME" "$*" >>"$A04_LOG"
+if [[ "$*" == 'scan source --offline --download-offline-databases --no-resolve --lockfile package-lock.json' ]]; then
+  [[ -f package-lock.json ]]
+  [[ -z "$(ls -A "$XDG_CACHE_HOME")" ]]
+  [[ "\${A04_DB_FAILURE:-0}" == 0 ]] || exit 42
+  printf 'valid-fixture-db' >"$XDG_CACHE_HOME/db"
+else
+  [[ "$*" == 'scan source --offline-vulnerabilities --recursive --verbosity error .' ]]
+  [[ -f "$XDG_CACHE_HOME/db" && "$(<"$XDG_CACHE_HOME/db")" == valid-fixture-db ]] || exit 43
+fi
+`
+    await writeFile(artifact, scanner)
+    await writeFile(join(tools, 'curl'), `#!/usr/bin/env bash
+set -euo pipefail
+printf 'download:%s\\n' "$*" >>"$A04_LOG"
+[[ "\${A04_DOWNLOAD_FAILURE:-0}" == 0 ]] || exit 22
+while [[ "$#" -gt 0 ]]; do
+  if [[ "$1" == --output ]]; then target="$2"; shift; fi
+  shift
+done
+cp "$A04_ARTIFACT" "$target"
+if [[ "\${A04_CORRUPT:-0}" == 1 ]]; then printf 'corrupt' >>"$target"; fi
+`)
+    // Fixture-only adapter verifies actual synthetic bytes with Node crypto.
+    await writeFile(join(tools, 'sha256sum'), `#!/usr/bin/env bash
+set -euo pipefail
+[[ "$*" == '--check --strict' ]]
+"$A04_NODE" -e '
+  const fs = require("node:fs"), crypto = require("node:crypto");
+  const line = fs.readFileSync(0, "utf8");
+  const match = line.match(/^([a-f0-9]{64})  (.+)\\n$/);
+  if (!match) process.exit(1);
+  const actual = crypto.createHash("sha256").update(fs.readFileSync(match[2])).digest("hex");
+  if (actual !== match[1]) process.exit(1);
+'
+`)
+    await writeFile(join(tools, 'npm'), `#!/usr/bin/env bash
+set -euo pipefail
+[[ "$*" == 'run security:review' ]]
+osv-scanner scan source --offline-vulnerabilities --recursive --verbosity error .
+`)
+    await chmod(join(tools, 'curl'), 0o755)
+    await chmod(join(tools, 'npm'), 0o755)
+    await chmod(join(tools, 'sha256sum'), 0o755)
+    // No network: production digest is asserted separately from synthetic bytes.
+    const digest = createHash('sha256').update(scanner).digest('hex')
+    const environment = async (name) => {
+      const runner = join(directory, name)
+      await mkdir(runner)
+      return {
+        PATH: `${tools}:${process.env.PATH}`, HOME: directory, RUNNER_TEMP: runner,
+        GITHUB_PATH: join(runner, 'github-path'), GITHUB_ENV: join(runner, 'github-env'),
+        OSV_VERSION: '2.3.6', OSV_SHA256: digest, A04_ARTIFACT: artifact, A04_LOG: join(runner, 'log'), A04_NODE: process.execPath,
+      }
+    }
+    const execute = (body, env) => exec('bash', ['--noprofile', '--norc', '-e', '-o', 'pipefail', '-c', body], { cwd: workspace, env })
+    for (const [name, overrides] of [
+      ['bad-checksum', { A04_CORRUPT: '1' }], ['download-error', { A04_DOWNLOAD_FAILURE: '1' }],
+    ]) {
+      const env = { ...await environment(name), ...overrides }
+      await assert.rejects(execute(installBody, env))
+      await assert.rejects(lstat(join(env.RUNNER_TEMP, 'bin/osv-scanner')), { code: 'ENOENT' })
+      await assert.rejects(lstat(env.GITHUB_PATH), { code: 'ENOENT' }, 'failed install cannot publish its path')
+    }
+    const env = await environment('good')
+    await execute(installBody, env)
+    assert.equal(await readFile(join(env.RUNNER_TEMP, 'bin/osv-scanner'), 'utf8'), scanner)
+    assert.equal((await lstat(join(env.RUNNER_TEMP, 'bin/osv-scanner'))).mode & 0o777, 0o755)
+    assert.equal(await readFile(env.GITHUB_PATH, 'utf8'), `${env.RUNNER_TEMP}/bin\n`)
+    env.PATH = `${env.RUNNER_TEMP}/bin:${env.PATH}`
+    await assert.rejects(execute(cacheBody, { ...env, A04_DB_FAILURE: '1' }), (error) => error.code === 42)
+    await assert.rejects(lstat(env.GITHUB_ENV), { code: 'ENOENT' })
+    await execute(cacheBody, env)
+    const exported = (await readFile(env.GITHUB_ENV, 'utf8')).trim().split('\n')
+    assert.equal(exported.length, 1)
+    assert.match(exported[0], /^XDG_CACHE_HOME=/)
+    const cache = exported[0].slice('XDG_CACHE_HOME='.length)
+    assert.equal(dirname(cache), env.RUNNER_TEMP)
+    assert.equal((await lstat(cache)).mode & 0o777, 0o700)
+    const reviewEnv = { ...env, XDG_CACHE_HOME: cache }
+    const reviewCommand = reviewStep.match(/run: (npm run security:review)/)[1]
+    await execute(reviewCommand, reviewEnv)
+    const records = await readFile(env.A04_LOG, 'utf8')
+    assert.ok(records.includes(`scanner:${workspace}:${cache}:scan source --offline --download-offline-databases --no-resolve --lockfile package-lock.json`))
+    assert.ok(records.includes(`scanner:${workspace}:${cache}:scan source --offline-vulnerabilities --recursive --verbosity error .`))
+    await writeFile(join(cache, 'db'), 'corrupt-cache')
+    await assert.rejects(execute(reviewCommand, reviewEnv), (error) => error.code === 43)
+    await rm(join(cache, 'db'))
+    await assert.rejects(execute(reviewCommand, reviewEnv), (error) => error.code === 43)
+    await writeFile(join(cache, 'db'), 'stale-cache')
+    await execute(cacheBody, reviewEnv)
+    const again = (await readFile(env.GITHUB_ENV, 'utf8')).trim().split('\n')[1].slice('XDG_CACHE_HOME='.length)
+    assert.notEqual(again, cache)
+    assert.equal(await readFile(join(cache, 'db'), 'utf8'), 'stale-cache')
+    await execute(reviewCommand, { ...env, XDG_CACHE_HOME: again })
+    console.log('OSV provisioning workflow contract: PASS (offline synthetic fixtures)')
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
 }
 
 const fixture = await mkdtemp(join(sourceRoot, '.security-review-contract-'))
@@ -189,9 +336,15 @@ const occurrences = (lines, marker) => lines.join('\n').split(marker).length - 1
 const zero = '0'.repeat(40)
 
 try {
+  await verifyOsvProvisioning()
   await Promise.all([mkdir(bin, { recursive: true }), mkdir(home, { recursive: true }), mkdir(join(repo, 'scripts/tests'), { recursive: true })])
   await copyFile(new URL('../security-commit-review.sh', import.meta.url), reviewScript)
   await chmod(reviewScript, 0o755)
+  await mkdir(join(repo, 'scripts/lib/local-required-gate'), { recursive: true })
+  await copyFile(new URL('../lib/local-required-gate/run.mjs', import.meta.url), join(repo, 'scripts/lib/local-required-gate/run.mjs'))
+  await writeFile(join(repo, '.gitattributes'), 'omitted.txt export-ignore\nsubstituted.txt export-subst\n')
+  await writeFile(join(repo, 'omitted.txt'), 'must-scan\n')
+  await writeFile(join(repo, 'substituted.txt'), '$Format:%H$\n')
   await writeFile(join(repo, 'tracked.txt'), 'base\n')
   await writeFile(join(repo, 'package-lock.json'), '{}\n')
   await writeFile(join(repo, 'vercel.json'), '{}\n')
@@ -204,6 +357,8 @@ if [[ "\${1:-}" == "dir" ]]; then
   target="\${!#}"
   record="$record:content=$(tr -d '\\n' <"$target/tracked.txt")"
   [[ ! -e "$target/untracked.txt" ]]
+  [[ $(<"$target/omitted.txt") == must-scan ]]
+  [[ $(<"$target/substituted.txt") == '$Format:%H$' ]]
 fi
 printf '%s\\n' "$record" >>"$SECURITY_TEST_LOG"
 printf '%s\\n' "SYNTHETIC-PRIVATE-SCANNER-CONTENT" >&2
@@ -215,6 +370,9 @@ printf 'osv:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
 `)
   await writeFile(join(bin, 'node'), `#!/usr/bin/env bash
 set -eu
+if [[ "\${1:-}" == */scripts/lib/local-required-gate/run.mjs || "\${1:-}" == --input-type=module ]]; then
+  exec ${JSON.stringify(process.execPath)} "$@"
+fi
 printf 'node:cwd=%s:%s\\n' "$PWD" "$*" >>"$SECURITY_TEST_LOG"
 case "$1" in
   scripts/tests/security-review-chain.test.mjs) exit "$SECURITY_TEST_CHAIN_STATUS" ;;
@@ -330,6 +488,22 @@ esac
     assert.deepEqual(await scannerLines(), [], 'invalid repository must fail before scanner invocation')
     console.log(`Evidence contract: ${cwd === nonrepo ? 'nonrepository' : 'invalid metadata'} rejected before scanning`)
   }
+
+  // Exercise only the accepted workflow selector expansion; preserve main's
+  // staged working-tree contract rather than importing snapshot architecture.
+  for (const filename of ['webpack.yml', 'webpack.yaml', 'unrelated.yml']) {
+    await git(['reset', '--hard', 'HEAD'])
+    await mkdir(join(repo, '.github/workflows'), { recursive: true })
+    const file = `.github/workflows/${filename}`
+    await writeFile(join(repo, file), 'name: scoped fixture\n')
+    await git(['add', file])
+    await clearLog()
+    await runReview('staged')
+    const records = await scannerLines()
+    assert.equal(occurrences(records, 'node:cwd='), filename.startsWith('webpack.') ? 2 : 0, `${filename} policy scope`)
+    assert.ok(!records.some(line => line.startsWith('osv:')), 'workflow-only change does not broaden dependency scope')
+  }
+  await git(['reset', '--hard', 'HEAD'])
 
   await writeFile(join(repo, 'tracked.txt'), 'main-tip\n')
   await commit('main tip')
@@ -456,8 +630,14 @@ printf 'worker-status=%s\\n' "$status"
   let allLines = await scannerLines()
   assert.equal(allLines.filter((line) => line.startsWith('gitleaks:dir ')).length, 1, 'all mode performs one exact HEAD snapshot scan')
   assert.ok(allLines.some((line) => line.includes('content=side-tip')), 'all mode excludes mutable worktree content')
-  assert.equal(occurrences(allLines, 'osv:'), 1, 'all mode audits the archived HEAD snapshot')
+  assert.equal(occurrences(allLines, 'osv:'), 1, 'all mode audits the exact HEAD snapshot')
   assert.equal(occurrences(allLines, 'node:'), 2, 'all mode runs both contracts from archived HEAD')
+  await git(['reset', '--hard', 'HEAD'])
+
+  await writeFile(join(repo, 'scripts/lib/local-required-gate/run.mjs'), 'process.exit(0)\n')
+  await clearLog()
+  await assert.rejects(runReview('all'), 'a helper claiming success with an incomplete snapshot must block review')
+  assert.deepEqual(await scannerLines(), [], 'no scanner may run after incomplete materialization')
   await git(['reset', '--hard', 'HEAD'])
 
   await clearLog()

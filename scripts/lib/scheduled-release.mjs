@@ -499,8 +499,15 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     const previous = path.join(parent, `.scheduled-release.previous-${process.pid}`);
     let backedUp = false;
     try {
-      const spec = await specFromManifest(manifest, { requireFuture: true });
+      // Classify only against the internally verified package, under the lock.
+      // Its bytes need not equal edited sources while preparing a correction.
       const active = await activeRelease();
+      const spec = await specFromManifest(manifest, { requireFuture: false });
+      if (active?.config.editionId === spec.editionId) {
+        if (active.config.publishAt !== spec.publishAt) fail('same-edition correction must retain original publishAt');
+      } else {
+        publication(spec.publishAt, true);
+      }
       if (active && active.config.editionId !== spec.editionId) {
         const approvedActive = await verifyGeneratedRelease({ checkStaticDuplicates: false });
         const approvedActiveSpec = await specFromManifest(approvedActive.source.manifest, { requireFuture: false });

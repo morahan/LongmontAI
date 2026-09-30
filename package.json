@@ -17,6 +17,8 @@
     "test:loop-push": "node scripts/tests/loop-push-contract.test.mjs",
     "security:test": "npm run security:test-chain && npm run security:test-runtime",
     "verify:local": "bash scripts/local-ci.sh",
+    "gate:local-required": "bash scripts/local-required-gate.sh",
+    "test:local-required-gate": "node --test scripts/tests/local-required-gate-contract.test.mjs",
     "hooks:install": "scripts/install-security-hooks.sh",
     "content:check-assets": "node scripts/check-content-assets.js",
     "release:stage": "node scripts/stage-scheduled-release.mjs --manifest",

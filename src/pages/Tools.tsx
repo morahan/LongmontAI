@@ -286,7 +286,7 @@ const Tooltip: React.FC<{
         <div className="text-xs font-mono text-cyan-400 uppercase tracking-widest">
           {input} → {output}
         </div>
-        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+        <button type="button" onClick={onClose} aria-label="Close tool preview" className="text-zinc-500 hover:text-white transition-colors">
           <X size={14} />
         </button>
       </div>
@@ -342,7 +342,7 @@ const DetailPanel: React.FC<{
           <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider mb-1">Input → Output</div>
           <div className="text-white font-bold text-lg">{input} → {output}</div>
         </div>
-        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors p-1">
+        <button type="button" onClick={onClose} aria-label="Close tool details" className="text-zinc-500 hover:text-white transition-colors p-1">
           <X size={16} />
         </button>
       </div>

@@ -1,12 +1,13 @@
 import React from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar } from 'lucide-react';
 import { editions, isEditionPublished } from '../articles';
 import { scheduledEditionSlug } from '../articles/scheduledEdition';
 import ContentBlock from '../components/ContentBlock';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
 import ScheduledEdition from './ScheduledEdition';
+import EditionShare from '../components/EditionShare';
 
 const Edition: React.FC = () => {
     const { id } = useParams();
@@ -48,13 +49,7 @@ const Edition: React.FC = () => {
                                 })}
                             </time>
                         </div>
-                        <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--glass-border)] bg-white/5 text-[var(--text-secondary)] hover:text-white transition-colors"
-                            aria-label="Share this edition"
-                        >
-                            <Share2 size={20} />
-                        </button>
+                        <EditionShare key={edition.id} editionId={edition.id} title={edition.title} />
                     </div>
 
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight text-center">

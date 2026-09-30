@@ -1,6 +1,11 @@
 <svelte:options customElement="longmont-newsletter-signup" />
 
 <script lang="ts">
+  import {
+    newsletterSignupErrorMessage,
+    readNewsletterSubscribeResponse,
+  } from '../lib/newsletterResponse';
+
   let email = '';
   let name = '';
   let cadence: 'weekly' | 'biweekly' = 'weekly';
@@ -31,8 +36,7 @@
           page: window.location.pathname,
         }),
       });
-      const payload = await response.json();
-      if (!response.ok || !payload.ok) throw new Error(payload.message || 'Unable to subscribe.');
+      const payload = await readNewsletterSubscribeResponse(response);
       status = 'success';
       message = payload.status === 'confirmation_pending'
         ? 'You are on the briefing list. Check your inbox for the opt-in step.'
@@ -41,7 +45,7 @@
       name = '';
     } catch (error) {
       status = 'error';
-      message = error instanceof Error ? error.message : 'Newsletter signup is temporarily unavailable.';
+      message = newsletterSignupErrorMessage(error);
     }
   }
 </script>

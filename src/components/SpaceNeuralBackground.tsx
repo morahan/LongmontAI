@@ -87,6 +87,7 @@ import {
     getNebulaDepthTransmission,
     getNebulaOffset,
     getNebulaTextTransmission,
+    getNebulaTexelRgba,
     NEBULA_WORLD_SIZE,
     sampleNebulaTransmission,
 } from './spaceNebulaModel';
@@ -655,8 +656,9 @@ const drawUfo = (
     projection: ProjectedTraveler,
     deltaX: number,
     deltaY: number,
+    simulationSeconds: number,
 ) => {
-    const appearance = getUfoAppearance(traveler, projection.progress);
+    const appearance = getUfoAppearance(traveler, projection.progress, projection.cycle, simulationSeconds);
     const distance = Math.hypot(deltaX, deltaY);
     const directionX = distance > 0 ? deltaX / distance : 1;
     const directionY = distance > 0 ? deltaY / distance : 0;
@@ -692,7 +694,15 @@ const drawUfo = (
     ctx.rotate(angle);
     ctx.fillStyle = `rgba(206, 230, 239, ${opacity})`;
     ctx.beginPath();
-    ctx.ellipse(0, 0, appearance.radius, appearance.radius * 0.38, 0, 0, TAU);
+    if (appearance.shape === 'triangle') {
+        appearance.triangle.forEach((point, index) => {
+            if (index === 0) ctx.moveTo(point.x, point.y);
+            else ctx.lineTo(point.x, point.y);
+        });
+        ctx.closePath();
+    } else {
+        ctx.ellipse(0, 0, appearance.radius, appearance.radius * 0.38, 0, 0, TAU);
+    }
     ctx.fill();
     ctx.fillStyle = `rgba(102, 205, 236, ${opacity * 0.95})`;
     ctx.beginPath();
@@ -712,6 +722,29 @@ const drawUfo = (
     ctx.moveTo(-appearance.radius * 0.72, appearance.radius * 0.08);
     ctx.lineTo(appearance.radius * 0.72, appearance.radius * 0.08);
     ctx.stroke();
+    if (appearance.hasAlien) {
+        const alien = appearance.alien;
+        ctx.strokeStyle = ctx.fillStyle = `rgba(132, 255, 117, ${opacity})`;
+        ctx.lineWidth = alien.lineWidth;
+        ctx.lineCap = 'round';
+        for (const points of [alien.body, alien.arm]) {
+            ctx.beginPath();
+            points.forEach((point, index) => {
+                if (index === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
+            });
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.ellipse(alien.head.x, alien.head.y, alien.headRadiusX, alien.headRadiusY, 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = `rgba(15, 48, 31, ${opacity})`;
+        for (const eye of alien.eyes) {
+            ctx.beginPath();
+            ctx.ellipse(eye.x, eye.y, alien.eyeRadius, alien.eyeRadius * 1.4, 0, 0, TAU);
+            ctx.fill();
+        }
+    }
     ctx.restore();
 };
 
@@ -737,22 +770,28 @@ const drawComet = (
     const { x, y, opacity } = projection;
 
     ctx.save();
-    const tail = ctx.createLinearGradient(
-        x - directionX * appearance.trailLength,
-        y - directionY * appearance.trailLength,
-        x,
-        y,
-    );
-    tail.addColorStop(0, 'rgba(105, 174, 205, 0)');
-    tail.addColorStop(0.5, `rgba(142, 211, 234, ${opacity * 0.16})`);
-    tail.addColorStop(1, `rgba(218, 244, 250, ${opacity * 0.68})`);
-    ctx.strokeStyle = tail;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = appearance.trailWidth;
-    ctx.beginPath();
-    ctx.moveTo(x - directionX * appearance.trailLength, y - directionY * appearance.trailLength);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(directionY, directionX));
+    for (const wisp of appearance.wisps) {
+        ctx.save();
+        ctx.translate(-wisp.distance, wisp.lateralOffset);
+        ctx.scale(wisp.lengthRadius, wisp.widthRadius);
+        // Define the fill in this wisp's coordinate frame, never a shared head-space frame.
+        // A fixed patch budget bounds gradient work without any canvas blur/filter pass.
+        const mist = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+        mist.addColorStop(0, 'rgba(198, 235, 246, 1)');
+        mist.addColorStop(0.35, 'rgba(156, 215, 236, 0.7)');
+        mist.addColorStop(0.7, 'rgba(105, 174, 205, 0.22)');
+        mist.addColorStop(1, 'rgba(105, 174, 205, 0)');
+        ctx.fillStyle = mist;
+        ctx.globalAlpha = opacity * wisp.opacity;
+        ctx.beginPath();
+        ctx.arc(0, 0, 1, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+    }
+    ctx.restore();
 
     appearance.particles.forEach((particle) => {
         const particleX = x - directionX * particle.distance
@@ -783,14 +822,24 @@ const drawComet = (
         }
     });
 
-    const glow = ctx.createRadialGradient(x, y, 0, x, y, appearance.glowRadius);
-    glow.addColorStop(0, `rgba(255, 251, 229, ${opacity})`);
-    glow.addColorStop(0.28, `rgba(177, 226, 242, ${opacity * 0.62})`);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(directionY, directionX));
+    ctx.translate(-appearance.glow.lag, 0);
+    ctx.scale(appearance.glow.lengthRadius, appearance.glow.widthRadius);
+    // The outer oval lags the nucleus; its warm inner focus stays closer to the head.
+    const glow = ctx.createRadialGradient(
+        appearance.glow.lag / appearance.glow.lengthRadius * 0.65, 0, 0,
+        0, 0, 1,
+    );
+    glow.addColorStop(0, `rgba(255, 251, 229, ${opacity * appearance.glow.opacity})`);
+    glow.addColorStop(0.28, `rgba(177, 226, 242, ${opacity * appearance.glow.opacity * 0.62})`);
     glow.addColorStop(1, 'rgba(91, 177, 215, 0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(x, y, appearance.glowRadius, 0, TAU);
+    ctx.arc(0, 0, 1, 0, TAU);
     ctx.fill();
+    ctx.restore();
 
     const head = ctx.createRadialGradient(
         x - appearance.headRadius * 0.24,
@@ -887,11 +936,8 @@ const SpaceNeuralBackground: React.FC = () => {
                         + (x - 1 + nebula.size) % nebula.size
                     ];
                     const index = (y * (nebula.size + 2) + x) * 4;
-                    // Black absorbing dust against barely luminous interstellar haze.
-                    image.data[index] = Math.round(11 * transmission);
-                    image.data[index + 1] = Math.round(14 * transmission);
-                    image.data[index + 2] = Math.round(20 * transmission);
-                    image.data[index + 3] = 255;
+                    // Exact opaque black except for sparse neutral charcoal traces.
+                    image.data.set(getNebulaTexelRgba(scene.seed, x - 1, y - 1, transmission), index);
                 }
             }
             nebulaCtx.putImageData(image, 0, 0);
@@ -950,7 +996,7 @@ const SpaceNeuralBackground: React.FC = () => {
         };
 
         const getScheduledStarFrame = (elapsed: number, densityWidth = viewportWidth) => {
-            const phase = getConstellationPhase(elapsed);
+            const phase = getConstellationPhase(elapsed, scene.seed);
             if (phase.name !== 'ambient'
                 && (!constellationGeometry || constellationEvent !== phase.event)) {
                 constellationGeometry = createConstellationGeometry(width, height, scene.seed, phase.event);
@@ -1040,7 +1086,7 @@ const SpaceNeuralBackground: React.FC = () => {
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, width, height);
 
-            const nebulaSeconds = getSimulationTime(elapsed);
+            const nebulaSeconds = getSimulationTime(elapsed, scene.seed);
             const nebulaAt = (x: number, y: number) => sampleNebulaTransmission(
                 nebula, x, y, nebulaSeconds, reducedMotion,
             );
@@ -1059,7 +1105,7 @@ const SpaceNeuralBackground: React.FC = () => {
             const frame = getRenderedStarFrame(elapsed);
             const { phase, styles, lineLayers } = frame;
             // Preserve responsive pools/clocks/variants; only unowned stars enter gravity.
-            const simulationSeconds = getSimulationTime(elapsed);
+            const simulationSeconds = getSimulationTime(elapsed, scene.seed);
             const travelerCount = travelerCountForWidth(viewportWidth);
             const travelers = scene.travelers.slice(0, travelerCount);
             const projections = travelers.map((traveler) =>
@@ -1124,7 +1170,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 const style = styles[index];
                 if (!style || !isStarRenderable(style) || blackHole?.stars.get(index)?.consumed) continue;
                 const position = positions[index];
-                const [red, green, blue] = getStarRgb(style.strength);
+                const [red, green, blue] = getStarRgb(style.strength, style.aura?.rgb);
                 ctx.globalAlpha = 1;
                 const transmission = getNebulaTextTransmission(
                     nebulaAt(position.x, position.y), style.strength,
@@ -1164,7 +1210,7 @@ const SpaceNeuralBackground: React.FC = () => {
             if (neuralSignals[0]) {
                 neuralContagion = updateNeuralContagionForSignal(
                     neuralContagion,
-                    getNeuralSignalSlot(elapsed),
+                    getNeuralSignalSlot(elapsed, scene.seed),
                     neuralSignals[0],
                     projections,
                     width,
@@ -1209,7 +1255,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     if (variant === 'galaxy') {
                         drawGalaxy(ctx, traveler, projection, simulationSeconds);
                     } else if (variant === 'ufo') {
-                        drawUfo(ctx, traveler, projection, deltaX, deltaY);
+                        drawUfo(ctx, traveler, projection, deltaX, deltaY, simulationSeconds);
                     } else if (variant === 'comet') {
                         drawComet(ctx, traveler, projection, deltaX, deltaY, {
                             x: projection.x - width * 0.5,
@@ -1301,7 +1347,7 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.height = Math.max(1, Math.round(height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             const elapsed = reducedMotion ? 0 : getElapsedSecondsSinceMount(mountedAt, performance.now());
-            const resizePhase = getConstellationPhase(elapsed);
+            const resizePhase = getConstellationPhase(elapsed, scene.seed);
             constellationEvent = resizePhase.event;
             constellationGeometry = resizePhase.name === 'ambient'
                 ? null
@@ -1378,7 +1424,7 @@ const SpaceNeuralBackground: React.FC = () => {
             const geometry = createConstellationGeometryForPhrase(
                 width, height, phrase, scene.seed, densityEvent,
             );
-            const endpointPhase = getConstellationPhase(elapsed + CONSTELLATION_WINDOW_SECONDS);
+            const endpointPhase = getConstellationPhase(elapsed + CONSTELLATION_WINDOW_SECONDS, scene.seed);
             const rawEndPositions = getStarFieldPositions(
                 scene.seed, elapsed + CONSTELLATION_WINDOW_SECONDS, width, height,
             );
