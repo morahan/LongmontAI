@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-09-30-agents-bots-dots",
   "publishAt": "2026-09-30T11:30:00-06:00",
   "publishAtMs": 1790789400000,
-  "releaseRevision": "b7a6b86f5fa45304e8d1a5d5",
+  "releaseRevision": "79983417e3f91599fc9547b2",
   "source": {
     "manifest": "src/articles/drafts/2026.09.30-agents-bots-dots.release.json",
     "article": "src/articles/drafts/2026.09.30-agents-bots-dots.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "268325f3df0bf6b75e5588ddbc9352364f64e75b6db574c76184d18c9f3f4870"
+    "sha256": "2f042711eea8f0fac5900329e252202df5e4fb1f27fa46f2c7c3ee2bc6e6b76c"
   },
   "slideshow": null,
   "media": {

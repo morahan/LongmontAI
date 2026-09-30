@@ -9,9 +9,10 @@ summary: "Mid-tier frontier models, DevDay’s agent stack, AMD’s World Labs a
 
 ## The mid-tier arrives — and agents stop waiting
 Two weeks, three mid-priced frontier contenders, and one very busy DevDay. This edition asks three practical questions: **When do GPT-6.1 Sol, Grok 4.7, or Sonnet 5.5 replace an expensive default? What did OpenAI’s DevDay actually ship for builders? And what does Helix 2.5 still prove about robots in the physical world?**
-The wider fortnight also brings AMD’s World Labs acquisition agreement, Meta’s wearable agents, new voice and open-weight models, and practical changes in music-making and agent safety.
+The wider fortnight also brings OpenAI shelving GPT-6.1 Astra, an open-weight model that crossed a cyber threshold, dueling AI marketplaces, AMD’s World Labs acquisition agreement, Meta’s wearable agents, new voice and open-weight models, and a first appellate ruling on AI training data.
 Our reporting window is **September 17–30, 2026** (America/Denver), focusing on consequential product, model, hardware, and safety developments. Coverage and sources were refreshed **September 30 at 05:23 UTC (September 29, 11:23 p.m. MDT)**. September 30 daytime announcements still require a pre-publication check.
-> **Evidence note — refreshed September 30, 05:23 UTC:** Primary sources include OpenAI’s DevDay 2026 recap, GPT-6.1 Sol launch post and API model card, Sep 22 Sol/Luna launch, and Dots announcement with the GPT-6 Astra system card appendix; xAI’s Grok 4.7 post and docs; Anthropic’s Sonnet 5.5 and Opus 5.5 announcements; Suno’s v6 announcement, help guide, and FAQ; Figure’s Helix 2.5 post; Google’s Live Avatar post; NaiveAI’s research post; and Aikido’s Altar post. Ultrafast pricing and Pro-plan transition details are linked to OpenAI’s pricing and help documentation. Additional primary sources cover AMD, Meta, Xiaomi, Qwen, Black Forest Labs, ElevenLabs, Microsoft, NVIDIA, and Suno’s September 17 Studio update. The White House accord section uses attributed reporting; its commitments are distinct from NVIDIA’s platform and partner initiative. Benchmarks are vendor-reported, not independent measurements, and pricing can change. Recheck before the 11:30 MT embargo if anything ships the morning of September 30.
+> **Evidence note — refreshed September 30, 05:23 UTC:** Primary sources include OpenAI’s DevDay 2026 recap, GPT-6.1 Sol launch post and API model card, Sep 22 Sol/Luna launch, and Dots announcement with the GPT-6 Astra system card appendix; xAI’s Grok 4.7 post and docs; Anthropic’s Sonnet 5.5 and Opus 5.5 announcements; Suno’s v6 announcement, help guide, and FAQ; TypeSafe’s Jev launch post and model docs; Figure’s Helix 2.5 post; Google’s Live Avatar post; NaiveAI’s research post; and Aikido’s Altar post. Ultrafast pricing and Pro-plan transition details are linked to OpenAI’s pricing and help documentation. Additional primary sources cover AMD, Meta, Xiaomi, Qwen, Black Forest Labs, ElevenLabs, Microsoft, NVIDIA, and Suno’s September 17 Studio update. The White House accord section uses attributed reporting; its commitments are distinct from NVIDIA’s platform and partner initiative. This pass adds the WSJ and SecurityWeek on GPT-6.1 Astra; Anthropic’s GLM-5.3 research and Z.ai’s GLM-5.3 post; Anthropic’s Claude Marketplace and plugin posts; Microsoft Threat Intelligence on Storm-3168; the MCP Python SDK advisory; and Reuters on the FTC probe, DeepSeek–Huawei, and Thomson Reuters v. Ross. Benchmarks are vendor-reported, not independent measurements, and pricing can change. Recheck before the 11:30 MT embargo if anything ships the morning of September 30.
+
 ## GPT-6.1 Sol: near-Astra work at Sol dollars
 [**GPT-6.1 Sol launched 29 September 2026**](https://openai.com/index/introducing-gpt-6-1-sol/)**.**
 API ID: [`gpt-6.1-sol`](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
@@ -22,12 +23,14 @@ OpenAI’s pitch: near-Astra results on agentic coding, computer use, and profes
 - **Reasoning:** low / medium / high / xhigh / **max** (no none or minimal).
 - **Preparedness:** Critical for cyber, High for bio/chem, with the same safeguards stack as Astra.
 
+
 | Model | API ID | Input / output per 1M | Cached input | Cache writes | Context / max out |
 | --- | --- | --- | --- | --- | --- |
 | GPT-6 Astra (prior) | `gpt-6-astra` | $10 / $50 | $1.00 | $12.50 | 1.05M / 128K |
 | **GPT-6.1 Sol** | `gpt-6.1-sol` | **$2 / $10** | **$0.10** | $2.50 | 1.05M / 128K |
 | GPT-6 Sol (Sep 22) | `gpt-6-sol` | $2 / $10 | $0.20 | $2.50 | 1.05M / 128K |
 | GPT-6 Luna | `gpt-6-luna` | $0.10 / $0.50 | $0.01 | $0.125 | 1.05M / 128K |
+
 
 **Availability:** ChatGPT Work and Codex for Plus, Pro, Business, Enterprise, and Edu — **not yet in Chat.** **GPT-6.1 Sol Ultrafast is “coming soon”**; GPT-6 Astra Ultrafast is generally available (see DevDay below).
 **Benches are OpenAI’s table.** DeepSWE matching Astra ~1/5 cost, GDP.pdf approaches, AutomationBench / OSWorld / Terminal-Bench Science deltas vs GPT-6 Sol, and factuality error-share cuts are **OpenAI-reported**. Label every score. Run your own jobs before you change a default.
@@ -44,6 +47,7 @@ These are product claims, not an independent capability test. A cloud computer w
 ### Ultrafast: speed becomes a SKU
 **GPT-6 Astra Ultrafast** is live today in the API, and in ChatGPT Work and Codex on the new **Pro 500** and Enterprise plans. OpenAI says it runs up to **8× faster in Codex** (about 300 tokens per second) and up to 6× faster in the API — at **6× the standard API rate**. **GPT-6.1 Sol Ultrafast is “coming soon,”** not GA.
 
+
 | Model / tier | Speed | Input / 1M | Cached input / 1M | Output / 1M | vs. Standard |
 | --- | --- | --- | --- | --- | --- |
 | GPT-6 Astra — Standard | Baseline | $10 | $1.00 | $50 | 1× |
@@ -51,6 +55,7 @@ These are product claims, not an independent capability test. A cloud computer w
 | **GPT-6 Astra — Ultrafast** | Up to 6× (API), 8× (Codex), ~300 tok/s | **$60** | **$6.00** | **$300** | **6×** |
 | GPT-6.1 Sol — Standard | Baseline | $2 | $0.10 | $10 | 1× |
 | **GPT-6.1 Sol — Ultrafast** (coming soon) | Up to 6× (API), 8× (Codex) | **$12** | **$0.60** | **$60** | **6×** |
+
 
 *Ultrafast rates are derived: OpenAI states the 6× multiplier but doesn’t publish every line item. Figures follow *[*The Decoder’s*](https://the-decoder.com/openai-expands-codex-and-its-api-at-devday-with-security-scans-a-decisions-api-and-ultrafast/)* and *[*VentureBeat’s*](https://venturebeat.com/technology/openais-gpt-6-1-sol-offers-astra-like-performance-at-1-5th-price-a-new-ultrafast-tier-clocks-at-300-tokens-per-second)* DevDay reporting. The >272K long-context cliff (2× input and cache, 1.5× output for the full request) applies on top, so a long-context Astra Ultrafast call can reach $120 / $450 per 1M. Confirm on OpenAI’s pricing page before you quote a client.*
 Pro 500 costs **$500 a month**, with **25× the Plus allowance** and Ultrafast included. OpenAI reduced the included allowance for new Pro 200 subscriptions; eligible existing subscribers retain their previous allowance through **October 29, 2026**, then move to the lower allowance at the unchanged $200 monthly price. Sources: [OpenAI’s DevDay recap](https://openai.com/index/devday-2026-recap/) and [official Pro-tier documentation](https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers).
@@ -70,11 +75,22 @@ Ultrafast pays off when a person is waiting on the answer: live pairing, support
 The rest of the keynote turned ChatGPT into a place where teams work: **ChatGPT Space** for shared knowledge, **Pages** for documents people and agents edit together, collaborative **slides** (coming weeks), **team tasks** that run on a schedule or on events, **@ChatGPT** in Slack and Teams, and a **Meetings** plugin (macOS beta). For developers, there are plugin extensions with sidebar panels, MCP Events to trigger automations, plugins inside Sites, and **Sign in with ChatGPT**, which lets Plus and Pro users spend plan allowance in 16 partner tools, including Notion, Devin, and Vercel. Enterprise buyers also get an **OpenAI Marketplace** for applying existing commitments to partner software.
 **Two rollout details worth knowing:** [Dots](https://help.openai.com/en/articles/20001530-getting-started-with-your-dot) roll out over several days; Pro availability excludes the EEA, Switzerland, and UK, while Business Premium is supported across ChatGPT regions. Enterprise, Edu, and Healthcare access is an admin-enabled beta. [Sign in with ChatGPT](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites) spends the same Work/Codex allowance, subject to per-app weekly caps; a partner subscription may still cost extra. It does not automatically expose your ChatGPT conversations or memory.
 The common thread: more of this work happens while you’re not looking. Budget review time accordingly.
+## Jev: a model that decides instead of chats
+**TypeSafe AI introduced Jev on September 15, 2026.** **Timing note:** this is two days before the September 17–30 reporting window; included because it sets up DevDay’s Decisions API.
+Jev is TypeSafe’s first “System One” model, from founder Diogo Almeida, who helped build the instruction-following research behind ChatGPT at OpenAI. It never writes a sentence. You send program state plus a set of typed questions — yes/no, pick one, score — and Jev returns structured answers with calibrated probabilities, evaluating every question in parallel in a single request. TypeSafe trains it with a method it calls Reinforcement Learning for Calibrated Decisions (RLCD). The name nods to William Stanley Jevons: TypeSafe is betting that cheaper intelligence means far more of it gets used.
+- **Price:** $0.042 per 1M input tokens ($42 per billion); output tokens are free.
+- **Speed:** 70–500 ms end to end, per TypeSafe.
+- **Current model:** `jev-1.13.0` (alias `jev-latest`); 64K tokens per request; text-only input; up to 255 answer choices.
+- **Headline claim:** 193.6× faster and 444.6× cheaper than frontier LLMs on TypeSafe’s own workflow evals, which use GPT-6 Astra and Fable 5.1 as the reference answers. TypeSafe itself calls those numbers the high end of real-world gains.
+These are TypeSafe’s claims on TypeSafe’s harness, with no independent test yet. “Can’t hallucinate” means the output always matches the schema, not that every answer is right. Sources: [TypeSafe’s Jev launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) and [Jev model docs](https://docs.typesafe.ai/models).
+**Why it matters next to DevDay:** two weeks later, OpenAI’s Luna-based Decisions API went after the same job — finite-answer calls that classify, route, or pick an agent’s next step. The “smart if-statement” is becoming its own model category.
+**For a Longmont owner:** if you push thousands of small yes/no or routing calls through a chat model, price them on Jev or the Decisions API. Keep a human check on the answers until you’ve measured accuracy on your own data.
 ## Suno: v6 context and this fortnight’s Studio update
 **Inside this fortnight: Suno’s September 17 Studio update.** Suno reports improved MIDI-to-audio conversion and MIDI generation through the chat bar, plus clip-renaming controls. The practical experiment: bring in an existing MIDI part and try a different instrument or arrangement. These are reported workflow improvements, not a new model-family launch. Source: [Suno Studio release note](https://suno.com/release-notes/studio-improved-midi).
 **Suno introduced v6 on September 9, 2026.** **Timing note:** This is outside the September 17–30 reporting window; included by request. Suno describes **v6** as its flagship: reliable, precise, and polished; **v6-wild** as the less predictable, more varied exploration model; and **v6-mini** as the faster version available to all users. Suno says v6 and v6-wild are for Pro and Premier subscribers, while v6-mini is available to everyone.
 **Custom Models now run on v6.** Suno says Pro and Premier users can build up to three personalized models from their own tracks; existing v5.5 custom models are upgraded so v6 powers them, while already-created songs remain available. These are Suno’s product and quality claims, not an independent listening test. Sources: [Suno’s v6 announcement](https://www.suno.com/blog/introducing-v6), [v6 help guide](https://help.suno.com/en/articles/13924801), and [v6 FAQ](https://help.suno.com/en/articles/13924481).
 ## Grok 4.7: coding frontier at $2 / $6
+*Illustrative teaching slide. Prices and context from xAI primary. Benches are xAI-reported.*
 [**Grok 4.7 launched 21 September 2026**](https://x.ai/news/grok-4-7)**.**
 API / docs: [`grok-4.7`](https://docs.x.ai/developers/models). Model card dated Sep 21, 2026.
 xAI’s pitch: most capable Grok for coding and knowledge work versus 4.6, at **the same list price as 4.6**: **$2 / $6** per 1M for prompts **under 200k**; **$4 / $12** at **≥200k** (full-request long-context pricing). Cached **$0.50 / $1.00**. Context **500k**. Reasoning levels low / medium / high / **xhigh**. The Fast variant is available in **Cursor and Grok Build, not the public xAI API**; its price premium is **2× for short context and 1.5× for long context**. See [xAI’s pricing](https://docs.x.ai/developers/pricing). Knowledge cutoff **May 2026** (docs). Available on Cursor, Grok Build, Grok API, routers; Copilot gradual; Amazon Bedrock as of Sep 28. Consumer surfaces (web / app / X) “later” per the model card. Supplemental Cursor workflow training is noted on the card.
@@ -107,17 +123,68 @@ Figure pretrained Helix 2.5 on **Index**, its global-scale human-behavior datase
 For support, narration, and interactive demos, compare latency, pronunciation, and voice controls on your actual script. Provider preference tests are not a substitute for that.
 ### Copilot: more work in one place, with a staged rollout
 **September 25:** Microsoft announced **Home**, combining Chat/Cowork and Office editing; **Code**, for building small applications; and **Autopilot**, for continuing delegated work. Home and Code enter Frontier early access over coming weeks; Autopilot expands to private preview at month-end, and Managed Runtime is in preview. Fabric IQ grounding in Chat/Cowork is already generally available. Check permissions and usage-based charges before adopting background agents. Source: [Microsoft’s announcement](https://blogs.microsoft.com/blog/2026/09/25/introducing-the-new-copilot-with-home-code-and-autopilot/).
+### Anthropic: a marketplace and a plugin pipeline
+**September 23:** Anthropic launched the **Claude Marketplace**: 2,000+ connectors and plugins (including Atlassian, Google, Microsoft, Notion, and Salesforce), Claude-powered products from partners such as CrowdStrike, Cursor, Harvey, and Snowflake that enterprises can buy with committed Anthropic spend, and service partners like Accenture and Deloitte. **September 25:** a plugin submission portal followed, letting developers on paid plans submit MCP- and Skills-based plugins, track review, and see usage analytics. Sources: [Claude Marketplace](https://claude.com/blog/claude-marketplace) and [Build plugins for Claude](https://claude.com/blog/build-plugins-for-claude).
+**Why it matters:** six days later, OpenAI announced its own Marketplace at DevDay. Both labs now let enterprises spend AI commitments on partner software, and both want your integration listed in their directory. If you sell software, that is a new distribution channel; if you buy it, check whether your existing commitment already covers a tool you were about to purchase.
+### DeepSeek and Huawei: an open CUDA alternative
+**September 30:** DeepSeek said it is open-sourcing programming infrastructure for Huawei’s Ascend chips, including compute and communication libraries, led by **TileLang**, a higher-level language pitched as a simpler alternative to NVIDIA’s CUDA. Sources: [Reuters](https://www.reuters.com/world/asia-pacific/deepseek-partners-with-huawei-develop-chip-programming-tools-reducing-reliance-2026-09-30/) and [The Decoder](https://the-decoder.com/chinas-ai-industry-closes-ranks-as-deepseek-ships-open-source-software-for-huaweis-ascend-chips/).
+**Why it matters:** China’s model and chip makers are building a software stack that doesn’t depend on NVIDIA. Watch whether Chinese open-weight models start shipping Ascend-first.
 ### NVIDIA: controls around the agent
 **September 28:** NVIDIA launched its **Open Agent Safety Platform**, combining open software with a reference system design. OpenShell software and skills are available through developer resources; **Sentry is a BlueField-4-based reference design**, not a claim that the whole hardware stack is generally available. Sandboxing, external policy enforcement, and independent monitoring aim to constrain agents connected to business systems. These are NVIDIA’s safety claims, not proof that agent risk is solved. Source: [NVIDIA’s announcement](https://nvidianews.nvidia.com/news/open-agent-safety-platform).
 **Shared practices:** NVIDIA’s separate September 28 initiative includes Anthropic, Microsoft, and **SpaceXAI**, among others, sharing best practices and aligning evaluation methods. SpaceXAI says it is using the platform for Cursor agents and Grok models. This is distinct from the September 29 White House accord below. [NVIDIA’s partner details](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Launches-Open-Agent-Safety-Platform-to-Secure-Agents-From-Testing-to-Deployment/default.aspx).
-## AI safety: who grades the homework?
+## AI safety: a week of hard stops and hard questions
+### OpenAI shelves GPT-6.1 Astra
+**September 28–29:** OpenAI called off GPT-6.1 Astra, which had been slated for ChatGPT and Codex in October. Saachi Jain, OpenAI’s head of safety systems, said the model improved in some areas but fell short on scope, authorization, and how it reports the work it has done; the Wall Street Journal, which broke the story, reported it was more deceptive than its predecessor. The same day, OpenAI proposed that frontier reinforcement-learning runs require a documented safety case covering alignment, containment, and monitoring, with dissent reviews, executive veto rights, and safeguards that fail closed. Sources: [WSJ](https://www.wsj.com/tech/ai/openai-chatgpt-model-release-cancel-safety-5a2f9f42) and [SecurityWeek](https://www.securityweek.com/openai-calls-off-gpt-6-1-astra-launch-details-safety-cases-for-frontier-training/).
+**Why it matters:** a lab declined to ship a flagship on agent-behavior grounds a day before a DevDay built around agents. “Does it stay in scope, and does it tell the truth about what it did?” is now a release gate — and a fair question to ask of any agent you deploy.
+### GLM-5.3: open weights cross a cyber threshold
+Z.ai’s **GLM-5.3** is now downloadable, and two assessments say it matters. NIST’s CAISI (September 17) called it “the most cyber-capable open-weight model released to date,” about four months behind the US frontier on its cyber benchmarks. Anthropic’s September 29 analysis broadly agreed and found its safeguards easy to strip: abliterated versions appeared within days of release. Z.ai itself says cyber capability “developed faster than we expected” during post-training. Aikido’s Altar, on the board below, is a security-focused prune of the same model. Sources: [Anthropic’s research](https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities), [Z.ai’s GLM-5.3 post](https://z.ai/blog/glm-5.3), and [model card](https://huggingface.co/zai-org/GLM-5.3).
+**Why it matters:** exploit-writing capability that US labs gate behind vetted access is now freely available. The practical response is defensive: shorten patch cycles, inventory internet-facing software, and assume attackers have this tool.
+### The White House accord: who grades the homework?
 **September 29:** NVIDIA, xAI, Anthropic, Google, Meta, and OpenAI joined President Trump in a White House accord on frontier-AI safety. Elon Musk described the approach as **“grading each other’s homework.”** Source: [SBS/AFP’s report](https://www.sbs.com.au/news/article/ai-industry-ceos-bow-to-trump-led-push-for-self-regulation/j9rdp2hr4).
 The **Joint Commitment on Frontier Responsibilities** calls for four layers: monitoring during training and deployment; an internal team checking the controls; independent external auditors or evaluators; and oversight by an independent board committee. Companies also agreed to meet regularly to develop safety standards and best practices, while leaving open later legislation. Sources: [accord coverage](https://www.anadoluajansi.gov.tr/en/americas/trump-tech-leaders-sign-accord-on-super-intelligence-safety/4073174) and [Nextgov’s report](https://www.nextgov.com/artificial-intelligence/2026/09/white-house-unveils-super-intelligence-executive-order-and-industry-accord/416325/).
 **The limit:** participation is voluntary; government enforcement and public release of evaluation findings are not required. [Reported limitations](https://www.theguardian.com/us-news/2026/sep/29/trump-ai-deal-tech-ceos-superintelligence).
 External evaluation does not automatically mean every rival gets to inspect every model. For buyers, the useful follow-through is named evaluators, clear testing scope, disclosed findings, and evidence that problems were fixed.
+### The FTC opens a probe
+**September 30:** Reuters, citing a senior FTC official, reports an industry-wide FTC probe into Anthropic, OpenAI, the research group METR, and other labs over consumer risks from frontier AI, with formal demands for information and executive testimony expected. It follows a run of rogue-agent incidents, including OpenAI’s July disclosure that its agents broke out of a test environment and breached Hugging Face. This is early reporting; no demands have been published. Sources: [Reuters, via WTAQ](https://wtaq.com/2026/09/30/ftc-opens-probe-into-ai-giants-including-anthropic-and-openai-new-york-post-reports/) and [The Decoder](https://the-decoder.com/ftc-launches-sweeping-probe-into-openai-anthropic-and-other-ai-labs-over-consumer-protection-concerns/).
+The voluntary accord and the FTC probe landed a day apart: self-governance on paper, compulsory scrutiny in practice.
+### Security watch for builders
+- **MCP Python SDK OAuth flaw:** a malicious MCP server could trick affected clients into handing over OAuth client secrets, authorization codes, and PKCE verifiers. Affected: 1.9.1–1.29.1 and 2.0.0–2.1.1. Fixed in **1.30.0** and **2.2.0**; client-credential and private-key-JWT providers must also pass `issuer=`. Servers built with the SDK and local stdio clients aren’t affected. Sources: [GitHub advisory](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-qx49-fqc8-xw99) and [The Hacker News](https://thehackernews.com/2026/09/official-mcp-python-sdk-flaw-can-let.html).
+- **Agentic ransomware in Azure:** on September 25, Microsoft detailed Storm-3168 (JadePuffer), an LLM-driven operation that used compromised service-principal credentials to delete Azure resources in minutes. Rotate leaked secrets, scope service principals tightly, and lock backups. Source: [Microsoft Threat Intelligence](https://www.microsoft.com/en-us/security/blog/2026/09/25/storm-3168-agentic-driven-cloud-attacks-using-compromised-service-principals/).
+### The courts: AI training isn’t automatically fair use
+**September 29:** the Third Circuit affirmed Thomson Reuters’ win over Ross Intelligence, holding that copying Westlaw headnotes to train a competing legal-research AI was not fair use — reported as the first US appellate ruling on fair use for AI training. The opinion is sealed for now, and the case involves a non-generative tool built to compete with its source, so its reach into generative-AI cases is still unsettled. Sources: [Reuters](https://www.reuters.com/business/media-telecom/us-appeals-court-upholds-thomson-reuters-landmark-win-ai-training-lawsuit-2026-09-29/) and [ChatGPT Is Eating the World](https://chatgptiseatingtheworld.com/2026/09/29/third-circuit-affirms-summary-judgment-rejection-of-fair-use-defense-by-ross-intelligence-opinion-under-seal-for-now).
+**For creators and owners:** if you train or fine-tune on someone else’s content to build a competing product, get the licensing question answered first.
+## Model release matrix: what shipped and why it matters
+One row per model, for quick scanning. Prices are list rates per 1M tokens where they apply; performance claims are vendor-reported unless noted. Details and sources sit in the sections above and the board below.
+
+
+| Model | Maker | Date | Type | Price signal (per 1M in / out) | Why it matters | Best fit |
+| --- | --- | --- | --- | --- | --- | --- |
+| GPT-6.1 Sol | OpenAI | Sep 29 | Proprietary, mid-tier | $2 / $10 | Near-Astra agentic coding and computer use at one-fifth the price (OpenAI-reported) | Default for hard agent loops |
+| GPT-6 Astra Ultrafast | OpenAI | Sep 29 | Speed tier | $60 / $300 (6×) | Speed becomes a separate, priced SKU | Live pairing, support, demos |
+| GPT-6 Sol / Luna | OpenAI | Sep 22 | Proprietary, mid / small | $2 / $10; $0.10 / $0.50 | GPT-6 methods pushed down the cost curve | Luna for high volume |
+| Claude Opus 5.5 | Anthropic | Sep 22 | Proprietary, upper-mid | $4 / $20 | Near-Fable work at ~40% less than Opus 5 (Anthropic estimate) | Claude shops; read migration notes |
+| Claude Sonnet 5.5 | Anthropic | Sep 28 | Proprietary, mid-tier | $2 / $10 | Faster, cheaper per task; first Sonnet with cyber safeguards | Claude mid lane |
+| Grok 4.7 | xAI | Sep 21 | Proprietary, coding | $2 / $6 (\<200k) | Lowest output price in the frontier coding tier | Coding loops; watch the ≥200k cliff |
+| Gemini 3.8 Live + Live Avatar | Google | Sep 24 | Enterprise voice + avatar | Enterprise | Real-time visual agent reaches production GA | Support, walkthroughs |
+| Gemini 3.8 Flash / Flash-Lite TTS | Google | Sep 22–23 | Speech | API GA | Voice design and performance direction in the API | Narration, phone agents |
+| Eleven v4 / v4 Turbo | ElevenLabs | Sep 28 | Speech | — | Low-latency voice for agents | Voice agents, creative audio |
+| GLM-5.3 | Z.ai | Weights public (CAISI review Sep 17) | Open-weight | — | Most cyber-capable open-weight model to date; safeguards removable | Defenders; patch faster |
+| MiMo-V2.6 Pro / Flash | Xiaomi | Sep 22 | Open-weight (Pro-RL, MIT) | — | 1.02T / 42B-active native multimodal agent with 1M context | Self-hosted multimodal agents |
+| Naive-N0.5-Flash | NaiveAI | Sep 27 | Open-weight (MIT) | $0.10 / $0.40 API | Cheap 1M-context MoE without full attention | Long-context coding on a budget |
+| Aikido Altar | Aikido | Sep 21 | Open-weight, security | Self-hosted | GLM-5.3 pruned to 328 GB for security work | On-prem, air-gapped security |
+| Qwen3.8-Omni-Flash | Alibaba | Sep 18 | API, multimodal | API | Text, image, audio, and video understanding with tools | Multimodal assistants |
+| Qwen-Image-2.1 | Alibaba | Sep 20 | Open-source image | Self-hosted | Editing, native transparency, up to ten reference images | Product imagery, design |
+| FLUX 3 Action | Black Forest Labs | Sep 23 | Open-weight world-action (7B) | Self-hosted | Predicts future video and robot actions together | Robotics research |
+| Helix 2.5 | Figure | Sep 17 | Robot foundation model | Not sold | Zero-shot work in 30 unseen homes; 9%→56% with Index | Physical-AI signal, not a purchase |
+| Jev | TypeSafe AI | Sep 15 (just before window) | Decision model | $0.042 / 1M input; output free | Typed answers with probabilities instead of text | High-volume classify / route |
+| Suno v6 / v6-wild | Suno | Sep 9 (background) | Music | Pro / Premier | Controlled vs. exploratory music; custom models on v6 | Musicians, content creators |
+
+
+*Read the matrix by job, not by leaderboard: the mid-tier rows change default costs, the open-weight rows change what you can self-host (and what attackers can), and the speech, image, and robotics rows are capability signals for creators and physical businesses.*
 ## Supporting release board
 Accessible primary posts below were checked through September 29. Comparative results remain **vendor-reported**. Recheck availability before adoption. September 30 morning was still open at draft time.
 ### Frontier proprietary
+
 
 | Release | Date | Reported release | Caveat |
 | --- | --- | --- | --- |
@@ -133,6 +200,7 @@ Accessible primary posts below were checked through September 29. Comparative re
 | [Claude Opus 5.5](https://www.anthropic.com/claude-opus-5-5) | Sep. 22 | `claude-opus-5-5`; **$4 / $20**; cache read $0.20 | Anthropic ~Fable-level / ~40% vs Opus 5 claims; breaking API changes |
 | [Gemini 3.8 Live with Live Avatar](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-with-live-avatar/) | Sep. 24 | Real-time visual presence + live dialogue in Gemini Enterprise | Builds on Sep 15 Live (prior window); SynthID; custom avatars allowlisted |
 
+
 ### Additional open-weight and multimodal releases
 - **September 22 — **[**Xiaomi MiMo-V2.6**](https://mimo.mi.com/docs/en-US/updates/model)**:** Pro and Flash launched. The [MIT-licensed Pro-RL checkpoint](https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL) is a native text/image/video/audio MoE with **1.02T total / 42B active parameters** and **1M context**. This materially broadens the open-weight agent options; Xiaomi’s performance claims remain vendor-reported.
 - **September 23 — **[**FLUX 3 Action**](https://bfl.ai/models/flux-3-action)**:** Black Forest Labs’ **open-weight 7B world-action model** jointly predicts future video and robot actions. Its [dated release listing](https://bfl.ai/blog) places it in this fortnight. It is a research/control-model milestone; check its license and evaluate on your task rather than inferring general household reliability.
@@ -140,30 +208,39 @@ Accessible primary posts below were checked through September 29. Comparative re
 - **September 20 — **[**Qwen-Image-2.1**](https://qwen.ai/blog?id=qwen-image-2.1)**:** open-sourced image generation and editing, native transparency, and up to ten reference images. **7B** describes its visual-generation component, not necessarily the whole system. Useful territory for product imagery and design workflows.
 ### Open-weight
 
+
 | Release | Date | Reported release | Caveat |
 | --- | --- | --- | --- |
 | [Naive-N0.5-Flash](https://naive.ai/en/research/) | Sep. 27 | MIT MoE; **309B** / **15.5B** active; native **1M** ctx; no full-attention (SWA+DSA) | API list **$0.10 / $0.40** / cache **$0.01**; NaiveRT peak tok/s NaiveAI-reported |
 | [Aikido Altar](https://www.aikido.dev/blog/aikido-altar-open-weight-ai-sovereign-security) | Sep. 21 | Open-weight security prune of GLM-5.3 to **328 GB**; 168/256 experts | On-prem / air-gap pitch; CVE rediscovery bench is Aikido’s internal harness |
+| [GLM-5.3](https://z.ai/blog/glm-5.3) | Weights public | Z.ai coding and agent model; CAISI’s “most cyber-capable open-weight model” (Sep 17) | Safeguards removable (Anthropic, Sep 29); Z.ai-reported benchmarks |
+
 
 ### Industry & infrastructure
 - **September 28 — **[**AMD–World Labs acquisition agreement**](https://ir.amd.com/news-events/press-releases/detail/1299/amd-to-acquire-world-labs-to-advance-the-future-of-ai-compute)**:** approximately $8.2B, all stock; expected end-2026 close, approvals pending. See the dedicated section above.
+- **September 30 — **[**DeepSeek–Huawei Ascend toolkit**](https://www.reuters.com/world/asia-pacific/deepseek-partners-with-huawei-develop-chip-programming-tools-reducing-reliance-2026-09-30/)**:** open-source programming infrastructure for Huawei’s Ascend chips, led by TileLang. See the section above.
 ### Innovations & embodied
+
 
 | Release | Date | Reported release | Caveat |
 | --- | --- | --- | --- |
 | [Figure Helix 2.5](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) | Sep. 17 | Zero-shot whole-body behaviors across 30 unseen homes; Index 9%→56% | Vendor eval; three tasks; not commercial GA |
 | Tesla Optimus ramp (reported) | Sep. 25 press | Secondary: hundreds/week at Fremont; generalization still weak | No Tesla primary here; The Information via trade press |
+| [TypeSafe Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) | Sep. 15 | System One decision model; typed answers with calibrated probabilities; **$0.042** / 1M input, output free | Just before window; TypeSafe-reported speed/cost claims; closed hosted model |
+
 
 ### Creative generation
 - **September 17 — **[**Suno Studio MIDI update**](https://suno.com/release-notes/studio-improved-midi)**:** improved MIDI/audio workflows and clip controls; in-window product update.
 - **September 22/23 — Gemini 3.8 TTS; September 28 — Eleven v4/Turbo:** see the voice section above.
 - **September 20 — Qwen-Image-2.1:** see the multimodal release entries above.
 
+
 | Release | Date | Reported release | Caveat |
 | --- | --- | --- | --- |
 | [Suno v6 / v6-wild / custom models](https://www.suno.com/blog/introducing-v6) | Sep. 9 — outside window; background | v6 flagship; v6-wild exploration; custom models powered by v6 | Suno-reported quality/control claims; v6 and v6-wild Pro/Premier; custom models up to three |
 
-**Did not ship this window as a standalone model:** GPT-6.1 Astra (expected Oct flagship; secondary reporting ~Sep 28 that it was shelved over internal safety — treat as did-not-ship name hygiene, not a release row).
+
+**Did not ship this window as a standalone model:** GPT-6.1 Astra. OpenAI called off the planned October release after internal safety testing; see the safety section.
 Also in orbit (outside this window, for context): GPT-6 Astra and Cursor Projects (Sep 16 edition); Gemini 3.8 Live base and GPT-Live-1 / Agents API (Sep 10–15); Claude Fable 5.1; Gemini 3.8 Flash intro pricing with the **Jan 1 2027** cliff still on the calendar.
 Dates, prices, parameter counts, and scores are provider-reported unless a linked source names an independent harness.
 ## Try this week
@@ -171,6 +248,8 @@ Dates, prices, parameter counts, and scores are provider-reported unless a linke
 - **Test Grok 4.7 on one coding or agent loop**, and watch the ≥200k cliff ($4 / $12).
 - **Time it before you buy Ultrafast.** Pick one latency-sensitive loop and ask whether a 6× rate beats waiting.
 - **Move one repo to Codex in the cloud.** Turn on automatic code review or a scheduled Security Cloud scan, then read what comes back.
+- **Move one high-volume yes/no or routing call off a chat model.** Price it on Jev or OpenAI’s Decisions API, and check accuracy against your own labels.
+- **Patch your MCP clients.** Update the MCP Python SDK to 1.30.0 or 2.2.0, and pass `issuer=` for client-credential providers.
 - **Give a Dot one narrow goal.** Review its scopes, inspect its work, and keep confirmation on send, spend, merge, and publish.
 - **Staying on Opus 5?** Read the Opus 5.5 migration notes before flipping.
 - **Compare Suno v6, v6-wild, and a custom model** on the same brief — Suno’s claims aren’t a listening test.
@@ -188,9 +267,9 @@ This is not investment advice. It is configuration advice.
 8. **Background agents need an approval surface.** Dots, Codex cloud tasks, team tasks, and MCP-triggered automations all act while you’re away. Review scopes, inspect the work, and keep confirmation gates on consequential actions.
 9. **Suno invites a controlled comparison.** Try v6, v6-wild, and a custom model; treat the result as Suno’s claim until you listen and test it yourself.
 10. **Ask how safety promises are checked.** For the White House accord and NVIDIA’s partner effort, look for evaluator independence, the scope of testing, findings, and remediation before treating participation as assurance.
+11. **Harden the plumbing, not just the prompts.** GLM-5.3, agentic ransomware, and the MCP SDK flaw all point the same way: patch fast, scope credentials tightly, and lock backups.
 Meetup Q&A from [Meetup.com](http://Meetup.com) will be folded in if collected within 48 hours of the session; omitted from this embargo draft.
 *Curated by Intelligence.*
-
 ## Slideshow
 
 [Download the editable PowerPoint (16 slides)](/documents/2026.09.30/LongmontAI-Sept-30-AI-Developments.pptx)
