@@ -140,6 +140,7 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     let manifest;
     try { manifest = JSON.parse(await readFile(manifestFile, 'utf8')); } catch { fail('manifest is not valid JSON'); }
     if (manifest?.status !== 'scheduled') fail('manifest status must be scheduled');
+    if (manifest.textOnly !== undefined && typeof manifest.textOnly !== 'boolean') fail('textOnly must be a boolean');
     if (!/^edition-\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(manifest.editionId ?? '')) fail('editionId is invalid');
     const publishAtMs = publication(manifest.publishAt, requireFuture);
     const manifestRelative = rootRelative(manifestFile);
@@ -166,7 +167,8 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
       selected.set(mediaPath, { path: mediaPath, sourceUrl: match[0] });
     }
     for (const slide of slideshow?.slides ?? []) if (!selected.has(slide.path)) selected.set(slide.path, { path: slide.path, sourceUrl: null });
-    if (!selected.size) fail('release does not reference any media');
+    if (!selected.size && manifest.textOnly !== true) fail('release does not reference any media; text-only editions must explicitly declare textOnly');
+    if (manifest.textOnly === true && (selected.size || slideshow)) fail('text-only editions cannot declare private media or a slideshow');
     const media = [];
     for (const item of [...selected.values()].sort((a, b) => a.path.localeCompare(b.path))) {
       const sourceFile = path.resolve(assetRoot, ...item.path.split('/'));
