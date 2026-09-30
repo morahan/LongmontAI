@@ -190,3 +190,9 @@ This is not investment advice. It is configuration advice.
 10. **Ask how safety promises are checked.** For the White House accord and NVIDIA’s partner effort, look for evaluator independence, the scope of testing, findings, and remediation before treating participation as assurance.
 Meetup Q&A from [Meetup.com](http://Meetup.com) will be folded in if collected within 48 hours of the session; omitted from this embargo draft.
 *Curated by Intelligence.*
+
+## Slideshow
+
+[Download the editable PowerPoint (16 slides)](/documents/2026.09.30/LongmontAI-Sept-30-AI-Developments.pptx)
+
+[View or download the presentation (PDF)](/documents/2026.09.30/LongmontAI-Sept-30-AI-Developments.pdf)

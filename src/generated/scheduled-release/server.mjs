@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-09-30-agents-bots-dots",
   "publishAt": "2026-09-30T11:30:00-06:00",
   "publishAtMs": 1790789400000,
-  "releaseRevision": "622d3fa37e465b4a57fc01c7",
+  "releaseRevision": "b7a6b86f5fa45304e8d1a5d5",
   "source": {
     "manifest": "src/articles/drafts/2026.09.30-agents-bots-dots.release.json",
     "article": "src/articles/drafts/2026.09.30-agents-bots-dots.md",
@@ -12,10 +12,23 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "ab195b4db1ac26a1536d936a9b9f8679c291a896f6b21d59e3ab32b29c400315"
+    "sha256": "268325f3df0bf6b75e5588ddbc9352364f64e75b6db574c76184d18c9f3f4870"
   },
   "slideshow": null,
-  "media": {}
+  "media": {
+    "LongmontAI-Sept-30-AI-Developments.pdf": {
+      "file": "media/LongmontAI-Sept-30-AI-Developments.pdf",
+      "sourceUrl": "/documents/2026.09.30/LongmontAI-Sept-30-AI-Developments.pdf",
+      "contentType": "application/pdf",
+      "sha256": "6785c8bd73b37666371b0373d2c1f3ffe5cd2cf9744d2bfc690f3f3f08f7deb6"
+    },
+    "LongmontAI-Sept-30-AI-Developments.pptx": {
+      "file": "media/LongmontAI-Sept-30-AI-Developments.pptx",
+      "sourceUrl": "/documents/2026.09.30/LongmontAI-Sept-30-AI-Developments.pptx",
+      "contentType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "sha256": "7c752109ae6a22e925fdd5c9f9b7c6c62e1c62d2bf287cbc8cd71c872e7a50dc"
+    }
+  }
 });
 
 export default release;

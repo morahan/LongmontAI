@@ -49,14 +49,14 @@ test('PDF is allowlisted, revision-scoped, embargoed and served with exact appli
   assert.ok(global.headers.some(({ key, value }) => key.toLowerCase() === 'x-content-type-options' && value === 'nosniff'));
 });
 
-for (const scenario of ['missing', 'symlink', 'pptx', 'image-bucket', 'slideshow']) {
+for (const scenario of ['missing', 'symlink', 'docx', 'image-bucket', 'slideshow']) {
   test(`PDF support does not admit ${scenario} media`, async (t) => {
     const { root, article, asset, stage } = await fixture(t);
     if (scenario === 'missing') await rm(asset);
     if (scenario === 'symlink') { await rm(asset); await symlink(article, asset); }
-    if (scenario === 'pptx') {
-      await writeFile(`${asset}.pptx`, 'not a supported deck');
-      await writeFile(article, (await readFile(article, 'utf8')).replace('briefing.pdf', 'briefing.pdf.pptx'));
+    if (scenario === 'docx') {
+      await writeFile(`${asset}.docx`, 'not a supported deck');
+      await writeFile(article, (await readFile(article, 'utf8')).replace('briefing.pdf', 'briefing.pdf.docx'));
     }
     if (scenario === 'image-bucket') await writeFile(article, (await readFile(article, 'utf8')).replace('/documents/', '/weekly-screenshots/'));
     if (scenario === 'slideshow') {
