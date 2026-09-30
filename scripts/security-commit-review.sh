@@ -32,7 +32,7 @@ if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
     echo "security-commit-review: SECURITY_COMMIT_BREAK_GLASS_TICKET must contain a ticket or incident reference." >&2
     exit 1
   fi
-  break_glass_log="$ROOT/.git/security-review/break-glass.log"
+  break_glass_log="$git_metadata_dir/security-review/break-glass.log"
   mkdir -p "$(dirname "$break_glass_log")"
   chmod 700 "$(dirname "$break_glass_log")" 2>/dev/null || true
   printf '%s mode=%s commit=%s ticket=%s\n' \
@@ -168,9 +168,61 @@ try {
 NODE
 }
 
+prepare_staged_snapshot() {
+  local index_path entries entry metadata file mode oid stage
+  if ! git rev-parse --verify 'HEAD^{commit}' >/dev/null 2>&1; then
+    echo "security-commit-review: unborn staged review is unsupported; exact scope cannot be proven." >&2
+    return 1
+  fi
+  index_path="$(git rev-parse --path-format=absolute --git-path index)" || return 1
+  [[ -f "$index_path" && ! -L "$index_path" ]] || {
+    echo "security-commit-review: staged index is unavailable or unsupported." >&2
+    return 1
+  }
+  # All staged readers share one frozen selection. Never write-tree, checkout,
+  # or refresh the caller's index/object database to materialize it.
+  cp "$index_path" "$gate_temp_dir/index" || return 1
+  chmod 600 "$gate_temp_dir/index" || return 1
+  export GIT_INDEX_FILE="$gate_temp_dir/index"
+  # ls-files --stage cannot distinguish intent-only placeholders from genuinely
+  # staged empty blobs. Ask Git for both cached-tree interpretations instead;
+  # reject unsupported intent entries before any scanner or materialization.
+  git diff --cached --raw -z --no-abbrev --no-renames --no-ext-diff --no-textconv \
+    --ita-visible-in-index >"$gate_temp_dir/intent-visible" || return 1
+  git diff --cached --raw -z --no-abbrev --no-renames --no-ext-diff --no-textconv \
+    --ita-invisible-in-index >"$gate_temp_dir/intent-invisible" || return 1
+  if ! cmp -s "$gate_temp_dir/intent-visible" "$gate_temp_dir/intent-invisible"; then
+    echo "security-commit-review: intent-to-add index entries are unsupported; stage actual content before review." >&2
+    return 1
+  fi
+  staged_snapshot="$gate_temp_dir/staged-snapshot"
+  mkdir -m 700 "$staged_snapshot" || return 1
+  entries="$gate_temp_dir/index-entries"
+  git ls-files --stage -z >"$entries" || return 1
+  while IFS= read -r -d '' entry; do
+    metadata="${entry%%$'\t'*}"
+    file="${entry#*$'\t'}"
+    read -r mode oid stage <<<"$metadata"
+    if [[ "$stage" != 0 || ( "$mode" != 100644 && "$mode" != 100755 ) ]] \
+      || ! valid_oid "$oid" || [[ -z "$file" || "$file" == /* ]] \
+      || [[ "/$file/" == *'/../'* || "/$file/" == *'/./'* || "/$file/" == *'//'* ]] \
+      || [[ "/$file/" == */.[gG][iI][tT]/* ]]; then
+      echo "security-commit-review: unresolved or unsupported staged entry; refusing snapshot." >&2
+      return 1
+    fi
+    # Symlinks/submodules are rejected above, so no staged path can redirect
+    # writes or scanner reads outside this private regular-file tree.
+    mkdir -p "$(dirname "$staged_snapshot/$file")" || return 1
+    [[ ! -e "$staged_snapshot/$file" ]] || return 1
+    git cat-file blob "$oid" >"$staged_snapshot/$file" || return 1
+    chmod "${mode#100}" "$staged_snapshot/$file" || return 1
+  done <"$entries"
+}
+
 prepare_scan_scope() {
   if [[ "$MODE" == "staged" ]]; then
-    return 0
+    prepare_staged_snapshot
+    return
   fi
 
   if [[ "$MODE" == "all" ]]; then
@@ -495,7 +547,7 @@ dependency_audit() {
   echo "  Scanner: osv-scanner"
   echo "  Database: local offline cache"
   if [[ "$MODE" == "staged" ]]; then
-    osv-scanner scan source --offline-vulnerabilities --recursive --verbosity error .
+    (cd "$staged_snapshot" && osv-scanner scan source --offline-vulnerabilities --recursive --verbosity error .)
     return
   fi
   local entry tip snapshot
@@ -528,9 +580,9 @@ write_scope_targets() {
     git diff --cached --name-only --diff-filter=ACMR -z >"$source_file" || return 1
     while IFS= read -r -d '' file; do
       if [[ "$kind" == "review" ]] && path_matches_review_scope "$file"; then
-        printf '%s\0%s\0' "$ROOT" "$file" >>"$output"
+        printf '%s\0%s\0' "$staged_snapshot" "$file" >>"$output"
       elif [[ "$kind" == "control" ]] && path_matches_control_scope "$file"; then
-        printf '%s\0%s\0' "$ROOT" "$file" >>"$output"
+        printf '%s\0%s\0' "$staged_snapshot" "$file" >>"$output"
       fi
     done <"$source_file"
     return
@@ -640,8 +692,8 @@ security_policy_contract() {
   fi
 
   if [[ "$MODE" == "staged" ]]; then
-    node scripts/tests/security-review-chain.test.mjs || return
-    node scripts/tests/runtime-security-headers.mjs || return
+    (cd "$staged_snapshot" && node scripts/tests/security-review-chain.test.mjs) || return
+    (cd "$staged_snapshot" && node scripts/tests/runtime-security-headers.mjs) || return
     return
   fi
   local entry tip snapshot

@@ -3,7 +3,10 @@ async (page) => {
   const baseUrl = currentUrl && currentUrl !== 'about:blank'
     ? await page.evaluate(() => window.location.origin)
     : 'http://localhost:5173';
-  const outputDir = 'output/playwright/mobile-audit';
+  const runTransport = currentUrl?.match(/[?&]__longmont_mobile_audit_run=([^&#]*)(?:[&#]|$)/);
+  const runId = runTransport ? runTransport[1] : 'manual';
+  if (!/^[A-Za-z0-9_-]{1,80}$/.test(runId)) throw new Error('Invalid mobile audit run id.');
+  const outputDir = `output/playwright/mobile-audit/${runId}`;
   const viewports = [
     { name: 'narrow-phone', width: 360, height: 740 },
     { name: 'iphone-12', width: 390, height: 844 },

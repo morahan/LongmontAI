@@ -1,10 +1,11 @@
 # One-shot local required gate
 
-This is **local evidence, not a GitHub required check**. The GitHub App reporter
-is uninstalled. Nothing here posts checks, statuses, SARIF, or artifacts remotely,
-changes protection, installs hooks/services, or stores credentials. Until a trusted
-reporter is installed and separately authorized, this cannot satisfy remote branch
-protection. Existing CI and hook requirements remain in force.
+The base gate produces **local evidence, not a GitHub required check**. The optional
+GitHub App reporter below can post `LongmontAI Local Required Gate` only when
+explicitly invoked. Neither command changes protection/settings, installs hooks or
+services, or uploads SARIF/artifacts. Existing CI and hook requirements remain in
+force. Implementation and mocked tests do not prove a real check was posted or
+that branch protection requires this check.
 
 ## Run
 
@@ -85,8 +86,93 @@ claim. This unsigned JSON is not an authenticated attestation.
 
 For diagnosis, rerun the named existing check locally in a private terminal;
 do not attach raw scanner output to public issues. No break-glass is supported.
-Use `npm run test:local-required-gate` for offline adversarial mocked contracts.
-Mocked success proves orchestration behavior, not a real Docker/CodeQL pass.
+Use `npm run test:local-required-gate` for offline adversarial mocked contracts,
+including the reporter. Mocked success proves orchestration behavior, not a real
+Docker/CodeQL pass or authenticated GitHub installation scope.
+
+## Optional exact-SHA GitHub App reporter
+
+Run only from the root of a trusted, exclusively held, clean attached checkout.
+The explicit SHA must be the full lowercase 40-character GitHub commit ID and
+match HEAD throughout. Origin must be exactly `git@github.com:morahan/LongmontAI.git`
+or `https://github.com/morahan/LongmontAI.git`. The commit must exist on GitHub.
+The reporter never fetches, rebases, commits, pushes, or changes remote settings.
+
+Provision credentials separately; never put them in this repository or command
+arguments. The only supported files are:
+
+- `~/.config/longmontai-gate/metadata.json`: exactly the fields `app_id` (positive
+  integer), `installation_id` (positive integer), and `slug` (App slug string).
+- `~/.config/longmontai-gate/reporter.pem`: RSA private key, at least 2048 bits.
+
+Both files must be regular, non-symlink, single-link files owned by the current
+UID with exactly `0600` permissions. The reporter checks ownership/mode before
+and after opening with no-follow semantics. Keep the parent directory private
+and trusted. No CLI credential overrides, environment tokens, debug logging,
+credential printing, or automatic permission repair are supported.
+
+The App installation must belong to `morahan`, select **only**
+`morahan/LongmontAI`, and have exactly `checks: write`, `contents: read`, and
+`metadata: read`, matching the installed App manifest. Both the installation and
+the full-scope token response must contain all three permissions at these exact
+levels and no others. Missing permissions, Contents write, or any additional
+permission (even read-only) are rejected.
+All-repository installations, extra repositories/permissions, suspended
+installations, mismatched identities, malformed API responses, expired tokens,
+and redirects fail closed. A short-lived RS256 JWT (`iat = now - 60s`,
+`exp = now + 300s`) is signed using Node crypto. Its installation token stays in
+memory. The token exchange deliberately requests the installation's full scope:
+a narrowed token must not conceal access to other repositories. The repository
+inventory must contain exactly one repository. Scope is rechecked after the gate.
+
+### Separate read-only scope verification plan (operator authorization required)
+
+From the clean committed checkout, in a private terminal without shell tracing:
+
+```sh
+sha="$(git rev-parse --verify HEAD)"
+npm run --silent gate:local-required:verify-installation -- --sha "$sha"
+```
+
+This authenticates the installation and enumerates its scope; it does **not**
+create/update checks, run scanners, mutate settings, or change repository content.
+Authentication requires a POST to mint an ephemeral installation token, so this
+is read-only with respect to repository/App configuration, not an HTTP-GET-only
+operation. Its only success output is
+`{"status":"scope-verified","remoteReported":false}`. It never emits identities,
+tokens, keys, headers, or raw responses. Do not run it as part of offline tests.
+
+### Posting (separate explicit operator action; not a dry run)
+
+```sh
+npm run --silent gate:local-required:report -- --sha "$(git rev-parse --verify HEAD)"
+```
+
+The reporter checks every page of existing check runs (including older runs),
+refusing a same-name success from another App. It creates an App-authored
+`in_progress` check on that SHA, invokes `scripts/local-required-gate.sh --sha`
+with an allowlisted child environment and discarded stderr, and only completes
+`success` when the child exits zero and its bounded JSON evidence matches the
+exact schema/SHA, `status: pass`, `remoteReported: false`, and every required gate
+exactly once in the expected order. It also rechecks the checkout before posting.
+
+Inherited bypass/skip/security override variables and Git/Node/shell/loader
+configuration overrides are rejected by presence (even `0`), not silently
+honored. The reporter sends only fixed summaries; scanner stdout, stderr,
+credentials, exception details and raw API responses never become public output.
+It attempts `completed/failure` for any failure after obtaining a verified check
+ID. An unavailable API, expired token, ambiguous creation response, termination,
+or lost network can prevent that update; the run can remain pending. An ambiguous
+success-update response triggers a best-effort failure update, but network loss
+cannot provide transactional rollback guarantees. Nonzero exit always means
+unproven, never success; `remoteReported: true` on failure only confirms a
+validated failure update. No automatic retry/reuse of an existing check occurs.
+
+Credentialed execution trusts the reviewed checkout, host tools, filesystem and
+current user. Clean-tree checks are not a sandbox against a malicious same-user
+process or concurrent changes between checks. Do not execute unreviewed branches
+with these credentials. No real authenticated verification or check posting is
+performed by the mocked contract suite.
 
 ## Public CodeQL bundle and checksum workflow
 

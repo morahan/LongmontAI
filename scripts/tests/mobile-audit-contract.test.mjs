@@ -11,6 +11,10 @@ import { FULL_ROUTES, selectMobileAudit } from '../mobile-audit-selector.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const runnerPath = path.join(root, 'scripts/run-targeted-mobile-audit.mjs');
 
+function isolatedMobileAuditEnvironment() {
+  return Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('MOBILE_AUDIT_')));
+}
+
 function git(cwd, args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 }
@@ -28,7 +32,7 @@ function runSelection(cwd, mode, input = '') {
     cwd,
     input,
     encoding: 'utf8',
-    env: { ...process.env, MOBILE_AUDIT_DRY_RUN: '1' },
+    env: { ...isolatedMobileAuditEnvironment(), MOBILE_AUDIT_DRY_RUN: '1' },
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   return JSON.parse(result.stdout.trim().split('\n').at(-1));
@@ -112,7 +116,7 @@ esac
   await chmod(cliPath, 0o755);
 
   const baseEnv = {
-    ...process.env,
+    ...isolatedMobileAuditEnvironment(),
     CODEX_HOME: codexHome,
     MOBILE_AUDIT_BASE_URL: 'http://audit.test',
     MOBILE_AUDIT_TEST_LOG: logPath,
@@ -124,14 +128,16 @@ esac
   });
   const commands = async () => (await readFile(logPath, 'utf8')).trim().split('\n');
 
-  const headless = run({ MOBILE_AUDIT_ROUTES: JSON.stringify(['/', '/edition/test']) });
+  const headless = run({ CODEX_HOME: path.join(directory, 'unused'), MOBILE_AUDIT_PLAYWRIGHT_CLI: cliPath,
+    MOBILE_AUDIT_RUN_ID: 'contract-headless', MOBILE_AUDIT_ROUTES: JSON.stringify(['/', '/edition/test']) });
   assert.equal(headless.status, 0, headless.stderr);
   const headlessCommands = await commands();
   assert.equal(headlessCommands.length, 3);
   const session = headlessCommands[0].match(/^--session (\S+) /)?.[1];
   assert.match(session, /^longmont-mobile-audit-/);
   assert.ok(headlessCommands.every((command) => command.startsWith(`--session ${session} `)));
-  assert.match(headlessCommands[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_routes=/);
+  assert.match(headlessCommands[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_run=contract-headless&__longmont_mobile_audit_routes=/);
+  await access(path.join(directory, 'output/playwright/mobile-audit/contract-headless'));
   assert.match(headlessCommands[0], / --config \/.*longmont-mobile-audit-playwright\./);
   assert.doesNotMatch(headlessCommands[0], /(?:^|\s)(?:--headed|--browser(?:=|\s+)chrome)(?:\s|$)/);
   assert.match(headlessCommands[1], / run-code --filename scripts\/mobile-playwright-audit\.js$/);
@@ -140,7 +146,7 @@ esac
   await writeFile(logPath, '');
   const headed = run({ MOBILE_AUDIT_HEADED: '1' });
   assert.equal(headed.status, 0, headed.stderr);
-  assert.match((await commands())[0], / open http:\/\/audit\.test --browser chrome --headed$/);
+  assert.match((await commands())[0], / open http:\/\/audit\.test\/\?__longmont_mobile_audit_run=longmont-mobile-audit-[\d-]+ --browser chrome --headed$/);
 
   await writeFile(logPath, '');
   const failedAudit = run({ MOBILE_AUDIT_TEST_FAIL: '1' });
@@ -179,6 +185,17 @@ esac
   const invalidMode = run({ MOBILE_AUDIT_HEADED: 'sometimes' });
   assert.equal(invalidMode.status, 2);
   assert.match(invalidMode.stderr, /must be 0 or 1/);
+
+  await writeFile(logPath, '');
+  for (const runId of ['', '../escape', 'spaces disallowed', 'a'.repeat(81)]) {
+    const invalidRun = run({ MOBILE_AUDIT_RUN_ID: runId });
+    assert.equal(invalidRun.status, 2);
+    assert.match(invalidRun.stderr, /MOBILE_AUDIT_RUN_ID/);
+  }
+  const invalidCli = run({ MOBILE_AUDIT_PLAYWRIGHT_CLI: path.join(directory, 'missing') });
+  assert.equal(invalidCli.status, 1);
+  assert.match(invalidCli.stderr, /existing executable/);
+  assert.equal(await readFile(logPath, 'utf8'), '', 'invalid controls must not launch a browser');
 });
 
 test('mobile server owns an ephemeral listener, preserves audit environment and cleans up failures', async (t) => {
@@ -231,7 +248,7 @@ setTimeout(() => process.exit(Number(process.env.TEST_AUDIT_STATUS || 0)), 300);
     const log = path.join(directory, `run-${sequence++}.log`);
     const child = spawn('bash', [path.join(root, 'scripts/run-mobile-audit.sh')], {
       cwd: directory,
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, TEST_LOG: log,
+      env: { ...isolatedMobileAuditEnvironment(), PATH: `${bin}:${process.env.PATH}`, TEST_LOG: log,
         MOBILE_AUDIT_ROUTES: '["/","/tools"]', MOBILE_AUDIT_HEADED: '0', ...extra },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -300,7 +317,8 @@ fs.appendFileSync(path.join(directory, id + '.events'), command + '\\n');
 if (command === 'open') {
   const config = args[args.indexOf('--config') + 1];
   fs.writeFileSync(path.join(directory, id + '.json'), JSON.stringify({
-    config, session: args[1], contents: JSON.parse(fs.readFileSync(config, 'utf8')),
+    config, session: args[1], runId: new URL(args[3]).searchParams.get('__longmont_mobile_audit_run'),
+    contents: JSON.parse(fs.readFileSync(config, 'utf8')),
   }));
   const started = Date.now();
   const timer = setInterval(() => {
@@ -344,6 +362,11 @@ if (command === 'open') {
   }
   assert.notEqual(opened[0].config, opened[1].config);
   assert.notEqual(opened[0].session, opened[1].session);
+  assert.notEqual(opened[0].runId, opened[1].runId);
+  for (const { session, runId } of opened) {
+    assert.equal(runId, session);
+    await access(path.join(directory, 'output/playwright/mobile-audit', runId));
+  }
   for (const { config, contents } of opened) {
     assert.equal(path.dirname(path.dirname(config)), temporary);
     assert.equal(path.basename(config), 'config.json');
@@ -369,7 +392,7 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   let evaluateCount = 0;
   let unreadableMarkdownTables = [];
   const page = {
-    url: () => `http://audit.test/?__longmont_mobile_audit_routes=${encoded}`,
+    url: () => `http://audit.test/?__longmont_mobile_audit_run=contract-evidence&__longmont_mobile_audit_routes=${encoded}`,
     evaluate: async (_callback, argument) => {
       evaluateCount += 1;
       if (evaluateCount === 1) return 'http://audit.test';
@@ -396,6 +419,8 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
   };
 
   const result = await audit(page);
+  assert.equal(result.screenshots.length, routes.length);
+  assert.ok(result.screenshots.every((file) => file.startsWith('output/playwright/mobile-audit/contract-evidence/')));
   assert.deepEqual([...result.routes], routes);
   assert.deepEqual([...new Set(navigations)], ['http://audit.test/', ...routes.slice(1).map((route) => `http://audit.test${route}`)]);
   assert.ok(!navigations.some((url) => url.includes('/tools')));
@@ -407,6 +432,11 @@ test('encoded targeted routes reach audit code before navigation and invalid tra
 
   const invalidPage = { ...page, url: () => 'http://audit.test/?__longmont_mobile_audit_routes=not_json' };
   await assert.rejects(() => audit(invalidPage), /Invalid targeted mobile audit route transport/);
+  const beforeInvalidRun = navigations.length;
+  for (const runId of ['', '../escape', '%2Fescape', 'a'.repeat(81)]) {
+    await assert.rejects(() => audit({ ...page, url: () => `http://audit.test/?__longmont_mobile_audit_run=${runId}` }), /Invalid mobile audit run id/);
+  }
+  assert.equal(navigations.length, beforeInvalidRun, 'invalid run transport must fail before navigation');
 });
 
 test('production route transport validates bounded paths without backtracking or navigation on rejection', () => {
