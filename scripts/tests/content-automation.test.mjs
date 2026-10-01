@@ -458,6 +458,32 @@ test('VAL-CONTENT-01 next capture preserves current snapshot names and full GPT-
   assert.ok(!openaiRecords.some(({ name }) => name === 'Astra'));
 });
 
+test('September 16 public article exposes the existing briefing PDF alongside its PPTX', async () => {
+  const article = await readFile(new URL('../../src/articles/2026.09.16-astra-then-projects.md', import.meta.url), 'utf8');
+  const draft = await readFile(new URL('../../src/articles/drafts/2026.09.16-astra-then-projects.md', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../../src/articles/index.ts', import.meta.url), 'utf8');
+  const pdfLink = '[Download the seven-slide briefing (PDF)](/documents/2026.09.16/astra-then-projects-briefing.pdf)';
+  const pptxLink = '[Download GPT-Astra-Slideshow (PPTX)](/slideshows/2026.09.16/astra-then-projects/gpt-astra-slideshow.pptx)';
+  const downloads = article.split('## Slideshow and downloads\n')[1];
+  assert.ok(downloads?.includes(`${pptxLink}\n\n${pdfLink}`), 'public downloads retain adjacent PPTX and PDF affordances');
+  assert.equal(article.split(pdfLink).length, 2, 'one public PDF download link');
+  assert.ok(draft.includes(pdfLink), 'restored public link agrees with the unchanged draft');
+  assert.match(article, /^status: published$/m);
+  assert.match(index, /import article_2026_09_16_astra_then_projects from '\.\/2026\.09\.16-astra-then-projects\.md\?raw'/);
+  assert.match(index, /parseMarkdownToEdition\(article_2026_09_16_astra_then_projects\)/);
+  const links = [...downloads.matchAll(/\[([^\]]+)\]\((\/[^)]+)\)/g)];
+  const pdf = links.find(([, label]) => label === 'Download the seven-slide briefing (PDF)');
+  const pptx = links.find(([, label]) => label === 'Download GPT-Astra-Slideshow (PPTX)');
+  assert.equal(pdf?.[2], '/documents/2026.09.16/astra-then-projects-briefing.pdf');
+  assert.equal(pptx?.[2], '/slideshows/2026.09.16/astra-then-projects/gpt-astra-slideshow.pptx');
+  const pdfBytes = await readFile(new URL(`../../public${pdf[2]}`, import.meta.url));
+  const pptxBytes = await readFile(new URL(`../../public${pptx[2]}`, import.meta.url));
+  assert.equal(pdfBytes.subarray(0, 5).toString('ascii'), '%PDF-');
+  // Independent golden: public PDF bytes from historical 75ca7efd5ec469142f6665eeb5445a894b35494f.
+  assert.equal(createHash('sha256').update(pdfBytes).digest('hex'), '3bd3baf26680e51f4e2f65b84efc25b4e70e9ec03b01181fd5bda2d198a94034');
+  assert.equal(pptxBytes.subarray(0, 2).toString('ascii'), 'PK');
+});
+
 test('VAL-CONTENT-05 malformed trusted content fails before trusted writes', async () => fixture(async (root) => {
   await mkdir(path.join(root, 'content/review'), { recursive: true });
   await writeFile(path.join(root, 'content/review/latest.json'), '{malformed');

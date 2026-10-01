@@ -100,8 +100,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Provision cached newsletter Postgres fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker --host unix:///var/run/docker.sock pull --platform linux/amd64 \
+            public.ecr.aws/supabase/postgres@sha256:21ab971149317ea9cd12a8126fe4ebb34def08c8972956b0958cba0924409dab
+
       - name: Contract tests
-        run: npm run test:model-watch && npm run test:space-background
+        run: |
+          npm run test:model-watch && npm run test:space-background &&
+          npm run test:newsletter
 
       - name: Build
         run: npm run build

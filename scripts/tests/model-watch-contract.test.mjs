@@ -1,4 +1,22 @@
 import assert from 'node:assert/strict';import test from 'node:test';import{readFile}from'node:fs/promises';import{MODEL_WATCH_SOURCE_MAX_BYTES,MODEL_WATCH_SOURCE_TIMEOUT_MS,createModelWatchHandler}from'../../api/model-watch.mjs';import{modelWatchSources,seedModels}from'../model-watch-sources.mjs';
+test('Model Watch snapshot identities do not duplicate a company/date/source event', async () => {
+  const models = await readFile(new URL('../../src/data/modelWatch.ts', import.meta.url), 'utf8');
+  const snapshotsBlock = models.match(/export const modelWatchSnapshots: ModelWatchSnapshot\[\] = \[([\s\S]*?)\n\];/);
+  assert.ok(snapshotsBlock, 'modelWatchSnapshots export should remain parseable by the contract test');
+  const snapshotIdentities = [...snapshotsBlock[1].matchAll(
+    /\{\s*company: '([^']+)',[\s\S]*?\n\s*date: '([^']+)',[\s\S]*?\n\s*url: '([^']+)',\s*\n\s*\}/g,
+  )].map(([, company, date, url]) => `${company}\u0000${date}\u0000${url}`);
+  assert.ok(snapshotIdentities.length > 0, 'contract test should extract model watch snapshot identities');
+  const duplicateSnapshotIdentities = snapshotIdentities.filter(
+    (identity, index) => snapshotIdentities.indexOf(identity) !== index,
+  );
+  assert.deepEqual(
+    duplicateSnapshotIdentities,
+    [],
+    `model watch snapshots must not repeat a company/date/source event: ${duplicateSnapshotIdentities.join(', ')}`,
+  );
+});
+
 test('briefing heading honestly identifies the August 19 edition', async () => {
   const page = await readFile(new URL('../../src/pages/ModelWatch.tsx', import.meta.url), 'utf8');
   assert.match(page, /<h2 id="briefing-models-heading">Models Covered in the August 19 Briefing<\/h2>/);

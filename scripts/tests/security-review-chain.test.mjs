@@ -344,7 +344,141 @@ const clearLog = () => writeFile(scannerLog, '')
 const occurrences = (lines, marker) => lines.join('\n').split(marker).length - 1
 const zero = '0'.repeat(40)
 
+async function verifySnapshotHashing() {
+  const match = /verify_snapshot\(\)[\s\S]*?<<'NODE'\n([\s\S]*?)\nNODE/.exec(script)
+  assert.ok(match, 'exact production verifier must be available')
+  const verifier = match[1]
+  const directory = join(fixture, 'verifier-hashing')
+  const tools = join(directory, 'bin')
+  await mkdir(tools, { recursive: true })
+  const realGit = (await exec('/bin/sh', ['-c', 'command -v git'], { env: isolatedEnv })).stdout.trim()
+  const log = join(directory, 'git-calls')
+  await writeFile(join(tools, 'git'), `#!/bin/sh
+printf '%s\\n' "$1" >> "$VERIFIER_GIT_LOG"
+if [ "$1" = rev-parse ] && [ "\${2:-}" = --show-object-format ]; then
+  case "\${VERIFIER_FORMAT_PROBE:-}" in
+    unsupported) printf 'unsupported\\n'; exit 0 ;;
+    unavailable) exit 9 ;;
+  esac
+fi
+if [ "$1" = ls-tree ] && [ -n "\${VERIFIER_FAKE_TREE:-}" ]; then
+  exec /bin/cat "$VERIFIER_FAKE_TREE"
+fi
+exec ${JSON.stringify(realGit)} "$@"
+`)
+  await chmod(join(tools, 'git'), 0o755)
+  const verifierEnv = { ...isolatedEnv, PATH: `${tools}:${isolatedEnv.PATH}`, VERIFIER_GIT_LOG: log }
+  async function invoke(work, tip, snapshot, passes, extra = {}, program = verifier) {
+    await writeFile(log, '')
+    const result = await new Promise((resolvePromise, reject) => {
+      const child = spawn(process.execPath, ['--input-type=module', '-', tip, snapshot], {
+        cwd: work, env: { ...verifierEnv, ...extra }, stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      let stdout = '', stderr = ''
+      child.stdout.on('data', chunk => { stdout += chunk })
+      child.stderr.on('data', chunk => { stderr += chunk })
+      child.on('error', reject)
+      child.on('close', (code, signal) => resolvePromise({ code, signal, stdout, stderr }))
+      child.stdin.end(program)
+    })
+    const failed = result.code !== 0 || result.signal !== null
+    assert.equal(failed, !passes, 'verifier acceptance must match independent fixture expectation')
+    assert.equal(result.stdout, '', 'verifier must not print snapshot contents')
+    assert.equal(result.stderr, '', 'verifier must not expose object or file contents on errors')
+    const calls = (await readFile(log, 'utf8')).trim().split('\n').filter(Boolean)
+    assert.ok(calls.length <= 2, 'verifier Git process count is bounded independently of inventory')
+    assert.ok(!calls.includes('hash-object'), 'no per-file hash-object subprocess')
+    if (passes) assert.deepEqual(calls, ['rev-parse', 'ls-tree'])
+  }
+  for (const algorithm of ['sha1', 'sha256']) {
+    const work = join(directory, algorithm)
+    const snapshot = join(directory, `${algorithm}-snapshot`)
+    await mkdir(work); await mkdir(snapshot)
+    const options = { cwd: work, env: isolatedEnv }
+    const git = args => exec('git', args, options)
+    await git(['init', '-q', '--object-format=' + algorithm])
+    const contents = new Map([
+      ['empty', Buffer.alloc(0)],
+      ['binary', Buffer.from([0, 255, 128, 13, 10, 0, 1])],
+      ['multi-chunk', Buffer.alloc(2 * 1024 * 1024 + 3, 0xa5)],
+      ['duplicate', Buffer.from([0, 255, 128, 13, 10, 0, 1])],
+      ['space directory/tab\tnewline\n雪', Buffer.from('CRLF\r\nno final newline')],
+      ['executable', Buffer.from('#!/bin/sh\nexit 0\n')],
+    ])
+    for (const [file, bytes] of contents) {
+      await mkdir(dirname(join(work, file)), { recursive: true })
+      await writeFile(join(work, file), bytes)
+    }
+    await chmod(join(work, 'executable'), 0o755)
+    await git(['add', '.'])
+    await git(['-c', 'user.name=Verifier Test', '-c', 'user.email=verifier@example.invalid', 'commit', '-qm', 'immutable fidelity fixture'])
+    const tip = (await git(['rev-parse', 'HEAD'])).stdout.trim()
+    const records = (await git(['ls-tree', '-rz', '--full-tree', tip])).stdout.split('\0').filter(Boolean)
+    for (const record of records) {
+      const tab = record.indexOf('\t')
+      const [mode, type, oid] = record.slice(0, tab).split(' ')
+      const file = record.slice(tab + 1)
+      assert.equal(type, 'blob')
+      const { stdout: bytes } = await exec('git', ['cat-file', 'blob', oid], { ...options, encoding: 'buffer', maxBuffer: 4 * 1024 * 1024 })
+      assert.deepEqual(bytes, contents.get(file), 'raw Git bytes independently match fixture')
+      await mkdir(dirname(join(snapshot, file)), { recursive: true })
+      await writeFile(join(snapshot, file), bytes)
+      await chmod(join(snapshot, file), mode === '100755' ? 0o755 : 0o644)
+      assert.equal((await git(['hash-object', '--no-filters', '--', join(snapshot, file)])).stdout.trim(), oid)
+    }
+    await invoke(work, tip, snapshot, true)
+    const binary = join(snapshot, 'binary')
+    await writeFile(binary, Buffer.from([1, 255, 128, 13, 10, 0, 1]))
+    await invoke(work, tip, snapshot, false) // same-length corruption
+    await writeFile(binary, contents.get('binary').subarray(0, 3))
+    await invoke(work, tip, snapshot, false) // truncation
+    await writeFile(binary, contents.get('binary')); await chmod(binary, 0o644)
+    await chmod(join(snapshot, 'executable'), 0o644)
+    await invoke(work, tip, snapshot, false)
+    await chmod(join(snapshot, 'executable'), 0o755)
+    await rm(binary); await invoke(work, tip, snapshot, false)
+    await symlink(join(work, 'binary'), binary); await invoke(work, tip, snapshot, false)
+    await rm(binary); await mkdir(binary); await invoke(work, tip, snapshot, false)
+    await rm(binary, { recursive: true }); await writeFile(binary, contents.get('binary')); await chmod(binary, 0o644)
+    const nested = join(snapshot, 'space directory')
+    await rm(nested, { recursive: true }); await symlink(join(work, 'space directory'), nested)
+    await invoke(work, tip, snapshot, false)
+    await rm(nested); await mkdir(nested)
+    await writeFile(join(nested, 'tab\tnewline\n雪'), contents.get('space directory/tab\tnewline\n雪'))
+    await chmod(join(nested, 'tab\tnewline\n雪'), 0o644)
+    await writeFile(join(snapshot, 'extra'), 'extra')
+    await invoke(work, tip, snapshot, false); await rm(join(snapshot, 'extra'))
+    await mkdir(join(snapshot, 'extra-directory'))
+    await invoke(work, tip, snapshot, false); await rm(join(snapshot, 'extra-directory'), { recursive: true })
+    await invoke(work, tip, snapshot, false, { VERIFIER_FORMAT_PROBE: 'unsupported' })
+    await invoke(work, tip, snapshot, false, { VERIFIER_FORMAT_PROBE: 'unavailable' })
+    await invoke(work, '0'.repeat(tip.length), snapshot, false)
+    // Deterministic fault injection exercises I/O errors and early EOF without racing a file.
+    const alias = verifier.replace('openSync, readSync, readdirSync', 'openSync, readSync as actualReadSync, readdirSync')
+    assert.notEqual(alias, verifier)
+    await invoke(work, tip, snapshot, false, {}, `const readSync = () => { throw new Error('synthetic I/O'); };\n${alias}`)
+    await invoke(work, tip, snapshot, false, {}, `const readSync = () => 0;\n${alias}`)
+    const oid = (await git(['hash-object', '--no-filters', '--', join(work, 'binary')])).stdout.trim()
+    const fake = join(directory, 'fake-tree')
+    for (const entry of [
+      Buffer.from(`120000 blob ${oid}\tunsafe-link\0`),
+      Buffer.from(`160000 commit ${tip}\tgitlink\0`),
+      Buffer.from(`100644 blob ${oid}\t../escape\0`),
+      Buffer.from(`100644 blob ${oid}\t.git/config\0`),
+      Buffer.from(`100644 blob ${oid}\tbinary\0`.repeat(2)),
+      Buffer.concat([Buffer.from(`100644 blob ${oid}\t`), Buffer.from([0xff, 0])]),
+      Buffer.from(`100644 blob ${oid}\tbinary`), // missing NUL terminator
+    ]) {
+      await writeFile(fake, entry)
+      await invoke(work, tip, snapshot, false, { VERIFIER_FAKE_TREE: fake })
+    }
+    await invoke(work, tip, snapshot, true)
+  }
+  console.log('Streamed snapshot hashing: SHA-1/SHA-256, raw bytes/modes/inventory, adversarial failures and bounded Git calls: PASS')
+}
+
 try {
+  await verifySnapshotHashing()
   await verifyOsvProvisioning()
   await Promise.all([mkdir(bin, { recursive: true }), mkdir(home, { recursive: true }), mkdir(join(repo, 'scripts/tests'), { recursive: true })])
   await copyFile(new URL('../security-commit-review.sh', import.meta.url), reviewScript)

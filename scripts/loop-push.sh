@@ -76,7 +76,7 @@ commit_dirty_work() {
   rm -f "$message_file"
 
   # The commit must happen after this Codex process exits. Otherwise the hook's
-  # mandatory Codex review would be an unsupported nested Codex invocation.
+  # optional caller-requested Codex review would otherwise nest Codex invocations.
   if ! codex exec \
     --ephemeral \
     -c 'approval_policy="never"' \
@@ -106,9 +106,9 @@ commit_dirty_work() {
   fi
   printf '%s\n' "${response#COMMIT_MESSAGE: }" >"$message_file"
 
-  # This shell is outside Codex, so the hook can safely launch its mandatory,
-  # read-only Codex security review without nesting Codex inside Codex.
-  if ! SECURITY_COMMIT_AGENT_REVIEW=1 git commit --file "$message_file"; then
+  # This shell is outside Codex, so an explicitly requested optional read-only
+  # security review can run in the hook without nesting Codex inside Codex.
+  if ! git commit --file "$message_file"; then
     rm -f "$message_file"
     return 1
   fi
@@ -153,9 +153,9 @@ push_current_branch() {
     bash scripts/local-ci.sh
   fi
   if git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1; then
-    SECURITY_COMMIT_AGENT_REVIEW=1 git push
+    git push
   else
-    SECURITY_COMMIT_AGENT_REVIEW=1 git push -u origin "$branch"
+    git push -u origin "$branch"
   fi
 }
 

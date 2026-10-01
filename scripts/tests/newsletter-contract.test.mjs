@@ -4,7 +4,8 @@ import { inspect } from 'node:util';
 import { createHmac } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import test from 'node:test';
+import test, { before, after } from 'node:test';
+import { createNewsletterPostgresFixture } from './newsletter-postgres-fixture.mjs';
 import { fileURLToPath } from 'node:url';
 
 import { createNewsletterGenerateHandler } from '../../scripts/lib/newsletter/generate-handler.mjs';
@@ -32,29 +33,12 @@ import {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rateLimitSecret = 'test-only-newsletter-rate-limit-secret-with-32-bytes';
-const localDatabaseContainer = 'supabase_db_LongmontAI';
+const localPostgresFixture = createNewsletterPostgresFixture();
+before(() => localPostgresFixture.start());
+after(() => localPostgresFixture.stop());
 
 function runLocalPostgres(sql) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(
-      'docker',
-      [
-        'exec', '--interactive', localDatabaseContainer,
-        'psql', '--no-psqlrc', '--username', 'postgres', '--dbname', 'postgres',
-        '--set', 'ON_ERROR_STOP=1', '--quiet', '--tuples-only', '--no-align',
-      ],
-      { cwd: root, stdio: ['pipe', 'pipe', 'pipe'] },
-    );
-    let stdout = '';
-    let stderr = '';
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
-    child.stdout.on('data', (chunk) => { stdout += chunk; });
-    child.stderr.on('data', (chunk) => { stderr += chunk; });
-    child.on('error', (error) => reject(new Error(`Local Postgres test harness is unavailable: ${error.message}`)));
-    child.on('close', (code) => resolve({ code, stdout: stdout.trim(), stderr: stderr.trim() }));
-    child.stdin.end(`${sql}\n`);
-  });
+  return localPostgresFixture.run(sql);
 }
 
 async function postgresSql(sql) {

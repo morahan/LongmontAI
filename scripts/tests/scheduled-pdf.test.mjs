@@ -6,13 +6,13 @@ import { FIRST_PUBLISH_AT, TEST_NOW, assertGenericNotFound, correctQuery, findGe
 
 const pdf = Buffer.from('%PDF-1.4\n% private fixture deck\n%%EOF\n');
 
-async function fixture(t) {
+async function fixture(t, extension = 'pdf', bytes = pdf) {
   const root = await makeWorkspace();
   t.after(() => rm(root, { recursive: true, force: true }));
   const article = join(root, 'src/articles/drafts/2026.09.02-first.md');
-  const asset = join(root, 'src/articles/drafts/assets/2026.09.02/briefing.pdf');
-  await writeFile(asset, pdf);
-  await writeFile(article, `${await readFile(article, 'utf8')}\n[Download deck](/documents/2026.09.02/briefing.pdf)\n`);
+  const asset = join(root, `src/articles/drafts/assets/2026.09.02/briefing.${extension}`);
+  await writeFile(asset, bytes);
+  await writeFile(article, `${await readFile(article, 'utf8')}\n[Download deck](/documents/2026.09.02/briefing.${extension})\n`);
   return { root, article, asset, stage: await loadStager() };
 }
 
@@ -49,14 +49,71 @@ test('PDF is allowlisted, revision-scoped, embargoed and served with exact appli
   assert.ok(global.headers.some(({ key, value }) => key.toLowerCase() === 'x-content-type-options' && value === 'nosniff'));
 });
 
-for (const scenario of ['missing', 'symlink', 'pptx', 'image-bucket', 'slideshow']) {
+test('PPTX document staging preserves bytes, embargo, revision and original-time corrections', async (t) => {
+  const bytes = Buffer.from('PK\u0003\u0004 private PPTX transport fixture');
+  const { root, article, stage } = await fixture(t, 'pptx', bytes);
+  await stage({ root, manifest: manifestPath(root), now: TEST_NOW });
+  const before = await snapshot(root);
+  await stage({ root, manifest: manifestPath(root), now: TEST_NOW });
+  assert.deepEqual(await snapshot(root), before);
+  const packages = await findGeneratedPackages(root);
+  const release = await importGeneratedServer(packages.server.path);
+  const mime = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  assert.equal(release.media['briefing.pptx'].contentType, mime);
+  assert.doesNotMatch(packages.client.text, /briefing\.pptx|private PPTX/);
+  const api = await loadApiModules(root);
+  const query = correctQuery(release, { path: 'briefing.pptx' });
+  assertGenericNotFound(assert, await requestHandler(api.media, 'media', { root, now: FIRST_PUBLISH_AT - 1, query }));
+  for (const now of [FIRST_PUBLISH_AT, FIRST_PUBLISH_AT + 1]) {
+    const response = await requestHandler(api.media, 'media', { root, now, query });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['content-type'], mime);
+    assert.equal(response.headers['cache-control'], 'public, max-age=31536000, s-maxage=31536000, immutable');
+    assert.deepEqual(response.body, bytes);
+  }
+  for (const bad of [
+    { ...query, path: '../briefing.pptx' }, { ...query, path: '%2e%2e/briefing.pptx' },
+    { ...query, path: 'unreferenced.pptx' }, { ...query, revision: 'wrong' },
+    { ...query, edition: 'wrong' }, { ...query, path: '/briefing.pptx' },
+  ]) assertGenericNotFound(assert, await requestHandler(api.media, 'media', { root, now: FIRST_PUBLISH_AT, query: bad }));
+  assertGenericNotFound(assert, await requestHandler(api.media, 'media', { root, now: FIRST_PUBLISH_AT, method: 'POST', query }));
+  const edition = await requestHandler(api.edition, 'edition', { root, now: FIRST_PUBLISH_AT, query: correctQuery(release) });
+  assert.match(edition.body.toString(), /scheduled-media[^\s]*briefing\.pptx/);
+
+  // Correcting the active due release must not move its publication boundary.
+  await writeFile(article, `${await readFile(article, 'utf8')}\nReviewed correction.\n`);
+  await stage({ root, manifest: manifestPath(root), now: FIRST_PUBLISH_AT + 1 });
+  const corrected = await importGeneratedServer((await findGeneratedPackages(root)).server.path);
+  assert.equal(corrected.publishAt, release.publishAt);
+  assert.notEqual(corrected.releaseRevision, release.releaseRevision);
+});
+
+for (const scenario of ['missing', 'symlink', 'image-bucket', 'slideshow']) {
+  test(`PPTX support rejects ${scenario} without changing the package`, async (t) => {
+    const { root, article, asset, stage } = await fixture(t, 'pptx', Buffer.from('private PPTX fixture'));
+    if (scenario === 'missing') await rm(asset);
+    if (scenario === 'symlink') { await rm(asset); await symlink(article, asset); }
+    if (scenario === 'image-bucket') await writeFile(article, (await readFile(article, 'utf8')).replace('/documents/', '/weekly-screenshots/'));
+    if (scenario === 'slideshow') {
+      const file = manifestPath(root);
+      const manifest = JSON.parse(await readFile(file, 'utf8'));
+      manifest.slideshow.slides[0].path = 'briefing.pptx';
+      await writeFile(file, JSON.stringify(manifest));
+    }
+    const before = await snapshot(root);
+    await assert.rejects(stage({ root, manifest: manifestPath(root), now: TEST_NOW }));
+    assert.deepEqual(await snapshot(root), before);
+  });
+}
+
+for (const scenario of ['missing', 'symlink', 'docx', 'image-bucket', 'slideshow']) {
   test(`PDF support does not admit ${scenario} media`, async (t) => {
     const { root, article, asset, stage } = await fixture(t);
     if (scenario === 'missing') await rm(asset);
     if (scenario === 'symlink') { await rm(asset); await symlink(article, asset); }
-    if (scenario === 'pptx') {
-      await writeFile(`${asset}.pptx`, 'not a supported deck');
-      await writeFile(article, (await readFile(article, 'utf8')).replace('briefing.pdf', 'briefing.pdf.pptx'));
+    if (scenario === 'docx') {
+      await writeFile(`${asset}.docx`, 'not a supported deck');
+      await writeFile(article, (await readFile(article, 'utf8')).replace('briefing.pdf', 'briefing.pdf.docx'));
     }
     if (scenario === 'image-bucket') await writeFile(article, (await readFile(article, 'utf8')).replace('/documents/', '/weekly-screenshots/'));
     if (scenario === 'slideshow') {

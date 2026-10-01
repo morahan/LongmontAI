@@ -110,7 +110,8 @@ verify_snapshot() {
   local tip="$1" snapshot="$2"
   node --input-type=module - "$tip" "$snapshot" <<'NODE'
 import { spawnSync } from 'node:child_process';
-import { lstatSync, readdirSync } from 'node:fs';
+import { constants, closeSync, fstatSync, lstatSync, openSync, readSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 try {
@@ -121,7 +122,35 @@ try {
     if (result.error || result.signal || result.status !== 0) throw new Error('Git object');
     return result.stdout;
   };
+  const algorithm = git(['rev-parse', '--show-object-format']).toString('ascii').trim();
+  if (algorithm !== 'sha1' && algorithm !== 'sha256') throw new Error('object format');
   const entries = git(['ls-tree', '-rz', '--full-tree', tip]);
+  const buffer = Buffer.alloc(64 * 1024);
+  const blobHash = (absolute, stat) => {
+    if (!Number.isSafeInteger(stat.size) || stat.size < 0) throw new Error('file size');
+    const file = openSync(absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    try {
+      const opened = fstatSync(file);
+      if (!opened.isFile() || opened.dev !== stat.dev || opened.ino !== stat.ino
+        || opened.size !== stat.size || opened.mode !== stat.mode) throw new Error('file changed');
+      const hash = createHash(algorithm);
+      hash.update(`blob ${stat.size}\0`, 'ascii');
+      let total = 0;
+      for (;;) {
+        const length = readSync(file, buffer, 0, buffer.length, null);
+        if (length === 0) break;
+        total += length;
+        if (total > stat.size) throw new Error('file grew');
+        hash.update(buffer.subarray(0, length));
+      }
+      const final = fstatSync(file);
+      if (total !== stat.size || final.size !== stat.size || final.mtimeMs !== opened.mtimeMs
+        || final.ctimeMs !== opened.ctimeMs) throw new Error('file changed');
+      return hash.digest('hex');
+    } finally {
+      closeSync(file);
+    }
+  };
   const decoder = new TextDecoder('utf-8', { fatal: true });
   const expected = new Map();
   const directories = new Set();
@@ -154,7 +183,7 @@ try {
       }
       const entry = expected.get(path);
       if (!entry || !stat.isFile() || (stat.mode & 0o777) !== entry.mode
-        || git(['hash-object', '--no-filters', '--', absolute]).toString('ascii').trim() !== entry.oid) {
+        || blobHash(absolute, stat) !== entry.oid) {
         throw new Error('snapshot mismatch');
       }
       seen.add(path);

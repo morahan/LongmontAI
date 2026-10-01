@@ -25,6 +25,37 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    'host-then-cheap-stack': {
+    "id": "host-then-cheap-stack",
+    "title": "The teammate, then the Flash",
+    "description": "Six educational slides: Grok Bot as the teammate, then GLM-5.3-Flash with a date on the price.",
+    "slides": [
+        {
+            "title": "The teammate, then the Flash",
+            "src": "/slideshows/2026.09.02/host-then-cheap-stack/slide-01.png"
+        },
+        {
+            "title": "Grok Bot is the teammate",
+            "src": "/slideshows/2026.09.02/host-then-cheap-stack/slide-02.png"
+        },
+        {
+            "title": "Keep the names straight",
+            "src": "/slideshows/2026.09.02/host-then-cheap-stack/slide-03.png"
+        },
+        {
+            "title": "GLM-5.3-Flash has a date on the price",
+            "src": "/slideshows/2026.09.02/host-then-cheap-stack/slide-04.png"
+        },
+        {
+            "title": "The rest of the board",
+            "src": "/slideshows/2026.09.02/host-then-cheap-stack/slide-05.png"
+        },
+        {
+            "title": "One teammate. One dated promo.",
+            "src": "/slideshows/2026.09.02/host-then-cheap-stack/slide-06.png"
+        }
+    ]
+},
     'astra-then-projects': {
         id: 'astra-then-projects',
         title: 'Astra, then Projects',

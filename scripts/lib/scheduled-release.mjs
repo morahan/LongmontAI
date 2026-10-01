@@ -9,6 +9,7 @@ const TYPES = new Map([
   ['.avif', 'image/avif'], ['.gif', 'image/gif'], ['.jpeg', 'image/jpeg'],
   ['.jpg', 'image/jpeg'], ['.mp4', 'video/mp4'], ['.png', 'image/png'],
   ['.pdf', 'application/pdf'],
+  ['.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
   ['.webm', 'video/webm'], ['.webp', 'image/webp'],
 ]);
 const MEDIA_URL = /\/(?:weekly-screenshots|slideshows|documents)\/([A-Za-z0-9._-]+)\/([A-Za-z0-9][A-Za-z0-9._/-]*)/g;
@@ -55,7 +56,7 @@ function slideshowFrom(manifest) {
   const slides = show.slides.map((slide, index) => {
     if (!slide?.title?.trim()) fail(`slideshow slide ${index + 1} needs a title`);
     const mediaPath = safeRelative(slide.path, `slideshow slide ${index + 1}`);
-    if (path.extname(mediaPath).toLowerCase() === '.pdf') fail('PDF decks must be article document links, not slideshow images');
+    if (['.pdf', '.pptx'].includes(path.extname(mediaPath).toLowerCase())) fail('PDF decks must be article document links, not slideshow images');
     if (seen.has(mediaPath)) fail(`duplicate slideshow path: ${mediaPath}`);
     seen.add(mediaPath);
     return { title: slide.title, path: mediaPath };
@@ -140,6 +141,7 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     let manifest;
     try { manifest = JSON.parse(await readFile(manifestFile, 'utf8')); } catch { fail('manifest is not valid JSON'); }
     if (manifest?.status !== 'scheduled') fail('manifest status must be scheduled');
+    if (manifest.textOnly !== undefined && typeof manifest.textOnly !== 'boolean') fail('textOnly must be a boolean');
     if (!/^edition-\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(manifest.editionId ?? '')) fail('editionId is invalid');
     const publishAtMs = publication(manifest.publishAt, requireFuture);
     const manifestRelative = rootRelative(manifestFile);
@@ -162,11 +164,12 @@ export function createScheduledReleaseTools({ root = repositoryRoot, now = Date.
     for (const match of articleText.matchAll(MEDIA_URL)) {
       if (match[1] !== manifest.assetFolder) fail(`article media uses the wrong dated folder: ${match[0]}`);
       const mediaPath = safeRelative(match[2], 'article media');
-      if (path.extname(mediaPath).toLowerCase() === '.pdf' && !match[0].startsWith('/documents/')) fail('PDF decks must use dated /documents/ article links');
+      if (['.pdf', '.pptx'].includes(path.extname(mediaPath).toLowerCase()) && !match[0].startsWith('/documents/')) fail('PDF decks must use dated /documents/ article links');
       selected.set(mediaPath, { path: mediaPath, sourceUrl: match[0] });
     }
     for (const slide of slideshow?.slides ?? []) if (!selected.has(slide.path)) selected.set(slide.path, { path: slide.path, sourceUrl: null });
-    if (!selected.size) fail('release does not reference any media');
+    if (!selected.size && manifest.textOnly !== true) fail('release does not reference any media; text-only editions must explicitly declare textOnly');
+    if (manifest.textOnly === true && (selected.size || slideshow)) fail('text-only editions cannot declare private media or a slideshow');
     const media = [];
     for (const item of [...selected.values()].sort((a, b) => a.path.localeCompare(b.path))) {
       const sourceFile = path.resolve(assetRoot, ...item.path.split('/'));
