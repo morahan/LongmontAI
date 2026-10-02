@@ -29,8 +29,11 @@ test-flows-ios:
 loop-push minutes="2":
     @bash scripts/loop-push.sh {{quote(minutes)}}
 
-# Publish the current branch, run the local verification contract, and prune stale worktree metadata.
-loop-push-merge minutes="2":
-    @bash scripts/loop-push.sh {{quote(minutes)}} --local-verify --merge-prune
+# Merge ALL frozen sources, verify and publish main normally, then clean only after proof.
+[positional-arguments]
+loop-push-merge minutes="2" *args:
+    @node scripts/loop-merge-push.mjs "$@"
 
-loop-merge-push minutes="2": (loop-push-merge minutes)
+[positional-arguments]
+loop-merge-push minutes="2" *args:
+    @node scripts/loop-merge-push.mjs "$@"

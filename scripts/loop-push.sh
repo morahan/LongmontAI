@@ -21,6 +21,15 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# The legacy merge flag is an ALL-source operation, never the old caller-only loop.
+# Dispatch before dry-run, dirty Codex preparation, fetch or pruning.
+if [[ "$MERGE_PRUNE" -eq 1 ]]; then
+  SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  merge_args=("$MINUTES")
+  if [[ "$DRY_RUN" -eq 1 ]]; then merge_args+=(--dry-run); fi
+  exec node "$SCRIPT_DIR/loop-merge-push.mjs" "${merge_args[@]}"
+fi
+
 if ! [[ "$MINUTES" =~ ^[0-9]+$ ]]; then
   usage
   exit 2

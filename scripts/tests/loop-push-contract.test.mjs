@@ -18,7 +18,9 @@ function gitStatus(cwd) {
 }
 
 assert.match(justfile, /^loop-push minutes="2":/m);
-assert.match(justfile, /^loop-merge-push minutes="2": \(loop-push-merge minutes\)/m);
+assert.match(justfile, /^loop-merge-push minutes="2" \*args:/m);
+assert.match(justfile, /^loop-push-merge minutes="2" \*args:/m);
+assert.match(justfile, /node scripts\/loop-merge-push\.mjs/);
 const loopScript = readFileSync(script, 'utf8');
 assert.match(loopScript, /commit_dirty_work\(\)/);
 assert.match(loopScript, /refresh_upstream\(\)/);
@@ -41,11 +43,20 @@ assert.doesNotMatch(loopScript, /npm run security:push/);
 assert.match(loopScript, /git push/);
 assert.match(loopScript, /git push -u origin/);
 
-const dryRun = execFileSync('bash', [script, '10', '--merge-prune', '--dry-run'], {
-  cwd: root,
-  encoding: 'utf8',
-});
-assert.match(dryRun, /delay=10m local-verify=0 merge-prune=1 empty-stop=3/);
+// ALL dry-run inventory belongs in a bounded fixture, never a sweep of shared user worktrees.
+const dryRunRepository = mkdtempSync(join(tmpdir(), 'longmont-merge-dry-run-'));
+try {
+  execFileSync('git', ['init', '-q'], { cwd: dryRunRepository });
+  const dryRun = execFileSync('bash', [script, '10', '--merge-prune', '--dry-run'], {
+    cwd: dryRunRepository,
+    encoding: 'utf8',
+  });
+  assert.equal(JSON.parse(dryRun).phase, 'dry-run');
+  assert.equal(JSON.parse(dryRun).complete, false);
+  assert.match(JSON.parse(dryRun).detail, /NOT PUBLISHED \/ NOT COMPLETE/);
+} finally {
+  rmSync(dryRunRepository, { recursive: true, force: true });
+}
 
 assert.throws(
   () => execFileSync('bash', [script, 'nope', '--dry-run'], { cwd: root, stdio: 'pipe' }),
@@ -383,4 +394,17 @@ fi
 } finally {
   rmSync(fixture, { recursive: true, force: true });
 }
-console.log('loop-push contract: PASS (18-call CI/default+opt-in failures; real Git scheduling matrix)');
+console.log('loop-push compatibility: PASS (18-call CI/default+opt-in failures; real Git scheduling matrix)');
+
+// Mandatory ALL-source contract: never skip a missing suite or turn its failures into compatibility success.
+// Its isolated fixture npm boundary records test:loop-push without recursively dispatching this entry point.
+const mergeContract = spawnSync(process.execPath, [resolve(root, 'scripts/tests/loop-merge-push-contract.test.mjs')], {
+  cwd: root,
+  env: process.env,
+  stdio: 'inherit',
+  timeout: 30 * 60_000,
+});
+assert.ifError(mergeContract.error);
+assert.equal(mergeContract.signal, null, 'mandatory ALL-source contract must finish without termination');
+assert.equal(mergeContract.status, 0, 'mandatory ALL-source contract failed or is unavailable');
+console.log('loop-push integrated contract: PASS (ordinary compatibility + mandatory ALL-source suite)');
