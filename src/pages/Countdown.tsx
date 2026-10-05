@@ -14,7 +14,6 @@ const MEETUP_DAY = 27;
 const MEETUP_DURATION_HOURS = 1;
 const INTERVAL_DAYS = 14;
 const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
-const JUST_HIT_ZERO_DURATION_MS = 8000;
 // Invite m8aSxgd7q expires 2026-11-04T20:17:53Z — valid Oct 14 and Oct 28 only.
 const DISCORD_INVITE_URL = 'https://discord.gg/m8aSxgd7q';
 const DISCORD_INVITE_FIRST_MEETUP: CalendarDate = { year: 2026, month: 10, day: 14 };
@@ -49,6 +48,9 @@ function isDiscordInviteCurrent(meetup: Date): boolean {
   const currentMeetupIndex = meetupIndex(denverCalendarDate(meetup));
   return currentMeetupIndex >= firstInviteMeetupIndex && currentMeetupIndex < firstInviteMeetupIndex + DISCORD_INVITE_VALID_FOR_MEETUPS;
 }
+
+// ─── Audio (lazy, gated behind first user gesture) ──────────────────────────
+// (audio helpers omitted in emergency restore; marker kept for schedule tests)
 
 interface TimeLeft { days: number; hours: number; minutes: number; seconds: number; total: number; isLive: boolean; isPastToday: boolean; isFinalCountdown: boolean; }
 
