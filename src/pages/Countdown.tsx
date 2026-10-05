@@ -1,1 +1,1 @@
-@/tmp/countdown_fixed.tsx
+$file:/tmp/countdown_fixed.tsx
