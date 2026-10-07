@@ -102,3 +102,4 @@ npm run verify:local                # complete configured local verification
 - Plain `scripts/loop-push.sh` retains its current-branch Codex preparation behavior and is not the minimal article path. Its legacy `--merge-prune` flag now dispatches to the ALL-source engine **before** dirty preparation/fetch/prune; it never prunes metadata early. Both merge aliases use the actual engine. Normal optional security-review opt-in and exact Git pre-push ref streams remain unchanged; no scanner/mobile/hook bypass is introduced.
 
 <!-- push-path check 2026-10-07T18:33:08Z -->
+<!-- push-path check 19:06:20Z -->
