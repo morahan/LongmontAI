@@ -97,3 +97,5 @@ npm run verify:local                # complete configured local verification
 - An unavailable scanner or offline database is a failed/unproven security gate. Security findings require read-only `security-triage` and a bounded `security-fixer` packet under parent review; normal hooks do not automatically fix vulnerabilities.
 - Mobile audit browser-install errors include the required install command. The runner starts and cleans up its own ephemeral Vite listener; do not assume a separately running dev server proves the audit passed.
 - Plain `scripts/loop-push.sh` retains its current-branch Codex preparation behavior and is not the minimal article path. Its legacy `--merge-prune` flag now dispatches to the ALL-source engine **before** dirty preparation/fetch/prune; it never prunes metadata early. Both merge aliases use the actual engine. Normal optional security-review opt-in and exact Git pre-push ref streams remain unchanged; no scanner/mobile/hook bypass is introduced.
+
+<!-- push-path check 2026-10-07T18:33:08Z -->
