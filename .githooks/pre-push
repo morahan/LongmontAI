@@ -9,5 +9,4 @@ chmod 600 "$PUSH_REFS"
 trap 'rm -f "$PUSH_REFS"' EXIT INT TERM
 cat >"$PUSH_REFS"
 
-scripts/security-commit-review.sh push <"$PUSH_REFS"
-node scripts/run-targeted-mobile-audit.mjs push <"$PUSH_REFS"
+scripts/fast-gate.sh push <"$PUSH_REFS"

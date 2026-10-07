@@ -4,5 +4,4 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-scripts/security-commit-review.sh staged
-node scripts/run-targeted-mobile-audit.mjs staged
+scripts/fast-gate.sh commit

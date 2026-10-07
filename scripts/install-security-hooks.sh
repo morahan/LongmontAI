@@ -6,6 +6,5 @@ cd "$ROOT"
 
 git config core.hooksPath .githooks
 echo "Installed local Git hooks: core.hooksPath=.githooks"
-echo "Pre-commit runs the staged security review and mobile editorial audit."
-echo "Pre-push runs the full security review and mobile editorial audit."
-echo "Both hooks launch independent review gates in parallel; remediation stays sequential after failures."
+echo "Pre-commit and pre-push run scripts/fast-gate.sh (gitleaks, risky-pattern, control-plane, osv on dependency changes)."
+echo "Thorough review: npm run security:review / just verify. Mobile audit on push only with MOBILE_AUDIT=1."

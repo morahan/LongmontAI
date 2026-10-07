@@ -11,6 +11,18 @@ blog-update manifest mode="--dry-run":
 verify:
     @bash scripts/local-ci.sh
 
+# Routine push to main through the fast hooks.
+push:
+    git pull --rebase origin main && git push origin main
+
+# Same as push, plus the opt-in mobile browser audit in pre-push.
+push-audited:
+    git pull --rebase origin main && MOBILE_AUDIT=1 git push origin main
+
+# Show the 100 most recent prompts from the global Claude prompt log.
+claude-history:
+    @if [ -f "$HOME/.claude_global_prompts.log" ]; then tail -n 100 "$HOME/.claude_global_prompts.log"; else echo "No prompt log at ~/.claude_global_prompts.log"; fi
+
 # Run available web, Android, and iOS flow lanes concurrently. Native lanes are
 # reported as skipped when this web-only checkout has no corresponding project.
 test-flows:

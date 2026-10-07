@@ -49,11 +49,12 @@ async function fixture() {
 }
 
 test('hook and exhaustive local-CI wiring preserve their distinct scopes', async () => {
-  const [packageJson, localCi, preCommit, prePush, browserRunner, audit, editorGuide] = await Promise.all([
+  const [packageJson, localCi, preCommit, prePush, fastGate, browserRunner, audit, editorGuide] = await Promise.all([
     readFile(path.join(root, 'package.json'), 'utf8').then(JSON.parse),
     readFile(path.join(root, 'scripts/local-ci.sh'), 'utf8'),
     readFile(path.join(root, '.githooks/pre-commit'), 'utf8'),
     readFile(path.join(root, '.githooks/pre-push'), 'utf8'),
+    readFile(path.join(root, 'scripts/fast-gate.sh'), 'utf8'),
     readFile(path.join(root, 'scripts/run-mobile-browser-audit.sh'), 'utf8'),
     readFile(path.join(root, 'scripts/mobile-playwright-audit.js'), 'utf8'),
     readFile(path.join(root, 'docs/blog-editor.md'), 'utf8'),
@@ -63,8 +64,10 @@ test('hook and exhaustive local-CI wiring preserve their distinct scopes', async
   assert.match(localCi, /npm run test:mobile-contract/);
   assert.match(localCi, /MOBILE_AUDIT_HEADED=0 env -u MOBILE_AUDIT_ROUTES npm run test:mobile/);
   assert.doesNotMatch(localCi, /test:mobile:staged/);
-  assert.match(preCommit, /run-targeted-mobile-audit\.mjs staged/);
-  assert.match(prePush, /run-targeted-mobile-audit\.mjs push/);
+  assert.match(preCommit, /fast-gate\.sh commit/);
+  assert.doesNotMatch(preCommit, /run-targeted-mobile-audit/);
+  assert.match(prePush, /fast-gate\.sh push <"\$PUSH_REFS"/);
+  assert.match(fastGate, /MOBILE_AUDIT:-0[\s\S]*run-targeted-mobile-audit\.mjs push/);
   assert.match(prePush, /cat >"\$PUSH_REFS"/);
   assert.equal(packageJson.scripts['audit:mobile'], 'bash scripts/run-mobile-browser-audit.sh');
   assert.match(browserRunner, /MOBILE_AUDIT_HEADED/);
