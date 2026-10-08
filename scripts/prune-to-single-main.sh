@@ -26,8 +26,8 @@ done
 
 echo "## 3. Delete every origin branch except main"
 git fetch --prune origin
-git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -vx 'origin/main' | sed 's#^origin/##' | while read -r b; do
-  run $MODE git push origin --delete "$b"
+git branch -r --format='%(refname:short)' | grep '^origin/' | grep -v '^origin/HEAD' | grep -vx 'origin/main' | sed 's#^origin/##' | while read -r b; do
+  run $MODE git push origin --delete "$b" || echo "SKIP (delete failed): $b"
 done
 
 echo "## 4. (Manual) real worktree directories still on disk; remove only when you are sure:"
