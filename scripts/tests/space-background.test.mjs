@@ -60,6 +60,7 @@ import {
   NEURAL_SIGNAL_WIDTH_RANGE,
   PLANET_ATMOSPHERE_CLASSES,
   PLANET_COUNT_BASIS_POINTS,
+  MOON_COUNT_BASIS_POINTS,
   SYSTEM_CARRIER_FRACTION,
   SYSTEM_CARRIER_INTERVAL,
   PLANET_RADIUS_RANGE,
@@ -634,9 +635,9 @@ test('mobile ambient prefixes feed every glyph without rerouting shared sources 
 
 test('planetary data matches current-main digests and rare visitors never become enlarged hosts', () => {
   for (const [seed, digest] of [
-    [0, 'd0ed4cef516a285de4ef32e69d68218c735a554524f2d3fbd44447e81279fa71'],
-    [17, '7ce250591c45b68f6e469cf60b827bdfb42b62a17c410a44e119104f4877469f'],
-    [9876, '6e4ee54471f0351e7ad1714c12bf6d81da6364caf2164e4bff6aae2bf4669006'],
+    [0, '9ec6d996a772cb181fdc93d1a1d193162fdeb8c9cc5a83f426b593ddc46d5ce6'],
+    [17, '97510b2710646e2583a81dabdd381da951f26fa833fd564fe12d4dc8f6fd9415'],
+    [9876, '94ba5ccb7d9efa033ada7d546377ad4c522e02d26d6731cfa52938d35ca1209d'],
   ]) assert.equal(createHash('sha256').update(JSON.stringify(createPlanetSystem(seed, 3))).digest('hex'), digest);
   for (const variant of ['ufo', 'comet']) {
     let seed = 0;
@@ -3632,32 +3633,31 @@ test('every generated moon stays at most half its rendered parent radius at ever
   assert.ok(largestRatio > 0.49, `largest moon ratio ${largestRatio} did not approach the cap`);
 });
 
-test('per-planet moon outcomes use exact mutually exclusive probability boundaries', () => {
-  const outcome = (...samples) => {
-    let index = 0;
-    return chooseMoonCount(() => samples[index++]);
-  };
+test('per-planet moon CDF has exact basis-point boundaries and a 3.5 mean', () => {
+  assert.deepEqual(MOON_COUNT_BASIS_POINTS, Array(8).fill(1250));
+  assert.equal(MOON_COUNT_BASIS_POINTS.reduce((sum, weight) => sum + weight, 0), 10000);
+  const expectedMean = MOON_COUNT_BASIS_POINTS.reduce((sum, weight, count) => sum + weight * count, 0) / 10000;
+  closeTo(expectedMean, 3.5);
+  assert.equal(chooseMoonCount(() => 0), 0, 'zero-moon planets are possible');
+  assert.equal(chooseMoonCount(() => 0.124999999), 0);
+  let draws = 0;
+  chooseMoonCount(() => { draws += 1; return 0.5; });
+  assert.equal(draws, 1, 'moon count uses one seeded CDF draw');
 
-  assert.equal(outcome(0), 0);
-  assert.equal(outcome(0.814999999), 0);
-  assert.equal(outcome(0.815), 1);
-  assert.equal(outcome(0.914999999), 1);
-  assert.equal(outcome(0.915), 2);
-  assert.equal(outcome(0.964999999), 2);
-  assert.equal(outcome(0.965, 0), 3);
-  assert.equal(outcome(0.989999999, 0.999999999), 5);
-  assert.equal(outcome(0.99, 0), 5);
-  assert.equal(outcome(0.999999999, 0.999999999), 7);
+  let lower = 0;
+  MOON_COUNT_BASIS_POINTS.forEach((weight, count) => {
+    assert.equal(chooseMoonCount(() => (lower + weight / 2) / 10000), count);
+    lower += weight;
+    if (count < MOON_COUNT_BASIS_POINTS.length - 1) {
+      assert.equal(chooseMoonCount(() => lower / 10000), count + 1);
+    }
+  });
 
-  const counts = Array(8).fill(0);
+  const observed = Array(8).fill(0);
   for (let index = 0; index < 10000; index += 1) {
-    counts[chooseMoonCount((() => {
-      const samples = [(index + 0.5) / 10000, 0.5];
-      return () => samples.shift();
-    })())] += 1;
+    observed[chooseMoonCount(() => (index + 0.5) / 10000)] += 1;
   }
-  assert.equal(counts[0], 8150);
-  assert.equal(counts.slice(1).reduce((total, count) => total + count, 0), 1850);
+  assert.deepEqual(observed, MOON_COUNT_BASIS_POINTS);
 });
 
 test('planet moon generation reaches 0-7 independently with no system cap and legible orbital tiers', () => {
@@ -3693,6 +3693,7 @@ test('planet moon generation reaches 0-7 independently with no system cap and le
     });
   }
   assert.deepEqual([...observedCounts].sort((left, right) => left - right), [0, 1, 2, 3, 4, 5, 6, 7]);
+  assert.ok(observedCounts.has(0), 'seeded planet creation includes planets without moons');
   assert.equal(sawMultipleMoonBearingPlanets, true);
   assert.ok(largestSystemMoonTotal > 7, `largest generated system had only ${largestSystemMoonTotal} moons`);
   assert.notDeepEqual(createPlanetSystem(0xface, 4), createPlanetSystem(0xface, 5));

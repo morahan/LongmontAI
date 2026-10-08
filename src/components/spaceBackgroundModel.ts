@@ -2743,14 +2743,16 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
     return PLANET_COUNT_BASIS_POINTS.length;
 };
 
-/** Mutually exclusive per-planet moon bands: 81.5% none and 18.5% moon-bearing. */
+export const MOON_COUNT_BASIS_POINTS = [1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250] as const;
+
+/** One seeded basis-point roll selects a per-planet moon count from 0 through 7. */
 export const chooseMoonCount = (random: RandomSource) => {
-    const outcome = random();
-    if (outcome < 0.815) return 0;
-    if (outcome < 0.915) return 1;
-    if (outcome < 0.965) return 2;
-    if (outcome < 0.99) return 3 + Math.floor(random() * 3);
-    return 5 + Math.floor(random() * 3);
+    let cursor = random() * 10000;
+    for (let count = 0; count < MOON_COUNT_BASIS_POINTS.length; count += 1) {
+        cursor -= MOON_COUNT_BASIS_POINTS[count];
+        if (cursor < 0) return count;
+    }
+    return MOON_COUNT_BASIS_POINTS.length - 1;
 };
 
 /** Radius-derived periods keep every visible system legible while preserving clear inner/outer speed tiers. */
