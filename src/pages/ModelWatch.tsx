@@ -64,14 +64,6 @@ const ModelWatch: React.FC = () => {
           <span>{modelWatchStatus.successfulSources}/{modelWatchStatus.totalSources}</span>
           <p>sources healthy</p>
         </div>
-        <div>
-          <span>Source</span>
-          <p>snapshot</p>
-        </div>
-        <div>
-          <span>0</span>
-          <p>AI credits used</p>
-        </div>
       </section>
 
       <section className="model-watch-section" aria-labelledby="snapshot-heading">
