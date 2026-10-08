@@ -23,3 +23,25 @@ test('briefing heading honestly identifies the August 19 edition', async () => {
   assert.doesNotMatch(page, /Models Covered in the Latest Edition/);
 });
 const req=(method='GET',authorization)=>({method,headers:authorization===undefined?{}:{authorization}}),res=()=>({statusCode:200,headers:{},body:null,setHeader(n,v){this.headers[n.toLowerCase()]=v},status(n){this.statusCode=n;return this},json(v){this.body=v;return this}});test('Model Watch security and main data contracts',async()=>{for(const x of['Muse Spark 1.1','Muse Spark 1.2','GLM-5.3','Nemotron 3.5 Lightning','Qwen-Image 3.0','Kimi K3'])assert.ok(seedModels.includes(x));assert.ok(modelWatchSources.some(x=>x.company==='Meta AI'&&x.required));assert.ok(modelWatchSources.some(x=>x.company==='Moonshot AI / Kimi'&&x.required));assert.equal(MODEL_WATCH_SOURCE_TIMEOUT_MS,12000);assert.equal(MODEL_WATCH_SOURCE_MAX_BYTES,512*1024);let calls=0;const h=createModelWatchHandler({env:{CRON_SECRET:'cron-test-secret'},watchSources:[{url:'https://source.test',patterns:[/Example Model 2/g]}],fetchImpl:async()=>{calls++;return new Response('Example Model 2')},now:()=>new Date('2026-08-25T12:00:00.000Z')});for(const method of['POST','PUT','PATCH','DELETE','HEAD','OPTIONS']){const o=res();await h(req(method,'Bearer cron-test-secret'),o);assert.equal(o.statusCode,405);assert.equal(o.headers.allow,'GET');assert.equal(calls,0)}for(const a of[undefined,'cron-test-secret','Bearer wrong-secret','bearer cron-test-secret']){const o=res();await h(req('GET',a),o);assert.equal(o.statusCode,401)}const o=res();await h(req('GET','Bearer cron-test-secret'),o);assert.equal(o.statusCode,200);assert.equal(o.body.successfulSources,1);assert.ok(o.body.detectedModels.includes('Example Model 2'));const files=await readFile(new URL('../../src/data/modelWatch.ts',import.meta.url),'utf8');assert.match(files,/latestBriefingModelIds/);});
+
+test('editorial guides require an evidence-backed review of every living surface', async () => {
+  for (const path of [
+    '../../docs/blog-editor.md',
+    '../../.claude/skills/blog-editor/SKILL.md',
+    '../../.codex/skills/create-blog-post/SKILL.md',
+    '../../.codex/skills/create-blog-post/references/longmontai-release-workflow.md',
+  ]) {
+    const guide = await readFile(new URL(path, import.meta.url), 'utf8');
+    for (const surface of ['/model-watch', '/leaderboard', '/timeline', 'Star Text']) {
+      assert.ok(guide.includes(surface), `${path} omits ${surface}`);
+    }
+    for (const contract of [
+      'npm run model-watch:update', 'no-change-needed', 'primary-source evidence',
+      'latestBriefingModelIds', 'comparable', 'auto-generation', '10–25',
+    ]) {
+      assert.ok(guide.includes(contract), `${path} omits ${contract}`);
+    }
+    assert.match(guide, /bounded\s+read-only\s+subagent/, `${path} omits Star Text review delegation`);
+    assert.match(guide, /verified\s+primary-source\s+ledger/, `${path} omits the source ledger`);
+  }
+});

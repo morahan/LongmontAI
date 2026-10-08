@@ -4,6 +4,12 @@ import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
 import { createHash } from 'node:crypto';
+import {
+  STAR_TEXT_ALTERNATIVES,
+  STAR_TEXT_BRAND_PHRASE,
+  STAR_TEXT_EDITION,
+  STAR_TEXT_EXCLUDED_CANDIDATES,
+} from '../../src/data/starText.ts';
 import { createNebulaField, sampleNebulaTransmission, getNebulaDepthTransmission } from '../../src/components/spaceNebulaModel.ts';
 import * as spaceModel from '../../src/components/spaceBackgroundModel.ts';
 import {
@@ -14,6 +20,7 @@ import {
   EASTER_EGG_CLICK_DISTANCE_PX,
   EASTER_EGG_CLICK_INTERVAL_MS,
   CONSTELLATION_INTERVAL_SECONDS,
+  CONSTELLATION_BUCKET_COUNT,
   CONSTELLATION_PHRASES,
   CONSTELLATION_STAR_COUNT,
   CONSTELLATION_STAR_RGB,
@@ -454,7 +461,8 @@ test('aura caching preserves uncached visual data through seeded events, tiers a
     });
   ` + source.slice(end);
   const uncachedStyles = runInNewContext(
-    `${stripTypeScriptTypes(uncachedSource).replace(/^export /gm, '')}\ngetStarFieldStyles;`,
+    `${stripTypeScriptTypes(uncachedSource.replace(/^import \{[\s\S]*?\} from '\.\.\/data\/starText\.ts';\n/, '')).replace(/^export /gm, '')}\ngetStarFieldStyles;`,
+    { STAR_TEXT_ALTERNATIVES, STAR_TEXT_BRAND_PHRASE },
   );
   const phases = new Set();
   for (const seed of [0, 17, 12345]) {
@@ -1049,12 +1057,14 @@ test('three separately observed nearby clicks work when native detail remains on
 test('Easter eggs cycle deterministically through every hidden phrase and never select LONGMONT AI', () => {
   assert.deepEqual(EASTER_EGG_PHRASES, CONSTELLATION_PHRASES.slice(1));
   for (const seed of [0, 1, 0x51a7, 0xffffffff]) {
-    const firstCycle = Array.from({ length: 6 }, (_, trigger) => selectEasterEggPhrase(seed, trigger));
-    assert.equal(new Set(firstCycle).size, 6);
+    const firstCycle = Array.from({ length: EASTER_EGG_PHRASES.length }, (_, trigger) =>
+      selectEasterEggPhrase(seed, trigger));
+    assert.equal(new Set(firstCycle).size, EASTER_EGG_PHRASES.length);
     assert.deepEqual([...firstCycle].sort(), [...EASTER_EGG_PHRASES].sort());
-    assert.ok(firstCycle.every((phrase) => phrase !== 'LONGMONT AI'));
+    assert.ok(firstCycle.every((phrase) => phrase !== STAR_TEXT_BRAND_PHRASE));
     assert.deepEqual(
-      Array.from({ length: 6 }, (_, trigger) => selectEasterEggPhrase(seed, trigger + 6)),
+      Array.from({ length: EASTER_EGG_PHRASES.length }, (_, trigger) =>
+        selectEasterEggPhrase(seed, trigger + EASTER_EGG_PHRASES.length)),
       firstCycle,
     );
   }
@@ -1606,23 +1616,34 @@ test('Easter target styles retain every constellation anchor and scheduled selec
   }
 });
 
-test('constellation phrase buckets preserve spelling and exact 50/50 then equal-alternative semantics', () => {
-  assert.deepEqual(CONSTELLATION_PHRASES, [
-    'LONGMONT AI',
-    '1023.Digital',
-    'Nerual Networks',
-    'Attention',
-    'Transformer',
-    'Context',
-    'Harness',
-  ]);
-  const buckets = Array.from({ length: 12 }, (_, bucket) => getConstellationPhraseForBucket(bucket));
-  assert.equal(buckets.filter((phrase) => phrase === 'LONGMONT AI').length, 6);
+test('editorial Star Text registry is source-backed, unique, and excludes unsupported releases', () => {
+  const edition = readFileSync(
+    new URL('../../src/articles/drafts/2026.09.02-host-then-cheap-stack.md', import.meta.url), 'utf8');
+  assert.equal(STAR_TEXT_EDITION.id, 'edition-2026-09-02-host-then-cheap-stack');
+  assert.ok(STAR_TEXT_ALTERNATIVES.length >= 10 && STAR_TEXT_ALTERNATIVES.length <= 25);
+  assert.deepEqual(CONSTELLATION_PHRASES, [STAR_TEXT_BRAND_PHRASE,
+    ...STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase)]);
+  const normalized = STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase.replace(/[^A-Z0-9]/g, ''));
+  assert.equal(new Set(normalized).size, normalized.length);
+  for (const { phrase, topic, primarySourceUrl } of STAR_TEXT_ALTERNATIVES) {
+    assert.ok(phrase && topic);
+    assert.match(primarySourceUrl, /^https:\/\//);
+    assert.ok(edition.includes(primarySourceUrl), `${phrase} source missing from edition ledger`);
+  }
+  assert.deepEqual(STAR_TEXT_EXCLUDED_CANDIDATES.map(({ phrase }) => phrase),
+    ['DEEPSEEK V5', 'GPT-6', 'ASTRA', 'CLAUDE FABLE 5.1']);
+});
+
+test('constellation phrase buckets preserve exact 50/50 then equal-alternative semantics', () => {
+  const buckets = Array.from({ length: CONSTELLATION_BUCKET_COUNT },
+    (_, bucket) => getConstellationPhraseForBucket(bucket));
+  assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_BRAND_PHRASE).length,
+    STAR_TEXT_ALTERNATIVES.length);
   CONSTELLATION_PHRASES.slice(1).forEach((phrase) => {
     assert.equal(buckets.filter((candidate) => candidate === phrase).length, 1, phrase);
   });
-  assert.equal(getConstellationPhraseForBucket(12), 'LONGMONT AI');
-  assert.equal(getConstellationPhraseForBucket(-1), 'Harness');
+  assert.equal(getConstellationPhraseForBucket(CONSTELLATION_BUCKET_COUNT), STAR_TEXT_BRAND_PHRASE);
+  assert.equal(getConstellationPhraseForBucket(-1), CONSTELLATION_PHRASES.at(-1));
 });
 
 test('event selection is stable and every phrase is reachable from deterministic seed/event identity', () => {
@@ -1713,7 +1734,8 @@ test('every glyph receives deterministic variable density with unique readable a
 // Read the actual private source graph without adding a production testing API.
 const sourceGlyphGraph = runInNewContext(`${stripTypeScriptTypes(readFileSync(
   new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8',
-)).replace(/^export /gm, '')}\n({ GLYPHS, createGlyphStrokes });`);
+).replace(/^import \{[\s\S]*?\} from '\.\.\/data\/starText\.ts';\n/, '')).replace(/^export /gm, '')}\n({ GLYPHS, createGlyphStrokes });`,
+{ STAR_TEXT_ALTERNATIVES, STAR_TEXT_BRAND_PHRASE });
 
 const liesOnStroke = (point, [start, end]) => {
   const dx = end.x - start.x;

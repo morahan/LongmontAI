@@ -134,7 +134,7 @@ Use this guide for every Longmont AI meetup edition.
   `npm run test:mobile`; that explicit mode may use headed Chrome. Headless and
   headed runs enforce the same audit failures and retain the same screenshots.
 
-## Model Watch cadence
+## Living-surface review cadence
 
 - Intake is **manual local**: `npm run content:update` checks fixed official
   sources and writes a reviewable Model Watch snapshot and website-unpublished
@@ -151,6 +151,18 @@ Use this guide for every Longmont AI meetup edition.
   edition is promoted. Add a curated entry only when the primary announcement
   confirms a named model, date, and availability; label vendor benchmark claims
   as vendor-reported.
+- During drafting and again before promotion, review `/model-watch`,
+  `/leaderboard`, `/timeline`, and the hidden header/Star Text. For each surface,
+  record an individual updated or no-change-needed result, the reason, and
+  primary-source evidence. Check `latestBriefingModelIds`; compare leaderboard
+  results only when benchmark methods are comparable and retain their notes.
+  Determine whether timeline coverage comes from Model Watch auto-generation or
+  needs an explicit event, without duplicating it.
+- For each edition, use a bounded read-only subagent to propose 10–25 timely
+  words or short phrases from that edition's verified primary-source ledger.
+  The parent/editor independently verifies every proposal against the ledger,
+  selects and stores 10–25 alternatives in `src/data/starText.ts`, and removes
+  stale phrases. Exclude speculative model names even when they sound plausible.
 - The source configuration in `scripts/model-watch-sources.mjs` is shared by
   the local producer and compatibility updater. The status endpoint serves
   only the deployed static snapshot; it never refreshes upstream sources.

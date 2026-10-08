@@ -18,6 +18,15 @@ description: Draft and release Longmont AI meetup editions with dated asset orga
    a concise high-resolution top slideshow with a downloadable deck.
 6. Label evidence honestly. Separate social claims, vendor claims, independent
    benchmarks, and primary research.
-7. At the scheduled time only, promote the article and approved assets, update
+7. During drafting and before promotion, review `/model-watch`, `/leaderboard`,
+   `/timeline`, and hidden header/Star Text. Run `npm run model-watch:update`.
+   For each surface record an individual updated or no-change-needed result,
+   reason, and primary-source evidence. Check `latestBriefingModelIds`, compare
+   leaderboard results only when benchmarks are comparable, and distinguish
+   timeline auto-generation from explicit events. For Star Text, use a bounded
+   read-only subagent to propose 10–25 timely words or short phrases only from
+   that edition's verified primary-source ledger. The parent/editor independently
+   verifies every proposal, then selects and stores 10–25 in `src/data/starText.ts`.
+8. At the scheduled time only, promote the article and approved assets, update
    the registries, run `npm run content:check-assets` and `npm run build`, check
    desktop and mobile, then publish through the normal reviewed path.

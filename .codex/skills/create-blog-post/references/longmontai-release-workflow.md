@@ -19,7 +19,16 @@ The existing scheduled-edition API is a deliberately isolated, single-edition im
 
 1. Inspect every asset for private information and visual quality before copying it into a public path.
 2. Confirm every Markdown image, slideshow, video, PDF, and source link resolves.
-3. Run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`.
-4. Use Browser Harness to view the rendered article and slides at 360 px, 390 px, and 430 px. Check the first and last slide as well as each individual slide.
-5. Run `npm run security:review` before publication. A scanner error or unavailable scanner blocks publication.
-6. Stop at review-ready status unless the user separately requests the normal commit and push workflow.
+3. During drafting and before promotion, review `/model-watch`, `/leaderboard`,
+   `/timeline`, and hidden header/Star Text. Run `npm run model-watch:update`.
+   For each surface record an individual updated or no-change-needed result,
+   reason, and primary-source evidence. Check `latestBriefingModelIds`, compare
+   leaderboard results only when benchmarks are comparable, and distinguish
+   timeline auto-generation from explicit events. For Star Text, use a bounded
+   read-only subagent to propose 10–25 timely words or short phrases only from
+   that edition's verified primary-source ledger. The parent/editor independently
+   verifies every proposal, then selects and stores 10–25 in `src/data/starText.ts`.
+4. Run `npm run content:check-assets`, `npm run build`, and `npm run test:mobile`.
+5. Use Browser Harness to view the rendered article and slides at 360 px, 390 px, and 430 px. Check the first and last slide as well as each individual slide.
+6. Run `npm run security:review` before publication. A scanner error or unavailable scanner blocks publication.
+7. Stop at review-ready status unless the user separately requests the normal commit and push workflow.
