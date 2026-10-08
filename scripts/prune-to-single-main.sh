@@ -21,7 +21,7 @@ run $MODE git worktree prune -v
 
 echo "## 2. Delete every local branch except main"
 git branch --format='%(refname:short)' | grep -vx main | while read -r b; do
-  run $MODE git branch -D "$b"
+  run $MODE git branch -D "$b" 2>/dev/null || echo "SKIP (held by a live worktree; remove that worktree first): $b"
 done
 
 echo "## 3. Delete every origin branch except main"
