@@ -516,8 +516,14 @@ const drawStarAura = (
     ctx.fill();
 };
 
-const drawAmbientCardinalFlare = (ctx: CanvasRenderingContext2D, position: Point, style: StarVisualStyle) => {
-    const flare = getAmbientCardinalFlare(style);
+const drawAmbientCardinalFlare = (
+    ctx: CanvasRenderingContext2D,
+    position: Point,
+    style: StarVisualStyle,
+    elapsedSeconds: number,
+    seed: number,
+) => {
+    const flare = getAmbientCardinalFlare(style, elapsedSeconds, seed);
     if (!flare) return;
     ctx.save();
     ctx.globalAlpha = flare.opacity;
@@ -1186,7 +1192,8 @@ const SpaceNeuralBackground: React.FC = () => {
                 ctx.fill();
                 ctx.globalAlpha = 1;
                 drawAmbientCardinalFlare(ctx, position, { ...style,
-                    cardinalFlare: (style.cardinalFlare ?? 0) * transmission });
+                    cardinalFlare: (style.cardinalFlare ?? 0) * transmission }, elapsed,
+                    (scene.seed ^ Math.imul(index + 1, 0x9e3779b1)) >>> 0);
             }
 
             if (canvas.dataset.spaceReady !== 'true') {

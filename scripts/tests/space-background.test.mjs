@@ -400,7 +400,7 @@ test('all five seeded ambient colors and varied radii reach the actual Canvas lo
         const auras = [];
         const ctx = { beginPath() {}, arc(x, y, radius) { arcs.push({ x, y, radius }); },
           fill() { fills.push({ color: this.fillStyle, alpha: this.globalAlpha }); } };
-        runInNewContext(loop, { ...spaceModel, styles, positions, ctx, blackHole: null,
+        runInNewContext(loop, { ...spaceModel, styles, positions, elapsed: time, scene: { seed }, ctx, blackHole: null,
           TAU: Math.PI * 2, nebulaAt: () => 0, getNebulaTextTransmission: () => 1,
           drawStarAura: (_ctx, _x, _y, _radius, aura) => auras.push(aura.rgb.join(',')),
           drawAmbientCardinalFlare: () => {} });
@@ -522,18 +522,34 @@ test('seeded ambient cardinal flares stay near 10% in all tiers and retained lay
     }
   }
   const styles = getStarFieldStyles(12345, 47);
-  const later = getStarFieldStyles(12345, 80);
+  const partial = { ...styles.find((style) => style.cardinalFlare), cardinalFlare: 0.5 };
+  const at = (time, seed = 456) => spaceModel.getAmbientCardinalFlare(partial, time, seed);
+  const baseline = 0.5;
+  const cycleSamples = Array.from({ length: 29 }, (_, index) => at(index * 0.25));
+  assert.deepEqual(at(1.25), at(1.25));
+  assert.ok(new Set(cycleSamples.map((flare) => flare.opacity)).size > 1);
+  assert.ok(new Set(cycleSamples.map((flare) => flare.rayLength)).size > 1);
+  assert.ok(cycleSamples.every((flare) => flare.rayLength >= partial.radius * 8.1
+    && flare.rayLength <= partial.radius * 9.9));
+  assert.ok(cycleSamples.every((flare) => flare.opacity >= baseline * 0.9
+    && flare.opacity <= Math.min(1, baseline * 1.1)));
+  assert.notEqual(at(1.25, 456).rayLength, at(1.25, 457).rayLength);
+  const closeA = at(2);
+  const closeB = at(2.001);
+  assert.ok(Math.abs(closeA.rayLength - closeB.rayLength) < partial.radius * 0.002);
+  assert.ok(Math.abs(closeA.opacity - closeB.opacity) < 0.001);
   styles.forEach((style, index) => {
-    const flare = spaceModel.getAmbientCardinalFlare(style);
-    assert.deepEqual(flare, spaceModel.getAmbientCardinalFlare(later[index]));
+    const flare = spaceModel.getAmbientCardinalFlare(style, 0, index);
     if (!flare) return;
-    assert.equal(flare.opacity, 1);
-    assert.deepEqual(flare.rays, [{ x: 0, y: -style.radius * 9 }, { x: 0, y: style.radius * 9 },
-      { x: style.radius * 9, y: 0 }, { x: -style.radius * 9, y: 0 }]);
+    assert.ok(flare.opacity >= 0 && flare.opacity <= 1);
+    assert.ok(flare.rayLength >= style.radius * 8.1 && flare.rayLength <= style.radius * 9.9);
+    assert.deepEqual(flare.rays, [{ x: 0, y: -flare.rayLength }, { x: 0, y: flare.rayLength },
+      { x: flare.rayLength, y: 0 }, { x: -flare.rayLength, y: 0 }]);
   });
-  getStarFieldStyles(12345, getInitialConstellationDelay(12345) + 10).slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style) =>
-    assert.equal(spaceModel.getAmbientCardinalFlare(style), null));
-  createEasterEggTargetStyles(12345, 0).forEach((style) => assert.equal(spaceModel.getAmbientCardinalFlare(style), null));
+  getStarFieldStyles(12345, getInitialConstellationDelay(12345) + 10).slice(0, MAX_STAR_TEXT_ANCHOR_COUNT).forEach((style, index) =>
+    assert.equal(spaceModel.getAmbientCardinalFlare(style, 10, index), null));
+  createEasterEggTargetStyles(12345, 0).forEach((style, index) =>
+    assert.equal(spaceModel.getAmbientCardinalFlare(style, 0, index), null));
 });
 
 test('auras are varied and deterministic while cores are opaque outside lifecycle fades', () => {

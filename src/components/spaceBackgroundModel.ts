@@ -839,10 +839,17 @@ const mixStarAura = (from: StarAura, to: StarAura, amount: number): StarAura => 
         mix(from.rgb[2], to.rgb[2], amount)],
 });
 
-export const getAmbientCardinalFlare = (style: StarVisualStyle) => {
-    const opacity = clamp01(style.cardinalFlare ?? 0);
-    if (opacity <= 0 || style.opacity <= 0) return null;
-    const rayLength = style.radius * 9;
+export const getAmbientCardinalFlare = (
+    style: StarVisualStyle,
+    elapsedSeconds: number,
+    seed: number,
+) => {
+    const baseOpacity = clamp01(style.cardinalFlare ?? 0);
+    if (baseOpacity <= 0 || style.opacity <= 0) return null;
+    const phase = elapsedSeconds * (Math.PI * 2 / 7) + hashRandom(seed, 0, 816) * Math.PI * 2;
+    const oscillation = Math.sin(phase);
+    const rayLength = style.radius * 9 * (1 + oscillation * 0.1);
+    const opacity = clamp01(baseOpacity * (1 + oscillation * 0.1));
     return { opacity, rayLength, rayWidth: Math.max(0.45, style.radius * 0.55),
         coreRadius: style.radius * 0.85,
         rays: [{ x: 0, y: -rayLength }, { x: 0, y: rayLength },
