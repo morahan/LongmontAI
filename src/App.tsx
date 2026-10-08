@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { BrowserRouter as Router, Link, Routes, Route, useLocation } from 'react-router-dom';
 import { routeTitle, useDocumentTitle } from './lib/documentTitle';
 import Layout from './components/Layout';
+import RouteNavigation from './components/RouteNavigation';
 import Feed from './pages/Feed';
 
 const Edition = lazy(() => import('./pages/Edition'));
@@ -58,10 +59,11 @@ function App() {
   return (
     <Router>
       <RouteDocumentTitle />
+      <RouteNavigation />
       <Layout>
         <PageBoundary>
         <Suspense fallback={(
-          <div className="min-h-[40vh]" role="status" aria-live="polite">
+          <div data-route-loading className="min-h-[40vh]" role="status" aria-live="polite">
             <span className="sr-only">Loading page…</span>
           </div>
         )}>

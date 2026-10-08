@@ -65,6 +65,8 @@ export interface ModelBenchmarkDefinition {
   unit: '%' | 'score' | 'index' | '$/task' | '$/M tokens';
   higherIsBetter: boolean;
   description: string;
+  /** False when metric version or harness provenance is insufficient for ranking. */
+  rankable?: boolean;
 }
 
 export interface ModelBenchmarkScore {
@@ -796,17 +798,19 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
   },
   {
     key: 'terminalBench',
-    label: 'Terminal-Bench',
+    label: 'Terminal-Bench (version unspecified)',
+    rankable: false,
     unit: '%',
     higherIsBetter: true,
-    description: 'Terminal-based coding task score when reported for a model.',
+    description: 'Reported values retained unranked: benchmark version and comparable harness are not established.',
   },
   {
     key: 'frontierCode',
-    label: 'FrontierCode',
+    label: 'Coding score (metric/version unverified)',
+    rankable: false,
     unit: 'score',
     higherIsBetter: true,
-    description: 'Agentic coding benchmark score from the June model-watch notes where available.',
+    description: 'Legacy FrontierCode-field values retained unranked: the metric and version are not verified.',
   },
   {
     key: 'hle',
@@ -845,10 +849,11 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
   },
   {
     key: 'aaIndex',
-    label: 'AA Intelligence Index',
+    label: 'AA Intelligence Index (version unspecified)',
+    rankable: false,
     unit: 'index',
     higherIsBetter: true,
-    description: 'Artificial Analysis intelligence index value from the June 2026 notes.',
+    description: 'Reported values retained unranked because the index version is unspecified.',
   },
   {
     key: 'costPerTask',
