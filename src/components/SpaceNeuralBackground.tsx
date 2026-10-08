@@ -129,8 +129,8 @@ const drawMoon = (
     moon: OrbitingMoon,
     opacity: number,
 ) => {
-    ctx.fillStyle = `rgba(225, 236, 241, ${opacity * 0.94})`;
-    ctx.strokeStyle = `rgba(130, 166, 184, ${opacity * 0.9})`;
+    ctx.fillStyle = `rgba(225, 236, 241, ${opacity * 0.58})`;
+    ctx.strokeStyle = `rgba(130, 166, 184, ${opacity * 0.5})`;
     ctx.lineWidth = 0.14;
     ctx.beginPath();
     ctx.arc(moon.x, moon.y, moon.radius, 0, TAU);

@@ -100,14 +100,15 @@ export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const PLANET_RING_LINE_WIDTH = 0.8;
 export const PLANET_RADIUS_RANGE = [1.45, 2.3] as const;
 export const PLANET_RENDER_SCALE = 0.5;
-export const MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO = 0.5;
+export const MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO = 0.35;
 export const SYSTEM_STAR_RADIUS = 11.55;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
 export const SYSTEM_CARRIER_INTERVAL = 3;
 export const SYSTEM_CARRIER_FRACTION = 1 / SYSTEM_CARRIER_INTERVAL;
-export const PLANET_COUNT_BASIS_POINTS = [500, 500, 1000, 2500, 2500, 3000] as const;
+/** Basis points for 0 through 10 planets: 1-2 likely, 0 semi-unlikely, then rarer up to 1% at ten. */
+export const PLANET_COUNT_BASIS_POINTS = [1200, 2600, 2400, 1460, 860, 550, 350, 220, 150, 110, 100] as const;
 
 const UINT32_RANGE = 4294967296;
 const DEPTH_RANGE = FAR_DEPTH - NEAR_DEPTH;
@@ -649,9 +650,11 @@ export const getSimulationTime = (elapsedSeconds: number, sceneSeed = 0) => {
         - Math.min(phase.eventElapsed, CONSTELLATION_WINDOW_SECONDS);
 };
 
-// Paired layers preserve balanced drift and near-10% flares in every tier prefix.
+// Paired layers preserve balanced drift and near-8% flares in every tier prefix.
 const morphingAmbientIndex = (index: number) => index + 2 * Math.floor(index / 2);
+/** One flare per ten-star block, except every fifth block (seeded offset) stays flare-free. */
 const ambientFlareIndexForBlock = (seed: number, generation: number, block: number) => {
+    if ((block + hashUint(seed, generation, 703) % 5) % 5 === 0) return -1;
     const layer = (block & 1) ^ (hashUint(seed, generation, 701) & 1);
     const candidates = Array.from({ length: 10 }, (_, offset) => block * 10 + offset)
         .filter((candidate) => (candidate % 4 >= 2 ? 1 : 0) === layer);
@@ -848,8 +851,12 @@ export const getAmbientCardinalFlare = (
 ) => {
     const baseOpacity = clamp01(style.cardinalFlare ?? 0);
     if (baseOpacity <= 0 || style.opacity <= 0) return null;
-    const phase = elapsedSeconds * (Math.PI * 2 / 7) + hashRandom(seed, 0, 816) * Math.PI * 2;
-    const oscillation = Math.sin(phase);
+    // Two slow, per-star random periods (16-30s and 6-12s) blend into an unhurried, aperiodic drift.
+    const slowPeriod = 16 + hashRandom(seed, 0, 817) * 14;
+    const fastPeriod = 6 + hashRandom(seed, 0, 818) * 6;
+    const slowPhase = elapsedSeconds * (TAU / slowPeriod) + hashRandom(seed, 0, 816) * TAU;
+    const fastPhase = elapsedSeconds * (TAU / fastPeriod) + hashRandom(seed, 0, 819) * TAU;
+    const oscillation = Math.sin(slowPhase) * 0.7 + Math.sin(fastPhase) * 0.3;
     const rayLength = style.radius * 9 * (1 + oscillation * 0.1);
     const opacity = clamp01(baseOpacity * (1 + oscillation * 0.1));
     return { opacity, rayLength, rayWidth: Math.max(0.45, style.radius * 0.55),
@@ -2738,9 +2745,9 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
     let cursor = random() * 10000;
     for (let index = 0; index < PLANET_COUNT_BASIS_POINTS.length; index += 1) {
         cursor -= PLANET_COUNT_BASIS_POINTS[index];
-        if (cursor < 0) return index + 1;
+        if (cursor < 0) return index;
     }
-    return PLANET_COUNT_BASIS_POINTS.length;
+    return PLANET_COUNT_BASIS_POINTS.length - 1;
 };
 
 export const MOON_COUNT_BASIS_POINTS = [1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250] as const;
@@ -2777,8 +2784,10 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
         const moons: Moon[] = Array.from({ length: moonCount }, (_, moonIndex) => ({
             // Relative sizing stays varied without allowing moons to overwhelm smaller parents.
             radius: between(random, maxMoonRadius * 0.55, maxMoonRadius),
-            // Strict radial tiers and stratified phases keep dense seven-moon systems readable.
-            orbitRadius: radius + 1.8 + moonIndex * 1.2 + between(random, 0, 0.12),
+            // Tight radial tiers hug the rendered parent (inner track clears the disc on the
+            // 0.55 minor axis) while stratified phases keep dense seven-moon systems readable.
+            orbitRadius: radius * PLANET_RENDER_SCALE * 2.5 + 0.1
+                + moonIndex * 0.8 + between(random, 0, 0.08),
             phase: moonPhase
                 + moonIndex * TAU / Math.max(1, moonCount)
                 + between(random, -0.1, 0.1),
@@ -2858,12 +2867,15 @@ export const getOrbitingPlanets = (
     .map((planet) => getOrbitingPlanet(planet, simulationSeconds, center))
     .sort((left, right) => left.z - right.z);
 
-/** Systems reveal smoothly, then stay opaque until their rendered bounds leave the viewport. */
+/** Planet systems fade in over this much traveler progress once they become eligible. */
+export const SYSTEM_REVEAL_PROGRESS_SPAN = 0.3;
+
+/** Systems reveal gradually, then stay opaque until their rendered bounds leave the viewport. */
 export const getSystemOpacity = (
     projection: ProjectedTraveler,
     carrierOpacity = projection.opacity,
 ) => {
-    const reveal = smoothstep((projection.progress - SYSTEM_MIN_PROGRESS) / 0.12);
+    const reveal = smoothstep((projection.progress - SYSTEM_MIN_PROGRESS) / SYSTEM_REVEAL_PROGRESS_SPAN);
     return carrierOpacity * reveal;
 };
 

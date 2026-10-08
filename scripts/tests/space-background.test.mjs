@@ -512,13 +512,13 @@ test('all tiers preserve visible scheduled and click-trigger boundary frames, in
   }
 });
 
-test('seeded ambient cardinal flares stay near 10% in all tiers and retained layers', () => {
+test('seeded ambient cardinal flares stay near 8% in all tiers and retained layers', () => {
   for (let seed = 0; seed < 24; seed += 1) {
     for (const generation of [0, 1, 3]) {
       for (const width of [390, 1000, 1920]) {
         const stars = createAmbientLayout(seed, generation, starCountForWidth(width));
         for (const layer of [stars, stars.filter((_, index) => index % 4 >= 2)]) {
-          assert.ok(Math.abs(layer.filter((star) => star.hasCardinalFlare).length - layer.length * 0.1) < 1);
+          assert.ok(Math.abs(layer.filter((star) => star.hasCardinalFlare).length - layer.length * 0.08) < 2);
           assert.equal(layer.filter((star) => star.driftMode === 'wrap').length, layer.length / 2);
         }
       }
@@ -528,7 +528,7 @@ test('seeded ambient cardinal flares stay near 10% in all tiers and retained lay
   const partial = { ...styles.find((style) => style.cardinalFlare), cardinalFlare: 0.5 };
   const at = (time, seed = 456) => spaceModel.getAmbientCardinalFlare(partial, time, seed);
   const baseline = 0.5;
-  const cycleSamples = Array.from({ length: 29 }, (_, index) => at(index * 0.25));
+  const cycleSamples = Array.from({ length: 121 }, (_, index) => at(index * 0.25));
   assert.deepEqual(at(1.25), at(1.25));
   assert.ok(new Set(cycleSamples.map((flare) => flare.opacity)).size > 1);
   assert.ok(new Set(cycleSamples.map((flare) => flare.rayLength)).size > 1);
@@ -635,9 +635,9 @@ test('mobile ambient prefixes feed every glyph without rerouting shared sources 
 
 test('planetary data matches current-main digests and rare visitors never become enlarged hosts', () => {
   for (const [seed, digest] of [
-    [0, '9ec6d996a772cb181fdc93d1a1d193162fdeb8c9cc5a83f426b593ddc46d5ce6'],
-    [17, '97510b2710646e2583a81dabdd381da951f26fa833fd564fe12d4dc8f6fd9415'],
-    [9876, '94ba5ccb7d9efa033ada7d546377ad4c522e02d26d6731cfa52938d35ca1209d'],
+    [0, '381a104113c3cafb50a47b9bf7a6861e469e40ac9a12e7a61c9a7b5e971c5fd1'],
+    [17, 'c00777d31ed1f4f0b78a6e21b3631fa96cf01ee374bd57fff538eb61ab18e7fa'],
+    [9876, '4a425fe5fbe85461eeaa8ab11e8baa595b0017458925aeeca2ade3a264fc32a0'],
   ]) assert.equal(createHash('sha256').update(JSON.stringify(createPlanetSystem(seed, 3))).digest('hex'), digest);
   for (const variant of ['ufo', 'comet']) {
     let seed = 0;
@@ -731,38 +731,41 @@ test('crypto seeding is preferred, falls back exactly once, and explicit scene s
 });
 
 test('the exact reviewed planet-count CDF uses 10,000 basis points', () => {
-  assert.deepEqual(PLANET_COUNT_BASIS_POINTS, [500, 500, 1000, 2500, 2500, 3000]);
+  assert.deepEqual(PLANET_COUNT_BASIS_POINTS, [1200, 2600, 2400, 1460, 860, 550, 350, 220, 150, 110, 100]);
   assert.equal(PLANET_COUNT_BASIS_POINTS.reduce((sum, value) => sum + value, 0), 10000);
   let lower = 0;
   PLANET_COUNT_BASIS_POINTS.forEach((weight, index) => {
     const midpoint = (lower + weight / 2) / 10000;
-    assert.equal(chooseWeightedPlanetCount(() => midpoint), index + 1);
+    assert.equal(chooseWeightedPlanetCount(() => midpoint), index);
     lower += weight;
     if (index < PLANET_COUNT_BASIS_POINTS.length - 1) {
-      assert.equal(chooseWeightedPlanetCount(() => lower / 10000), index + 2);
+      assert.equal(chooseWeightedPlanetCount(() => lower / 10000), index + 1);
     }
   });
-  assert.equal(chooseWeightedPlanetCount(() => 0), 1);
-  assert.equal(chooseWeightedPlanetCount(() => 0.999999999), 6);
-  const conditionalMean = PLANET_COUNT_BASIS_POINTS.reduce((sum, weight, index) => sum + weight * (index + 1), 0) / 10000;
+  assert.equal(chooseWeightedPlanetCount(() => 0), 0);
+  assert.equal(chooseWeightedPlanetCount(() => 0.999999999), 10);
+  // One and two planets are likeliest; counts then grow progressively rarer, ending at 1% for ten.
+  assert.ok(PLANET_COUNT_BASIS_POINTS[1] >= PLANET_COUNT_BASIS_POINTS[2]);
+  assert.ok(PLANET_COUNT_BASIS_POINTS[0] < PLANET_COUNT_BASIS_POINTS[1]);
+  for (let count = 2; count < PLANET_COUNT_BASIS_POINTS.length; count += 1) {
+    assert.ok(PLANET_COUNT_BASIS_POINTS[count] < PLANET_COUNT_BASIS_POINTS[count - 1]);
+  }
+  assert.equal(PLANET_COUNT_BASIS_POINTS[10], 100, 'ten planets is a one-in-a-hundred system');
   closeTo(SYSTEM_CARRIER_FRACTION, 1 / 3);
   const intervalTravelers = Array.from({ length: SYSTEM_CARRIER_INTERVAL }, () => ({ isGalaxy: false }));
   assert.equal(intervalTravelers.filter((traveler, index) => isSystemCarrier(traveler, index)).length,
     SYSTEM_CARRIER_FRACTION * SYSTEM_CARRIER_INTERVAL);
-  closeTo(SYSTEM_CARRIER_FRACTION * conditionalMean, 1.5);
-  assert.ok(SYSTEM_CARRIER_FRACTION * conditionalMean >= 1.45
-    && SYSTEM_CARRIER_FRACTION * conditionalMean <= 1.55);
-  assert.equal(PLANET_COUNT_BASIS_POINTS.length, 6, 'hard cap is six planets per carrier');
+  assert.equal(PLANET_COUNT_BASIS_POINTS.length, 11, 'hard cap is ten planets per carrier');
 });
 
 test('100k deterministic samples match every reviewed planet percentage within tolerance', () => {
   const random = createSeededRandom(0x51a7c0de);
   const observed = Array(PLANET_COUNT_BASIS_POINTS.length).fill(0);
-  for (let index = 0; index < 100000; index += 1) observed[chooseWeightedPlanetCount(random) - 1] += 1;
+  for (let index = 0; index < 100000; index += 1) observed[chooseWeightedPlanetCount(random)] += 1;
   PLANET_COUNT_BASIS_POINTS.forEach((basisPoints, index) => {
     const expected = basisPoints * 10;
     assert.ok(Math.abs(observed[index] - expected) <= 500,
-      `count ${index + 1}: expected ${expected}, observed ${observed[index]}`);
+      `count ${index}: expected ${expected}, observed ${observed[index]}`);
   });
 });
 
@@ -3327,8 +3330,8 @@ test('system opacity reveals once and remains stable past the selection cutoff',
     cycle: 0,
   });
   assert.equal(getSystemOpacity(projectionAt(SYSTEM_MIN_PROGRESS - 0.001)), 0);
-  closeTo(getSystemOpacity(projectionAt(SYSTEM_MIN_PROGRESS + 0.06)), 0.36);
-  const stableSamples = [SYSTEM_MIN_PROGRESS + 0.12, 0.78, 0.84, 0.9, 0.99]
+  closeTo(getSystemOpacity(projectionAt(SYSTEM_MIN_PROGRESS + 0.15)), 0.36);
+  const stableSamples = [SYSTEM_MIN_PROGRESS + 0.3, 0.78, 0.84, 0.9, 0.99]
     .map((progress) => getSystemOpacity(projectionAt(progress)));
   stableSamples.forEach((opacity) => closeTo(opacity, 0.72));
   closeTo(getSystemOpacity(projectionAt(0.9, 0), 0.36), 0.36);
@@ -3421,7 +3424,8 @@ test('deterministic carrier fraction excludes galaxies and permits zero-planet m
   assert.ok(moving.some((traveler) => !isSystemCarrier(traveler, scene.travelers.indexOf(traveler))));
   assert.ok(scene.travelers.filter((traveler) => traveler.isGalaxy)
     .every((traveler) => !isSystemCarrier(traveler, scene.travelers.indexOf(traveler))));
-  assert.equal(chooseWeightedPlanetCount(() => 0.025), 1);
+  assert.equal(chooseWeightedPlanetCount(() => 0.025), 0, "a seeded carrier can roll zero planets");
+  assert.equal(chooseWeightedPlanetCount(() => 0.2), 1);
 });
 
 test('the expanded deterministic carrier minority still selects one nearest useful system', () => {
@@ -3576,7 +3580,7 @@ test('canvas doubles the host disc but retains ordinary-host caps for both orbit
         getOrbitingPlanets: () => [-1, 1].map((z) => ({
           radius: PLANET_RADIUS_RANGE[1], x: z * 10, y: 0, z,
           atmosphere: 'rocky-cratered', color: '#ffffff', surfaceSeed: 1,
-          moons: [{ radius: 0.5, orbitRadius: 2, phase: 0, speed: 1, inclination: 0.5 }],
+          moons: [{ radius: PLANET_RADIUS_RANGE[1] * 0.5 * 0.34, orbitRadius: 2, phase: 0, speed: 1, inclination: 0.5 }],
         })),
       });
       draw(ctx, traveler, projection, 1, nebulaTransmission);
@@ -3594,7 +3598,7 @@ test('canvas doubles the host disc but retains ordinary-host caps for both orbit
 });
 
 test('every generated moon stays at most half its rendered parent radius at every system scale', () => {
-  assert.equal(MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO, 0.5);
+  assert.equal(MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO, 0.35);
   const systemScales = Array.from({ length: 101 }, (_, index) => getSystemScale({
     progress: SYSTEM_MIN_PROGRESS
       + (SYSTEM_MAX_PROGRESS - SYSTEM_MIN_PROGRESS) * index / 100,
@@ -3629,8 +3633,8 @@ test('every generated moon stays at most half its rendered parent radius at ever
   }
 
   assert.ok(moonCount > 1000, `only sampled ${moonCount} moons`);
-  assert.ok(smallestRatio < 0.3, `smallest moon ratio ${smallestRatio} was not visibly varied`);
-  assert.ok(largestRatio > 0.49, `largest moon ratio ${largestRatio} did not approach the cap`);
+  assert.ok(smallestRatio < 0.21, `smallest moon ratio ${smallestRatio} was not visibly varied`);
+  assert.ok(largestRatio > 0.34, `largest moon ratio ${largestRatio} did not approach the cap`);
 });
 
 test('per-planet moon CDF has exact basis-point boundaries and a 3.5 mean', () => {
@@ -3679,7 +3683,7 @@ test('planet moon generation reaches 0-7 independently with no system cap and le
       assert.ok(planet.moons.length <= 7);
       planet.moons.forEach((moon, index) => {
         if (index === 0) return;
-        assert.ok(moon.orbitRadius - planet.moons[index - 1].orbitRadius >= 1.08 - 1e-12);
+        assert.ok(moon.orbitRadius - planet.moons[index - 1].orbitRadius >= 0.72 - 1e-12);
         assert.ok(Math.abs(planet.moons[index - 1].speed) - Math.abs(moon.speed) >= 0.06 - 1e-12);
       });
       if (planet.moons.length > 1) {
