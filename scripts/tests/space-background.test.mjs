@@ -60,6 +60,8 @@ import {
   NEURAL_SIGNAL_WIDTH_RANGE,
   PLANET_ATMOSPHERE_CLASSES,
   PLANET_COUNT_BASIS_POINTS,
+  SYSTEM_CARRIER_FRACTION,
+  SYSTEM_CARRIER_INTERVAL,
   PLANET_RADIUS_RANGE,
   PLANET_RENDER_SCALE,
   PLANET_RING_LINE_WIDTH,
@@ -632,9 +634,9 @@ test('mobile ambient prefixes feed every glyph without rerouting shared sources 
 
 test('planetary data matches current-main digests and rare visitors never become enlarged hosts', () => {
   for (const [seed, digest] of [
-    [0, '1f2912c262933618a4b0ed0d5e7c728dea316242534c70231c1b0fd0d5baf1f7'],
-    [17, '05d28cee2320d75b44c9369a383889683d0adbe5ea14fdb82ed833bdc7c34126'],
-    [9876, 'fdbccbdde48a7395527248777af0f795aa0eb82cfc0f6a86d320b41ccdecb095'],
+    [0, 'd0ed4cef516a285de4ef32e69d68218c735a554524f2d3fbd44447e81279fa71'],
+    [17, '7ce250591c45b68f6e469cf60b827bdfb42b62a17c410a44e119104f4877469f'],
+    [9876, '6e4ee54471f0351e7ad1714c12bf6d81da6364caf2164e4bff6aae2bf4669006'],
   ]) assert.equal(createHash('sha256').update(JSON.stringify(createPlanetSystem(seed, 3))).digest('hex'), digest);
   for (const variant of ['ufo', 'comet']) {
     let seed = 0;
@@ -728,7 +730,7 @@ test('crypto seeding is preferred, falls back exactly once, and explicit scene s
 });
 
 test('the exact reviewed planet-count CDF uses 10,000 basis points', () => {
-  assert.deepEqual(PLANET_COUNT_BASIS_POINTS, [4000, 2200, 1300, 850, 550, 380, 260, 180, 120, 80, 50, 30]);
+  assert.deepEqual(PLANET_COUNT_BASIS_POINTS, [500, 500, 1000, 2500, 2500, 3000]);
   assert.equal(PLANET_COUNT_BASIS_POINTS.reduce((sum, value) => sum + value, 0), 10000);
   let lower = 0;
   PLANET_COUNT_BASIS_POINTS.forEach((weight, index) => {
@@ -740,12 +742,21 @@ test('the exact reviewed planet-count CDF uses 10,000 basis points', () => {
     }
   });
   assert.equal(chooseWeightedPlanetCount(() => 0), 1);
-  assert.equal(chooseWeightedPlanetCount(() => 0.999999999), 12);
+  assert.equal(chooseWeightedPlanetCount(() => 0.999999999), 6);
+  const conditionalMean = PLANET_COUNT_BASIS_POINTS.reduce((sum, weight, index) => sum + weight * (index + 1), 0) / 10000;
+  closeTo(SYSTEM_CARRIER_FRACTION, 1 / 3);
+  const intervalTravelers = Array.from({ length: SYSTEM_CARRIER_INTERVAL }, () => ({ isGalaxy: false }));
+  assert.equal(intervalTravelers.filter((traveler, index) => isSystemCarrier(traveler, index)).length,
+    SYSTEM_CARRIER_FRACTION * SYSTEM_CARRIER_INTERVAL);
+  closeTo(SYSTEM_CARRIER_FRACTION * conditionalMean, 1.5);
+  assert.ok(SYSTEM_CARRIER_FRACTION * conditionalMean >= 1.45
+    && SYSTEM_CARRIER_FRACTION * conditionalMean <= 1.55);
+  assert.equal(PLANET_COUNT_BASIS_POINTS.length, 6, 'hard cap is six planets per carrier');
 });
 
 test('100k deterministic samples match every reviewed planet percentage within tolerance', () => {
   const random = createSeededRandom(0x51a7c0de);
-  const observed = Array(12).fill(0);
+  const observed = Array(PLANET_COUNT_BASIS_POINTS.length).fill(0);
   for (let index = 0; index < 100000; index += 1) observed[chooseWeightedPlanetCount(random) - 1] += 1;
   PLANET_COUNT_BASIS_POINTS.forEach((basisPoints, index) => {
     const expected = basisPoints * 10;
@@ -3401,18 +3412,29 @@ test('traveler trajectories remain straight and collinear through every reveal t
   });
 });
 
+test('deterministic carrier fraction excludes galaxies and permits zero-planet moving stars', () => {
+  assert.ok(Math.abs(SYSTEM_CARRIER_FRACTION - 1 / 3) < 1e-12);
+  assert.equal(SYSTEM_CARRIER_INTERVAL, 3);
+  const scene = createSpaceScene(9876);
+  const moving = scene.travelers.filter((traveler) => !traveler.isGalaxy);
+  assert.ok(moving.some((traveler) => !isSystemCarrier(traveler, scene.travelers.indexOf(traveler))));
+  assert.ok(scene.travelers.filter((traveler) => traveler.isGalaxy)
+    .every((traveler) => !isSystemCarrier(traveler, scene.travelers.indexOf(traveler))));
+  assert.equal(chooseWeightedPlanetCount(() => 0.025), 1);
+});
+
 test('the expanded deterministic carrier minority still selects one nearest useful system', () => {
   const scene = createSpaceScene(9876);
   const carrierIndices = scene.travelers.map((traveler, index) =>
     isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0);
   // The 16% roll makes slot 14 a galaxy; galaxies remain excluded from carriers.
   assert.equal(scene.travelers[14].isGalaxy, true);
-  assert.deepEqual(carrierIndices, [2, 8, 20, 26, 32, 38, 50, 56, 62, 74, 80, 92, 98,
-    104, 110, 116, 122, 128, 140, 146, 152, 158, 164]);
-  assert.ok(carrierIndices.every((index) => index % 6 === 2 && !scene.travelers[index].isGalaxy));
+  assert.deepEqual(carrierIndices, scene.travelers.map((traveler, index) =>
+    index % SYSTEM_CARRIER_INTERVAL === SYSTEM_CARRIER_INTERVAL - 1 && !traveler.isGalaxy ? index : -1).filter((index) => index >= 0));
+  assert.ok(carrierIndices.every((index) => index % SYSTEM_CARRIER_INTERVAL === SYSTEM_CARRIER_INTERVAL - 1 && !scene.travelers[index].isGalaxy));
   const mobileTravelers = scene.travelers.slice(0, MOBILE_TRAVELER_COUNT);
   assert.deepEqual(mobileTravelers.map((traveler, index) =>
-    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 8]);
+    isSystemCarrier(traveler, index) ? index : -1).filter((index) => index >= 0), [2, 5, 8, 11]);
 
   const projections = scene.travelers.map((_, index) => ({
     x: 400,
@@ -3423,13 +3445,13 @@ test('the expanded deterministic carrier minority still selects one nearest usef
     opacity: 0.6,
     cycle: 0,
   }));
-  assert.equal(selectProminentSystem(scene.travelers, projections, 1000, 600), 20);
+  assert.equal(selectProminentSystem(scene.travelers, projections, 1000, 600), 23);
   assert.equal(selectProminentSystem(
     mobileTravelers,
     projections.slice(0, MOBILE_TRAVELER_COUNT),
     1000,
     600,
-  ), 8);
+  ), 11);
 });
 
 test('planet atmosphere taxonomy is diverse, deterministic, and cycle-seeded', () => {
@@ -3884,11 +3906,11 @@ test('radius-derived periods are distinct, monotonic, visible, and include a det
   assert.ok(periods.at(-1) <= 20, 'outermost orbit exceeds a prominent-system visibility window');
 
   const systemsByCount = new Map();
-  for (let seed = 1; seed <= 10000 && systemsByCount.size < 12; seed += 1) {
+  for (let seed = 1; seed <= 10000 && systemsByCount.size < 6; seed += 1) {
     const candidate = createPlanetSystem(seed, 0);
     if (!systemsByCount.has(candidate.length)) systemsByCount.set(candidate.length, candidate);
   }
-  assert.equal(systemsByCount.size, 12, 'deterministic fixtures do not cover every 1-12 planet count');
+  assert.equal(systemsByCount.size, 6, 'deterministic fixtures do not cover every 1-6 planet count');
   systemsByCount.forEach((system, count) => {
     const generatedPeriods = system.map((planet) => Math.PI * 2 / Math.abs(planet.speed));
     assert.ok(generatedPeriods.every((period, index) =>

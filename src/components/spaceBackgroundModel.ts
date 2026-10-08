@@ -105,7 +105,9 @@ export const SYSTEM_STAR_RADIUS = 11.55;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
-export const PLANET_COUNT_BASIS_POINTS = [4000, 2200, 1300, 850, 550, 380, 260, 180, 120, 80, 50, 30] as const;
+export const SYSTEM_CARRIER_INTERVAL = 3;
+export const SYSTEM_CARRIER_FRACTION = 1 / SYSTEM_CARRIER_INTERVAL;
+export const PLANET_COUNT_BASIS_POINTS = [500, 500, 1000, 2500, 2500, 3000] as const;
 
 const UINT32_RANGE = 4294967296;
 const DEPTH_RANGE = FAR_DEPTH - NEAR_DEPTH;
@@ -556,9 +558,9 @@ export const travelerCountForWidth = (width: number) => MOBILE_TRAVELER_COUNT * 
 /** One galaxy roll in [0, 0.16): a 20% relative reduction from the former 20% chance. */
 export const isGalaxyCreationRoll = (roll: number) => roll >= 0 && roll < GALAXY_CREATION_CHANCE;
 
-/** Every sixth moving star is eligible to carry a prominent planetary system. */
+/** Every third moving star is eligible to carry a prominent planetary system. */
 export const isSystemCarrier = (traveler: Traveler, index: number) =>
-    !traveler.isGalaxy && index % 6 === 2;
+    !traveler.isGalaxy && index % SYSTEM_CARRIER_INTERVAL === SYSTEM_CARRIER_INTERVAL - 1;
 
 const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPhase => {
     if (eventElapsed < MORPH_SECONDS) {
@@ -2738,7 +2740,7 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
         cursor -= PLANET_COUNT_BASIS_POINTS[index];
         if (cursor < 0) return index + 1;
     }
-    return 12;
+    return PLANET_COUNT_BASIS_POINTS.length;
 };
 
 /** Mutually exclusive per-planet moon bands: 81.5% none and 18.5% moon-bearing. */
