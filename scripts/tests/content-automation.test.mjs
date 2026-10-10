@@ -194,7 +194,7 @@ test('VAL-CONTENT-03 Star Text review points to the existing main phrase source 
   assert.deepEqual(ROUTES.filter((route) => !route.startsWith('/')), [target]);
   const modelSource = await readFile(new URL(`../../${target}`, import.meta.url), 'utf8');
   assert.match(modelSource, /export const CONSTELLATION_PHRASES = \[/);
-  assert.match(modelSource, /export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES\.slice\(1\)/);
+  assert.match(modelSource, /export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES\.slice\(2\)/);
   const guide = await readFile(new URL('../../docs/content-automation.md', import.meta.url), 'utf8');
   assert.ok(guide.includes(target));
   assert.ok(guide.includes('CONSTELLATION_PHRASES'));

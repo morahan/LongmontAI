@@ -5,6 +5,7 @@ import modelWatchStatus from '../data/modelWatch.generated.json';
 import { countDistinctModels } from '../lib/modelWatchPresentation';
 import {
   latestBriefingModelIds,
+  modelCatalogAsOf,
   modelWatchModels,
   modelWatchSnapshots,
 } from '../data/modelWatch';
@@ -102,9 +103,9 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Radar size={16} />
-              August 19 briefing
+              Catalog snapshot {modelCatalogAsOf} (UTC)
             </div>
-            <h2 id="briefing-models-heading">Models Covered in the August 19 Briefing</h2>
+            <h2 id="briefing-models-heading">Current Models and Tools</h2>
           </div>
         </div>
         <div className="model-watch-release-list model-watch-briefing-list">
@@ -131,9 +132,9 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Radar size={16} />
-              Active watchlist
+              Historical archive
             </div>
-            <h2 id="models-heading">Other Recent Releases</h2>
+            <h2 id="models-heading">Earlier Releases</h2>
           </div>
         </div>
         <div className="model-watch-release-list">

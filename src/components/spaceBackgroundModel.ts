@@ -1,6 +1,7 @@
 import {
     STAR_TEXT_ALTERNATIVES,
     STAR_TEXT_BRAND_PHRASE,
+    STAR_TEXT_SECOND_BRAND_PHRASE,
     type StarTextPhrase,
 } from '../data/starText.ts';
 
@@ -1019,10 +1020,11 @@ export const getStarRgb = (
 
 export const CONSTELLATION_PHRASES = [
     STAR_TEXT_BRAND_PHRASE,
+    STAR_TEXT_SECOND_BRAND_PHRASE,
     ...STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase),
 ] as const satisfies readonly StarTextPhrase[];
-export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
-export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(1) as readonly ConstellationPhrase[];
+export type ConstellationPhrase = StarTextPhrase;
+export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(2) as readonly ConstellationPhrase[];
 export const MAX_STAR_TEXT_ANCHOR_COUNT = Math.max(...CONSTELLATION_PHRASES.map((phrase) =>
     [...phrase].filter((character) => character !== ' ').length * MAX_GLYPH_STAR_COUNT));
 /** Stable slots prevent array churn at the intro/outro lifecycle boundaries. */
@@ -1060,36 +1062,40 @@ export const shouldTriggerEasterEgg = (
 
 /** Seed chooses the first hidden phrase; subsequent triggers cycle every alternative without repeats. */
 export const selectEasterEggPhrase = (sceneSeed: number, triggerIndex: number): ConstellationPhrase => {
+    if (!EASTER_EGG_PHRASES.length) return '';
     const firstIndex = hashUint(sceneSeed, 0, 313) % EASTER_EGG_PHRASES.length;
     return EASTER_EGG_PHRASES[
         positiveModulo(firstIndex + Math.max(0, Math.trunc(triggerIndex)), EASTER_EGG_PHRASES.length)
     ];
 };
 
-/** Half the slots are the stable brand; the other half gives every live alternative one slot. */
-export const CONSTELLATION_BUCKET_COUNT = STAR_TEXT_ALTERNATIVES.length * 2;
+/** Integer units preserve exact 35/15/50 shares, including half-unit editorial weights. */
+const alternativeWeightUnits = STAR_TEXT_ALTERNATIVES.reduce((sum, entry) => sum + entry.weightUnits, 0);
+export const CONSTELLATION_BUCKET_COUNT = alternativeWeightUnits * 20;
 
 export const getConstellationPhraseForBucket = (bucket: number): ConstellationPhrase => {
     const normalized = positiveModulo(Math.trunc(bucket), CONSTELLATION_BUCKET_COUNT);
-    return normalized < STAR_TEXT_ALTERNATIVES.length
-        ? CONSTELLATION_PHRASES[0]
-        : CONSTELLATION_PHRASES[1 + normalized - STAR_TEXT_ALTERNATIVES.length];
+    if (normalized < alternativeWeightUnits * 7) return STAR_TEXT_BRAND_PHRASE;
+    if (normalized < alternativeWeightUnits * 10) return STAR_TEXT_SECOND_BRAND_PHRASE;
+    let offset = normalized - alternativeWeightUnits * 10;
+    for (const entry of STAR_TEXT_ALTERNATIVES) {
+        offset -= entry.weightUnits * 10;
+        if (offset < 0) return entry.phrase;
+    }
+    return STAR_TEXT_BRAND_PHRASE;
 };
 
 /** Phrase choice is stable for an event and changes only with scene seed/event identity. */
 export const selectConstellationPhrase = (sceneSeed: number, event: number): ConstellationPhrase => {
     const stableEvent = Math.max(0, Math.trunc(event));
-    // The uint32 midpoint is an exact half split, without modulo bias.
-    if (hashUint(sceneSeed, stableEvent, 211) < UINT32_RANGE / 2) return CONSTELLATION_PHRASES[0];
-    const alternativeCount = STAR_TEXT_ALTERNATIVES.length;
-    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % alternativeCount);
+    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % CONSTELLATION_BUCKET_COUNT);
     let channel = 212;
     let alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
     while (alternativeRoll >= acceptedRange) {
         channel += 1;
         alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
     }
-    return CONSTELLATION_PHRASES[1 + alternativeRoll % alternativeCount];
+    return getConstellationPhraseForBucket(alternativeRoll % CONSTELLATION_BUCKET_COUNT);
 };
 
 // A shared 5x7 pixel alphabet provides consistent proportions and much fuller letterforms.
@@ -1103,6 +1109,7 @@ const GLYPHS: Record<string, string[]> = {
     G: ['01111', '10000', '10000', '10111', '10001', '10001', '01111'],
     H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
     I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
+    J: ['11111', '00010', '00010', '00010', '10010', '10010', '01100'],
     K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
     L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
     M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
@@ -1118,12 +1125,16 @@ const GLYPHS: Record<string, string[]> = {
     W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
     X: ['10001', '10001', '01010', '00100', '01010', '10001', '10001'],
     Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
+    Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
     '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
     '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
     '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
     '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
     '4': ['10010', '10010', '10010', '11111', '00010', '00010', '00010'],
     '5': ['11111', '10000', '10000', '11110', '00001', '00001', '11110'],
+    '6': ['01110', '10000', '10000', '11110', '10001', '10001', '01110'],
+    '7': ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
+    '9': ['01110', '10001', '10001', '01111', '00001', '00001', '01110'],
     '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
     '.': ['00000', '00000', '00000', '00000', '00000', '00110', '00110'],
     '-': ['00000', '00000', '11111', '11111', '11111', '00000', '00000'],

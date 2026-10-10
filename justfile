@@ -1,5 +1,10 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 
+# Regenerate both reviewed model surfaces; discovery produces unreviewed leads.
+[positional-arguments]
+update-models *args:
+    @node scripts/update-models.mjs "$@"
+
 # Prepare a new draft without overwriting existing work. Pass --write explicitly to create it.
 blog-new date topic mode="--dry-run":
     @node scripts/blog-edition.mjs new {{quote(date)}} {{quote(topic)}} {{quote(mode)}}

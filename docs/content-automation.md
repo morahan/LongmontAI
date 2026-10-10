@@ -1,5 +1,10 @@
 # Content intake: deterministic evidence, not automatic editorial publication
 
+For reviewed Model Watch and Star Text updates together, use `just update-models`.
+See [the shared model catalog workflow](model-updates.md) for release-date checks,
+fixed brand probabilities, weighted categories, and the complete matrix command.
+This intake pipeline remains an unreviewed research source for that workflow.
+
 ## Scope and activation
 
 `npm run content:update` (legacy alias: `npm run model-watch:update`) runs one
