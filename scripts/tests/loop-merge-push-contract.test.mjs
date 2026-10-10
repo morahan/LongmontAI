@@ -247,6 +247,59 @@ function approveFixtureContent(f, result) {
 
 if (module) {
   assert.equal(typeof module.runMergeAll, 'function', 'public runMergeAll export required');
+  for (const collision of ['none', 'path', 'ref', 'source-drift']) await scenario(`D-CLI-initialization-review-resume-${collision}`, ['005', '008', '009', '012'], async () => {
+    const f = fixture(`D-init-review-${collision}`);
+    file(f.repo, 'caller.txt', 'caller ahead of origin\n');
+    const caller = commit(f.repo, 'caller ahead of base', ['caller.txt']);
+    const common = join(f.repo, '.git'), store = join(common, 'loop-merge-push');
+    executable(join(common, 'hooks/post-checkout'), '#!/bin/sh\nexit 0\n');
+    prepare(f);
+    const invoke = (...args) => {
+      const result = command(f.repo, process.execPath, [enginePath, '0', ...args], { env: { ...process.env, PATH: `${f.bin}:${process.env.PATH}` }, timeout: 180_000 });
+      assert.ok(result.stdout.trim(), result.stderr);
+      return JSON.parse(result.stdout);
+    };
+    const approve = (dir, packet) => {
+      mkdirSync(dir, { recursive: true, mode: 0o700 }); chmodSync(dir, 0o700);
+      const note = 'Independent fixture review: fixed no-op post-checkout hook; exact packet only.\n';
+      writeFileSync(join(dir, 'execution-evidence.txt'), note); chmodSync(join(dir, 'execution-evidence.txt'), 0o600);
+      privateJSON(join(dir, 'base-execution-approval.json'), { ...packet, decision: 'approve-reviewed-git-execution', reviewer: { role: 'parent', provider: 'openai-codex', model: 'gpt-6.1-sol' }, evidenceFiles: [{ relativePath: 'execution-evidence.txt', sha256: sha(note) }] });
+    };
+    const globalReview = invoke('--dry-run');
+    assert.equal(globalReview.blockers[0].kind, 'git-execution-review');
+    approve(store, globalReview.reviewPacket);
+    const first = invoke();
+    assert.equal(first.blockers[0].kind, 'git-execution-review');
+    assert.equal(first.reviewPacket.sourceOid, caller);
+    assert.equal(existsSync(first.integrationWorktree), false);
+    assert.equal(state(first).data.intent, null);
+    const dir = dirname(first.statePath);
+    approve(dir, first.reviewPacket);
+    const second = invoke('--resume', first.runId);
+    assert.equal(second.blockers[0].kind, 'git-execution-review', JSON.stringify(second));
+    assert.equal(second.reviewPacket.sourceOid, f.base);
+    assert.equal(existsSync(second.integrationWorktree), false);
+    assert.ok(state(second).data.events.some(event => event.kind === 'all-remote-prefetch-and-refreshed-census'));
+    approve(dir, second.reviewPacket);
+    if (collision === 'path') { mkdirSync(second.integrationWorktree); file(second.integrationWorktree, 'preserve.txt', 'do not overwrite\n'); }
+    if (collision === 'ref') git(f.repo, 'branch', second.integrationRef.slice('refs/heads/'.length), caller);
+    if (collision === 'source-drift') file(f.repo, 'unreviewed.txt', 'do not adopt\n');
+    const before = snapshot(f.repo), beforeRemote = remoteMain(f);
+    const third = invoke('--resume', first.runId);
+    assert.equal(remoteMain(f), beforeRemote);
+    assert.deepEqual(snapshot(f.repo), before);
+    if (collision === 'none') {
+      assert.ok(existsSync(third.integrationWorktree), JSON.stringify(third));
+      assert.equal(git(third.integrationWorktree, 'symbolic-ref', 'HEAD'), third.integrationRef);
+      assert.ok(state(third).data.events.some(event => event.kind === 'isolated-integration-created'));
+      assert.ok(!third.blockers.some(blocker => ['derived-resource-mismatch', 'integration-initialization-mismatch'].includes(blocker.kind)));
+    } else {
+      assert.ok(third.blockers.some(blocker => blocker.kind === (collision === 'source-drift' ? 'source-movement' : 'integration-create-incomplete')), JSON.stringify(third));
+      if (collision === 'path') assert.equal(readFileSync(join(third.integrationWorktree, 'preserve.txt'), 'utf8'), 'do not overwrite\n');
+      if (collision === 'ref') assert.equal(git(f.repo, 'rev-parse', third.integrationRef), caller);
+      if (collision === 'source-drift') assert.equal(existsSync(third.integrationWorktree), false);
+    }
+  });
   await scenario('A-all-remotes-stale-divergent-detached-duplicate-ancestry-and-cleanup', ['002', '006', '009', '010', '011', '012', '013'], async () => {
     const f = fixture('A-all-source');
     const a = branch(f, 'local-A', { 'a.txt': 'local A\n' });

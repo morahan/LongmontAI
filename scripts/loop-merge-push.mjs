@@ -386,7 +386,7 @@ function executionPreflight(cwd, common, targetOid, store) {
   if (!fs.existsSync(approval)) throw new Stop(4, 'git-execution-review', 'Configured external drivers/filters/fsmonitor/attributes or automatic hooks require exact parent review BEFORE Git can execute them.', { reviewPacket: packet, reviewPacketPath: store ? path.join(store.dir, 'base-execution-packet.json') : null });
   privateDirectory(dir);
   const receipt = readPrivate(approval); reviewer(receipt);
-  for (const key of ['sourceOid', 'configDigest', 'hooksDigest', 'attributesDigest', 'packetDigest']) if (receipt[key] !== packet[key]) throw new Stop(4, 'git-execution-review', 'Git execution trust receipt is stale for actual config/hooks/attributes/source.');
+  for (const key of ['sourceOid', 'configDigest', 'hooksDigest', 'attributesDigest', 'packetDigest']) if (receipt[key] !== packet[key]) throw new Stop(4, 'git-execution-review', 'Git execution trust receipt is stale for actual config/hooks/attributes/source.', { reviewPacket: packet, reviewPacketPath: store ? path.join(store.dir, 'base-execution-packet.json') : null });
   if (receipt.decision !== 'approve-reviewed-git-execution') throw new Stop(4, 'git-execution-review', 'Git execution receipt decision is invalid.');
   validateEvidence(dir, receipt.evidenceFiles);
   return true;
@@ -1072,19 +1072,29 @@ async function run(options) {
       const beforeFetch = inventory(root, common);
       state = { schema: SCHEMA, id, common, caller: root, primary: worktrees(root)[0]?.worktree, minutes, phase: 'inventory', complete: false, sources: [...beforeFetch.sources], expected: beforeFetch, preFetch: beforeFetch, fetchBlockers: [], objectBlockers: [], blockers: [], events: [], merges: [], coverage: {}, policyReviews: [], conflictDecisions: [], cleanupActions: [], retainedAnchors: [], pendingMerge: null, pendingConflict: null, pendingReview: null, intent: null, mainProof: null, integrationRef: `refs/heads/integration/loop-merge-all-${id}`, integrationWorktree: path.join(store.dir, 'integration') };
       store.save(state);
-      executionPreflight(root, common, text(root, ['rev-parse', 'HEAD']), store);
-      // Preserve every pre-fetch object BEFORE any remote update. Fetch only that remote's head namespace;
-      // do not honor a custom refspec that could overwrite a local source head or silently narrow ALL coverage.
-      pinInputs(root, state, store);
-      for (const remote of beforeFetch.remotes) {
-        try {
-          git(root, ['check-ref-format', `refs/remotes/${remote}/scope-proof`]);
-          git(root, ['fetch', '--atomic', '--no-tags', '--no-prune', '--no-auto-maintenance', '--', remote, `refs/heads/*:refs/remotes/${remote}/*`]);
-        } catch { state.fetchBlockers.push({ kind: 'remote-fetch', sourceId: `remote:${remote}`, paths: [], detail: 'Configured remote refresh failed; stale sources retained, completeness blocked.' }); }
+    }
+    // Review can stop before a create intent exists. Resume only the unfinished
+    // initialization stage; caller and fetched-base execution reviews are distinct.
+    if (!state.integrationHead && !state.intent) {
+      if (state.integrationRef !== `refs/heads/integration/loop-merge-all-${id}` || state.integrationWorktree !== path.join(store.dir, 'integration') || state.pendingMerge || state.publication || state.mainProof || state.validation || !Array.isArray(state.merges) || state.merges.length || !Array.isArray(state.events) || state.events.some(event => !event || ['integration-create-intent', 'isolated-integration-created', 'integration-create-facts-recovered'].includes(event.kind))) throw new Stop(4, 'integration-initialization-mismatch', 'Missing integration identity does not describe an unstarted initialization.');
+      if (worktrees(root).some(row => row.worktree === state.integrationWorktree || row.branch === state.integrationRef) || refs(root).some(row => row.ref === state.integrationRef) || fs.lstatSync(state.integrationWorktree, { throwIfNoEntry: false })) throw new Stop(4, 'integration-create-incomplete', 'Unstarted integration collides with an existing resource; no adoption or overwrite.');
+      assertStable(root, common, state, store);
+      if (!state.events.some(event => event.kind === 'all-remote-prefetch-and-refreshed-census')) {
+        const beforeFetch = state.preFetch;
+        executionPreflight(root, common, text(root, ['rev-parse', 'HEAD']), store);
+        // Preserve every pre-fetch object BEFORE any remote update. Fetch only that remote's head namespace;
+        // do not honor a custom refspec that could overwrite a local source head or silently narrow ALL coverage.
+        pinInputs(root, state, store);
+        for (const remote of beforeFetch.remotes) {
+          try {
+            git(root, ['check-ref-format', `refs/remotes/${remote}/scope-proof`]);
+            git(root, ['fetch', '--atomic', '--no-tags', '--no-prune', '--no-auto-maintenance', '--', remote, `refs/heads/*:refs/remotes/${remote}/*`]);
+          } catch { state.fetchBlockers.push({ kind: 'remote-fetch', sourceId: `remote:${remote}`, paths: [], detail: 'Configured remote refresh failed; stale sources retained, completeness blocked.' }); }
+        }
+        state.expected = inventory(root, common, { ref: state.integrationRef, worktree: state.integrationWorktree, managedRefs: state.managedRefs }); addSources(state, state.expected.sources);
+        captureInputHistory(state, beforeFetch); captureInputHistory(state, state.expected);
+        store.event(state, 'all-remote-prefetch-and-refreshed-census');
       }
-      state.expected = inventory(root, common, { ref: state.integrationRef, worktree: state.integrationWorktree, managedRefs: state.managedRefs }); addSources(state, state.expected.sources);
-      captureInputHistory(state, beforeFetch); captureInputHistory(state, state.expected);
-      store.event(state, 'all-remote-prefetch-and-refreshed-census');
       if (!state.expected.remotes.includes('origin')) throw new Stop(4, 'missing-origin', 'Origin main publication remote is required.');
       const base = state.expected.refs.find(r => r.ref === 'refs/remotes/origin/main')?.oid;
       if (!base || !commitExists(root, base)) throw new Stop(4, 'missing-main', 'A real origin/main commit is required.');
