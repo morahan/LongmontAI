@@ -6,5 +6,8 @@ export function reconcileVisibleSelection<T extends SelectableEvent>(
   selected: T | null,
   visible: readonly T[],
 ): T | null {
-  return (selected && visible.find((event) => event.id === selected.id)) || visible[0] || null;
+  if (selected && visible.some((event) => event.id === selected.id)) {
+    return selected;
+  }
+  return visible[0] ?? null;
 }

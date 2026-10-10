@@ -23,13 +23,9 @@ export class NewsletterResponseError extends Error {
 
 export async function readNewsletterSubscribeResponse(response: Response): Promise<NewsletterSubscribePayload> {
   let payload: NewsletterSubscribePayload | null = null;
-  const mediaType = response.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
-  if (mediaType === 'application/json') {
+  if (response.headers.get('content-type')?.toLowerCase().includes('application/json')) {
     try {
-      const parsed: unknown = await response.json();
-      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        payload = parsed as NewsletterSubscribePayload;
-      }
+      payload = await response.json() as NewsletterSubscribePayload;
     } catch {
       payload = null;
     }

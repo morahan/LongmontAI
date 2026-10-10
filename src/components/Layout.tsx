@@ -67,9 +67,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 Skip to main content
             </a>
 
-            {/* Background Elements */}
-            <div className="bg-mesh" />
-
             <header
                 className={`site-header fixed top-0 left-0 right-0 z-50 header-glass ${isHeaderCompact ? 'site-header--compact' : 'site-header--hero'}`}
                 data-header-state={isHeaderCompact ? 'compact' : 'hero'}

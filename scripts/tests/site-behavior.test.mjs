@@ -11,7 +11,10 @@ import {
 } from '../../src/lib/meetupSchedule.ts';
 import { pageTitle } from '../../src/lib/documentTitle.ts';
 import { canonicalEditionUrl, shareEdition } from '../../src/lib/editionShare.ts';
-import { countDistinctModels } from '../../src/lib/modelWatchPresentation.ts';
+import {
+  countDistinctModels,
+  isModelWatchSnapshotStatus,
+} from '../../src/lib/modelWatchPresentation.ts';
 import {
   newsletterSignupErrorMessage,
   readNewsletterSubscribeResponse,
@@ -184,7 +187,12 @@ test('edition sharing uses a canonical URL and reports supported outcomes withou
   assert.equal(await shareEdition({}, 'Released title', url), 'failed');
 });
 
-test('Model Watch counts case/separator variants once', () => {
+test('Model Watch validates snapshot payloads and counts case/separator variants once', () => {
+  const valid = { checkedAt: '2026-08-19T15:59:26.904Z', successfulSources: 12, totalSources: 12, detectedModels: ['GLM-5', 'Qwen-Image 3.0'] };
+  assert.equal(isModelWatchSnapshotStatus(valid), true);
+  assert.equal(isModelWatchSnapshotStatus({ ...valid, detectedModels: 'GLM-5' }), false);
+  assert.equal(isModelWatchSnapshotStatus({ ...valid, successfulSources: 13 }), false);
+  assert.equal(isModelWatchSnapshotStatus({ ...valid, checkedAt: 'not-a-date' }), false);
   assert.equal(countDistinctModels(['glm-5', 'GLM-5', 'Qwen-Image 3.0', 'qwen_image-3.0']), 2);
 });
 

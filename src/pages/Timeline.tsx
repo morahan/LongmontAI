@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
   ArrowUpRight,
@@ -97,7 +97,7 @@ export default function Timeline() {
   const [organization, setOrganization] = useState('All organizations');
   const [view, setView] = useState<View>('timeline');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [selection, setSelectedEvent] = useState<TimelineEvent | null>(timelineEvents[timelineEvents.length - 1] ?? null);
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(timelineEvents[timelineEvents.length - 1] ?? null);
 
   const range = ranges.find((item) => item.id === activeRange) ?? ranges[0];
   const filteredEvents = useMemo(() => timelineEvents.filter((event) => (
@@ -106,12 +106,13 @@ export default function Timeline() {
     && (activeCategories.length === 0 || activeCategories.includes(event.category))
     && (organization === 'All organizations' || event.organization === organization)
   )), [activeCategories, organization, range]);
-  const selectedEvent = reconcileVisibleSelection(selection, filteredEvents);
-  if (selectedEvent !== selection) setSelectedEvent(selectedEvent);
-
   const eventGroups = useMemo(() => groupEvents(filteredEvents, activeRange), [activeRange, filteredEvents]);
   const expandedEvents = eventGroups.find((group) => group.key === selectedGroup)?.events ?? [];
   const yearLabels = useMemo(() => yearLabelsForRange(range.start, range.end), [range.start, range.end]);
+
+  useEffect(() => {
+    setSelectedEvent((current) => reconcileVisibleSelection(current, filteredEvents));
+  }, [filteredEvents]);
 
   const toggleCategory = (category: TimelineCategory) => {
     setActiveCategories((current) => current.includes(category)
@@ -167,8 +168,8 @@ export default function Timeline() {
           </select>
         </label>
         <div className="timeline-view-switch" role="group" aria-label="Display mode">
-          <button type="button" aria-pressed={view === 'timeline'} className={view === 'timeline' ? 'is-active' : ''} onClick={() => setView('timeline')}><Network size={15} /> Timeline</button>
-          <button type="button" aria-pressed={view === 'matrix'} className={view === 'matrix' ? 'is-active' : ''} onClick={() => setView('matrix')}><Layers3 size={15} /> Matrix</button>
+          <button type="button" aria-pressed={view === 'timeline'} className={view === 'timeline' ? 'is-active' : ''} onClick={() => setView('timeline')}><Network size={15} aria-hidden="true" /> Timeline</button>
+          <button type="button" aria-pressed={view === 'matrix'} className={view === 'matrix' ? 'is-active' : ''} onClick={() => setView('matrix')}><Layers3 size={15} aria-hidden="true" /> Matrix</button>
         </div>
       </section>
 
@@ -199,9 +200,7 @@ export default function Timeline() {
           <p>The x-axis is fixed to the selected time range. Dense periods collapse into count nodes; select one to inspect every event inside it.</p>
         </div>
 
-        {filteredEvents.length === 0 ? (
-          <p role="status">No events match these filters. Try another range, focus, or organization.</p>
-        ) : view === 'timeline' ? (
+        {view === 'timeline' ? (
           <div className="timeline-canvas-wrap" tabIndex={0} aria-label="Scrollable historical AI timeline">
             <div className="timeline-canvas" style={{ '--timeline-years': yearLabels.length } as CSSProperties}>
               <div className="timeline-year-ruler" aria-hidden="true">
@@ -258,11 +257,13 @@ export default function Timeline() {
         </section>
       )}
 
-      {selectedEvent && <aside className="timeline-detail" aria-label="Selected event" aria-live="polite">
-        <div className="timeline-detail-icon">{(() => { const Icon = iconForCategory(selectedEvent.category); return <Icon size={20} />; })()}</div>
-        <div className="timeline-detail-copy"><div><span>{selectedEvent.category}</span><time dateTime={selectedEvent.date}>{formatDate(selectedEvent.date)}</time></div><h2>{selectedEvent.title}</h2><p>{selectedEvent.summary}</p><strong>{selectedEvent.organization}</strong></div>
-        <div className="timeline-source"><span>Source: {selectedEvent.source}</span><a href={selectedEvent.sourceUrl} target="_blank" rel="noopener noreferrer">Link to Source<ArrowUpRight size={15} /></a></div>
-      </aside>}
+      {selectedEvent && (
+        <aside className="timeline-detail" aria-label="Selected event" aria-live="polite">
+          <div className="timeline-detail-icon">{(() => { const Icon = iconForCategory(selectedEvent.category); return <Icon size={20} aria-hidden="true" />; })()}</div>
+          <div className="timeline-detail-copy"><div><span>{selectedEvent.category}</span><time dateTime={selectedEvent.date}>{formatDate(selectedEvent.date)}</time></div><h2>{selectedEvent.title}</h2><p>{selectedEvent.summary}</p><strong>{selectedEvent.organization}</strong></div>
+          <div className="timeline-source"><span>Source: {selectedEvent.source}</span><a href={selectedEvent.sourceUrl} target="_blank" rel="noopener noreferrer">Link to Source<ArrowUpRight size={15} aria-hidden="true" /></a></div>
+        </aside>
+      )}
     </div>
   );
 }

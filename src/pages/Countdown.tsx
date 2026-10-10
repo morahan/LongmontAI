@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import {
-  DENVER_TIME_ZONE,
   denverCalendarDate,
   mountainTimeLabel,
   nextDenverMeetup,
@@ -9,7 +8,7 @@ import {
 } from '../lib/meetupSchedule';
 
 // ─── LongmontAI Meetup Schedule ─────────────────────────────────────────────
-// Every other Wednesday at noon (America/Denver, MST or MDT)
+// Every other Wednesday at noon (America/Denver / MDT)
 // Hardcoded reference: May 27, 2026 is a Wednesday meetup day.
 // Subsequent meetups are every 14 days from that date.
 const MEETUP_YEAR = 2026;
@@ -19,13 +18,11 @@ const MEETUP_DURATION_HOURS = 1;
 const INTERVAL_DAYS = 14;
 const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
 const JUST_HIT_ZERO_DURATION_MS = 8000;
-// Update these together when rotating Discord invites (match Discord expires_at).
-// Invite m8aSxgd7q expires 2026-11-04T20:17:53Z (Nov 4, 2026 1:17 PM MST), so
-// valid for Oct 14 and Oct 28 only — Nov 11 noon Denver is after expiry.
-// The QR code and its click-through link both derive from this one URL (quickchart).
-const DISCORD_INVITE_URL = 'https://discord.gg/m8aSxgd7q';
-const DISCORD_INVITE_FIRST_MEETUP: CalendarDate = { year: 2026, month: 10, day: 14 };
-const DISCORD_INVITE_VALID_FOR_MEETUPS = 2;
+// Update these together roughly every third meetup (28 days) when rotating Discord invites.
+// The QR code and its click-through link both derive from this one URL.
+const DISCORD_INVITE_URL = 'https://discord.gg/ctx5rF7q2';
+const DISCORD_INVITE_FIRST_MEETUP: CalendarDate = { year: 2026, month: 9, day: 2 };
+const DISCORD_INVITE_VALID_FOR_MEETUPS = 3;
 const DISCORD_QR_OPENING_WINDOW_MINUTES = 10;
 const DISCORD_QR_POST_MEETUP_WINDOW_MINUTES = 30;
 
@@ -484,7 +481,7 @@ const Countdown: React.FC = () => {
   const isPostMeetupInvite = !isLiveEvent && isDiscordInviteVisible;
 
   const meetupDateStr = nextMeetup.toLocaleDateString('en-US', {
-    timeZone: DENVER_TIME_ZONE,
+    timeZone: 'America/Denver',
     weekday: 'long',
     month: 'long',
     day: 'numeric',

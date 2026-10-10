@@ -1,83 +1,43 @@
 import {
     STAR_TEXT_ALTERNATIVES,
     STAR_TEXT_BRAND_PHRASE,
-    STAR_TEXT_SECOND_BRAND_PHRASE,
     type StarTextPhrase,
 } from '../data/starText.ts';
 
-// Maximum pool; all responsive tiers share deterministic prefixes.
-export const AMBIENT_STAR_COUNT = 1120;
+export const AMBIENT_STAR_COUNT = 70;
 // Kept as the historical density reference for consumers that use the exported constant.
 // Actual Star Text anchor totals are phrase/event dependent.
 export const CONSTELLATION_STAR_COUNT = 144;
 export const MIN_GLYPH_STAR_COUNT = 37;
 export const MAX_GLYPH_STAR_COUNT = 73;
-export const RETAINED_AMBIENT_STAR_COUNT = 560;
+export const RETAINED_AMBIENT_STAR_COUNT = 35;
 export const DESKTOP_STAR_COUNT = AMBIENT_STAR_COUNT;
-export const MOBILE_STAR_COUNT = 112;
+export const MOBILE_STAR_COUNT = AMBIENT_STAR_COUNT;
 export const AMBIENT_STAR_RGB = [232, 224, 220] as const;
-export const AMBIENT_STAR_PALETTE = [
-    { name: 'blue', rgb: [174, 207, 255] },
-    { name: 'white', rgb: [240, 242, 255] },
-    { name: 'yellow', rgb: [255, 235, 174] },
-    { name: 'red', rgb: [255, 157, 164] },
-    { name: 'orange', rgb: [255, 193, 143] },
-] as const;
 export const CONSTELLATION_STAR_RGB = [214, 231, 239] as const;
 export const AMBIENT_STAR_RADIUS_RANGE = [0.825, 2.09] as const;
-export const DESKTOP_TRAVELER_COUNT = 170;
-export const MOBILE_TRAVELER_COUNT = 17;
+export const DESKTOP_TRAVELER_COUNT = 24;
+export const MOBILE_TRAVELER_COUNT = 15;
 export const TRAVELER_RADIUS_RANGE = [0.66, 1.21] as const;
-export const GALAXY_CREATION_CHANCE = 0.16;
+export const GALAXY_CREATION_CHANCE = 0.1;
 export const GALAXY_MAX_RADIUS_MULTIPLIER = 7;
-export const GALAXY_INTERNAL_STAR_COUNT = 144;
-export const GALAXY_DISTANT_STAR_COUNT = 18;
-/** Independent 8% rolls among galaxy lifecycles, never additional travelers. */
-export const GALAXY_DIRECT_APPROACH_CHANCE = 0.08;
-export const GALAXY_SOMBRERO_CHANCE = 0.08;
-export const GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE = [2, 3] as const;
-export const GALAXY_EMBEDDED_PLANET_COUNT_RANGE = [1, 2] as const;
-/** Historical/default spiral arm count; individual formations deliberately vary this. */
+export const GALAXY_INTERNAL_STAR_COUNT = 36;
 export const GALAXY_SPIRAL_ARM_COUNT = 3;
-export const GALAXY_FORMATIONS = [
-    'spiral',
-    'barred-spiral',
-    'elliptical',
-    'irregular',
-    'sombrero',
-] as const;
-export const GALAXY_ROTATION_RATE_RANGE = [0.09, 0.15] as const;
-export const GALAXY_FORMATION_RATE_MULTIPLIERS: Record<GalaxyFormation, number> = {
-    spiral: 1,
-    'barred-spiral': 0.92,
-    elliptical: 0.78,
-    irregular: 1.12,
-    sombrero: 0,
-};
-export const UFO_BASIS_POINTS = 50;
-export const COMET_BASIS_POINTS = 50;
+export const UFO_BASIS_POINTS = 300;
+export const COMET_BASIS_POINTS = 300;
 export const UFO_SIZE_MULTIPLIER = 1.5;
 export const MOBILE_BREAKPOINT = 640;
-export const LARGE_BREAKPOINT = 1440;
-export const SYSTEM_HOST_RADIUS_MULTIPLIER = 2;
 export const NEURAL_SIGNAL_SLOT_SECONDS = 24;
-export const NEURAL_SIGNAL_DURATION_RANGE = [4.2, 5] as const;
-export const NEURAL_SIGNAL_FADE_SECONDS = [1.3, 1.9] as const;
-export const NEURAL_SIGNAL_COLORS = ['155, 213, 239', '183, 188, 239', '151, 185, 236'] as const;
+export const NEURAL_SIGNAL_DURATION_RANGE = [2.4, 3.2] as const;
 export const NEURAL_SIGNAL_MAX_CONCURRENT = 1;
-export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.48;
-export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.30;
-export const NEURAL_SIGNAL_MAX_OPACITY = 0.075;
+export const NEURAL_SIGNAL_DESKTOP_CHANCE = 0.32;
+export const NEURAL_SIGNAL_MOBILE_CHANCE = 0.2;
+export const NEURAL_SIGNAL_MAX_OPACITY = 0.12;
 export const NEURAL_SIGNAL_WIDTH_RANGE = [0.5, 0.72] as const;
-export const NEURAL_CONTAGION_OPPORTUNITIES = 3;
-export const NEURAL_CONTAGION_AFFINITY_BOOST = 4;
-export const NEURAL_CONTAGION_MAX_ENTRIES = 8;
-/** Maximum idle wait; each event samples its own delay after the previous fade ends. */
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
-/** @deprecated Historical event window; ambient twinkle now uses independent continuous periods. */
 export const TWINKLE_WINDOW_SECONDS = 120;
 export const FAR_DEPTH = 1000;
 export const NEAR_DEPTH = 56;
@@ -93,7 +53,7 @@ export const TRAVELER_PALETTE = [
 ] as const;
 export const TRAVELER_SURFACE_TEXTURES = ['bands', 'speckles', 'facets', 'swirls', 'mottled'] as const;
 export const SMALL_TRAVELER_RED_CHANCE = 0.06;
-export const LARGE_TRAVELER_RED_CHANCE = 0.35;
+export const LARGE_TRAVELER_RED_CHANCE = 0.7;
 export const TRAVELER_GLOW_BLUR_RANGE = [1.5, 12] as const;
 export const TRAVELER_GLOW_OPACITY_RANGE = [0.06, 0.22] as const;
 export const PLANET_SURFACE_LOD_DIAMETERS = [5, 10] as const;
@@ -101,15 +61,12 @@ export const ATMOSPHERE_HALO_RADIUS_MULTIPLIER = 1.18;
 export const PLANET_RING_LINE_WIDTH = 0.8;
 export const PLANET_RADIUS_RANGE = [1.45, 2.3] as const;
 export const PLANET_RENDER_SCALE = 0.5;
-export const MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO = 0.35;
+export const MAX_MOON_TO_RENDERED_PLANET_RADIUS_RATIO = 0.5;
 export const SYSTEM_STAR_RADIUS = 11.55;
 export const MAX_PLANET_ORBIT_RADIUS = 22.35;
 export const MIN_PLANET_ORBIT_PERIOD_SECONDS = 8;
 export const MAX_PLANET_ORBIT_PERIOD_SECONDS = 18;
-export const SYSTEM_CARRIER_INTERVAL = 3;
-export const SYSTEM_CARRIER_FRACTION = 1 / SYSTEM_CARRIER_INTERVAL;
-/** Basis points for 0 through 10 planets: 1-2 likely, 0 semi-unlikely, then rarer up to 1% at ten. */
-export const PLANET_COUNT_BASIS_POINTS = [1200, 2600, 2400, 1460, 860, 550, 350, 220, 150, 110, 100] as const;
+export const PLANET_COUNT_BASIS_POINTS = [4000, 2200, 1300, 850, 550, 380, 260, 180, 120, 80, 50, 30] as const;
 
 const UINT32_RANGE = 4294967296;
 const DEPTH_RANGE = FAR_DEPTH - NEAR_DEPTH;
@@ -154,22 +111,12 @@ export interface ConstellationGeometry {
     glyphs: ConstellationGlyph[];
 }
 
-export interface StarAura {
-    radiusMultiplier: number;
-    opacity: number;
-    softness: number;
-    rgb: readonly [number, number, number];
-}
-
 export interface StarVisualStyle {
     alpha: number;
     twinkle: number;
     strength: number;
     radius: number;
     opacity: number;
-    cardinalFlare?: number;
-    coreOpacity?: number;
-    aura?: StarAura;
 }
 
 export interface PlanetLightingStyle {
@@ -196,7 +143,6 @@ export interface DistantStar {
     driftSpeed: number;
     driftAngle: number;
     twinkleSeed: number;
-    hasCardinalFlare: boolean;
 }
 
 export interface Moon {
@@ -272,27 +218,12 @@ export interface TravelerStarRenderPolicy {
 }
 
 export interface UfoAppearance {
-    shape: 'saucer' | 'triangle';
-    hasAlien: boolean;
-    triangle: Point[];
-    alien: {
-        head: Point;
-        headRadiusX: number;
-        headRadiusY: number;
-        body: Point[];
-        arm: Point[];
-        eyes: Point[];
-        eyeRadius: number;
-        lineWidth: number;
-    };
     radius: number;
     glowRadius: number;
     streakLength: number;
 }
 
 export type TravelerVariant = 'star' | 'ufo' | 'comet' | 'galaxy';
-export type GalaxyFormation = typeof GALAXY_FORMATIONS[number];
-export type GalaxyMatterKind = 'star' | 'young-star' | 'dust';
 export type CometTrailParticleKind = 'asteroid' | 'stardust';
 
 export interface CometTrailParticle {
@@ -304,73 +235,19 @@ export interface CometTrailParticle {
     rotation: number;
 }
 
-/** Elliptical, transparent-edged patches in motion-opposed local coordinates. */
-export interface CometPlumeWisp {
-    distance: number;
-    lateralOffset: number;
-    lengthRadius: number;
-    widthRadius: number;
-    opacity: number;
-}
-
 export interface CometAppearance {
     headRadius: number;
-    /** Motion-aligned ellipse centered `lag` pixels behind the nucleus. */
-    glow: { lengthRadius: number; widthRadius: number; lag: number; opacity: number };
+    glowRadius: number;
     trailLength: number;
     trailWidth: number;
-    wisps: CometPlumeWisp[];
     particles: CometTrailParticle[];
 }
 
 export interface GalaxyAppearance {
-    formation: GalaxyFormation;
     outerRadius: number;
     coreRadius: number;
     armCount: number;
-    flattening: number;
-    barLength: number;
-    rotationRate: number;
     internalStarCount: number;
-}
-
-export interface EmbeddedGalaxyPlanet {
-    orbitRadius: number;
-    radius: number;
-    phase: number;
-    speed: number;
-    color: string;
-}
-
-export interface EmbeddedGalaxySystem {
-    orbitRadius: number;
-    phase: number;
-    speed: number;
-    hostRadius: number;
-    hostColor: string;
-    planets: EmbeddedGalaxyPlanet[];
-}
-
-export interface EmbeddedGalaxyPlanetState extends EmbeddedGalaxyPlanet, Point {
-    angle: number;
-    z: number;
-}
-
-export interface EmbeddedGalaxySystemState {
-    host: Point;
-    planets: EmbeddedGalaxyPlanetState[];
-}
-
-export interface GalaxyAnimationState {
-    rotation: number;
-    corePulse: number;
-    dustDrift: number;
-}
-
-export interface GalaxyParticleState extends Point {
-    radius: number;
-    opacity: number;
-    kind: GalaxyMatterKind;
 }
 
 export interface ProjectedTraveler {
@@ -395,27 +272,6 @@ export interface NeuralSignal {
     pulseProgress: number;
     lineWidth: number;
     bend: number;
-    color: string;
-    sparkles: { progress: number; opacity: number; radius: number }[];
-}
-
-export interface NeuralContagionEntry {
-    travelerIndex: number;
-    cycle: number;
-    remainingOpportunities: number;
-    lastStruckSlot: number;
-}
-
-export interface NeuralContagionState {
-    entries: NeuralContagionEntry[];
-    lastSignalSlot: number | null;
-    lastSignalPair: readonly [number, number] | null;
-    lastSignalCycles: readonly [number, number] | null;
-}
-
-export interface NeuralSignalPair {
-    fromTravelerIndex: number;
-    toTravelerIndex: number;
 }
 
 export interface ConstellationPhase {
@@ -428,9 +284,15 @@ export interface ConstellationPhase {
 export interface StarTextIntroProgress {
     stage: 'morph-in' | 'complete';
     progress: number;
+    /** @deprecated All glyphs now use `progress`; retained for compatibility. */
+    firstGlyph: number;
+    /** @deprecated All glyphs now use `progress`; retained for compatibility. */
+    burst: number;
 }
 
 export interface StarTextTransitionOptions {
+    /** @deprecated Ignored. All glyphs participate for the complete morph-in. */
+    firstGlyphCount?: number;
     targetCount: number;
     /** End-frame visibility decides whether a slot fades in place or converges to live content. */
     endpointVisible?: readonly boolean[];
@@ -464,7 +326,7 @@ const hashRandom = (seed: number, cycle: number, channel: number) =>
 
 const TRAVELER_VARIANT_BASIS_POINT_RANGE = 10000;
 
-/** One shared equiprobable roll makes the two 0.5% visitor bands disjoint by construction. */
+/** One shared equiprobable roll makes the 3% UFO and 3% comet bands disjoint by construction. */
 export const getTravelerVariantForBasisPoint = (basisPoint: number): TravelerVariant => {
     const outcome = positiveModulo(Math.trunc(basisPoint), TRAVELER_VARIANT_BASIS_POINT_RANGE);
     if (outcome < UFO_BASIS_POINTS) return 'ufo';
@@ -472,11 +334,11 @@ export const getTravelerVariantForBasisPoint = (basisPoint: number): TravelerVar
     return 'star';
 };
 
-/** Exactly 50 of 10,000 equiprobable outcomes classify as spacecraft. */
+/** Exactly 300 of 10,000 equiprobable outcomes classify as spacecraft. */
 export const isUfoBasisPoint = (basisPoint: number) =>
     getTravelerVariantForBasisPoint(basisPoint) === 'ufo';
 
-/** Exactly 50 different outcomes classify as comets. */
+/** Exactly 300 different outcomes classify as comets. */
 export const isCometBasisPoint = (basisPoint: number) =>
     getTravelerVariantForBasisPoint(basisPoint) === 'comet';
 
@@ -551,18 +413,16 @@ export const createCryptoSeed = (
 export const getElapsedSecondsSinceMount = (mountedAt: number, now: number) =>
     Math.max(0, now - mountedAt) / 1000;
 
-export const starDensityMultiplierForWidth = (width: number) =>
-    width < MOBILE_BREAKPOINT ? 1 : width < LARGE_BREAKPOINT ? 3 : 10;
-export const starCountForWidth = (width: number) => MOBILE_STAR_COUNT * starDensityMultiplierForWidth(width);
-export const retainedAmbientCountForWidth = (width: number) => starCountForWidth(width) / 2;
-export const travelerCountForWidth = (width: number) => MOBILE_TRAVELER_COUNT * starDensityMultiplierForWidth(width);
+export const starCountForWidth = (_width: number) => AMBIENT_STAR_COUNT;
+export const travelerCountForWidth = (width: number) =>
+    width < MOBILE_BREAKPOINT ? MOBILE_TRAVELER_COUNT : DESKTOP_TRAVELER_COUNT;
 
-/** One galaxy roll in [0, 0.16): a 20% relative reduction from the former 20% chance. */
+/** The half-open threshold gives every newly created traveler one exact 10% galaxy roll. */
 export const isGalaxyCreationRoll = (roll: number) => roll >= 0 && roll < GALAXY_CREATION_CHANCE;
 
-/** Every third moving star is eligible to carry a prominent planetary system. */
+/** Every sixth moving star is eligible to carry a prominent planetary system. */
 export const isSystemCarrier = (traveler: Traveler, index: number) =>
-    !traveler.isGalaxy && index % SYSTEM_CARRIER_INTERVAL === SYSTEM_CARRIER_INTERVAL - 1;
+    !traveler.isGalaxy && index % 6 === 2;
 
 const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPhase => {
     if (eventElapsed < MORPH_SECONDS) {
@@ -582,60 +442,13 @@ const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPh
     return { name: 'ambient', event, progress: 0, eventElapsed };
 };
 
-/** Seed/event-local rejection sampling avoids uint32 modulo bias; events are one-indexed. */
-export const getConstellationIdleDelay = (sceneSeed: number, event = 1): number => {
-    const acceptedRange = UINT32_RANGE - UINT32_RANGE % CONSTELLATION_INTERVAL_SECONDS;
-    let channel = 503;
-    let roll = hashUint(sceneSeed, event, channel);
-    while (roll >= acceptedRange) roll = hashUint(sceneSeed, event, ++channel);
-    return 1 + roll % CONSTELLATION_INTERVAL_SECONDS;
-};
-
-export const getInitialConstellationDelay = (sceneSeed: number): number =>
-    getConstellationIdleDelay(sceneSeed, 1);
-
-// Cache only event starts, not frames. A warm lookup is logarithmic; extending a schedule
-// generates each event once. Bound retained scene histories (resize never creates a new seed).
-const constellationSchedules = new Map<number, number[]>();
-const getConstellationSchedule = (sceneSeed: number): number[] => {
-    const seed = sceneSeed >>> 0;
-    let starts = constellationSchedules.get(seed);
-    if (!starts) {
-        if (constellationSchedules.size >= 16) {
-            constellationSchedules.delete(constellationSchedules.keys().next().value!);
-        }
-        starts = [getInitialConstellationDelay(seed)];
-        constellationSchedules.set(seed, starts);
+export const getConstellationPhase = (elapsedSeconds: number): ConstellationPhase => {
+    const elapsed = Math.max(0, elapsedSeconds);
+    if (elapsed < CONSTELLATION_INTERVAL_SECONDS) {
+        return { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed };
     }
-    return starts;
-};
-
-export const getConstellationEventStart = (sceneSeed: number, event: number): number => {
-    const starts = getConstellationSchedule(sceneSeed);
-    while (starts.length < event) {
-        starts.push(starts[starts.length - 1] + CONSTELLATION_WINDOW_SECONDS
-            + getConstellationIdleDelay(sceneSeed, starts.length + 1));
-    }
-    return starts[event - 1];
-};
-
-export const getConstellationPhase = (elapsedSeconds: number, sceneSeed = 0): ConstellationPhase => {
-    const elapsed = Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0);
-    const starts = getConstellationSchedule(sceneSeed);
-    while (starts[starts.length - 1] <= elapsed) {
-        getConstellationEventStart(sceneSeed, starts.length + 1);
-    }
-    // Upper bound: the number of started events also preserves phrase/geometry numbering.
-    let low = 0;
-    let high = starts.length;
-    while (low < high) {
-        const middle = Math.floor((low + high) / 2);
-        if (starts[middle] <= elapsed) low = middle + 1;
-        else high = middle;
-    }
-    return low === 0
-        ? { name: 'ambient', event: 0, progress: 0, eventElapsed: elapsed }
-        : getLifecyclePhase(elapsed - starts[low - 1], low);
+    const event = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS);
+    return getLifecyclePhase(elapsed - event * CONSTELLATION_INTERVAL_SECONDS, event);
 };
 
 /** An explicit trigger gets the same exact 10s in / 10s hold / 10s out lifecycle. */
@@ -643,33 +456,20 @@ export const getEasterEggPhase = (elapsedSinceTrigger: number): ConstellationPha
     getLifecyclePhase(Math.max(0, elapsedSinceTrigger), 1);
 
 /** Traveler and planet clocks exclude every constellation window, including the active partial one. */
-export const getSimulationTime = (elapsedSeconds: number, sceneSeed = 0) => {
-    const elapsed = Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0);
-    const phase = getConstellationPhase(elapsed, sceneSeed);
-    if (phase.event === 0) return elapsed;
-    return elapsed - (phase.event - 1) * CONSTELLATION_WINDOW_SECONDS
-        - Math.min(phase.eventElapsed, CONSTELLATION_WINDOW_SECONDS);
+export const getSimulationTime = (elapsedSeconds: number) => {
+    const elapsed = Math.max(0, elapsedSeconds);
+    if (elapsed < CONSTELLATION_INTERVAL_SECONDS) return elapsed;
+    const completedEvents = Math.floor(elapsed / CONSTELLATION_INTERVAL_SECONDS) - 1;
+    const inInterval = elapsed % CONSTELLATION_INTERVAL_SECONDS;
+    return elapsed
+        - completedEvents * CONSTELLATION_WINDOW_SECONDS
+        - Math.min(inInterval, CONSTELLATION_WINDOW_SECONDS);
 };
-
-// Paired layers preserve balanced drift and near-8% flares in every tier prefix.
-const morphingAmbientIndex = (index: number) => index + 2 * Math.floor(index / 2);
-/** One flare per ten-star block, except every fifth block (seeded offset) stays flare-free. */
-const ambientFlareIndexForBlock = (seed: number, generation: number, block: number) => {
-    if ((block + hashUint(seed, generation, 703) % 5) % 5 === 0) return -1;
-    const layer = (block & 1) ^ (hashUint(seed, generation, 701) & 1);
-    const candidates = Array.from({ length: 10 }, (_, offset) => block * 10 + offset)
-        .filter((candidate) => (candidate % 4 >= 2 ? 1 : 0) === layer);
-    return candidates[hashUint(seed, generation, 702 + block) % candidates.length];
-};
-export const hasAmbientCardinalFlare = (seed: number, generation: number, index: number) =>
-    index === ambientFlareIndexForBlock(seed, generation, Math.floor(index / 10));
 
 const createStarLayout = (seed: number, generation: number, count: number, channel: number) => {
-    const flares = new Set(Array.from({ length: Math.ceil(count / 10) },
-        (_, block) => ambientFlareIndexForBlock(seed, generation, block)));
     const modeOffset = hashUint(seed, generation, channel + 1) & 1;
     return Array.from({ length: count }, (_, index) => {
-        // Per-index streams keep all shared prefix stars identical when a display temporarily needs
+        // Per-index streams keep the first 70 stars identical when a display temporarily needs
         // hundreds more anchors. Density changes therefore cannot perturb the ambient frame.
         const random = createSeededRandom(hashUint(seed, generation, channel + 2 + index));
         return {
@@ -681,7 +481,6 @@ const createStarLayout = (seed: number, generation: number, count: number, chann
             driftSpeed: between(random, 0.0007, 0.0017),
             driftAngle: between(random, 0, TAU),
             twinkleSeed: Math.floor(random() * UINT32_RANGE),
-            hasCardinalFlare: flares.has(index),
         } satisfies DistantStar;
     });
 };
@@ -751,29 +550,30 @@ export const getDriftedStarVelocity = (
     };
 };
 
-/** Separate seed channels preserve layout/drift randomness and never reseed on a frame or cycle. */
-export const getStarTwinkleParameters = (star: Pick<DistantStar, 'twinkleSeed'>) => ({
-    periodSeconds: 8 + hashRandom(star.twinkleSeed, 0, 0) * 10,
-    phase: hashRandom(star.twinkleSeed, 0, 1) * TAU,
-    dim: 0.82 + hashRandom(star.twinkleSeed, 0, 2) * 0.1,
-    bright: 1.04 + hashRandom(star.twinkleSeed, 0, 3) * 0.08,
-});
-
 const getAmbientTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) => {
-    const { periodSeconds, phase, dim, bright } = getStarTwinkleParameters(star);
-    const wave = (1 + Math.sin(Math.max(0, elapsedSeconds) * TAU / periodSeconds + phase)) / 2;
-    return dim + (bright - dim) * wave;
+    const elapsed = Math.max(0, elapsedSeconds);
+    const cycle = Math.floor(elapsed / TWINKLE_WINDOW_SECONDS);
+    const cycleTime = elapsed - cycle * TWINKLE_WINDOW_SECONDS;
+    const fallDuration = 2 + hashRandom(star.twinkleSeed, cycle, 1) * 3;
+    const restDuration = 0.35 + hashRandom(star.twinkleSeed, cycle, 2) * 1.4;
+    const riseDuration = 2 + hashRandom(star.twinkleSeed, cycle, 3) * 3;
+    const totalDuration = fallDuration + restDuration + riseDuration;
+    const start = hashRandom(star.twinkleSeed, cycle, 0) * (TWINKLE_WINDOW_SECONDS - totalDuration);
+    const target = 0.4 + hashRandom(star.twinkleSeed, cycle, 4) * 0.2;
+    const eventTime = cycleTime - start;
+    if (eventTime < 0 || eventTime >= totalDuration) return 1;
+    if (eventTime < fallDuration) return 1 - (1 - target) * smoothstep(eventTime / fallDuration);
+    if (eventTime < fallDuration + restDuration) return target;
+    return target + (1 - target) * smoothstep(
+        (eventTime - fallDuration - restDuration) / riseDuration,
+    );
 };
 
-/** Slow, independent dim/bright variation; constellation choreography retains its own styles. */
-export const getTwinkleBrightness = (
-    star: DistantStar,
-    elapsedSeconds: number,
-    prefersReducedMotion = false,
-    sceneSeed = 0,
-) => !prefersReducedMotion && getConstellationPhase(elapsedSeconds, sceneSeed).name === 'ambient'
-    ? getAmbientTwinkleBrightness(star, elapsedSeconds)
-    : 1;
+/** One independently seeded full-dim-full event per <=120s cycle. */
+export const getTwinkleBrightness = (star: DistantStar, elapsedSeconds: number) =>
+    getConstellationPhase(elapsedSeconds).name === 'ambient'
+        ? getAmbientTwinkleBrightness(star, elapsedSeconds)
+        : 1;
 
 export const getConstellationStrength = (phase: ConstellationPhase) => {
     if (phase.name === 'morph-in') return phase.progress;
@@ -789,6 +589,8 @@ export const getStarTextIntroProgress = (eventElapsed: number): StarTextIntroPro
     return {
         stage: elapsed < MORPH_SECONDS ? 'morph-in' : 'complete',
         progress,
+        firstGlyph: progress,
+        burst: progress,
     };
 };
 
@@ -807,73 +609,13 @@ export const getEasterEggStrength = (
 
 const mix = (from: number, to: number, amount: number) => from + (to - from) * amount;
 
-const starAuras = new Map<number, StarAura>();
-export const getStarAura = (seed: number): StarAura => {
-    const cached = starAuras.get(seed);
-    if (cached) return cached;
-    const warmth = hashRandom(seed, 0, 811);
-    const aura: StarAura = {
-        radiusMultiplier: 2.1 + hashRandom(seed, 0, 812) * 1.5,
-        opacity: 0.16 + hashRandom(seed, 0, 813) * 0.16,
-        softness: 0.22 + hashRandom(seed, 0, 814) * 0.34,
-        rgb: [Math.round(mix(160, 255, warmth)), Math.round(mix(211, 216, warmth)),
-            Math.round(mix(255, 174, warmth))],
-    };
-    if (starAuras.size >= 4096) starAuras.delete(starAuras.keys().next().value!);
-    starAuras.set(seed, aura);
-    return aura;
-};
-
-// Keep palette variants separate so cached traveler/text auras retain their original RGB.
-// Bound retained identities across scene seeds and generations, just like getStarAura.
-const ambientStarAuras = new Map<number, StarAura>();
-const getAmbientStarAura = (seed: number): StarAura => {
-    const cached = ambientStarAuras.get(seed);
-    if (cached) return cached;
-    const aura: StarAura = { ...getStarAura(seed),
-        rgb: AMBIENT_STAR_PALETTE[hashUint(seed, 0, 815) % AMBIENT_STAR_PALETTE.length].rgb };
-    if (ambientStarAuras.size >= 4096) ambientStarAuras.delete(ambientStarAuras.keys().next().value!);
-    ambientStarAuras.set(seed, aura);
-    return aura;
-};
-
-const mixStarAura = (from: StarAura, to: StarAura, amount: number): StarAura => ({
-    radiusMultiplier: mix(from.radiusMultiplier, to.radiusMultiplier, amount),
-    opacity: mix(from.opacity, to.opacity, amount),
-    softness: mix(from.softness, to.softness, amount),
-    rgb: [mix(from.rgb[0], to.rgb[0], amount), mix(from.rgb[1], to.rgb[1], amount),
-        mix(from.rgb[2], to.rgb[2], amount)],
-});
-
-export const getAmbientCardinalFlare = (
-    style: StarVisualStyle,
-    elapsedSeconds: number,
-    seed: number,
-) => {
-    const baseOpacity = clamp01(style.cardinalFlare ?? 0);
-    if (baseOpacity <= 0 || style.opacity <= 0) return null;
-    // Two slow, per-star random periods (16-30s and 6-12s) blend into an unhurried, aperiodic drift.
-    const slowPeriod = 16 + hashRandom(seed, 0, 817) * 14;
-    const fastPeriod = 6 + hashRandom(seed, 0, 818) * 6;
-    const slowPhase = elapsedSeconds * (TAU / slowPeriod) + hashRandom(seed, 0, 816) * TAU;
-    const fastPhase = elapsedSeconds * (TAU / fastPeriod) + hashRandom(seed, 0, 819) * TAU;
-    const oscillation = Math.sin(slowPhase) * 0.7 + Math.sin(fastPhase) * 0.3;
-    const rayLength = style.radius * 9 * (1 + oscillation * 0.1);
-    const opacity = clamp01(baseOpacity * (1 + oscillation * 0.1));
-    return { opacity, rayLength, rayWidth: Math.max(0.45, style.radius * 0.55),
-        coreRadius: style.radius * 0.85,
-        rays: [{ x: 0, y: -rayLength }, { x: 0, y: rayLength },
-            { x: rayLength, y: 0 }, { x: -rayLength, y: 0 }] };
-};
-
 /** Pure visual style interpolation with no alpha, radius, or twinkle pops at phase boundaries. */
 export const getStarVisualStyle = (
     previous: DistantStar,
     next: DistantStar,
     elapsedSeconds: number,
-    sceneSeed = 0,
 ): StarVisualStyle => {
-    const phase = getConstellationPhase(elapsedSeconds, sceneSeed);
+    const phase = getConstellationPhase(elapsedSeconds);
     const strength = getConstellationStrength(phase);
     if (phase.name === 'ambient') {
         const twinkle = getAmbientTwinkleBrightness(next, elapsedSeconds);
@@ -889,7 +631,7 @@ export const getStarVisualStyle = (
     const styleProgress = phase.name === 'morph-out' ? phase.progress : 0;
     const alpha = mix(previous.alpha, next.alpha, styleProgress);
     const size = mix(previous.size, next.size, styleProgress);
-    const eventStart = getConstellationEventStart(sceneSeed, phase.event);
+    const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
     const ambientTwinkle = phase.name === 'morph-out'
         ? getAmbientTwinkleBrightness(next, eventStart + CONSTELLATION_WINDOW_SECONDS)
         : getAmbientTwinkleBrightness(previous, eventStart - 0.000001);
@@ -904,37 +646,22 @@ export const getStarVisualStyle = (
 };
 
 const hiddenStarStyle = (radius = 1): StarVisualStyle => ({
-    alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0, coreOpacity: 0,
+    alpha: 0, twinkle: 1, strength: 0, radius, opacity: 0,
 });
 
-const ambientVisualStyle = (
-    star: DistantStar,
-    elapsedSeconds: number,
-    prefersReducedMotion = false,
-): StarVisualStyle => {
-    const twinkle = prefersReducedMotion ? 1 : getAmbientTwinkleBrightness(star, elapsedSeconds);
+const ambientVisualStyle = (star: DistantStar, elapsedSeconds: number): StarVisualStyle => {
+    const twinkle = getAmbientTwinkleBrightness(star, elapsedSeconds);
     return {
         alpha: star.alpha,
         twinkle,
         strength: 0,
         radius: star.size,
         opacity: Math.min(1, star.alpha * twinkle),
-        coreOpacity: 1,
-        cardinalFlare: star.hasCardinalFlare ? 1 : 0,
-        // Independent hashing leaves radius, drift, twinkle and traveler streams untouched.
-        aura: getAmbientStarAura(star.twinkleSeed),
     };
 };
 
-export const getStarFieldStyles = (
-    sceneSeed: number,
-    elapsedSeconds: number,
-    prefersReducedMotion = false,
-    densityWidth = LARGE_BREAKPOINT,
-): StarVisualStyle[] => {
-    // Match the Canvas lifecycle's static time-zero frame, including redraws after resize.
-    if (prefersReducedMotion) elapsedSeconds = 0;
-    const phase = getConstellationPhase(elapsedSeconds, sceneSeed);
+export const getStarFieldStyles = (sceneSeed: number, elapsedSeconds: number): StarVisualStyle[] => {
+    const phase = getConstellationPhase(elapsedSeconds);
     const ambient = createAmbientLayout(sceneSeed, phase.event);
     if (phase.name === 'ambient') {
         const hiddenEvent = Math.max(1, phase.event);
@@ -946,26 +673,23 @@ export const getStarFieldStyles = (
         return [
             ...Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) =>
                 hiddenStarStyle(hiddenSource[index]?.size ? hiddenSource[index].size * 1.18 : 1)),
-            ...ambient.map((star, index) => index < starCountForWidth(densityWidth)
-                ? ambientVisualStyle(star, elapsedSeconds, prefersReducedMotion) : hiddenStarStyle(star.size)),
+            ...ambient.map((star) => ambientVisualStyle(star, elapsedSeconds)),
         ];
     }
 
     const phrase = selectConstellationPhrase(sceneSeed, phase.event);
     const counts = getConstellationGlyphAnchorCounts(phrase, sceneSeed, phase.event);
     const anchorCount = counts.reduce((total, count) => total + count, 0);
-    const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), Math.max(anchorCount, AMBIENT_STAR_COUNT));
-    const eventStart = getConstellationEventStart(sceneSeed, phase.event);
+    const previous = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1), anchorCount);
+    const eventStart = phase.event * CONSTELLATION_INTERVAL_SECONDS;
     const intro = getStarTextIntroProgress(phase.eventElapsed);
     const ambientSources = getStarTextAmbientSources(anchorCount);
-    const targetStyles = previous.slice(0, anchorCount).map((star) => ({
+    const targetStyles = previous.map((star) => ({
         alpha: star.alpha,
         twinkle: 1,
         strength: 1,
         radius: star.size * 1.18,
         opacity: Math.min(1, star.alpha * 1.28),
-        coreOpacity: 1,
-        aura: getStarAura(star.twinkleSeed),
     }));
     const textStyles = Array.from({ length: MAX_STAR_TEXT_ANCHOR_COUNT }, (_, index) => {
         if (index >= anchorCount) return hiddenStarStyle();
@@ -973,11 +697,11 @@ export const getStarFieldStyles = (
         if (phase.name === 'morph-out') {
             const visible = 1 - phase.progress;
             return { ...target, alpha: target.alpha * visible, strength: visible,
-                opacity: target.opacity * visible, coreOpacity: visible };
+                opacity: target.opacity * visible };
         }
         if (phase.name === 'hold') return target;
         const source = ambientSources[index];
-        const start = source.visible && source.index < starCountForWidth(densityWidth)
+        const start = source.visible
             ? ambientVisualStyle(previous[source.index], eventStart - 0.000001)
             : hiddenStarStyle(previous[source.index].size * 1.18);
         const style = mixStarVisualStyle(start, target, intro.progress);
@@ -985,20 +709,13 @@ export const getStarFieldStyles = (
     });
 
     const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
-    const transferredSources = new Set(ambientSources.filter((source) => source.visible).map((source) => source.index));
     const ambientStyles = ambient.map((star, index) => {
         const from = ambientVisualStyle(previousAmbient[index], eventStart - 0.000001);
         const to = ambientVisualStyle(star, eventStart + CONSTELLATION_WINDOW_SECONDS);
-        if (index >= starCountForWidth(densityWidth)) return hiddenStarStyle(from.radius);
-        const consumed = index % 4 < 2;
-        const held = consumed ? hiddenStarStyle(from.radius) : from;
+        const consumedCount = AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT;
+        const held = index >= consumedCount ? from : hiddenStarStyle(from.radius);
         if (phase.name === 'morph-out') return mixStarVisualStyle(held, to, phase.progress);
-        // Short phrases fade excess sources without losing their boundary frame.
-        const transferred = transferredSources.has(index);
-        if (consumed && !transferred && phase.name === 'morph-in') {
-            return mixStarVisualStyle(from, hiddenStarStyle(from.radius), intro.progress);
-        }
-        return held;
+        return index < consumedCount ? hiddenStarStyle(from.radius) : from;
     });
     return [...textStyles, ...ambientStyles];
 };
@@ -1006,25 +723,21 @@ export const getStarFieldStyles = (
 /** Shared by tests and the Canvas loop so ambient draw counts cover the rendered path. */
 export const isStarRenderable = (style: StarVisualStyle) => style.opacity > 0;
 
-export const getStarRgb = (
-    strength: number,
-    ambientRgb: readonly [number, number, number] = AMBIENT_STAR_RGB,
-): readonly [number, number, number] => {
+export const getStarRgb = (strength: number): readonly [number, number, number] => {
     const amount = clamp01(strength);
     return [
-        Math.round(mix(ambientRgb[0], CONSTELLATION_STAR_RGB[0], amount)),
-        Math.round(mix(ambientRgb[1], CONSTELLATION_STAR_RGB[1], amount)),
-        Math.round(mix(ambientRgb[2], CONSTELLATION_STAR_RGB[2], amount)),
+        Math.round(mix(AMBIENT_STAR_RGB[0], CONSTELLATION_STAR_RGB[0], amount)),
+        Math.round(mix(AMBIENT_STAR_RGB[1], CONSTELLATION_STAR_RGB[1], amount)),
+        Math.round(mix(AMBIENT_STAR_RGB[2], CONSTELLATION_STAR_RGB[2], amount)),
     ];
 };
 
 export const CONSTELLATION_PHRASES = [
     STAR_TEXT_BRAND_PHRASE,
-    STAR_TEXT_SECOND_BRAND_PHRASE,
     ...STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase),
 ] as const satisfies readonly StarTextPhrase[];
-export type ConstellationPhrase = StarTextPhrase;
-export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(2) as readonly ConstellationPhrase[];
+export type ConstellationPhrase = typeof CONSTELLATION_PHRASES[number];
+export const EASTER_EGG_PHRASES = CONSTELLATION_PHRASES.slice(1) as readonly ConstellationPhrase[];
 export const MAX_STAR_TEXT_ANCHOR_COUNT = Math.max(...CONSTELLATION_PHRASES.map((phrase) =>
     [...phrase].filter((character) => character !== ' ').length * MAX_GLYPH_STAR_COUNT));
 /** Stable slots prevent array churn at the intro/outro lifecycle boundaries. */
@@ -1062,40 +775,36 @@ export const shouldTriggerEasterEgg = (
 
 /** Seed chooses the first hidden phrase; subsequent triggers cycle every alternative without repeats. */
 export const selectEasterEggPhrase = (sceneSeed: number, triggerIndex: number): ConstellationPhrase => {
-    if (!EASTER_EGG_PHRASES.length) return '';
     const firstIndex = hashUint(sceneSeed, 0, 313) % EASTER_EGG_PHRASES.length;
     return EASTER_EGG_PHRASES[
         positiveModulo(firstIndex + Math.max(0, Math.trunc(triggerIndex)), EASTER_EGG_PHRASES.length)
     ];
 };
 
-/** Integer units preserve exact 35/15/50 shares, including half-unit editorial weights. */
-const alternativeWeightUnits = STAR_TEXT_ALTERNATIVES.reduce((sum, entry) => sum + entry.weightUnits, 0);
-export const CONSTELLATION_BUCKET_COUNT = alternativeWeightUnits * 20;
+/** Half the slots are the stable brand; the other half gives every live alternative one slot. */
+export const CONSTELLATION_BUCKET_COUNT = STAR_TEXT_ALTERNATIVES.length * 2;
 
 export const getConstellationPhraseForBucket = (bucket: number): ConstellationPhrase => {
     const normalized = positiveModulo(Math.trunc(bucket), CONSTELLATION_BUCKET_COUNT);
-    if (normalized < alternativeWeightUnits * 7) return STAR_TEXT_BRAND_PHRASE;
-    if (normalized < alternativeWeightUnits * 10) return STAR_TEXT_SECOND_BRAND_PHRASE;
-    let offset = normalized - alternativeWeightUnits * 10;
-    for (const entry of STAR_TEXT_ALTERNATIVES) {
-        offset -= entry.weightUnits * 10;
-        if (offset < 0) return entry.phrase;
-    }
-    return STAR_TEXT_BRAND_PHRASE;
+    return normalized < STAR_TEXT_ALTERNATIVES.length
+        ? CONSTELLATION_PHRASES[0]
+        : CONSTELLATION_PHRASES[1 + normalized - STAR_TEXT_ALTERNATIVES.length];
 };
 
-/** Phrase choice is stable for an event and changes only with scene seed/event identity. */
+/** Phrase choice is stable for an event: brand is exactly 50%; alternatives are evenly divided. */
 export const selectConstellationPhrase = (sceneSeed: number, event: number): ConstellationPhrase => {
     const stableEvent = Math.max(0, Math.trunc(event));
-    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % CONSTELLATION_BUCKET_COUNT);
+    // The uint32 midpoint is an exact half split, without modulo bias.
+    if (hashUint(sceneSeed, stableEvent, 211) < UINT32_RANGE / 2) return CONSTELLATION_PHRASES[0];
+    const alternativeCount = STAR_TEXT_ALTERNATIVES.length;
+    const acceptedRange = UINT32_RANGE - (UINT32_RANGE % alternativeCount);
     let channel = 212;
     let alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
     while (alternativeRoll >= acceptedRange) {
         channel += 1;
         alternativeRoll = hashUint(sceneSeed, stableEvent, channel);
     }
-    return getConstellationPhraseForBucket(alternativeRoll % CONSTELLATION_BUCKET_COUNT);
+    return CONSTELLATION_PHRASES[1 + alternativeRoll % alternativeCount];
 };
 
 // A shared 5x7 pixel alphabet provides consistent proportions and much fuller letterforms.
@@ -1109,34 +818,29 @@ const GLYPHS: Record<string, string[]> = {
     G: ['01111', '10000', '10000', '10111', '10001', '10001', '01111'],
     H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
     I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
-    J: ['11111', '00010', '00010', '00010', '10010', '10010', '01100'],
     K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
-    L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+    L: ['11000', '11000', '11000', '11000', '11000', '11111', '11111'],
     M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
     N: ['10001', '11001', '11001', '10101', '10011', '10011', '10001'],
     O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
     P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
     Q: ['01110', '10001', '10001', '10001', '10101', '10010', '01101'],
     R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
-    S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
-    T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+    S: ['01111', '11111', '11000', '11110', '01111', '00011', '11110'],
+    T: ['11111', '11111', '00100', '00100', '00100', '00100', '00100'],
     U: ['10001', '10001', '10001', '10001', '10001', '10001', '01110'],
     V: ['10001', '10001', '10001', '10001', '10001', '01010', '00100'],
     W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
     X: ['10001', '10001', '01010', '00100', '01010', '10001', '10001'],
     Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
-    Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
     '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
     '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
     '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
     '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
     '4': ['10010', '10010', '10010', '11111', '00010', '00010', '00010'],
     '5': ['11111', '10000', '10000', '11110', '00001', '00001', '11110'],
-    '6': ['01110', '10000', '10000', '11110', '10001', '10001', '01110'],
-    '7': ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
-    '9': ['01110', '10001', '10001', '01111', '00001', '00001', '01110'],
     '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
-    '.': ['00000', '00000', '00000', '00000', '00000', '00110', '00110'],
+    '.': ['00000', '00000', '00000', '00000', '01110', '01110', '01110'],
     '-': ['00000', '00000', '11111', '11111', '11111', '00000', '00000'],
 };
 
@@ -1212,77 +916,63 @@ const createUniformGlyphPoints = (
     event: number,
     glyphIndex: number,
 ): GlyphPoint[] => {
-    // Reserve the graph vertices: even the sparsest glyph retains endpoints and ink
-    // junctions, with no singleton samples stranded on a source segment.
-    const vertices = new Map<string, GlyphPoint>();
-    strokes.forEach((stroke) => stroke.forEach((point) => {
-        vertices.set(`${point.x},${point.y}`, point);
-    }));
-    const points = [...vertices.values()];
-    if (points.length > count) throw new Error('Glyph vertices exceed anchor budget');
-    const segments = strokes.map(([from, to], index) => ({
-        from,
-        to,
-        length: Math.hypot(to.x - from.x, to.y - from.y),
-        divisions: 1,
-        tie: hashUint(sceneSeed ^ (glyphIndex + 1), event, 431 + index),
-    }));
-    // Spend each remaining anchor on the largest local gap, then distribute the
-    // segment's interior anchors uniformly (rather than leaving half/quarter clusters).
-    for (let remaining = count - points.length; remaining > 0; remaining -= 1) {
-        let best = segments[0];
-        for (const segment of segments) {
-            const gap = segment.length / segment.divisions;
-            const bestGap = best.length / best.divisions;
-            if (gap > bestGap + 1e-12
-                || (Math.abs(gap - bestGap) <= 1e-12 && segment.tie < best.tie)) {
-                best = segment;
-            }
-        }
-        best.divisions += 1;
-    }
-    segments.forEach(({ from, to, divisions }) => {
-        for (let step = 1; step < divisions; step += 1) {
-            points.push(mixPoint(from, to, step / divisions));
+    const dense = new Map<string, GlyphPoint>();
+    strokes.forEach(([from, to]) => {
+        const length = Math.hypot(to.x - from.x, to.y - from.y);
+        const steps = Math.max(2, Math.ceil(length * 48));
+        for (let step = 0; step <= steps; step += 1) {
+            const amount = step / steps;
+            const point = mixPoint(from, to, amount);
+            dense.set(`${point.x.toFixed(8)},${point.y.toFixed(8)}`, point);
         }
     });
-    return points;
-};
+    const candidates = [...dense.values()];
+    if (candidates.length < count) throw new Error('Insufficient unique glyph stroke samples');
 
-/** Only consecutive samples on the same source segment may share a rendered line.
- * Sampling order is deliberately irrelevant: proximity cannot establish glyph topology.
- * Shared source vertices let junctions meet on ink, never across empty glyph space.
- */
-const connectGlyphStrokeNeighbors = (
-    points: GlyphPoint[],
-    strokes: GlyphStroke[],
-): ConstellationEdge[] => {
-    const edges: ConstellationEdge[] = [];
-    const seen = new Set<string>();
-    for (const [start, end] of strokes) {
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const lengthSquared = dx * dx + dy * dy;
-        const neighbors = points.flatMap((point, index) => {
-            const px = point.x - start.x;
-            const py = point.y - start.y;
-            const amount = (px * dx + py * dy) / lengthSquared;
-            return Math.abs(px * dy - py * dx) <= 1e-8
-                && amount >= -1e-8 && amount <= 1 + 1e-8
-                ? [{ index, amount }] : [];
-        }).sort((a, b) => a.amount - b.amount || a.index - b.index);
-        for (let index = 1; index < neighbors.length; index += 1) {
-            const from = Math.min(neighbors[index - 1].index, neighbors[index].index);
-            const to = Math.max(neighbors[index - 1].index, neighbors[index].index);
-            const key = `${from},${to}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                edges.push({ from, to });
+    // Farthest-point sampling maximizes the next nearest-neighbor distance. The seeded first
+    // sample changes texture between events without changing spacing quality or adding jitter.
+    const selected: GlyphPoint[] = [];
+    const used = new Set<number>();
+    let selectedIndex = hashUint(sceneSeed ^ (glyphIndex + 1), event, 431) % candidates.length;
+    while (selected.length < count) {
+        used.add(selectedIndex);
+        selected.push(candidates[selectedIndex]);
+        let bestIndex = -1;
+        let bestDistance = -1;
+        for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+            if (used.has(candidateIndex)) continue;
+            const candidate = candidates[candidateIndex];
+            let nearest = Number.POSITIVE_INFINITY;
+            for (const point of selected) {
+                nearest = Math.min(nearest,
+                    (candidate.x - point.x) ** 2 + (candidate.y - point.y) ** 2);
+            }
+            if (nearest > bestDistance + 1e-12) {
+                bestDistance = nearest;
+                bestIndex = candidateIndex;
             }
         }
+        selectedIndex = bestIndex;
     }
-    return edges;
+    return selected;
 };
+
+const connectNearestTree = (points: GlyphPoint[]): ConstellationEdge[] => points
+    .slice(1)
+    .map((point, offset) => {
+        const to = offset + 1;
+        let from = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        for (let candidate = 0; candidate < to; candidate += 1) {
+            const distance = (points[candidate].x - point.x) ** 2
+                + (points[candidate].y - point.y) ** 2;
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                from = candidate;
+            }
+        }
+        return { from, to };
+    });
 
 const buildRawConstellationGeometry = (
     phrase: ConstellationPhrase,
@@ -1316,7 +1006,7 @@ const buildRawConstellationGeometry = (
             return points.length - 1;
         });
         if (includeEdges) {
-            connectGlyphStrokeNeighbors(glyphPoints, strokes).forEach(({ from, to }) => edges.push({
+            connectNearestTree(glyphPoints).forEach(({ from, to }) => edges.push({
                 from: glyphStart + from,
                 to: glyphStart + to,
             }));
@@ -1436,18 +1126,9 @@ const getDistributedTextSourceSlots = (targetCount: number) => {
         count,
     );
     const sourceByDestination = Array<number>(count).fill(-1);
-    // Distribute the mobile prefix across the entire phrase first, then fill remaining slots
-    // at larger tiers. Shared stars never switch glyph destinations at a breakpoint.
-    let assigned = 0;
-    for (const tierCount of [MOBILE_STAR_COUNT / 2, MOBILE_STAR_COUNT * 3 / 2, RETAINED_AMBIENT_STAR_COUNT]) {
-        const stageCount = Math.min(tierCount, visibleSourceCount) - assigned;
-        const available = sourceByDestination.map((source, index) => source < 0 ? index : -1)
-            .filter((index) => index >= 0);
-        for (let index = 0; index < stageCount; index += 1) {
-            const destination = available[Math.floor((index + 0.5) * available.length / stageCount)];
-            sourceByDestination[destination] = assigned + index;
-        }
-        assigned += stageCount;
+    for (let sourceIndex = 0; sourceIndex < visibleSourceCount; sourceIndex += 1) {
+        const destination = Math.floor((sourceIndex + 0.5) * count / visibleSourceCount);
+        sourceByDestination[destination] = sourceIndex;
     }
     let hiddenSource = visibleSourceCount;
     return sourceByDestination.map((source) => source >= 0 ? source : hiddenSource++);
@@ -1460,7 +1141,7 @@ const getStarTextAmbientSources = (targetCount: number) => {
     );
     return getDistributedTextSourceSlots(targetCount).map((sourceSlot) => ({
         index: sourceSlot < visibleSourceCount
-            ? morphingAmbientIndex(sourceSlot)
+            ? sourceSlot
             : positiveModulo(sourceSlot * 17 + 7, AMBIENT_STAR_COUNT),
         visible: sourceSlot < visibleSourceCount,
     }));
@@ -1484,7 +1165,6 @@ export const createStarTextAmbientOrigins = (
 export const remapAmbientStarsToTextSlots = (
     positions: Point[],
     styles: StarVisualStyle[],
-    targetCount: number,
     ambientStartIndex = MAX_STAR_TEXT_ANCHOR_COUNT,
 ): { positions: Point[]; styles: StarVisualStyle[]; sourceIndices: number[] } => {
     const remappedPositions = positions.map((point) => ({ ...point }));
@@ -1494,25 +1174,31 @@ export const remapAmbientStarsToTextSlots = (
         .filter(({ style, index }) => index >= ambientStartIndex
             && style.strength === 0 && style.opacity > 0)
         .map(({ index }) => index);
-    const sources = getStarTextAmbientSources(targetCount);
-    const sourceIndices = sources.filter((source) => source.visible)
-        .map((source) => ambientStartIndex + source.index)
-        .filter((index) => styles[index]?.opacity > 0);
+    const sourceIndices = ambientSourceIndices.slice(
+        0, AMBIENT_STAR_COUNT - RETAINED_AMBIENT_STAR_COUNT,
+    );
     if (ambientSourceIndices.length > 0) {
-        sources.forEach((source, destinationIndex) => {
-            const sourceIndex = ambientStartIndex + source.index;
-            remappedPositions[destinationIndex] = { ...positions[sourceIndex] };
-            remappedStyles[destinationIndex] = source.visible
-                ? { ...styles[sourceIndex] }
-                : hiddenStarStyle(styles[sourceIndex].radius);
-        });
+        for (let index = 0; index < ambientStartIndex; index += 1) {
+            const sourceIndex = ambientSourceIndices[positiveModulo(index * 17 + 7, ambientSourceIndices.length)];
+            remappedPositions[index] = { ...positions[sourceIndex] };
+            remappedStyles[index] = hiddenStarStyle(styles[sourceIndex].radius);
+        }
     }
-    sourceIndices.forEach((sourceIndex) => {
+    sourceIndices.forEach((sourceIndex, index) => {
+        remappedPositions[index] = { ...positions[sourceIndex] };
+        remappedStyles[index] = { ...styles[sourceIndex] };
         remappedStyles[sourceIndex] = hiddenStarStyle(styles[sourceIndex].radius);
     });
     return { positions: remappedPositions, styles: remappedStyles, sourceIndices };
 };
 
+/** @deprecated Use `remapAmbientStarsToTextSlots`; retained for the unchanged Canvas component. */
+export const remapAmbientStarsToFirstGlyphSlots = (
+    positions: Point[],
+    styles: StarVisualStyle[],
+    _firstGlyphCount: number,
+    ambientStartIndex = MAX_STAR_TEXT_ANCHOR_COUNT,
+) => remapAmbientStarsToTextSlots(positions, styles, ambientStartIndex);
 
 const quarticPoint = (controls: readonly Point[], amount: number): Point => {
     const t = clamp01(amount);
@@ -1621,10 +1307,11 @@ export const getEasterEggStarFieldPositions = (
         return end;
     }
     const targetCount = Math.min(options.targetCount, targets.length);
+    const sourceSlots = getDistributedTextSourceSlots(targetCount);
     const targetFor = (point: Point, index: number) => targets[index] ?? point;
     if (phase.name === 'morph-in') {
         return start.map((point, index) => index < targetCount
-            ? mixPoint(point, targetFor(point, index), phase.progress)
+            ? mixPoint(start[sourceSlots[index]] ?? point, targetFor(point, index), phase.progress)
             : point);
     }
     if (phase.name === 'hold') return start.map(targetFor);
@@ -1647,17 +1334,12 @@ const mixStarVisualStyle = (
     from: StarVisualStyle,
     to: StarVisualStyle,
     amount: number,
-): StarVisualStyle => amount <= 0 ? { ...from } : amount >= 1 ? { ...to } : ({
+): StarVisualStyle => ({
     alpha: mix(from.alpha, to.alpha, amount),
     twinkle: mix(from.twinkle, to.twinkle, amount),
     strength: mix(from.strength, to.strength, amount),
     radius: mix(from.radius, to.radius, amount),
     opacity: mix(from.opacity, to.opacity, amount),
-    ...(from.coreOpacity !== undefined || to.coreOpacity !== undefined
-        ? { coreOpacity: mix(from.coreOpacity ?? from.opacity, to.coreOpacity ?? to.opacity, amount) } : {}),
-    ...(from.cardinalFlare !== undefined || to.cardinalFlare !== undefined
-        ? { cardinalFlare: mix(from.cardinalFlare ?? 0, to.cardinalFlare ?? 0, amount) } : {}),
-    ...(from.aura || to.aura ? { aura: mixStarAura(from.aura ?? to.aura!, to.aura ?? from.aura!, amount) } : {}),
 });
 
 export const getEasterEggStarFieldStyles = (
@@ -1684,12 +1366,15 @@ export const getEasterEggStarFieldStyles = (
         return end;
     }
     const targetCount = Math.min(options.targetCount, targets.length);
+    const sourceSlots = getDistributedTextSourceSlots(targetCount);
     if (phase.name === 'morph-in') {
-        // Retained styles are identical; surplus ambient and old-phrase slots fade smoothly
-        // instead of vanishing at the hold boundary when a short phrase uses fewer sources.
-        return start.map((style, index) => mixStarVisualStyle(
-            style, targetFor(style, index), phase.progress,
-        ));
+        return start.map((style, index) => index < targetCount
+            ? mixStarVisualStyle(
+                start[sourceSlots[index]] ?? hiddenStarStyle(targetFor(style, index).radius),
+                targetFor(style, index),
+                phase.progress,
+            )
+            : style);
     }
     if (phase.name === 'hold') return start.map(targetFor);
     const endpointIsVisible = (index: number) => options.endpointVisible?.[index] ?? false;
@@ -1702,8 +1387,6 @@ export const getEasterEggStarFieldStyles = (
         alpha: mix(target.alpha, endpoint.alpha, amount),
         strength: mix(target.strength, endpoint.strength, amount),
         opacity: mix(target.opacity, endpoint.opacity, amount),
-        ...(target.coreOpacity !== undefined || endpoint.coreOpacity !== undefined
-            ? { coreOpacity: mix(target.coreOpacity ?? target.opacity, endpoint.coreOpacity ?? endpoint.opacity, amount) } : {}),
     });
     if (phase.name === 'morph-out') {
         return start.map((style, index) => {
@@ -1736,8 +1419,6 @@ export const createEasterEggTargetStyles = (
         strength: 1,
         radius: star.size * 1.18,
         opacity: Math.min(1, star.alpha * 1.28),
-        coreOpacity: 1,
-        aura: getStarAura(star.twinkleSeed),
     }));
 
 export const getStarFieldPositions = (
@@ -1746,7 +1427,7 @@ export const getStarFieldPositions = (
     width: number,
     height: number,
 ): Point[] => {
-    const phase = getConstellationPhase(elapsedSeconds, sceneSeed);
+    const phase = getConstellationPhase(elapsedSeconds);
     const ambientLayout = createAmbientLayout(sceneSeed, phase.event);
     const currentDriftTime = phase.event === 0
         ? elapsedSeconds
@@ -1771,10 +1452,12 @@ export const getStarFieldPositions = (
     const geometry = createConstellationGeometry(width, height, sceneSeed, phase.event);
     const targets = geometry.points;
     const previous = createAmbientLayout(
-        sceneSeed, Math.max(0, phase.event - 1), Math.max(targets.length, AMBIENT_STAR_COUNT),
+        sceneSeed, Math.max(0, phase.event - 1), targets.length,
     );
     const previousAmbient = createAmbientLayout(sceneSeed, Math.max(0, phase.event - 1));
-    const previousDriftTime = getConstellationIdleDelay(sceneSeed, phase.event);
+    const previousDriftTime = phase.event <= 1
+        ? CONSTELLATION_INTERVAL_SECONDS
+        : CONSTELLATION_INTERVAL_SECONDS - CONSTELLATION_WINDOW_SECONDS;
     const intro = getStarTextIntroProgress(phase.eventElapsed);
     const textSources = getStarTextAmbientSources(targets.length);
     const fallback = targets[0] ?? { x: width * 0.5, y: height * 0.5 };
@@ -1806,7 +1489,7 @@ export const getStarPosition = (
     height: number,
 ): Point => {
     const positions = getStarFieldPositions(sceneSeed, elapsedSeconds, width, height);
-    return positions[getConstellationPhase(elapsedSeconds, sceneSeed).name === 'ambient'
+    return positions[getConstellationPhase(elapsedSeconds).name === 'ambient'
         ? MAX_STAR_TEXT_ANCHOR_COUNT + starIndex
         : starIndex];
 };
@@ -1841,9 +1524,7 @@ const getTravelerSpeedTable = (traveler: Traveler, cycle: number) => {
         table[index] = table[index - 1] + (previous + current) * step * 0.5;
         previous = current;
     }
-    if (travelerSpeedTables.size >= 4096) {
-        travelerSpeedTables.delete(travelerSpeedTables.keys().next().value!);
-    }
+    if (travelerSpeedTables.size >= 4096) travelerSpeedTables.clear();
     travelerSpeedTables.set(key, table);
     return table;
 };
@@ -1854,45 +1535,26 @@ const travelerBudgetAtDistance = (table: Float64Array, distance: number) => {
     return mix(table[index], table[index + 1], tablePosition - index);
 };
 
-// Scalar cycle boundaries avoid replaying every historical quadrature table each RAF.
-const travelerCycleBudgets = new Map<number, number[]>();
-const getTravelerCycleBudgets = (traveler: Traveler) => {
-    const cached = travelerCycleBudgets.get(traveler.seed);
-    if (cached) return cached;
-    const budgets = [0];
-    if (travelerCycleBudgets.size >= 512) travelerCycleBudgets.delete(travelerCycleBudgets.keys().next().value!);
-    travelerCycleBudgets.set(traveler.seed, budgets);
-    return budgets;
-};
-
 export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) => {
     const initialDistance = Math.max(0, traveler.initialDistance);
     let cycle = Math.floor(initialDistance / DEPTH_RANGE);
     let localDistance = initialDistance - cycle * DEPTH_RANGE;
-    const distanceBudget = Math.max(0, simulationSeconds) * Math.max(0, traveler.speed);
+    let distanceBudget = Math.max(0, simulationSeconds) * Math.max(0, traveler.speed);
     if (traveler.speed <= 0 || distanceBudget === 0) {
         return { depth: FAR_DEPTH - localDistance, cycle };
     }
 
-    const budgets = getTravelerCycleBudgets(traveler);
-    const appendCycle = () => {
-        const table = getTravelerSpeedTable(traveler, budgets.length - 1);
-        budgets.push(budgets[budgets.length - 1] + table[TRAVELER_SPEED_TABLE_STEPS]);
-    };
-    while (budgets.length <= cycle) appendCycle();
-    const absoluteBudget = budgets[cycle]
-        + travelerBudgetAtDistance(getTravelerSpeedTable(traveler, cycle), localDistance) + distanceBudget;
-    while (budgets[budgets.length - 1] <= absoluteBudget) appendCycle();
-    let first = cycle;
-    let last = budgets.length - 1;
-    while (first + 1 < last) {
-        const middle = Math.floor((first + last) / 2);
-        if (budgets[middle] <= absoluteBudget) first = middle;
-        else last = middle;
+    let table = getTravelerSpeedTable(traveler, cycle);
+    let startingBudget = travelerBudgetAtDistance(table, localDistance);
+    while (distanceBudget >= table[TRAVELER_SPEED_TABLE_STEPS] - startingBudget) {
+        distanceBudget -= table[TRAVELER_SPEED_TABLE_STEPS] - startingBudget;
+        cycle += 1;
+        localDistance = 0;
+        startingBudget = 0;
+        table = getTravelerSpeedTable(traveler, cycle);
     }
-    cycle = first;
-    const table = getTravelerSpeedTable(traveler, cycle);
-    const targetBudget = absoluteBudget - budgets[cycle];
+
+    const targetBudget = startingBudget + distanceBudget;
     let lower = 0;
     let upper = TRAVELER_SPEED_TABLE_STEPS;
     while (lower + 1 < upper) {
@@ -1904,27 +1566,6 @@ export const getTravelerDepth = (traveler: Traveler, simulationSeconds: number) 
     const fraction = budgetSpan > 0 ? (targetBudget - table[lower]) / budgetSpan : 0;
     localDistance = (lower + fraction) * DEPTH_RANGE / TRAVELER_SPEED_TABLE_STEPS;
     return { depth: FAR_DEPTH - localDistance, cycle };
-};
-
-export const getTravelerDiscOpacity = (progress: number) =>
-    smoothstep(progress / 0.14) * (1 - smoothstep((progress - 0.82) / 0.18));
-export const SOLAR_SURFACE_CELL_COUNT = 12;
-
-/** Seeded, continuous solar dynamics on the frozen simulation clock. */
-export const getSolarSurface = (seed: number, simulationSeconds: number, progress: number) => {
-    const time = Math.max(0, simulationSeconds);
-    const strength = smoothstep((progress - TRAVELER_DETAIL_THRESHOLDS[0]) / 0.4);
-    const rotation = time * 0.09 + hashRandom(seed, 0, 511) * TAU;
-    const cells = Array.from({ length: SOLAR_SURFACE_CELL_COUNT }, (_, index) => {
-        const phase = hashRandom(seed, index, 512) * TAU;
-        const angle = phase + time * (0.04 + hashRandom(seed, index, 513) * 0.035);
-        const distance = 0.15 + hashRandom(seed, index, 514) * 0.65 + Math.sin(time * 0.23 + phase) * 0.035;
-        return { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance,
-            radius: 0.1 + hashRandom(seed, index, 515) * 0.11 + Math.sin(time * 0.37 + phase) * 0.025,
-            intensity: 0.5 + Math.sin(time * 0.31 + phase) * 0.5 };
-    });
-    return { strength, rotation, cells,
-        prominence: 0.5 + Math.sin(time * 0.19 + hashRandom(seed, 0, 516) * TAU) * 0.5 };
 };
 
 /** Intrinsically larger travelers trend red; all non-red palette entries share the remainder. */
@@ -1960,9 +1601,9 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     return {
         radius,
         detailLevel,
-        haloRadius: radius * (1.65 + smoothstep(progress / 0.68) * 0.54),
-        coreRadius: radius * (0.4 + smoothstep((progress - 0.28) / 0.4) * 0.18),
-        flareLength: radius * 2.6 * smoothstep((progress - 0.5) / 0.18),
+        haloRadius: radius * (1.65 + detailLevel * 0.18),
+        coreRadius: radius * (detailLevel >= 2 ? 0.58 : 0.4),
+        flareLength: detailLevel === 3 ? radius * 2.6 : 0,
         colorName: selectedColor.name,
         color: selectedColor.color,
         texture: TRAVELER_SURFACE_TEXTURES[
@@ -1974,272 +1615,17 @@ export const getTravelerAppearance = (traveler: Traveler, progress: number): Tra
     };
 };
 
-export const getSystemHostStarAppearance = (traveler: Traveler, progress: number): TravelerAppearance => {
-    const ordinary = getTravelerAppearance(traveler, progress);
-    return { ...ordinary, radius: ordinary.radius * SYSTEM_HOST_RADIUS_MULTIPLIER,
-        haloRadius: ordinary.haloRadius * SYSTEM_HOST_RADIUS_MULTIPLIER,
-        coreRadius: ordinary.coreRadius * SYSTEM_HOST_RADIUS_MULTIPLIER,
-        flareLength: ordinary.flareLength * SYSTEM_HOST_RADIUS_MULTIPLIER };
-};
-
-const GALAXY_DUST_DRIFT_MULTIPLIERS: Record<GalaxyFormation, number> = {
-    spiral: 0.32,
-    'barred-spiral': -0.22,
-    elliptical: 0.12,
-    irregular: -0.16,
-    sombrero: 0,
-};
-
-/** Stable half-open rare-event threshold; identity changes only at lifecycle boundaries. */
-export const isGalaxyDirectApproachRoll = (roll: number) =>
-    roll >= 0 && roll < GALAXY_DIRECT_APPROACH_CHANCE;
-
-export const isDirectApproachGalaxy = (traveler: Pick<Traveler, 'seed' | 'isGalaxy'>, cycle: number) =>
-    Boolean(traveler.isGalaxy) && isGalaxyDirectApproachRoll(
-        hashRandom(traveler.seed, Math.max(0, Math.trunc(cycle)), 529),
-    );
-
-/** Sombreros occupy 8% of cycles; the remaining four formations share the rest. */
-export const getGalaxyFormation = (seed: number, cycle = 0): GalaxyFormation => {
-    const stableCycle = Math.max(0, Math.trunc(cycle));
-    return hashRandom(seed, stableCycle, 530) < GALAXY_SOMBRERO_CHANCE ? 'sombrero'
-        : GALAXY_FORMATIONS[hashUint(seed, stableCycle, 521) % 4];
-};
-
-/** Fixed index ordering spreads the reveal across all arms and clumps without reshuffling. */
-export const getGalaxyVisibleStarCount = (progress: number) =>
-    mix(GALAXY_DISTANT_STAR_COUNT, GALAXY_INTERNAL_STAR_COUNT, smoothstep(clamp01(progress) / 0.82));
-
-export const getGalaxyStarReveal = (progress: number, index: number) =>
-    smoothstep((getGalaxyVisibleStarCount(progress)
-        + 8 * smoothstep(clamp01(progress) / 0.82) - index) / 8);
-
-/** Formation-specific magnitudes and seeded direction keep the population varied but legible. */
-export const getGalaxyRotationRate = (seed: number, cycle = 0) => {
-    const stableCycle = Math.max(0, Math.trunc(cycle));
-    const formation = getGalaxyFormation(seed, stableCycle);
-    if (formation === 'sombrero') return 0;
-    const magnitude = mix(
-        GALAXY_ROTATION_RATE_RANGE[0],
-        GALAXY_ROTATION_RATE_RANGE[1],
-        hashRandom(seed, stableCycle, 524),
-    ) * GALAXY_FORMATION_RATE_MULTIPLIERS[formation];
-    return magnitude * (hashUint(seed, stableCycle, 525) % 2 === 0 ? -1 : 1);
-};
-
 /** Galaxies stay recognizable without ever exceeding seven times the replaced moving-star radius. */
-export const getGalaxyAppearance = (
-    traveler: Traveler,
-    progress: number,
-    cycle = 0,
-): GalaxyAppearance => {
-    const stableCycle = Math.max(0, Math.trunc(cycle));
-    const formation = getGalaxyFormation(traveler.seed, stableCycle);
+export const getGalaxyAppearance = (traveler: Traveler, progress: number): GalaxyAppearance => {
     const starRadius = getTravelerAppearance(traveler, progress).radius;
-    const outerRadius = Math.min(
-        starRadius * GALAXY_MAX_RADIUS_MULTIPLIER,
-        starRadius * (6.8 + smoothstep(progress) * 0.2),
-    );
-    const profiles: Record<GalaxyFormation, Pick<GalaxyAppearance,
-        'coreRadius' | 'armCount' | 'flattening' | 'barLength'>> = {
-        spiral: { coreRadius: 0.14, armCount: 3 + hashUint(traveler.seed, stableCycle, 522) % 2,
-            flattening: 0.62, barLength: 0 },
-        'barred-spiral': { coreRadius: 0.13, armCount: 2,
-            flattening: 0.54, barLength: 0.48 },
-        elliptical: { coreRadius: 0.3, armCount: 0,
-            flattening: 0.7 + hashRandom(traveler.seed, stableCycle, 523) * 0.16,
-            barLength: 0 },
-        irregular: { coreRadius: 0.11, armCount: 0,
-            flattening: 0.82, barLength: 0 },
-        sombrero: { coreRadius: 0.28, armCount: 0,
-            flattening: 0.16, barLength: 0 },
-    };
-    const profile = profiles[formation];
+    const outerRadius = starRadius * (4.6 + smoothstep(progress) * 2.4);
     return {
-        formation,
-        outerRadius,
-        coreRadius: outerRadius * profile.coreRadius,
-        armCount: profile.armCount,
-        flattening: profile.flattening,
-        barLength: outerRadius * profile.barLength,
-        rotationRate: getGalaxyRotationRate(traveler.seed, stableCycle),
+        outerRadius: Math.min(starRadius * GALAXY_MAX_RADIUS_MULTIPLIER, outerRadius),
+        coreRadius: outerRadius * 0.15,
+        armCount: GALAXY_SPIRAL_ARM_COUNT,
         internalStarCount: GALAXY_INTERNAL_STAR_COUNT,
     };
 };
-
-/** Visible whole-formation motion plus independent core and dust rhythms, all on simulation time. */
-export const getGalaxyAnimationState = (
-    traveler: Pick<Traveler, 'seed'>,
-    cycle: number,
-    simulationSeconds: number,
-): GalaxyAnimationState => {
-    const stableCycle = Math.max(0, Math.trunc(cycle));
-    const elapsed = Math.max(0, simulationSeconds);
-    const formation = getGalaxyFormation(traveler.seed, stableCycle);
-    const rotationRate = getGalaxyRotationRate(traveler.seed, stableCycle);
-    return {
-        rotation: hashRandom(traveler.seed, stableCycle, 526) * TAU + elapsed * rotationRate,
-        corePulse: 0.92 + 0.08 * Math.sin(
-            elapsed * (0.34 + hashRandom(traveler.seed, stableCycle, 527) * 0.18)
-            + hashRandom(traveler.seed, stableCycle, 528) * TAU,
-        ),
-        dustDrift: elapsed * rotationRate * GALAXY_DUST_DRIFT_MULTIPLIERS[formation],
-    };
-};
-
-/**
- * Bounded local-space matter for Canvas rendering. Coherent centered revolution preserves
- * the formation; Sombrero bulges alone churn independently within a stationary filled disk.
- */
-export const getGalaxyParticleState = (
-    traveler: Traveler,
-    cycle: number,
-    progress: number,
-    simulationSeconds: number,
-    index: number,
-    resolvedAppearance?: GalaxyAppearance,
-): GalaxyParticleState => {
-    const stableCycle = Math.max(0, Math.trunc(cycle));
-    const particleIndex = positiveModulo(Math.trunc(index), GALAXY_INTERNAL_STAR_COUNT);
-    const appearance = resolvedAppearance ?? getGalaxyAppearance(traveler, progress, stableCycle);
-    const elapsed = Math.max(0, simulationSeconds);
-    const unit = hashRandom(traveler.seed, stableCycle, 540 + particleIndex * 4);
-    const jitter = hashRandom(traveler.seed, stableCycle, 541 + particleIndex * 4) - 0.5;
-    const phase = hashRandom(traveler.seed, stableCycle, 542 + particleIndex * 4) * TAU;
-    const twinklePhase = hashRandom(traveler.seed, stableCycle, 543 + particleIndex * 4) * TAU;
-    let radial = 0;
-    let angle = phase;
-    let kind: GalaxyMatterKind = particleIndex % 9 === 0 ? 'dust' : 'star';
-
-    if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
-        radial = 0.16 + Math.sqrt(unit) * 0.76;
-        const arm = particleIndex % appearance.armCount;
-        angle = arm * TAU / appearance.armCount + radial * TAU * 1.35 + jitter * 0.46;
-        if (particleIndex % 7 === 1) kind = 'young-star';
-        if (appearance.formation === 'barred-spiral' && radial < 0.38) {
-            angle = (particleIndex & 1) * Math.PI + jitter * 0.22;
-        }
-    } else if (appearance.formation === 'elliptical') {
-        radial = 0.08 + unit ** 0.72 * 0.82;
-        kind = particleIndex % 11 === 0 ? 'dust' : 'star';
-    } else if (appearance.formation === 'sombrero') {
-        // A filled edge-on disk, not an annulus. Interleaved central points form a round bulge.
-        const bulge = particleIndex % 3 === 0;
-        radial = bulge ? unit ** 0.8 * 0.28 : Math.sqrt(unit) * 0.92;
-        if (bulge) angle += elapsed * (0.12 + unit * 0.08);
-        kind = 'star';
-    } else {
-        const clump = particleIndex % 4;
-        const clumpAngle = hashRandom(traveler.seed, stableCycle, 610 + clump) * TAU;
-        const clumpRadius = 0.18 + hashRandom(traveler.seed, stableCycle, 620 + clump) * 0.42;
-        const localRadius = 0.04 + unit * 0.15;
-        const localAngle = phase;
-        const rawX = Math.cos(clumpAngle) * clumpRadius + Math.cos(localAngle) * localRadius;
-        const rawY = Math.sin(clumpAngle) * clumpRadius + Math.sin(localAngle) * localRadius;
-        radial = Math.min(0.82, Math.hypot(rawX, rawY));
-        angle = Math.atan2(rawY, rawX);
-        kind = particleIndex % 9 === 0 ? 'dust'
-            : particleIndex % 4 === 0 ? 'young-star' : 'star';
-    }
-
-    // Revolve in the same centered local plane BEFORE flattening; Canvas only applies
-    // the fixed seeded sky orientation. No double rotation or counter-rotating bars.
-    angle += elapsed * appearance.rotationRate;
-    const flattening = appearance.formation === 'sombrero' && particleIndex % 3 === 0
-        ? 0.85 : appearance.flattening;
-    const normalizedRadius = Math.min(0.94, Math.max(0.0, radial));
-    const pulse = 0.84 + 0.16 * Math.sin(elapsed * (0.55 + unit * 0.38) + twinklePhase);
-    return {
-        x: Math.cos(angle) * normalizedRadius * appearance.outerRadius,
-        y: Math.sin(angle) * normalizedRadius * appearance.outerRadius * flattening,
-        radius: Math.min(0.68, appearance.outerRadius * 0.04, Math.max(
-            0.12,
-            appearance.outerRadius * (kind === 'dust' ? 0.009 : 0.011),
-        )),
-        opacity: (kind === 'dust' ? 0.32 : 0.58) * pulse * getGalaxyStarReveal(progress, particleIndex),
-        kind,
-    };
-};
-
-const EMBEDDED_GALAXY_HOST_COLORS = ['#fff3cf', '#d9efff', '#ffd7a8'] as const;
-const EMBEDDED_GALAXY_PLANET_COLORS = ['#79b8d8', '#d2946f', '#9fc88c', '#b59bd6'] as const;
-
-/** Stable miniature systems remain comfortably inside the galaxy's seven-star-radius silhouette. */
-export const createEmbeddedGalaxySystems = (
-    traveler: Pick<Traveler, 'seed'>,
-    cycle: number,
-    appearance: Pick<GalaxyAppearance, 'outerRadius' | 'flattening'>,
-): EmbeddedGalaxySystem[] => {
-    const stableCycle = Math.max(0, Math.trunc(cycle));
-    const outerRadius = Number.isFinite(appearance.outerRadius)
-        ? Math.max(0, appearance.outerRadius) : 0;
-    const flattening = Number.isFinite(appearance.flattening)
-        ? Math.max(0.45, Math.min(1, appearance.flattening)) : 0.45;
-    const systemCount = GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[0]
-        + hashUint(traveler.seed, stableCycle, 701)
-        % (GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[1] - GALAXY_EMBEDDED_SYSTEM_COUNT_RANGE[0] + 1);
-    return Array.from({ length: systemCount }, (_, systemIndex) => {
-        const channel = 710 + systemIndex * 31;
-        const direction = hashUint(traveler.seed, stableCycle, channel + 3) % 2 === 0 ? -1 : 1;
-        const planetCount = GALAXY_EMBEDDED_PLANET_COUNT_RANGE[0]
-            + hashUint(traveler.seed, stableCycle, channel + 4)
-            % (GALAXY_EMBEDDED_PLANET_COUNT_RANGE[1] - GALAXY_EMBEDDED_PLANET_COUNT_RANGE[0] + 1);
-        return {
-            orbitRadius: outerRadius * flattening
-                * (0.27 + hashRandom(traveler.seed, stableCycle, channel) * 0.24),
-            phase: hashRandom(traveler.seed, stableCycle, channel + 1) * TAU,
-            speed: direction * (0.2 + hashRandom(traveler.seed, stableCycle, channel + 2) * 0.11),
-            hostRadius: Math.min(outerRadius * 0.04, Math.max(0.22, outerRadius * 0.03)),
-            hostColor: EMBEDDED_GALAXY_HOST_COLORS[
-                hashUint(traveler.seed, stableCycle, channel + 5) % EMBEDDED_GALAXY_HOST_COLORS.length
-            ],
-            planets: Array.from({ length: planetCount }, (_, planetIndex) => ({
-                orbitRadius: outerRadius * flattening
-                    * (0.052 + planetIndex * 0.035
-                        + hashRandom(traveler.seed, stableCycle, channel + 6 + planetIndex * 5) * 0.014),
-                radius: Math.min(outerRadius * 0.025, Math.max(0.13, outerRadius * (0.012
-                    + hashRandom(traveler.seed, stableCycle, channel + 7 + planetIndex * 5) * 0.006))),
-                phase: hashRandom(traveler.seed, stableCycle, channel + 8 + planetIndex * 5) * TAU,
-                speed: (planetIndex % 2 === 0 ? 1 : -1)
-                    * (1.35 + hashRandom(traveler.seed, stableCycle, channel + 9 + planetIndex * 5) * 1.1),
-                color: EMBEDDED_GALAXY_PLANET_COLORS[
-                    hashUint(traveler.seed, stableCycle, channel + 10 + planetIndex * 5)
-                    % EMBEDDED_GALAXY_PLANET_COLORS.length
-                ],
-            })),
-        } satisfies EmbeddedGalaxySystem;
-    });
-};
-
-/** Planet coordinates are host-relative, so moving hosts and their bound orbits share one clock. */
-export const getEmbeddedGalaxySystemState = (
-    system: EmbeddedGalaxySystem,
-    simulationSeconds: number,
-): EmbeddedGalaxySystemState => {
-    const elapsed = Number.isFinite(simulationSeconds) ? Math.max(0, simulationSeconds) : 0;
-    const hostAngle = system.phase + elapsed * system.speed;
-    const host = {
-        x: Math.cos(hostAngle) * system.orbitRadius,
-        y: Math.sin(hostAngle) * system.orbitRadius,
-    };
-    return {
-        host,
-        planets: system.planets.map((planet) => {
-            const angle = planet.phase + elapsed * planet.speed;
-            return {
-                ...planet,
-                angle,
-                z: Math.sin(angle),
-                x: host.x + Math.cos(angle) * planet.orbitRadius,
-                y: host.y + Math.sin(angle) * planet.orbitRadius,
-            };
-        }),
-    };
-};
-
-/** Miniature systems fade in only once their sub-pixel planets can resolve as distinct points. */
-export const getEmbeddedGalaxySystemOpacity = (outerRadius: number) =>
-    clamp01(((Number.isFinite(outerRadius) ? Math.max(0, outerRadius) : 0) - 4) / 5);
 
 /** System owners retain their resolved disc while suppressing every surrounding luminosity layer. */
 export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): TravelerStarRenderPolicy => ({
@@ -2249,146 +1635,51 @@ export const getTravelerStarRenderPolicy = (ownsPlanetarySystem: boolean): Trave
     renderFlare: !ownsPlanetarySystem,
 });
 
-/** 80 equiprobable UFO-only outcomes: 4 shape slots x 20 passenger slots.
- * Exactly 25% triangles and 5% aliens, including 5% within EACH shape.
- */
-export const getUfoTraitsForBucket = (bucket: number) => {
-    const outcome = positiveModulo(Math.trunc(bucket), 80);
-    return {
-        shape: outcome % 4 === 0 ? 'triangle' as const : 'saucer' as const,
-        hasAlien: Math.floor(outcome / 4) === 0,
-    };
-};
-
-/** Separate from traveler classification; rejection removes uint32 modulo bias. */
-const getUfoTraits = (seed: number, cycle: number) => {
-    const acceptedRange = UINT32_RANGE - UINT32_RANGE % 80;
-    let channel = 509;
-    let roll = hashUint(seed, cycle, channel);
-    while (roll >= acceptedRange) {
-        roll = hashUint(seed, cycle, ++channel);
-    }
-    return getUfoTraitsForBucket(roll % 80);
-};
-
-/** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth.
- * Passenger and triangle geometry stay inside that radius; no minimum pixel-size inflation.
- * Only the raised hand animates; identity depends solely on seed and depth cycle.
- */
-export const getUfoAppearance = (
-    traveler: Traveler,
-    progress: number,
-    cycle = 0,
-    simulationSeconds = 0,
-): UfoAppearance => {
+/** UFO silhouette radius is exactly 1.5x the star it replaces at the same approach depth. */
+export const getUfoAppearance = (traveler: Traveler, progress: number): UfoAppearance => {
     const radius = getTravelerAppearance(traveler, progress).radius * UFO_SIZE_MULTIPLIER;
     return {
-        ...getUfoTraits(traveler.seed, Math.max(0, Math.trunc(cycle))),
-        triangle: [{ x: radius, y: 0 }, { x: -radius * 0.7, y: radius * 0.7 },
-            { x: -radius * 0.7, y: -radius * 0.7 }],
-        alien: {
-            head: { x: 0, y: -radius * 0.55 },
-            headRadiusX: radius * 0.18,
-            headRadiusY: radius * 0.22,
-            body: [{ x: 0, y: -radius * 0.36 }, { x: 0, y: -radius * 0.12 }],
-            arm: [{ x: 0, y: -radius * 0.3 }, { x: radius * 0.28, y: -radius * 0.38 },
-                { x: radius * (0.32 + Math.sin(simulationSeconds * 5) * 0.08), y: -radius * 0.72 }],
-            eyes: [{ x: -radius * 0.07, y: -radius * 0.58 },
-                { x: radius * 0.07, y: -radius * 0.58 }],
-            eyeRadius: radius * 0.045,
-            lineWidth: radius * 0.09,
-        },
         radius,
         glowRadius: radius * 2.4,
         streakLength: Math.max(6, radius * 5),
     };
 };
 
-/** Seeded local-space debris drifts continuously while widening along the motion-opposed wake. */
+/** Stable local-space trail geometry; Canvas rotates its +distance axis opposite current motion. */
 export const getCometAppearance = (
     traveler: Traveler,
     cycle: number,
     progress: number,
 ): CometAppearance => {
     const stableCycle = Math.max(0, Math.trunc(cycle));
-    const boundedProgress = clamp01(progress);
-    const headRadius = getTravelerAppearance(traveler, boundedProgress).radius * 1.35;
-    const trait = (channel: number) => hashRandom(traveler.seed, stableCycle, channel);
-    const trailLength = Math.max(18, headRadius * (10 + trait(410) * 6));
-    const trailWidth = Math.max(3.5, headRadius * (2.3 + trait(411) * 1.4));
-    const glowLength = headRadius * (3.2 + trait(412) * 2.2);
-    const glow = {
-        lengthRadius: glowLength,
-        widthRadius: headRadius * (1.15 + trait(413) * 0.65),
-        lag: glowLength * (0.38 + trait(414) * 0.22),
-        opacity: 0.75 + trait(415) * 0.2,
-    };
-    const bend = 0.14 + trait(416) * 0.15;
-    const turbulence = 4.5 + trait(417) * 3;
-    const density = 0.78 + trait(418) * 0.18;
-    const falloff = 1.35 + trait(419) * 0.5;
+    const headRadius = getTravelerAppearance(traveler, progress).radius * 1.35;
+    const trailLength = Math.max(18, headRadius * 12);
+    const trailWidth = Math.max(3.5, headRadius * 2.8);
     const random = createSeededRandom(hashUint(traveler.seed, stableCycle, 401));
-    const flowPhase = hashRandom(traveler.seed, stableCycle, 402) * TAU;
-    // Progress is the existing simulation clock: frozen frames never acquire wall-clock drift.
-    const flowTime = boundedProgress * TAU * (2.4 + trait(420) * 1.2);
-    const flow = (age: number) => trailWidth * age * (
-        Math.sin(flowPhase + age * turbulence - flowTime) * bend
-        + Math.sin(flowPhase * 1.7 + age * turbulence * 1.9 - flowTime * 0.7) * 0.07
-    );
-    // Fixed overlapping patches avoid both a hard silhouette and per-frame blur/filter passes.
-    const wisps = Array.from({ length: 22 }, (_, index): CometPlumeWisp => {
-        const age = (index + 0.4) / 22;
-        const ripple = Math.sin(flowPhase + age * 13 - flowTime);
-        const distance = trailLength * age;
-        return {
-            distance,
-            lateralOffset: flow(age),
-            lengthRadius: Math.min(distance, trailLength * (0.07 + age * 0.035)),
-            widthRadius: trailWidth * (0.2 + age * 0.95) * (1 + ripple * 0.14),
-            opacity: density * (1 - age) ** falloff,
-        };
-    });
     const createParticle = (
         kind: CometTrailParticleKind,
         index: number,
         count: number,
     ): CometTrailParticle => {
-        const baseDistance = (index + 0.55 + random() * 0.35) / count;
-        const distanceFraction = baseDistance * (0.88 + boundedProgress * 0.12);
-        const wakeAge = smoothstep(distanceFraction);
-        const lateralBias = random() * 2 - 1;
-        const flutterPhase = random() * TAU;
-        const flutterRate = 0.65 + random() * 0.65;
-        const spread = trailWidth * (0.12 + wakeAge * 0.88);
-        const flutter = Math.sin(flutterPhase + boundedProgress * TAU * flutterRate);
+        const distanceFraction = (index + 0.55 + random() * 0.35) / count;
+        const spread = trailWidth * (0.18 + distanceFraction * 0.82);
         const asteroid = kind === 'asteroid';
-        const radiusRoll = random();
-        const baseOpacity = asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42;
-        const opacityPulse = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(
-            flutterPhase + boundedProgress * TAU * (0.8 + flutterRate * 0.35),
-        ));
-        const rotation = positiveModulo(
-            random() * TAU + boundedProgress * TAU * (0.45 + random() * 1.1),
-            TAU,
-        );
         return {
             kind,
             distance: trailLength * distanceFraction,
-            lateralOffset: flow(distanceFraction)
-                + spread * (lateralBias * 0.45 + flutter * 0.18),
+            lateralOffset: (random() * 2 - 1) * spread,
             radius: asteroid
-                ? Math.max(0.35, headRadius * (0.13 + radiusRoll * 0.16))
-                : Math.max(0.1, headRadius * (0.035 + radiusRoll * 0.045)),
-            opacity: baseOpacity * opacityPulse * (1 - wakeAge * 0.28),
-            rotation,
+                ? Math.max(0.35, headRadius * (0.13 + random() * 0.16))
+                : Math.max(0.1, headRadius * (0.035 + random() * 0.045)),
+            opacity: asteroid ? 0.48 + random() * 0.34 : 0.2 + random() * 0.42,
+            rotation: random() * TAU,
         };
     };
     return {
         headRadius,
-        glow,
+        glowRadius: headRadius * 3.1,
         trailLength,
         trailWidth,
-        wisps,
         particles: [
             ...Array.from({ length: 6 }, (_, index) => createParticle('asteroid', index, 6)),
             ...Array.from({ length: 18 }, (_, index) => createParticle('stardust', index, 18)),
@@ -2404,16 +1695,15 @@ export const projectTraveler = (
 ): ProjectedTraveler => {
     const { depth, cycle } = getTravelerDepth(traveler, simulationSeconds);
     const progress = (FAR_DEPTH - depth) / DEPTH_RANGE;
-    const directApproach = isDirectApproachGalaxy(traveler, cycle);
-    const laneX = directApproach ? 0 : hashRandom(traveler.seed, cycle, 5) * 2 - 1;
-    const laneY = directApproach ? 0 : hashRandom(traveler.seed, cycle, 6) * 2 - 1;
+    const laneX = hashRandom(traveler.seed, cycle, 5) * 2 - 1;
+    const laneY = hashRandom(traveler.seed, cycle, 6) * 2 - 1;
     const reciprocalScale = FAR_DEPTH / depth;
     const fadeIn = smoothstep(progress / 0.14);
     const fadeOut = 1 - smoothstep((progress - 0.82) / 0.18);
     const appearance = getTravelerAppearance(traveler, progress);
     return {
         x: width * 0.5 + laneX * width * 0.39 * reciprocalScale,
-        y: height * (directApproach ? 0.5 : 0.45) + laneY * height * 0.37 * reciprocalScale,
+        y: height * 0.45 + laneY * height * 0.37 * reciprocalScale,
         depth,
         progress,
         radius: appearance.radius,
@@ -2446,212 +1736,9 @@ const isSensibleNeuralPair = (
     return distance >= minimumDistance && distance <= maximumDistance;
 };
 
-/** Approach every eligibility boundary at zero light, before hard offscreen suppression. */
-export const getNeuralPairVisibility = (
-    left: ProjectedTraveler, right: ProjectedTraveler, width: number, height: number,
-) => {
-    const minimumDistance = Math.min(72, Math.max(36, Math.min(width, height) * 0.09));
-    const maximumDistance = Math.hypot(width, height) * 0.48;
-    const distance = Math.hypot(right.x - left.x, right.y - left.y);
-    const edgeBand = Math.min(80, Math.min(width, height) * 0.12);
-    const endpointFade = (point: ProjectedTraveler) => smoothstep(
-        Math.min(point.x, width - point.x, point.y, height - point.y) / edgeBand,
-    ) * smoothstep((point.opacity - 0.08) / 0.27);
-    return Math.min(endpointFade(left), endpointFade(right))
-        * smoothstep((distance - minimumDistance) / 32)
-        * smoothstep((maximumDistance - distance) / 80);
-};
-
-/** Render-only extinction: preserve intrinsic scheduling while fading before an endpoint is hidden.
- * The ratio replaces (rather than doubles) the intrinsic opacity fade already in the signal.
- */
-export const getNeuralEndpointTransmission = (intrinsicOpacity: number, renderedOpacity: number) => {
-    const intrinsicFade = smoothstep((intrinsicOpacity - 0.08) / 0.27);
-    if (intrinsicFade <= 0) return 0;
-    return Math.min(1, smoothstep((renderedOpacity - 0.08) / 0.27) / intrinsicFade);
-};
-
-export const getNeuralSignalEnvelope = (elapsed: number, duration: number) =>
-    smoothstep(elapsed / NEURAL_SIGNAL_FADE_SECONDS[0])
-    * smoothstep((duration - elapsed) / NEURAL_SIGNAL_FADE_SECONDS[1]);
-
-/** Two fixed beads bloom once as the eased light passes; no per-frame random flicker. */
-export const getNeuralSignalSparkles = (progress: number) => [0.34, 0.68].map((position) => ({
-    progress: position,
-    opacity: 0.65 * smoothstep(1 - Math.abs(progress - position) / 0.26),
-    radius: 2.6,
-}));
-
-/** A small value object keeps recent traveler affinity bounded and independent from React. */
-export const createNeuralContagionState = (): NeuralContagionState => ({
-    entries: [],
-    lastSignalSlot: null,
-    lastSignalPair: null,
-    lastSignalCycles: null,
-});
-
-const isCurrentContagionEntry = (
-    entry: NeuralContagionEntry,
-    projections: ProjectedTraveler[],
-    width: number,
-    height: number,
-) => entry.remainingOpportunities > 0
-    && projections[entry.travelerIndex]?.cycle === entry.cycle
-    && isTravelerEligibleForNeuralSignal(projections[entry.travelerIndex], width, height);
-
-/** Remove hidden or recycled travelers immediately instead of retaining stale index identities. */
-export const syncNeuralContagionState = (
-    state: NeuralContagionState,
-    projections: ProjectedTraveler[],
-    width: number,
-    height: number,
-): NeuralContagionState => {
-    const entries = state.entries.filter((entry) =>
-        isCurrentContagionEntry(entry, projections, width, height));
-    return entries.length === state.entries.length
-        ? state
-        : { ...state, entries };
-};
-
-const getContagionAffinity = (
-    state: NeuralContagionState | undefined,
-    travelerIndex: number,
-    projection: ProjectedTraveler,
-) => {
-    const entry = state?.entries.find((candidate) =>
-        candidate.travelerIndex === travelerIndex && candidate.cycle === projection.cycle);
-    return entry ? entry.remainingOpportunities / NEURAL_CONTAGION_OPPORTUNITIES : 0;
-};
-
-const isLockedNeuralPairCurrent = (
-    state: NeuralContagionState,
-    slot: number,
-    projections: ProjectedTraveler[],
-    width: number,
-    height: number,
-) => {
-    if (state.lastSignalSlot !== slot || !state.lastSignalPair || !state.lastSignalCycles) return false;
-    const [from, to] = state.lastSignalPair;
-    return projections[from]?.cycle === state.lastSignalCycles[0]
-        && projections[to]?.cycle === state.lastSignalCycles[1]
-        && isTravelerEligibleForNeuralSignal(projections[from], width, height)
-        && isTravelerEligibleForNeuralSignal(projections[to], width, height)
-        && isSensibleNeuralPair(projections[from], projections[to], width, height);
-};
-
 /**
- * Select from every sensible pair with baseline weight one. Recent endpoints add a temporary
- * weight, so ordinary pairs always retain a non-zero chance and contagion cannot hard-lock.
- */
-export const selectNeuralSignalPair = (
-    sceneSeed: number,
-    slot: number,
-    projections: ProjectedTraveler[],
-    width: number,
-    height: number,
-    contagionState?: NeuralContagionState,
-): NeuralSignalPair | null => {
-    if (contagionState && isLockedNeuralPairCurrent(
-        contagionState, slot, projections, width, height,
-    )) {
-        return {
-            fromTravelerIndex: contagionState.lastSignalPair![0],
-            toTravelerIndex: contagionState.lastSignalPair![1],
-        };
-    }
-    // An event whose locked endpoint went stale disappears rather than jumping to a new pair.
-    if (contagionState?.lastSignalSlot === slot) return null;
-
-    const pairs: Array<NeuralSignalPair & { weight: number }> = [];
-    let totalWeight = 0;
-    for (let from = 0; from < projections.length; from += 1) {
-        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
-        for (let to = from + 1; to < projections.length; to += 1) {
-            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
-                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
-            const weight = 1 + NEURAL_CONTAGION_AFFINITY_BOOST * (
-                getContagionAffinity(contagionState, from, projections[from])
-                + getContagionAffinity(contagionState, to, projections[to])
-            );
-            pairs.push({ fromTravelerIndex: from, toTravelerIndex: to, weight });
-            totalWeight += weight;
-        }
-    }
-    if (pairs.length === 0) return null;
-
-    let cursor = hashRandom(sceneSeed, Math.max(0, Math.trunc(slot)), 304) * totalWeight;
-    for (const pair of pairs) {
-        cursor -= pair.weight;
-        if (cursor < 0) return {
-            fromTravelerIndex: pair.fromTravelerIndex,
-            toTravelerIndex: pair.toTravelerIndex,
-        };
-    }
-    const fallback = pairs[pairs.length - 1];
-    return { fromTravelerIndex: fallback.fromTravelerIndex, toTravelerIndex: fallback.toTravelerIndex };
-};
-
-/**
- * Decay one opportunity and reinforce both endpoints exactly once per logical signal slot.
- * Oldest/weakest entries are discarded first if a chain spreads beyond the small fixed cap.
- */
-export const updateNeuralContagionForSignal = (
-    state: NeuralContagionState,
-    slot: number,
-    signal: Pick<NeuralSignal, 'fromTravelerIndex' | 'toTravelerIndex'>,
-    projections: ProjectedTraveler[],
-    width: number,
-    height: number,
-): NeuralContagionState => {
-    const stableSlot = Math.max(0, Math.trunc(slot));
-    if (state.lastSignalSlot === stableSlot) return state;
-
-    const eligibleEndpoints = [signal.fromTravelerIndex, signal.toTravelerIndex]
-        .filter((travelerIndex, index, values) => values.indexOf(travelerIndex) === index)
-        .filter((travelerIndex) =>
-            isTravelerEligibleForNeuralSignal(projections[travelerIndex], width, height));
-    if (eligibleEndpoints.length !== 2) return syncNeuralContagionState(
-        state, projections, width, height,
-    );
-
-    const entries = state.entries
-        .filter((entry) => isCurrentContagionEntry(entry, projections, width, height))
-        .map((entry) => ({ ...entry, remainingOpportunities: entry.remainingOpportunities - 1 }))
-        .filter((entry) => entry.remainingOpportunities > 0);
-    for (const travelerIndex of eligibleEndpoints) {
-        const projection = projections[travelerIndex];
-        const existing = entries.findIndex((entry) =>
-            entry.travelerIndex === travelerIndex && entry.cycle === projection.cycle);
-        const reinforced: NeuralContagionEntry = {
-            travelerIndex,
-            cycle: projection.cycle,
-            remainingOpportunities: NEURAL_CONTAGION_OPPORTUNITIES,
-            lastStruckSlot: stableSlot,
-        };
-        if (existing >= 0) entries[existing] = reinforced;
-        else entries.push(reinforced);
-    }
-    entries.sort((left, right) => right.remainingOpportunities - left.remainingOpportunities
-        || right.lastStruckSlot - left.lastStruckSlot
-        || left.travelerIndex - right.travelerIndex);
-
-    return {
-        entries: entries.slice(0, NEURAL_CONTAGION_MAX_ENTRIES),
-        lastSignalSlot: stableSlot,
-        lastSignalPair: [signal.fromTravelerIndex, signal.toTravelerIndex],
-        lastSignalCycles: [
-            projections[signal.fromTravelerIndex].cycle,
-            projections[signal.toTravelerIndex].cycle,
-        ],
-    };
-};
-
-export const getNeuralSignalSlot = (elapsedSeconds: number, sceneSeed = 0) =>
-    Math.floor(getSimulationTime(elapsedSeconds, sceneSeed) / NEURAL_SIGNAL_SLOT_SECONDS);
-
-/**
- * Deterministic sparse schedule with optional bounded endpoint affinity. Pair indices always
- * address current traveler projections, while a recorded event keeps its pair stable across RAFs.
+ * Stateless deterministic schedule. Pair indices always address the supplied live traveler
+ * projections, so Canvas endpoints track moving travelers without retaining stale coordinates.
  */
 export const getNeuralSignals = (
     sceneSeed: number,
@@ -2660,15 +1747,14 @@ export const getNeuralSignals = (
     width: number,
     height: number,
     reducedMotion = false,
-    contagionState?: NeuralContagionState,
 ): NeuralSignal[] => {
     if (reducedMotion
         || width <= 0
         || height <= 0
-        || getConstellationPhase(elapsedSeconds, sceneSeed).name !== 'ambient') return [];
+        || getConstellationPhase(elapsedSeconds).name !== 'ambient') return [];
 
-    const simulationSeconds = getSimulationTime(elapsedSeconds, sceneSeed);
-    const slot = getNeuralSignalSlot(elapsedSeconds, sceneSeed);
+    const simulationSeconds = getSimulationTime(elapsedSeconds);
+    const slot = Math.floor(simulationSeconds / NEURAL_SIGNAL_SLOT_SECONDS);
     const isMobile = width < MOBILE_BREAKPOINT;
     const chance = isMobile ? NEURAL_SIGNAL_MOBILE_CHANCE : NEURAL_SIGNAL_DESKTOP_CHANCE;
     if (hashRandom(sceneSeed, slot, 301) >= chance) return [];
@@ -2684,24 +1770,45 @@ export const getNeuralSignals = (
     const signalElapsed = slotElapsed - start;
     if (signalElapsed < 0 || signalElapsed >= duration) return [];
 
-    const pair = selectNeuralSignalPair(
-        sceneSeed, slot, projections, width, height, contagionState,
-    );
-    if (!pair) return [];
-    const { fromTravelerIndex, toTravelerIndex } = pair;
+    let pairCount = 0;
+    for (let from = 0; from < projections.length; from += 1) {
+        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
+        for (let to = from + 1; to < projections.length; to += 1) {
+            if (isTravelerEligibleForNeuralSignal(projections[to], width, height)
+                && isSensibleNeuralPair(projections[from], projections[to], width, height)) pairCount += 1;
+        }
+    }
+    if (pairCount === 0) return [];
 
-    const pulseProgress = smoothstep(signalElapsed / duration);
+    let selectedPair = hashUint(sceneSeed, slot, 304) % pairCount;
+    let fromTravelerIndex = -1;
+    let toTravelerIndex = -1;
+    pairSearch: for (let from = 0; from < projections.length; from += 1) {
+        if (!isTravelerEligibleForNeuralSignal(projections[from], width, height)) continue;
+        for (let to = from + 1; to < projections.length; to += 1) {
+            if (!isTravelerEligibleForNeuralSignal(projections[to], width, height)
+                || !isSensibleNeuralPair(projections[from], projections[to], width, height)) continue;
+            if (selectedPair === 0) {
+                fromTravelerIndex = from;
+                toTravelerIndex = to;
+                break pairSearch;
+            }
+            selectedPair -= 1;
+        }
+    }
+    if (fromTravelerIndex < 0 || toTravelerIndex < 0) return [];
+
+    const fadeIn = smoothstep(signalElapsed / 0.48);
+    const fadeOut = smoothstep((duration - signalElapsed) / 0.68);
     return [{
         fromTravelerIndex,
         toTravelerIndex,
-        opacity: NEURAL_SIGNAL_MAX_OPACITY * getNeuralSignalEnvelope(signalElapsed, duration)
-            * getNeuralPairVisibility(projections[fromTravelerIndex], projections[toTravelerIndex], width, height),
-        pulseProgress,
+        opacity: NEURAL_SIGNAL_MAX_OPACITY * Math.min(fadeIn, fadeOut)
+            * clamp01(Math.min(projections[fromTravelerIndex].opacity, projections[toTravelerIndex].opacity) / 0.35),
+        pulseProgress: clamp01(signalElapsed / duration),
         lineWidth: mix(NEURAL_SIGNAL_WIDTH_RANGE[0], NEURAL_SIGNAL_WIDTH_RANGE[1],
             hashRandom(sceneSeed, slot, 305)),
-        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.12,
-        color: NEURAL_SIGNAL_COLORS[hashUint(sceneSeed, slot, 307) % NEURAL_SIGNAL_COLORS.length],
-        sparkles: getNeuralSignalSparkles(pulseProgress),
+        bend: (hashRandom(sceneSeed, slot, 306) * 2 - 1) * 0.055,
     }];
 };
 
@@ -2756,21 +1863,19 @@ export const chooseWeightedPlanetCount = (random: RandomSource) => {
     let cursor = random() * 10000;
     for (let index = 0; index < PLANET_COUNT_BASIS_POINTS.length; index += 1) {
         cursor -= PLANET_COUNT_BASIS_POINTS[index];
-        if (cursor < 0) return index;
+        if (cursor < 0) return index + 1;
     }
-    return PLANET_COUNT_BASIS_POINTS.length - 1;
+    return 12;
 };
 
-export const MOON_COUNT_BASIS_POINTS = [1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250] as const;
-
-/** One seeded basis-point roll selects a per-planet moon count from 0 through 7. */
+/** Mutually exclusive per-planet moon bands: 81.5% none and 18.5% moon-bearing. */
 export const chooseMoonCount = (random: RandomSource) => {
-    let cursor = random() * 10000;
-    for (let count = 0; count < MOON_COUNT_BASIS_POINTS.length; count += 1) {
-        cursor -= MOON_COUNT_BASIS_POINTS[count];
-        if (cursor < 0) return count;
-    }
-    return MOON_COUNT_BASIS_POINTS.length - 1;
+    const outcome = random();
+    if (outcome < 0.815) return 0;
+    if (outcome < 0.915) return 1;
+    if (outcome < 0.965) return 2;
+    if (outcome < 0.99) return 3 + Math.floor(random() * 3);
+    return 5 + Math.floor(random() * 3);
 };
 
 /** Radius-derived periods keep every visible system legible while preserving clear inner/outer speed tiers. */
@@ -2795,10 +1900,8 @@ export const createPlanetSystem = (travelerSeed: number, cycle: number): Planet[
         const moons: Moon[] = Array.from({ length: moonCount }, (_, moonIndex) => ({
             // Relative sizing stays varied without allowing moons to overwhelm smaller parents.
             radius: between(random, maxMoonRadius * 0.55, maxMoonRadius),
-            // Tight radial tiers hug the rendered parent (inner track clears the disc on the
-            // 0.55 minor axis) while stratified phases keep dense seven-moon systems readable.
-            orbitRadius: radius * PLANET_RENDER_SCALE * 2.5 + 0.1
-                + moonIndex * 0.8 + between(random, 0, 0.08),
+            // Strict radial tiers and stratified phases keep dense seven-moon systems readable.
+            orbitRadius: radius + 1.8 + moonIndex * 1.2 + between(random, 0, 0.12),
             phase: moonPhase
                 + moonIndex * TAU / Math.max(1, moonCount)
                 + between(random, -0.1, 0.1),
@@ -2878,15 +1981,12 @@ export const getOrbitingPlanets = (
     .map((planet) => getOrbitingPlanet(planet, simulationSeconds, center))
     .sort((left, right) => left.z - right.z);
 
-/** Planet systems fade in over this much traveler progress once they become eligible. */
-export const SYSTEM_REVEAL_PROGRESS_SPAN = 0.3;
-
-/** Systems reveal gradually, then stay opaque until their rendered bounds leave the viewport. */
+/** Systems reveal smoothly, then stay opaque until their rendered bounds leave the viewport. */
 export const getSystemOpacity = (
     projection: ProjectedTraveler,
     carrierOpacity = projection.opacity,
 ) => {
-    const reveal = smoothstep((projection.progress - SYSTEM_MIN_PROGRESS) / SYSTEM_REVEAL_PROGRESS_SPAN);
+    const reveal = smoothstep((projection.progress - SYSTEM_MIN_PROGRESS) / 0.12);
     return carrierOpacity * reveal;
 };
 
@@ -2905,17 +2005,6 @@ export const getSystemOwnerDiscLocalRadius = (appearanceRadius: number, systemSc
         || appearanceRadius <= 0
         || systemScale <= 0) return 0;
     return appearanceRadius / systemScale;
-};
-
-/** Keeps planet bodies visibly smaller than their unchanged host disc. */
-export const MAX_PLANET_TO_HOST_RADIUS_RATIO = 0.75;
-
-/** Cap only the body, in system-local coordinates; no pixel floor may override the host limit. */
-export const getPlanetRenderRadius = (planetRadius: number, ownerDiscLocalRadius: number) => {
-    if (!Number.isFinite(planetRadius) || !Number.isFinite(ownerDiscLocalRadius)
-        || planetRadius <= 0 || ownerDiscLocalRadius <= 0) return 0;
-    return Math.min(planetRadius * PLANET_RENDER_SCALE,
-        ownerDiscLocalRadius * MAX_PLANET_TO_HOST_RADIUS_RATIO);
 };
 
 export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((largest, planet) => {
@@ -2938,9 +2027,12 @@ export const getPlanetSystemExtent = (planets: Planet[]) => planets.reduce((larg
 export const getSystemSafetyMargin = (traveler: Traveler, projection: ProjectedTraveler) => {
     const systemExtent = getPlanetSystemExtent(createPlanetSystem(traveler.seed, projection.cycle))
         * getSystemScale(projection);
-    const appearance = getSystemHostStarAppearance(traveler, projection.progress);
-    // Current-main hosts suppress glows; only the doubled disc contributes stellar bounds.
-    const starExtent = appearance.radius;
+    const appearance = getTravelerAppearance(traveler, projection.progress);
+    const starExtent = Math.max(
+        SYSTEM_STAR_RADIUS * getSystemScale(projection),
+        appearance.haloRadius,
+        appearance.flareLength,
+    );
     return Math.max(systemExtent, starExtent) + 0.5;
 };
 
@@ -3001,7 +2093,6 @@ export const selectProminentSystem = (
         const projection = projections[index];
         if (!isSystemCarrier(travelers[index], index)
             || !projection
-            || getTravelerVariant(travelers[index], projection.cycle) !== 'star'
             || projection.progress < SYSTEM_MIN_PROGRESS
             || projection.progress > SYSTEM_MAX_PROGRESS
             || !doesSystemExitViewportBeforeCycle(travelers[index], projection, width, height)

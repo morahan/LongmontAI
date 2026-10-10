@@ -3,13 +3,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { modelWatchSources } from '../../model-watch-sources.mjs';
-import {
-  NEWSLETTER_OUTBOUND_LIMITS,
-  cancelNewsletterBody,
-  newsletterFetch,
-  readBoundedResponseJson,
-  readBoundedResponseText,
-} from './shared.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const ARTICLE_URL_PATTERN = /https?:\/\/[^\s)"'<>]+/g;
@@ -81,23 +74,17 @@ async function readModelWatchStatus(root) {
   }
 }
 
-async function fetchSourceHighlights(fetchImpl, limit = 8, callerSignal) {
+async function fetchSourceHighlights(fetchImpl, limit = 8) {
   const highlights = [];
   const selectedSources = modelWatchSources.slice(0, limit);
   await Promise.all(selectedSources.map(async (source) => {
     try {
-      const outbound = await newsletterFetch(fetchImpl, source.url, {
+      const response = await fetchImpl(source.url, {
         headers: { 'User-Agent': 'LongmontAI-Newsletter/1.0 (+https://longmontai.com/newsletter)' },
-        signal: callerSignal,
-      }, NEWSLETTER_OUTBOUND_LIMITS.liveSource);
-      if (!outbound.response.ok) {
-        cancelNewsletterBody(outbound.response.body);
-        throw new Error('Newsletter live source request failed.');
-      }
-      const body = await readBoundedResponseText(outbound.response, {
-        maxBytes: NEWSLETTER_OUTBOUND_LIMITS.liveSource.maxBytes,
-        signal: outbound.signal,
+        signal: AbortSignal.timeout(9000),
       });
+      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      const body = (await response.text()).slice(0, 80_000);
       const matches = new Set();
       for (const pattern of source.patterns ?? []) {
         for (const match of body.matchAll(pattern)) matches.add(match[0].replace(/\s+/g, ' ').trim());
@@ -108,15 +95,13 @@ async function fetchSourceHighlights(fetchImpl, limit = 8, callerSignal) {
         matches: [...matches].slice(0, 8),
         ok: true,
       });
-    } catch {
+    } catch (error) {
       highlights.push({
         company: source.company,
         url: source.url,
         matches: [],
         ok: false,
-        // This structure is later serialized into the curation prompt; never
-        // retain provider text, URLs, or credentials from caught errors.
-        error: 'Newsletter live source was unavailable.',
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }));
@@ -128,12 +113,11 @@ export async function collectWebsiteSignals({
   now = new Date(),
   fetchImpl = fetch,
   fetchLiveSources = true,
-  signal,
 } = {}) {
   const [articles, modelWatchStatus, sourceHighlights] = await Promise.all([
     readRecentArticles(root, now),
     readModelWatchStatus(root),
-    fetchLiveSources ? fetchSourceHighlights(fetchImpl, 8, signal) : Promise.resolve([]),
+    fetchLiveSources ? fetchSourceHighlights(fetchImpl) : Promise.resolve([]),
   ]);
 
   const ownedSourceUrls = new Set([
@@ -218,7 +202,12 @@ export function deterministicDraftFromSignals(signals, { cadence = 'weekly', now
       3,
     ),
   ];
-  return sanitizeNewsletterDraft({
+  const htmlItems = items.map((entry) => (
+    `<li><strong>${escapeHtml(entry.title)}</strong><br>${escapeHtml(entry.synthesis)} <a href="${escapeHtml(entry.sourceUrl)}">Source</a></li>`
+  )).join('');
+  const textItems = items.map((entry) => `- ${entry.title}: ${entry.synthesis} (${entry.sourceUrl})`).join('\n');
+
+  return {
     cadence,
     periodStart: period.start,
     periodEnd: period.end,
@@ -226,130 +215,23 @@ export function deterministicDraftFromSignals(signals, { cadence = 'weekly', now
     subject,
     preheader,
     summary: `An AI-ready draft synthesized from LongmontAI's website archive, Model Watch, monitored model sources, and benchmark surfaces for ${period.start} through ${period.end}.`,
+    html: `<h1>${escapeHtml(subject)}</h1><p>${escapeHtml(preheader)}</p><ul>${htmlItems}</ul><p>Read more at <a href="https://longmontai.com/">LongmontAI.com</a>.</p>`,
+    text: `${subject}\n\n${preheader}\n\n${textItems}\n\nRead more: https://longmontai.com/`,
     items,
     sourceUrls: signals.sourceUrls,
     websiteSnapshot: signals,
     curatorModel: null,
     usedAi: false,
-  });
+  };
 }
 
-function normalizePlainText(value, maxLength) {
-  const normalized = String(value ?? '')
-    .normalize('NFKC')
-    .replace(/[\p{Cc}\p{Cf}]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return Array.from(normalized).slice(0, maxLength).join('');
-}
-
-export function escapeNewsletterHtml(value) {
+function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
-}
-
-const FIRST_PARTY_PATHS = new Set(['/', '/model-watch', '/leaderboard', '/timeline', '/newsletter']);
-const TRUSTED_URL_FALLBACK = 'https://longmontai.com/';
-
-function decodedUrlForInspection(value) {
-  let decoded = value;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const next = decodeURIComponent(decoded);
-    if (next === decoded) return decoded;
-    decoded = next;
-  }
-  if (/%[0-9a-f]{2}/i.test(decoded)) throw new Error('URL encoding depth exceeded.');
-  return decoded;
-}
-
-export function validatedNewsletterUrl(value) {
-  const normalized = String(value ?? '').normalize('NFKC').trim();
-  if (!normalized || normalized.length > 500 || /[\p{Cc}\p{Cf}]/u.test(normalized) || normalized.includes('\\')) {
-    return null;
-  }
-
-  let inspected;
-  try {
-    inspected = decodedUrlForInspection(normalized).trim();
-  } catch {
-    return null;
-  }
-  if (
-    /[\p{Cc}\p{Cf}]/u.test(inspected)
-    || /^(?:javascript|data|file)\s*:/i.test(inspected)
-    || inspected.startsWith('//')
-    || inspected.includes('\\')
-  ) {
-    return null;
-  }
-
-  if (inspected.startsWith('/')) {
-    const pathOnly = inspected.split(/[?#]/, 1)[0];
-    const allowedEdition = /^\/edition\/[A-Za-z0-9._~-]+$/.test(pathOnly);
-    if ((!FIRST_PARTY_PATHS.has(pathOnly) && !allowedEdition) || inspected !== pathOnly) return null;
-    return new URL(pathOnly, 'https://longmontai.com').href;
-  }
-
-  let url;
-  try {
-    url = new URL(normalized);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== 'https:' || url.username || url.password) return null;
-  return url.href;
-}
-
-function safeItemUrl(value, fallback) {
-  return validatedNewsletterUrl(value) ?? validatedNewsletterUrl(fallback) ?? TRUSTED_URL_FALLBACK;
-}
-
-export function sanitizeNewsletterDraft(candidate, fallback = candidate) {
-  const fallbackItems = Array.isArray(fallback?.items) ? fallback.items : [];
-  const candidateItems = Array.isArray(candidate?.items) && candidate.items.length > 0
-    ? candidate.items.slice(0, 8)
-    : fallbackItems.slice(0, 8);
-  const categories = ['models', 'benchmarks', 'breakthroughs', 'agents', 'tools', 'policy', 'community', 'watchlist'];
-  const items = candidateItems.map((entry, index) => {
-    const fallbackEntry = fallbackItems[index % Math.max(1, fallbackItems.length)] ?? {};
-    return {
-      category: categories.includes(entry?.category) ? entry.category : (fallbackEntry.category ?? 'watchlist'),
-      title: normalizePlainText(entry?.title ?? fallbackEntry.title, 180),
-      synthesis: normalizePlainText(entry?.synthesis ?? fallbackEntry.synthesis, 600),
-      sourceName: normalizePlainText(entry?.sourceName ?? entry?.source_name ?? fallbackEntry.sourceName, 140),
-      sourceUrl: safeItemUrl(entry?.sourceUrl ?? entry?.source_url, fallbackEntry.sourceUrl),
-      score: Number.isInteger(entry?.score) ? Math.max(0, Math.min(100, entry.score)) : (fallbackEntry.score ?? 50),
-      sortOrder: index,
-    };
-  });
-  const subject = normalizePlainText(candidate?.subject ?? fallback?.subject, 160);
-  const preheader = normalizePlainText(candidate?.preheader ?? fallback?.preheader, 180);
-  const summary = normalizePlainText(candidate?.summary ?? fallback?.summary, 900);
-  const htmlItems = items.map((entry) => (
-    `<li><strong>${escapeNewsletterHtml(entry.title)}</strong><br>${escapeNewsletterHtml(entry.synthesis)} <a href="${escapeNewsletterHtml(entry.sourceUrl)}">Source</a></li>`
-  )).join('');
-  const textItems = items.map((entry) => `- ${entry.title}: ${entry.synthesis} (${entry.sourceUrl})`).join('\n');
-  const sourceUrls = Array.from(new Set((candidate?.sourceUrls ?? fallback?.sourceUrls ?? [])
-    .map(validatedNewsletterUrl)
-    .filter(Boolean)))
-    .slice(0, 48);
-
-  return {
-    ...fallback,
-    ...candidate,
-    name: normalizePlainText(candidate?.name ?? fallback?.name, 180),
-    subject,
-    preheader,
-    summary,
-    html: `<h1>${escapeNewsletterHtml(subject)}</h1><p>${escapeNewsletterHtml(preheader)}</p><ul>${htmlItems}</ul><p>Read more at <a href="https://longmontai.com/">LongmontAI.com</a>.</p>`,
-    text: `${subject}\n\n${preheader}\n\n${textItems}\n\nRead more: https://longmontai.com/`,
-    items,
-    sourceUrls,
-  };
 }
 
 function responseText(responseJson) {
@@ -363,68 +245,104 @@ function responseText(responseJson) {
   return textParts.join('\n');
 }
 
-function parseJsonObject(text) {
-  const trimmed = text.trim();
+const MAX_AI_RESPONSE_BYTES = 64 * 1024;
+const AI_RESPONSE_TIMEOUT_MS = 15_000;
+
+async function boundedResponseJson(response) {
+  const reader = response.body?.getReader();
+  let timer;
   try {
-    return JSON.parse(trimmed);
-  } catch {
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        return JSON.parse(match[0]);
-      } catch {
-        // Fall through to the same sanitized error as every malformed response.
-      }
+    const length = response.headers.get('content-length');
+    if (length !== null && (!/^\d+$/.test(length) || Number(length) > MAX_AI_RESPONSE_BYTES)) {
+      throw new Error('Invalid AI response size');
     }
-    throw new Error('Newsletter curator returned invalid JSON.');
+    if (!reader) throw new Error('Missing AI response body');
+    const read = async () => {
+      const chunks = [];
+      let bytes = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > MAX_AI_RESPONSE_BYTES) throw new Error('AI response too large');
+        if (value.byteLength > 0) chunks.push(value);
+      }
+      const text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+      return JSON.parse(text);
+    };
+    return await Promise.race([
+      read(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('AI response deadline exceeded')), AI_RESPONSE_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    // Do not await cancellation: an untrusted stalled stream must not extend the deadline.
+    if (reader) void reader.cancel().catch(() => {});
   }
 }
 
-function normalizeAiDraft(candidate, fallback) {
-  if (!candidate || typeof candidate !== 'object') return fallback;
-  return sanitizeNewsletterDraft({
-    ...fallback,
-    subject: candidate.subject ?? fallback.subject,
-    preheader: candidate.preheader ?? fallback.preheader,
-    summary: candidate.summary ?? fallback.summary,
-    items: Array.isArray(candidate.items) && candidate.items.length > 0 ? candidate.items : fallback.items,
-    usedAi: true,
-  }, fallback);
+function requireShape(value, keys) {
+  if (!value || Object.getPrototypeOf(value) !== Object.prototype
+    || Object.keys(value).length !== keys.length
+    || !keys.every((key) => Object.hasOwn(value, key))) throw new Error('Invalid AI object shape');
 }
 
-function openAiCurationProjection(signals, { cadence, periodStart, periodEnd }) {
-  const recentArticles = (signals?.website?.recentArticles ?? []).slice(0, 6).map((article) => ({
-    title: normalizePlainText(article?.title, 180),
-    summary: normalizePlainText(article?.summary, 500),
-    publicUrl: validatedNewsletterUrl(article?.id ? `/edition/${article.id}` : null),
-    sourceUrls: (article?.sourceUrls ?? []).map(validatedNewsletterUrl).filter(Boolean).slice(0, 8),
-  }));
-  const sourceHighlights = (signals?.sourceHighlights ?? [])
-    .filter((source) => Array.isArray(source?.matches) && source.matches.length > 0)
-    .slice(0, 8)
-    .map((source) => ({
-      company: normalizePlainText(source.company, 120),
-      sourceUrl: validatedNewsletterUrl(source.url),
-      matches: source.matches.slice(0, 8).map((match) => normalizePlainText(match, 180)),
-    }));
+function validatedText(value, maxLength) {
+  if (typeof value !== 'string' || value.length > maxLength || /[\p{Cc}\p{Cs}]/u.test(value)) {
+    throw new Error('Invalid AI text');
+  }
+  const normalized = value.normalize('NFC').replace(/\s+/g, ' ').trim();
+  if (!normalized || normalized.length > maxLength) throw new Error('Invalid AI text length');
+  return normalized;
+}
+
+function safeSourceUrl(value) {
+  if (typeof value !== 'string' || value.length > 500 || /[\s\p{Cc}\p{Cs}]/u.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeAiDraft(candidate, fallback, model) {
+  requireShape(candidate, ['subject', 'preheader', 'summary', 'items']);
+  const categories = ['models', 'benchmarks', 'breakthroughs', 'agents', 'tools', 'policy', 'community', 'watchlist'];
+  const allowedUrls = new Set([...fallback.sourceUrls, ...fallback.items.map((entry) => entry.sourceUrl)].filter(safeSourceUrl));
+  const subject = validatedText(candidate.subject, 160);
+  const preheader = validatedText(candidate.preheader, 180);
+  const summary = validatedText(candidate.summary, 900);
+  if (!Array.isArray(candidate.items) || candidate.items.length < 1 || candidate.items.length > 8) {
+    throw new Error('Invalid AI items');
+  }
+  const items = candidate.items.map((entry, index) => {
+    requireShape(entry, ['category', 'title', 'synthesis', 'sourceName', 'sourceUrl', 'score']);
+    if (!categories.includes(entry.category) || !Number.isInteger(entry.score) || entry.score < 0 || entry.score > 100
+      || !safeSourceUrl(entry.sourceUrl) || !allowedUrls.has(entry.sourceUrl)) throw new Error('Invalid AI item');
+    return {
+      category: entry.category,
+      title: validatedText(entry.title, 180),
+      synthesis: validatedText(entry.synthesis, 600),
+      sourceName: validatedText(entry.sourceName, 140),
+      sourceUrl: entry.sourceUrl,
+      score: entry.score,
+      sortOrder: index,
+    };
+  });
+  const htmlItems = items.map((entry) => (
+    `<li><strong>${escapeHtml(entry.title)}</strong><br>${escapeHtml(entry.synthesis)} <a href="${escapeHtml(entry.sourceUrl)}">${escapeHtml(entry.sourceName)}</a></li>`
+  )).join('');
+  const textItems = items.map((entry) => `- ${entry.title}: ${entry.synthesis} (${entry.sourceName}: ${entry.sourceUrl})`).join('\n');
   return {
-    cadence,
-    periodStart,
-    periodEnd,
-    recentArticles,
-    modelWatch: {
-      successfulSources: Math.max(0, Number(signals?.modelWatchStatus?.successfulSources) || 0),
-      totalSources: Math.max(0, Number(signals?.modelWatchStatus?.totalSources) || 0),
-      detectedModels: (signals?.modelWatchStatus?.detectedModels ?? [])
-        .slice(-12)
-        .map((model) => normalizePlainText(model, 160)),
-    },
-    sourceHighlights,
-    reviewSurfaces: [
-      'https://longmontai.com/model-watch',
-      'https://longmontai.com/leaderboard',
-      'https://longmontai.com/timeline',
-    ],
+    ...fallback,
+    subject, preheader, summary, items,
+    html: `<h1>${escapeHtml(subject)}</h1><p>${escapeHtml(preheader)}</p><p>${escapeHtml(summary)}</p><ul>${htmlItems}</ul><p>Read more at <a href="https://longmontai.com/">LongmontAI.com</a>.</p>`,
+    text: `${subject}\n\n${preheader}\n\n${summary}\n\n${textItems}\n\nRead more: https://longmontai.com/`,
+    usedAi: true,
+    curatorModel: model,
   };
 }
 
@@ -435,29 +353,27 @@ export async function createCuratedNewsletterDraft({
   fetchImpl = fetch,
   root = ROOT,
   fetchLiveSources = true,
-  collectSignalsImpl = collectWebsiteSignals,
-  signal,
 } = {}) {
-  const signals = await collectSignalsImpl({ root, now, fetchImpl, fetchLiveSources, signal });
+  const signals = await collectWebsiteSignals({ root, now, fetchImpl, fetchLiveSources });
   const fallback = deterministicDraftFromSignals(signals, { cadence, now });
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) return fallback;
 
   const model = env.NEWSLETTER_CURATOR_MODEL || 'gpt-5-mini';
-  const outbound = await newsletterFetch(fetchImpl, 'https://api.openai.com/v1/responses', {
+  const response = await fetchImpl('https://api.openai.com/v1/responses', {
     method: 'POST',
+    signal: AbortSignal.timeout(AI_RESPONSE_TIMEOUT_MS),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
-    signal,
     body: JSON.stringify({
       model,
       instructions: [
         'You are the LongmontAI newsletter curator.',
         'Use the supplied LongmontAI website data as an owned source and blend it with monitored AI model/research sources.',
-        'Return only JSON with bounded plain-text subject, preheader, summary, and items; never return HTML.',
+        'Return only JSON with subject, preheader, summary, and items; no HTML or plain text blob fields.',
         'Promote model releases, frontier/benchmark movement, breakthroughs, agents/tools, and community relevance.',
         'Do not invent benchmark numbers or unsupported release claims.',
       ].join(' '),
@@ -465,29 +381,22 @@ export async function createCuratedNewsletterDraft({
         expectedShape: {
           subject: 'string',
           preheader: 'string',
-          summary: 'plain text string',
+          summary: 'string',
           items: [{ category: 'models|benchmarks|breakthroughs|agents|tools|policy|community|watchlist', title: 'string', synthesis: 'string', sourceName: 'string', sourceUrl: 'string', score: 0 }],
         },
-        context: openAiCurationProjection(signals, {
-          cadence,
-          periodStart: fallback.periodStart,
-          periodEnd: fallback.periodEnd,
-        }),
+        signals,
       }),
     }),
-  }, NEWSLETTER_OUTBOUND_LIMITS.openai);
-  const responseJson = await readBoundedResponseJson(outbound.response, {
-    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.openai.maxBytes,
-    signal: outbound.signal,
   });
-  if (!outbound.response.ok) {
-    throw new Error(`OpenAI curation failed with HTTP ${outbound.response.status}.`);
+  if (!response.ok) {
+    if (response.body) void response.body.cancel().catch(() => {});
+    throw new Error('OpenAI curation request failed.');
   }
-  const draft = normalizeAiDraft(parseJsonObject(responseText(responseJson)), fallback);
-  return sanitizeNewsletterDraft({
-    ...draft,
-    curatorModel: model,
-    websiteSnapshot: signals,
-    sourceUrls: signals.sourceUrls,
-  }, draft);
+  try {
+    const responseJson = await boundedResponseJson(response);
+    return normalizeAiDraft(JSON.parse(responseText(responseJson)), fallback, model);
+  } catch {
+    // Reject the entire candidate, including its attribution, without logging untrusted content.
+    return fallback;
+  }
 }
