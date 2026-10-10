@@ -60,8 +60,11 @@ There is no safe guarantee of **under one minute to main**: hooks, verification,
 Use this explicitly authorized consolidation path, not the routine article path:
 
 ```bash
-just loop-merge-push 0 --dry-run       # read-only local census; remote freshness UNPROVEN
-just loop-merge-push 2                 # actual isolated serial merges, gates, publication and cleanup
+just loop-merge-push                  # merge all branches/worktrees into main, push via hooks, prune (scripts/merge-all-push.sh)
+just loop-merge-push 0                # single pass, no recheck loop
+# The receipt-gated engine below is now `just loop-merge-push-strict`:
+just loop-merge-push-strict 0 --dry-run # read-only local census; remote freshness UNPROVEN
+just loop-merge-push-strict 2          # actual isolated serial merges, gates, publication and cleanup
 just loop-push-merge 0 --resume <run-id> # equivalent alias; safe positional arguments
 node scripts/loop-merge-push.mjs 0 --status <run-id>
 node scripts/loop-merge-push.mjs 0 --cleanup <run-id>

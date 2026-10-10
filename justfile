@@ -46,11 +46,15 @@ test-flows-ios:
 loop-push minutes="2":
     @bash scripts/loop-push.sh {{quote(minutes)}}
 
-# Merge ALL frozen sources, verify and publish main normally, then clean only after proof.
-[positional-arguments]
-loop-push-merge minutes="2" *args:
-    @node scripts/loop-merge-push.mjs "$@"
-
-[positional-arguments]
+# Merge every branch/worktree into main, push through the normal hooks, prune merged leftovers.
+# On conflict exits 3 with the file list: resolve, `git add`, re-run. minutes=0 for a single pass.
 loop-merge-push minutes="2" *args:
+    @bash scripts/merge-all-push.sh {{quote(minutes)}}
+
+loop-push-merge minutes="2" *args:
+    @bash scripts/merge-all-push.sh {{quote(minutes)}}
+
+# Legacy receipt-gated ALL-source engine (needs hand-written approval receipts; see README).
+[positional-arguments]
+loop-merge-push-strict minutes="2" *args:
     @node scripts/loop-merge-push.mjs "$@"
