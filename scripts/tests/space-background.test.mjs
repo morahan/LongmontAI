@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import {
   STAR_TEXT_ALTERNATIVES,
   STAR_TEXT_BRAND_PHRASE,
+  STAR_TEXT_SECOND_BRAND_PHRASE,
   STAR_TEXT_EDITION,
   STAR_TEXT_EXCLUDED_CANDIDATES,
 } from '../../src/data/starText.ts';
@@ -465,7 +466,7 @@ test('aura caching preserves uncached visual data through seeded events, tiers a
   ` + source.slice(end);
   const uncachedStyles = runInNewContext(
     `${stripTypeScriptTypes(uncachedSource.replace(/^import \{[\s\S]*?\} from '\.\.\/data\/starText\.ts';\n/, '')).replace(/^export /gm, '')}\ngetStarFieldStyles;`,
-    { STAR_TEXT_ALTERNATIVES, STAR_TEXT_BRAND_PHRASE },
+    { STAR_TEXT_ALTERNATIVES, STAR_TEXT_BRAND_PHRASE, STAR_TEXT_SECOND_BRAND_PHRASE },
   );
   const phases = new Set();
   for (const seed of [0, 17, 12345]) {
@@ -1085,14 +1086,15 @@ test('three separately observed nearby clicks work when native detail remains on
   assert.equal(click(second, 1325, second.x + EASTER_EGG_CLICK_DISTANCE_PX + 1).count, 1);
 });
 
-test('Easter eggs cycle deterministically through every hidden phrase and never select LONGMONT AI', () => {
-  assert.deepEqual(EASTER_EGG_PHRASES, CONSTELLATION_PHRASES.slice(1));
+test('Easter eggs cycle deterministically through every hidden phrase and exclude both brands', () => {
+  assert.deepEqual(EASTER_EGG_PHRASES, CONSTELLATION_PHRASES.slice(2));
   for (const seed of [0, 1, 0x51a7, 0xffffffff]) {
     const firstCycle = Array.from({ length: EASTER_EGG_PHRASES.length }, (_, trigger) =>
       selectEasterEggPhrase(seed, trigger));
     assert.equal(new Set(firstCycle).size, EASTER_EGG_PHRASES.length);
     assert.deepEqual([...firstCycle].sort(), [...EASTER_EGG_PHRASES].sort());
     assert.ok(firstCycle.every((phrase) => phrase !== STAR_TEXT_BRAND_PHRASE));
+    assert.ok(firstCycle.every((phrase) => phrase !== STAR_TEXT_SECOND_BRAND_PHRASE));
     assert.deepEqual(
       Array.from({ length: EASTER_EGG_PHRASES.length }, (_, trigger) =>
         selectEasterEggPhrase(seed, trigger + EASTER_EGG_PHRASES.length)),
@@ -1648,30 +1650,27 @@ test('Easter target styles retain every constellation anchor and scheduled selec
 });
 
 test('editorial Star Text registry is source-backed, unique, and excludes unsupported releases', () => {
-  const edition = readFileSync(
-    new URL('../../src/articles/drafts/2026.09.02-host-then-cheap-stack.md', import.meta.url), 'utf8');
-  assert.equal(STAR_TEXT_EDITION.id, 'edition-2026-09-02-host-then-cheap-stack');
-  assert.ok(STAR_TEXT_ALTERNATIVES.length >= 10 && STAR_TEXT_ALTERNATIVES.length <= 25);
-  assert.deepEqual(CONSTELLATION_PHRASES, [STAR_TEXT_BRAND_PHRASE,
+  assert.match(STAR_TEXT_EDITION.id, /^models-\d{4}-\d{2}-\d{2}$/);
+  assert.ok(STAR_TEXT_ALTERNATIVES.length > 0);
+  assert.deepEqual(CONSTELLATION_PHRASES, [STAR_TEXT_BRAND_PHRASE, STAR_TEXT_SECOND_BRAND_PHRASE,
     ...STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase)]);
-  const normalized = STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase.replace(/[^A-Z0-9]/g, ''));
+  const normalized = STAR_TEXT_ALTERNATIVES.map(({ phrase }) => phrase.toUpperCase().replace(/[^A-Z0-9]/g, ''));
   assert.equal(new Set(normalized).size, normalized.length);
   for (const { phrase, topic, primarySourceUrl } of STAR_TEXT_ALTERNATIVES) {
     assert.ok(phrase && topic);
     assert.match(primarySourceUrl, /^https:\/\//);
-    assert.ok(edition.includes(primarySourceUrl), `${phrase} source missing from edition ledger`);
   }
-  assert.deepEqual(STAR_TEXT_EXCLUDED_CANDIDATES.map(({ phrase }) => phrase),
-    ['DEEPSEEK V5', 'GPT-6', 'ASTRA', 'CLAUDE FABLE 5.1']);
+  assert.ok(STAR_TEXT_EXCLUDED_CANDIDATES.some(({ phrase }) => phrase === 'PROMO CLOCK'));
 });
 
-test('constellation phrase buckets preserve exact 50/50 then equal-alternative semantics', () => {
+test('constellation buckets preserve exact fixed brands and weighted alternatives', () => {
   const buckets = Array.from({ length: CONSTELLATION_BUCKET_COUNT },
     (_, bucket) => getConstellationPhraseForBucket(bucket));
   assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_BRAND_PHRASE).length,
-    STAR_TEXT_ALTERNATIVES.length);
-  CONSTELLATION_PHRASES.slice(1).forEach((phrase) => {
-    assert.equal(buckets.filter((candidate) => candidate === phrase).length, 1, phrase);
+    CONSTELLATION_BUCKET_COUNT * 0.35);
+  assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_SECOND_BRAND_PHRASE).length, CONSTELLATION_BUCKET_COUNT * 0.15);
+  STAR_TEXT_ALTERNATIVES.forEach(({ phrase, weightUnits }) => {
+    assert.equal(buckets.filter((candidate) => candidate === phrase).length, weightUnits * 10, phrase);
   });
   assert.equal(getConstellationPhraseForBucket(CONSTELLATION_BUCKET_COUNT), STAR_TEXT_BRAND_PHRASE);
   assert.equal(getConstellationPhraseForBucket(-1), CONSTELLATION_PHRASES.at(-1));
@@ -1766,7 +1765,7 @@ test('every glyph receives deterministic variable density with unique readable a
 const sourceGlyphGraph = runInNewContext(`${stripTypeScriptTypes(readFileSync(
   new URL('../../src/components/spaceBackgroundModel.ts', import.meta.url), 'utf8',
 ).replace(/^import \{[\s\S]*?\} from '\.\.\/data\/starText\.ts';\n/, '')).replace(/^export /gm, '')}\n({ GLYPHS, createGlyphStrokes });`,
-{ STAR_TEXT_ALTERNATIVES, STAR_TEXT_BRAND_PHRASE });
+{ STAR_TEXT_ALTERNATIVES, STAR_TEXT_BRAND_PHRASE, STAR_TEXT_SECOND_BRAND_PHRASE });
 
 const liesOnStroke = (point, [start, end]) => {
   const dx = end.x - start.x;

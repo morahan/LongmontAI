@@ -1,3 +1,5 @@
+import { modelCatalog } from './modelCatalog.generated.ts';
+
 export type SourceMethod =
   | 'RSS'
   | 'HTML'
@@ -878,7 +880,7 @@ export const modelBenchmarkDefinitions: ModelBenchmarkDefinition[] = [
   },
 ];
 
-export const modelWatchModels: ModelWatchModel[] = [
+export const modelWatchArchive: ModelWatchModel[] = [
   {
     id: 'gpt-6-astra',
     name: 'GPT-6 Astra',
@@ -1705,7 +1707,7 @@ export const modelWatchModels: ModelWatchModel[] = [
   },
 ];
 
-export const latestBriefingModelIds = [
+export const historicalBriefingModelIds = [
   'glm-5-3',
   'nemotron-3-5-lightning',
   'gemini-3-7-flash',
@@ -1720,5 +1722,24 @@ export const latestBriefingModelIds = [
 ] as const;
 
 export const coreSourceCount = modelWatchSources.filter((source) => source.priority === 'Core').length;
+export const modelCatalogAsOf = modelCatalog.asOf;
+export const latestBriefingModelIds: readonly string[] = modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => entry.id);
+export const activeModelWatchModels: ModelWatchModel[] = modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => {
+  const historical = modelWatchArchive.find((model) => model.id === entry.id);
+  return {
+    ...historical,
+    id: entry.id,
+    name: entry.phrase,
+    provider: entry.provider,
+    lane: `${entry.category} / ${entry.availability}`,
+    description: [historical?.description, entry.reason, `Access: ${entry.availability}. Source reviewed ${entry.reviewedAt}.`].filter(Boolean).join(' '),
+    releaseDate: new Date(`${entry.releaseDate}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }),
+    releaseDateSort: entry.releaseDate!,
+    sourceLabel: entry.provider,
+    sourceUrl: entry.sourceUrl,
+    benchmarks: historical?.benchmarks ?? {},
+  };
+});
+export const modelWatchModels: ModelWatchModel[] = [...activeModelWatchModels, ...modelWatchArchive.filter((model) => !latestBriefingModelIds.includes(model.id))];
 export const openWeightSourceCount = modelWatchSources.filter((source) => source.priority === 'Open-weight').length;
 export const regionCount = new Set(modelWatchSources.map((source) => source.region)).size;

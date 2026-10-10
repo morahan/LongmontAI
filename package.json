@@ -36,6 +36,8 @@
     "site:update:preflight": "node scripts/update-site-preflight.mjs",
     "test:update-site": "node scripts/tests/update-site-preflight.test.mjs",
     "model-watch:update": "node scripts/update-model-watch.mjs",
+    "models:update": "node scripts/update-models.mjs",
+    "test:models": "node --experimental-strip-types --test scripts/tests/model-catalog.test.mjs",
     "content:update": "node scripts/update-content.mjs",
     "test:content": "node --experimental-strip-types --test scripts/tests/content-*.test.mjs",
     "test:model-watch": "node scripts/tests/model-watch-contract.test.mjs",

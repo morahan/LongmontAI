@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync, chmodSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync, chmodSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -247,6 +247,110 @@ function approveFixtureContent(f, result) {
 
 if (module) {
   assert.equal(typeof module.runMergeAll, 'function', 'public runMergeAll export required');
+  for (const variant of ['approved', 'incomplete', 'stale', 'broader', 'dirty-anchor', 'non-anchor', 'symlink', 'special']) await scenario(`B-exact-local-retention-${variant}`, ['003', '008', '009', '011', '012'], async () => {
+    const f = fixture(`B-local-retention-${variant}`);
+    const source = branch(f, 'source', { 'source.txt': 'published source\n' });
+    const workspace = variant === 'non-anchor' ? source.path : f.repo;
+    file(f.repo, '.git/info/exclude', 'local-only.bin\nlocal-only-dir/\n');
+    file(workspace, 'local-only.bin', 'fixture private local bytes\n');
+    file(workspace, 'local-only-dir/nested.bin', 'nested private fixture bytes\n');
+    mkdirSync(join(workspace, 'empty-local-dir'));
+    if (['symlink', 'special'].includes(variant)) {
+      rmSync(join(workspace, 'local-only.bin'));
+      if (variant === 'symlink') symlinkSync('local-only-dir/nested.bin', join(workspace, 'local-only.bin'));
+      else assert.equal(command(workspace, 'mkfifo', ['local-only.bin']).status, 0);
+    }
+    if (variant === 'dirty-anchor') file(workspace, 'feature.txt', 'unreviewed dirty tracked bytes\n');
+    if (variant === 'non-anchor') source.before = snapshot(source.path);
+    prepare(f);
+    const first = await run(f, {}, unprotected, false); incomplete(first);
+    assert.ok(first.blockers.some(blocker => ['unknown-ignored', 'empty-untracked-directory'].includes(blocker.kind)));
+    const dir = dirname(first.statePath), packet = JSON.parse(readFileSync(join(dir, 'local-retention-packet.json'), 'utf8'));
+    if (['dirty-anchor', 'non-anchor', 'symlink', 'special'].includes(variant)) {
+      assert.deepEqual(packet.workspaces, []);
+      assert.equal(remoteMain(f), f.base); assertNoCleanup(f); return;
+    }
+    assert.equal(packet.workspaces.length, 1);
+    assert.deepEqual(packet.workspaces[0].paths.map(entry => entry.path), ['empty-local-dir', 'local-only-dir', 'local-only.bin']);
+    assert.ok(packet.workspaces[0].historicalInputs.some(input => input.paths.includes('empty-local-dir')));
+    const note = 'Fixture parent approves only enumerated clean-anchor metadata; local bytes stay unpublished.\n';
+    writeFileSync(join(dir, 'local-review.txt'), note); chmodSync(join(dir, 'local-review.txt'), 0o600);
+    const receipt = { ...packet, decision: 'preserve-locally-not-published', reviewer: { role: 'parent', provider: 'openai-codex', model: 'gpt-6.1-sol' }, evidenceFiles: [{ relativePath: 'local-review.txt', sha256: sha(note) }] };
+    if (variant === 'incomplete') receipt.workspaces[0].paths.pop();
+    if (variant === 'broader') receipt.workspaces[0].paths.push({ path: 'not-approved', kind: 'file' });
+    if (variant === 'stale') receipt.inventoryDigest = '0'.repeat(64);
+    privateJSON(join(dir, 'local-retention-approval.json'), receipt);
+    const next = await run(f, { resume: first.runId });
+    if (variant !== 'approved') {
+      incomplete(next); assert.ok(next.blockers.some(blocker => blocker.kind === 'local-retention-receipt')); assert.equal(remoteMain(f), f.base); assertNoCleanup(f); return;
+    }
+    assert.equal(next.code, 0, JSON.stringify(next)); ancestor(f, source.oid);
+    assert.equal(next.retainedLocalState[0].disposition, 'preserved-locally-not-published');
+    assert.equal(readFileSync(join(workspace, 'local-only.bin'), 'utf8'), 'fixture private local bytes\n');
+    assert.equal(readFileSync(join(workspace, 'local-only-dir/nested.bin'), 'utf8'), 'nested private fixture bytes\n');
+    assert.deepEqual(readdirSync(join(workspace, 'empty-local-dir')), []);
+    assert.equal(command(f.home, 'git', [`--git-dir=${f.origin}`, 'cat-file', '-e', 'main:local-only.bin']).status, 128);
+    const cli = command(f.repo, process.execPath, [enginePath, '0', '--status', first.runId]);
+    assert.equal(cli.status, 0, cli.stdout);
+    assert.equal(JSON.parse(cli.stdout).retainedLocalState[0].pathCount, 3);
+    assert.ok(!cli.stdout.includes('local-only.bin'), 'CLI retains only aggregate local metadata');
+    file(workspace, 'local-only.bin', 'modified after approval\n');
+    const moved = await run(f, { resume: first.runId }, unprotected, false);
+    incomplete(moved); assert.ok(moved.blockers.some(blocker => blocker.kind === 'local-retention-movement'));
+  });
+  for (const collision of ['none', 'path', 'ref', 'source-drift']) await scenario(`D-CLI-initialization-review-resume-${collision}`, ['005', '008', '009', '012'], async () => {
+    const f = fixture(`D-init-review-${collision}`);
+    file(f.repo, 'caller.txt', 'caller ahead of origin\n');
+    const caller = commit(f.repo, 'caller ahead of base', ['caller.txt']);
+    const common = join(f.repo, '.git'), store = join(common, 'loop-merge-push');
+    executable(join(common, 'hooks/post-checkout'), '#!/bin/sh\nexit 0\n');
+    prepare(f);
+    const invoke = (...args) => {
+      const result = command(f.repo, process.execPath, [enginePath, '0', ...args], { env: { ...process.env, PATH: `${f.bin}:${process.env.PATH}` }, timeout: 180_000 });
+      assert.ok(result.stdout.trim(), result.stderr);
+      return JSON.parse(result.stdout);
+    };
+    const approve = (dir, packet) => {
+      mkdirSync(dir, { recursive: true, mode: 0o700 }); chmodSync(dir, 0o700);
+      const note = 'Independent fixture review: fixed no-op post-checkout hook; exact packet only.\n';
+      writeFileSync(join(dir, 'execution-evidence.txt'), note); chmodSync(join(dir, 'execution-evidence.txt'), 0o600);
+      privateJSON(join(dir, 'base-execution-approval.json'), { ...packet, decision: 'approve-reviewed-git-execution', reviewer: { role: 'parent', provider: 'openai-codex', model: 'gpt-6.1-sol' }, evidenceFiles: [{ relativePath: 'execution-evidence.txt', sha256: sha(note) }] });
+    };
+    const globalReview = invoke('--dry-run');
+    assert.equal(globalReview.blockers[0].kind, 'git-execution-review');
+    approve(store, globalReview.reviewPacket);
+    const first = invoke();
+    assert.equal(first.blockers[0].kind, 'git-execution-review');
+    assert.equal(first.reviewPacket.sourceOid, caller);
+    assert.equal(existsSync(first.integrationWorktree), false);
+    assert.equal(state(first).data.intent, null);
+    const dir = dirname(first.statePath);
+    approve(dir, first.reviewPacket);
+    const second = invoke('--resume', first.runId);
+    assert.equal(second.blockers[0].kind, 'git-execution-review', JSON.stringify(second));
+    assert.equal(second.reviewPacket.sourceOid, f.base);
+    assert.equal(existsSync(second.integrationWorktree), false);
+    assert.ok(state(second).data.events.some(event => event.kind === 'all-remote-prefetch-and-refreshed-census'));
+    approve(dir, second.reviewPacket);
+    if (collision === 'path') { mkdirSync(second.integrationWorktree); file(second.integrationWorktree, 'preserve.txt', 'do not overwrite\n'); }
+    if (collision === 'ref') git(f.repo, 'branch', second.integrationRef.slice('refs/heads/'.length), caller);
+    if (collision === 'source-drift') file(f.repo, 'unreviewed.txt', 'do not adopt\n');
+    const before = snapshot(f.repo), beforeRemote = remoteMain(f);
+    const third = invoke('--resume', first.runId);
+    assert.equal(remoteMain(f), beforeRemote);
+    assert.deepEqual(snapshot(f.repo), before);
+    if (collision === 'none') {
+      assert.ok(existsSync(third.integrationWorktree), JSON.stringify(third));
+      assert.equal(git(third.integrationWorktree, 'symbolic-ref', 'HEAD'), third.integrationRef);
+      assert.ok(state(third).data.events.some(event => event.kind === 'isolated-integration-created'));
+      assert.ok(!third.blockers.some(blocker => ['derived-resource-mismatch', 'integration-initialization-mismatch'].includes(blocker.kind)));
+    } else {
+      assert.ok(third.blockers.some(blocker => blocker.kind === (collision === 'source-drift' ? 'source-movement' : 'integration-create-incomplete')), JSON.stringify(third));
+      if (collision === 'path') assert.equal(readFileSync(join(third.integrationWorktree, 'preserve.txt'), 'utf8'), 'do not overwrite\n');
+      if (collision === 'ref') assert.equal(git(f.repo, 'rev-parse', third.integrationRef), caller);
+      if (collision === 'source-drift') assert.equal(existsSync(third.integrationWorktree), false);
+    }
+  });
   await scenario('A-all-remotes-stale-divergent-detached-duplicate-ancestry-and-cleanup', ['002', '006', '009', '010', '011', '012', '013'], async () => {
     const f = fixture('A-all-source');
     const a = branch(f, 'local-A', { 'a.txt': 'local A\n' });

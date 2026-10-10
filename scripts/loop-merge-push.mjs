@@ -386,7 +386,7 @@ function executionPreflight(cwd, common, targetOid, store) {
   if (!fs.existsSync(approval)) throw new Stop(4, 'git-execution-review', 'Configured external drivers/filters/fsmonitor/attributes or automatic hooks require exact parent review BEFORE Git can execute them.', { reviewPacket: packet, reviewPacketPath: store ? path.join(store.dir, 'base-execution-packet.json') : null });
   privateDirectory(dir);
   const receipt = readPrivate(approval); reviewer(receipt);
-  for (const key of ['sourceOid', 'configDigest', 'hooksDigest', 'attributesDigest', 'packetDigest']) if (receipt[key] !== packet[key]) throw new Stop(4, 'git-execution-review', 'Git execution trust receipt is stale for actual config/hooks/attributes/source.');
+  for (const key of ['sourceOid', 'configDigest', 'hooksDigest', 'attributesDigest', 'packetDigest']) if (receipt[key] !== packet[key]) throw new Stop(4, 'git-execution-review', 'Git execution trust receipt is stale for actual config/hooks/attributes/source.', { reviewPacket: packet, reviewPacketPath: store ? path.join(store.dir, 'base-execution-packet.json') : null });
   if (receipt.decision !== 'approve-reviewed-git-execution') throw new Stop(4, 'git-execution-review', 'Git execution receipt decision is invalid.');
   validateEvidence(dir, receipt.evidenceFiles);
   return true;
@@ -467,7 +467,13 @@ function addSources(state, rows) {
 function updateSnapshot(cwd, common, state) {
   return inventory(cwd, common, { ref: state.integrationRef, worktree: state.integrationWorktree, managedRefs: state.managedRefs });
 }
+function assertLocalRetention(state) {
+  for (const workspace of state.retainedLocalState || []) {
+    for (const entry of workspace.paths) if (stable(localPathMetadata(workspace.path, entry.path, entry.kind)) !== stable(entry)) throw new Stop(4, 'local-retention-movement', 'Approved local-only path metadata changed; preserve state and obtain fresh review.');
+  }
+}
 function assertStable(cwd, common, state, store) {
+  assertLocalRetention(state);
   const current = updateSnapshot(cwd, common, state);
   if (current.fingerprint === state.expected.fingerprint) return current;
   const receiptPath = path.join(store.dir, 'source-transition-approval.json');
@@ -510,11 +516,59 @@ async function hashBlob(cwd, oid) {
   context.blobHashes.set(oid, promised);
   return promised;
 }
+function localPathMetadata(workspace, relative, kind) {
+  const absolute = sourcePath(workspace, relative);
+  const stat = fs.lstatSync(absolute);
+  if (stat.isSymbolicLink() || kind === 'file' && !stat.isFile() || ['directory', 'empty-directory'].includes(kind) && !stat.isDirectory() || !['file', 'directory', 'empty-directory'].includes(kind)) throw new Stop(4, 'local-retention-type', 'Local retention permits only regular files and directories.');
+  if (kind === 'empty-directory' && fs.readdirSync(absolute).length) throw new Stop(4, 'local-retention-movement', 'Approved empty local directory is no longer empty.');
+  const after = fs.lstatSync(absolute);
+  const keys = ['dev', 'ino', 'mode', 'size', 'mtimeMs', 'ctimeMs'];
+  if (keys.some(key => stat[key] !== after[key])) throw new Stop(4, 'local-retention-movement', 'Local-only path metadata changed during inspection.');
+  return { path: relative, kind, ...Object.fromEntries(keys.map(key => [key, stat[key]])) };
+}
+function retainLocalInputs(state, store, blockers) {
+  const workspaces = [];
+  const allowedKinds = new Set(['unknown-ignored', 'empty-untracked-directory']);
+  for (const workspace of state.expected.worktrees) {
+    if (![state.caller, state.primary].includes(workspace.path) || workspace.missing || workspace.locked || workspace.status || workspace.operations.length || workspace.blockers.some(blocker => !allowedKinds.has(blocker.kind))) continue;
+    const unknown = workspace.ignored.filter(entry => entry.classification === 'unknown');
+    if (unknown.some(entry => !['file', 'directory'].includes(entry.kind))) continue;
+    const paths = [
+      ...unknown.map(entry => localPathMetadata(workspace.path, entry.path, entry.kind)),
+      ...workspace.blockers.filter(blocker => blocker.kind === 'empty-untracked-directory').flatMap(blocker => blocker.paths.map(name => localPathMetadata(workspace.path, name, 'empty-directory'))),
+    ].sort((a, b) => a.path.localeCompare(b.path));
+    const historicalInputs = pendingInputs(state).filter(input => input.kind === 'worktree' && input.sourceId === `worktree:${workspace.path}` && input.snapshot.fingerprint === workspace.fingerprint)
+      .map(input => ({ inputDigest: input.inputDigest, fingerprint: input.snapshot.fingerprint, paths: input.blockers.filter(blocker => blocker.kind === 'empty-untracked-directory').flatMap(blocker => blocker.paths).sort() }));
+    if (paths.length) workspaces.push({ path: workspace.path, fingerprint: workspace.fingerprint, paths, historicalInputs });
+  }
+  workspaces.sort((a, b) => a.path.localeCompare(b.path));
+  const packet = bindPacket({ schema: SCHEMA, runId: state.id, inventoryDigest: state.expected.fingerprint, workspaces });
+  atomicWrite(path.join(store.dir, 'local-retention-packet.json'), packet);
+  const approval = path.join(store.dir, 'local-retention-approval.json');
+  if (!fs.existsSync(approval)) { state.retainedLocalState = []; return blockers; }
+  const receipt = readPrivate(approval); reviewer(receipt);
+  // Publication/cleanup update the run inventory internally. Reuse only a
+  // previously accepted exact packet whose complete anchor metadata still matches.
+  const accepted = state.localRetentionPacket;
+  const binding = accepted && stable(accepted.workspaces) === stable(workspaces) ? accepted : packet;
+  if (!workspaces.length || receipt.decision !== 'preserve-locally-not-published' || ['runId', 'inventoryDigest', 'packetDigest'].some(key => receipt[key] !== binding[key]) || stable(receipt.workspaces) !== stable(binding.workspaces)) throw new Stop(4, 'local-retention-receipt', 'Local retention must bind the exact run, inventory, clean anchors and enumerated metadata-only paths.');
+  validateEvidence(store.dir, receipt.evidenceFiles);
+  state.localRetentionPacket = binding;
+  state.retainedLocalState = workspaces.map(workspace => ({ ...workspace, disposition: 'preserved-locally-not-published', inventoryDigest: binding.inventoryDigest, packetDigest: binding.packetDigest }));
+  store.save(state);
+  return blockers.filter(blocker => {
+    const workspace = workspaces.find(row => blocker.sourceId === `worktree:${row.path}`);
+    if (!workspace) return true;
+    if (blocker.kind === 'unknown-ignored') return false;
+    const historical = workspace.historicalInputs.find(input => input.inputDigest === blocker.inputDigest);
+    return blocker.kind !== 'empty-untracked-directory' || !historical || !blocker.paths.length || blocker.paths.some(name => !historical.paths.includes(name) || !workspace.paths.some(entry => entry.path === name && entry.kind === 'empty-directory'));
+  });
+}
 async function intakeBlockers(cwd, state, store) {
   captureInputHistory(state, state.expected);
   const inputs = pendingInputs(state);
   const runtimeOnly = new Set(['ownership-held', 'unknown-ignored', 'source-race']);
-  const blockers = [...inputs.flatMap(i => i.blockers), ...state.expected.blockers.filter(b => runtimeOnly.has(b.kind)), ...state.fetchBlockers];
+  const blockers = retainLocalInputs(state, store, [...inputs.flatMap(i => i.blockers), ...state.expected.blockers.filter(b => runtimeOnly.has(b.kind)), ...state.fetchBlockers]);
   const receiptPath = path.join(store.dir, 'intake-approval.json');
   if (!fs.existsSync(receiptPath)) return blockers;
   const receipt = readPrivate(receiptPath);
@@ -1035,7 +1089,7 @@ function cleanupSources(cwd, common, state, store) {
   state.phase = 'complete'; state.complete = true; store.event(state, 'all-input-main-local-cleanup-complete');
 }
 function output(state, store, code, extra = {}) {
-  return { code, phase: state?.phase || 'failed', complete: state?.complete === true && code === 0, runId: state?.id || null, statePath: store?.file || null, integrationWorktree: state?.integrationWorktree || null, integrationRef: state?.integrationRef || null, inventory: state?.expected || null, pendingConflict: state?.pendingConflict || null, blockers: state?.blockers || [], mainProof: state?.mainProof || null, retainedAnchors: state?.retainedAnchors || [], cleanupActions: state?.cleanupActions || [], evidencePaths: state?.evidencePaths || [], ...extra };
+  return { code, phase: state?.phase || 'failed', complete: state?.complete === true && code === 0, runId: state?.id || null, statePath: store?.file || null, integrationWorktree: state?.integrationWorktree || null, integrationRef: state?.integrationRef || null, inventory: state?.expected || null, pendingConflict: state?.pendingConflict || null, blockers: state?.blockers || [], mainProof: state?.mainProof || null, retainedAnchors: state?.retainedAnchors || [], retainedLocalState: state?.retainedLocalState || [], cleanupActions: state?.cleanupActions || [], evidencePaths: state?.evidencePaths || [], ...extra };
 }
 async function run(options) {
   let state, store;
@@ -1058,6 +1112,7 @@ async function run(options) {
       state = store.load();
       if (state.schema !== SCHEMA || state.id !== id || state.common !== common || state.caller !== root) throw new Stop(4, 'foreign-run', 'Resume must use original repository/caller identity.');
       if (status) {
+        assertLocalRetention(state);
         const current = updateSnapshot(root, common, state);
         const fresh = state.complete && current.fingerprint === state.expected.fingerprint && state.mainProof && remoteHead(root) === state.mainProof.oid && text(state.integrationWorktree, ['rev-parse', 'HEAD']) === state.validation?.oid;
         return output(state, store, fresh ? 0 : state.pendingConflict ? 3 : 4, { complete: Boolean(fresh), detail: fresh ? 'Recorded completion freshly matched against sources and remote main.' : 'Run is incomplete or its completion proof is no longer current.' });
@@ -1072,19 +1127,29 @@ async function run(options) {
       const beforeFetch = inventory(root, common);
       state = { schema: SCHEMA, id, common, caller: root, primary: worktrees(root)[0]?.worktree, minutes, phase: 'inventory', complete: false, sources: [...beforeFetch.sources], expected: beforeFetch, preFetch: beforeFetch, fetchBlockers: [], objectBlockers: [], blockers: [], events: [], merges: [], coverage: {}, policyReviews: [], conflictDecisions: [], cleanupActions: [], retainedAnchors: [], pendingMerge: null, pendingConflict: null, pendingReview: null, intent: null, mainProof: null, integrationRef: `refs/heads/integration/loop-merge-all-${id}`, integrationWorktree: path.join(store.dir, 'integration') };
       store.save(state);
-      executionPreflight(root, common, text(root, ['rev-parse', 'HEAD']), store);
-      // Preserve every pre-fetch object BEFORE any remote update. Fetch only that remote's head namespace;
-      // do not honor a custom refspec that could overwrite a local source head or silently narrow ALL coverage.
-      pinInputs(root, state, store);
-      for (const remote of beforeFetch.remotes) {
-        try {
-          git(root, ['check-ref-format', `refs/remotes/${remote}/scope-proof`]);
-          git(root, ['fetch', '--atomic', '--no-tags', '--no-prune', '--no-auto-maintenance', '--', remote, `refs/heads/*:refs/remotes/${remote}/*`]);
-        } catch { state.fetchBlockers.push({ kind: 'remote-fetch', sourceId: `remote:${remote}`, paths: [], detail: 'Configured remote refresh failed; stale sources retained, completeness blocked.' }); }
+    }
+    // Review can stop before a create intent exists. Resume only the unfinished
+    // initialization stage; caller and fetched-base execution reviews are distinct.
+    if (!state.integrationHead && !state.intent) {
+      if (state.integrationRef !== `refs/heads/integration/loop-merge-all-${id}` || state.integrationWorktree !== path.join(store.dir, 'integration') || state.pendingMerge || state.publication || state.mainProof || state.validation || !Array.isArray(state.merges) || state.merges.length || !Array.isArray(state.events) || state.events.some(event => !event || ['integration-create-intent', 'isolated-integration-created', 'integration-create-facts-recovered'].includes(event.kind))) throw new Stop(4, 'integration-initialization-mismatch', 'Missing integration identity does not describe an unstarted initialization.');
+      if (worktrees(root).some(row => row.worktree === state.integrationWorktree || row.branch === state.integrationRef) || refs(root).some(row => row.ref === state.integrationRef) || fs.lstatSync(state.integrationWorktree, { throwIfNoEntry: false })) throw new Stop(4, 'integration-create-incomplete', 'Unstarted integration collides with an existing resource; no adoption or overwrite.');
+      assertStable(root, common, state, store);
+      if (!state.events.some(event => event.kind === 'all-remote-prefetch-and-refreshed-census')) {
+        const beforeFetch = state.preFetch;
+        executionPreflight(root, common, text(root, ['rev-parse', 'HEAD']), store);
+        // Preserve every pre-fetch object BEFORE any remote update. Fetch only that remote's head namespace;
+        // do not honor a custom refspec that could overwrite a local source head or silently narrow ALL coverage.
+        pinInputs(root, state, store);
+        for (const remote of beforeFetch.remotes) {
+          try {
+            git(root, ['check-ref-format', `refs/remotes/${remote}/scope-proof`]);
+            git(root, ['fetch', '--atomic', '--no-tags', '--no-prune', '--no-auto-maintenance', '--', remote, `refs/heads/*:refs/remotes/${remote}/*`]);
+          } catch { state.fetchBlockers.push({ kind: 'remote-fetch', sourceId: `remote:${remote}`, paths: [], detail: 'Configured remote refresh failed; stale sources retained, completeness blocked.' }); }
+        }
+        state.expected = inventory(root, common, { ref: state.integrationRef, worktree: state.integrationWorktree, managedRefs: state.managedRefs }); addSources(state, state.expected.sources);
+        captureInputHistory(state, beforeFetch); captureInputHistory(state, state.expected);
+        store.event(state, 'all-remote-prefetch-and-refreshed-census');
       }
-      state.expected = inventory(root, common, { ref: state.integrationRef, worktree: state.integrationWorktree, managedRefs: state.managedRefs }); addSources(state, state.expected.sources);
-      captureInputHistory(state, beforeFetch); captureInputHistory(state, state.expected);
-      store.event(state, 'all-remote-prefetch-and-refreshed-census');
       if (!state.expected.remotes.includes('origin')) throw new Stop(4, 'missing-origin', 'Origin main publication remote is required.');
       const base = state.expected.refs.find(r => r.ref === 'refs/remotes/origin/main')?.oid;
       if (!base || !commitExists(root, base)) throw new Stop(4, 'missing-main', 'A real origin/main commit is required.');
@@ -1153,7 +1218,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     else result = await runMergeAll(options);
   } catch (error) { result = { code: error.code || 1, complete: false, phase: 'failed', blockers: [{ kind: error.kind || 'usage', detail: error.detail || 'Invalid invocation.' }] }; }
   // Source path/version matrices stay private, especially ignored names. CLI prints only aggregate scope and packet locations.
-  const { inventory: inv, pendingConflict: conflict, ...metadata } = result;
+  const { inventory: inv, pendingConflict: conflict, retainedLocalState = [], ...metadata } = result;
+  metadata.retainedLocalState = retainedLocalState.map(row => ({ workspace: row.path, pathCount: row.paths.length, disposition: row.disposition, packetDigest: row.packetDigest }));
   console.log(JSON.stringify({ ...metadata, blockers: (metadata.blockers || []).map(({ paths, ...b }) => ({ ...b, pathCount: paths?.length || 0 })), inventory: inv ? { sources: inv.sources.length, worktrees: inv.worktrees.length, stashes: inv.stash.length, configuredRemotes: inv.remotes.length, fingerprint: inv.fingerprint } : null, pendingConflict: conflict ? { beforeOid: conflict.beforeOid, sourceOid: conflict.sourceOid, packetDigest: conflict.packetDigest, pathCount: conflict.paths.length } : null }, null, 2));
   process.exitCode = result.code;
 }
