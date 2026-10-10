@@ -93,7 +93,8 @@ export function watchRetryingResource<T>({
 
     if (!controller.signal.aborted && !completed) {
       onUnavailable?.(runtime.now(), publicationAt);
-      scheduleNextAttempt();
+      // The callback may synchronously dispose its watcher.
+      if (!controller.signal.aborted && !completed) scheduleNextAttempt();
     }
   };
 

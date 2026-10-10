@@ -1,5 +1,6 @@
 import {
   NewsletterError,
+  enforceNewsletterSignupRateLimit,
   headerValue,
   isValidEmail,
   normalizeCadence,
@@ -13,6 +14,7 @@ import {
   sanitizeText,
   sendJson,
   syncSubscriberToListmonk,
+  trustedClientIp,
   upsertSubscriber,
 } from './shared.mjs';
 
@@ -32,13 +34,19 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
       requireAllowedOrigin(request, env);
       requireJsonRequest(request);
       const payload = await readJsonBody(request);
-      if (sanitizeText(payload.company, 120)) {
-        return sendJson(response, 202, { ok: true, status: 'accepted' });
-      }
-
       const email = normalizeEmail(payload.email);
       if (!isValidEmail(email)) {
         throw new NewsletterError('Enter a valid email address.', { status: 400, code: 'invalid_email' });
+      }
+
+      const requestTime = now();
+      await enforceNewsletterSignupRateLimit(
+        env,
+        { ip: trustedClientIp(request), email, now: requestTime },
+        fetchImpl,
+      );
+      if (sanitizeText(payload.company, 120)) {
+        return sendJson(response, 202, { ok: true, status: 'accepted' });
       }
 
       const name = sanitizeText(payload.name, 120) || null;
@@ -51,15 +59,11 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
           name,
           cadence,
           source,
-          consentedAt: now().toISOString(),
+          consentedAt: requestTime.toISOString(),
           metadata: clientMetadata(request, payload),
         },
         fetchImpl,
       );
-
-      // The unique email constraint arbitrates races; duplicates must have no side effects.
-      // Public retries cannot reconcile a provider sync interrupted after insertion.
-      if (!subscriber) return sendJson(response, 202, { ok: true, status: 'accepted' });
 
       await recordNewsletterEvent(
         env,
@@ -70,17 +74,11 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
           payload: { cadence, source },
         },
         fetchImpl,
-      ).catch(() => {});
+      );
 
-      let listmonk;
+      let listmonk = { ok: false, skipped: true, reason: 'not_attempted' };
       try {
         listmonk = await syncSubscriberToListmonk(env, { email, name, cadence, source }, fetchImpl);
-      } catch {
-        listmonk = { ok: false, skipped: false, reason: 'sync_failed' };
-      }
-
-      // Bookkeeping is independent of provider submission and never retries it.
-      if (listmonk.ok || listmonk.skipped) {
         await patchSubscriber(
           env,
           subscriber?.id,
@@ -90,7 +88,7 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
             sync_error: listmonk.ok || listmonk.skipped ? null : listmonk.reason,
           },
           fetchImpl,
-        ).catch(() => {});
+        );
         await recordNewsletterEvent(
           env,
           {
@@ -100,11 +98,10 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
             payload: listmonk,
           },
           fetchImpl,
-        ).catch(() => {});
-      } else {
-        const message = 'listmonk_sync_failed';
-        // Best-effort diagnostics must not expose provider failure in the intake response.
-        await patchSubscriber(env, subscriber?.id, { sync_error: message }, fetchImpl).catch(() => {});
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await patchSubscriber(env, subscriber?.id, { sync_error: message }, fetchImpl);
         await recordNewsletterEvent(
           env,
           {
@@ -114,15 +111,23 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
             payload: { message },
           },
           fetchImpl,
-        ).catch(() => {});
+        );
+        listmonk = { ok: false, skipped: false, reason: 'sync_failed' };
       }
 
-      return sendJson(response, 202, { ok: true, status: 'accepted' });
+      return sendJson(response, 202, {
+        ok: true,
+        status: listmonk.ok ? 'confirmation_pending' : 'captured',
+        cadence,
+      });
     } catch (error) {
       const status = error instanceof NewsletterError ? error.status : 500;
       const code = error instanceof NewsletterError ? error.code : 'newsletter_subscribe_failed';
       const message = status < 500 && error instanceof Error ? error.message : 'Newsletter signup is temporarily unavailable.';
-      return sendJson(response, status, { ok: false, error: code, message });
+      const headers = status === 429 && error instanceof NewsletterError
+        ? { 'Retry-After': String(error.retryAfter) }
+        : {};
+      return sendJson(response, status, { ok: false, error: code, message }, headers);
     }
   };
 }

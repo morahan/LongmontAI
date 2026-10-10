@@ -12,20 +12,20 @@ if [[ ! -x "$PLAYWRIGHT_CLI" ]]; then
   exit 1
 fi
 SESSION="longmont-mobile-audit-$$-$RANDOM"
-RUN_ID="${MOBILE_AUDIT_RUN_ID:-$SESSION}"
+RUN_ID="${MOBILE_AUDIT_RUN_ID-$SESSION}"
 if [[ ! "$RUN_ID" =~ ^[A-Za-z0-9_-]{1,80}$ ]]; then
-  echo "MOBILE_AUDIT_RUN_ID must contain only letters, numbers, underscores, or hyphens." >&2
+  echo "MOBILE_AUDIT_RUN_ID must contain 1-80 letters, numbers, underscores, or hyphens." >&2
   exit 2
 fi
 OPEN_ERROR="$(mktemp "${TMPDIR:-/tmp}/longmont-mobile-audit-open.XXXXXXXX")"
-CONFIG_FILE=""
+CONFIG_DIR=""
 
 cleanup() {
   local status=$?
   trap - EXIT
   "$PLAYWRIGHT_CLI" --session "$SESSION" close >/dev/null 2>&1 || true
   rm -f "$OPEN_ERROR"
-  [[ -z "$CONFIG_FILE" ]] || rm -f "$CONFIG_FILE"
+  [[ -z "$CONFIG_DIR" ]] || rm -rf -- "$CONFIG_DIR"
   exit "$status"
 }
 trap cleanup EXIT
@@ -47,7 +47,9 @@ NODE
 
 case "${MOBILE_AUDIT_HEADED:-0}" in
   0|"")
-    CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/longmont-mobile-audit-playwright.XXXXXXXX.json")"
+    # Keep the JSON extension inside a private directory with a BSD-safe template.
+    CONFIG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/longmont-mobile-audit-playwright.XXXXXXXX")"
+    CONFIG_FILE="$CONFIG_DIR/config.json"
     cat >"$CONFIG_FILE" <<'JSON'
 {"browser":{"browserName":"chromium","launchOptions":{"headless":true}}}
 JSON

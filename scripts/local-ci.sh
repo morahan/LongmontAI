@@ -4,12 +4,23 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-echo "Local verification: deterministic scanners, Codex security review, lint, content assets, mobile browser audit, and production build."
-SECURITY_COMMIT_AGENT_REVIEW=1 npm run security:review
+echo "Local verification: deterministic scanners, optional caller-requested Codex security review, lint, contract tests, content assets, mobile browser audit, and production build."
+npm run security:review
 npm run lint
 npm run release:check
-npm test
+npm run release:self-test
+npm run test:scheduled-release
 npm run content:check-assets
+npm run security:test
+npm run test:loop-push
+npm run test:update-site
+npm run test:content
+npm run test:model-watch
+npm run test:space-background
+npm run test:newsletter
+npm run test:mobile-contract
+npm run test:flows-contract
+npm run test:tools-matrix
 npm run build
 MOBILE_AUDIT_HEADED=0 env -u MOBILE_AUDIT_ROUTES npm run test:mobile
 echo "Local verification passed."

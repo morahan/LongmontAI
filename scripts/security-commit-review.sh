@@ -14,12 +14,13 @@ if [[ "$MODE" == "commit" ]]; then
   MODE="staged"
 fi
 
-ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-cd "$ROOT"
-if ! REVIEW_GIT_DIR="$(git rev-parse --absolute-git-dir 2>/dev/null)" || [[ "$REVIEW_GIT_DIR" != /* || ! -d "$REVIEW_GIT_DIR" ]]; then
-  echo "security-commit-review: cannot determine repository Git directory." >&2
+if ! ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" \
+  || ! git_metadata_dir="$(git rev-parse --absolute-git-dir 2>/dev/null)" \
+  || [[ ! -d "$ROOT" || "$git_metadata_dir" != /* || ! -d "$git_metadata_dir" ]]; then
+  echo "security-commit-review: cannot establish Git repository metadata." >&2
   exit 1
 fi
+cd "$ROOT"
 
 if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
   if [[ -n "${CI:-}" ]]; then
@@ -31,7 +32,7 @@ if [[ "${SECURITY_COMMIT_BREAK_GLASS:-0}" == "1" ]]; then
     echo "security-commit-review: SECURITY_COMMIT_BREAK_GLASS_TICKET must contain a ticket or incident reference." >&2
     exit 1
   fi
-  break_glass_log="$REVIEW_GIT_DIR/security-review/break-glass.log"
+  break_glass_log="$git_metadata_dir/security-review/break-glass.log"
   mkdir -p "$(dirname "$break_glass_log")"
   chmod 700 "$(dirname "$break_glass_log")" 2>/dev/null || true
   printf '%s mode=%s commit=%s ticket=%s\n' \
@@ -67,7 +68,7 @@ failed_gates=""
 gate_count=0
 gate_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/security-review.XXXXXXXXXX")"
 chmod 700 "$gate_temp_dir"
-evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$REVIEW_GIT_DIR/security-review}"
+evidence_dir="${SECURITY_REVIEW_EVIDENCE_DIR:-$git_metadata_dir/security-review}"
 evidence_file=""
 
 cleanup() {
@@ -105,9 +106,152 @@ append_unique_tip() {
   scan_tips+=("$tip")
 }
 
+verify_snapshot() {
+  local tip="$1" snapshot="$2"
+  node --input-type=module - "$tip" "$snapshot" <<'NODE'
+import { spawnSync } from 'node:child_process';
+import { constants, closeSync, fstatSync, lstatSync, openSync, readSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join } from 'node:path';
+
+try {
+  const [, , tip, snapshot] = process.argv;
+  const git = args => {
+    const result = spawnSync('git', args, { env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' },
+      stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 128 * 1024 * 1024 });
+    if (result.error || result.signal || result.status !== 0) throw new Error('Git object');
+    return result.stdout;
+  };
+  const algorithm = git(['rev-parse', '--show-object-format']).toString('ascii').trim();
+  if (algorithm !== 'sha1' && algorithm !== 'sha256') throw new Error('object format');
+  const entries = git(['ls-tree', '-rz', '--full-tree', tip]);
+  const buffer = Buffer.alloc(64 * 1024);
+  const blobHash = (absolute, stat) => {
+    if (!Number.isSafeInteger(stat.size) || stat.size < 0) throw new Error('file size');
+    const file = openSync(absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    try {
+      const opened = fstatSync(file);
+      if (!opened.isFile() || opened.dev !== stat.dev || opened.ino !== stat.ino
+        || opened.size !== stat.size || opened.mode !== stat.mode) throw new Error('file changed');
+      const hash = createHash(algorithm);
+      hash.update(`blob ${stat.size}\0`, 'ascii');
+      let total = 0;
+      for (;;) {
+        const length = readSync(file, buffer, 0, buffer.length, null);
+        if (length === 0) break;
+        total += length;
+        if (total > stat.size) throw new Error('file grew');
+        hash.update(buffer.subarray(0, length));
+      }
+      const final = fstatSync(file);
+      if (total !== stat.size || final.size !== stat.size || final.mtimeMs !== opened.mtimeMs
+        || final.ctimeMs !== opened.ctimeMs) throw new Error('file changed');
+      return hash.digest('hex');
+    } finally {
+      closeSync(file);
+    }
+  };
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const expected = new Map();
+  const directories = new Set();
+  for (let offset = 0; offset < entries.length;) {
+    const end = entries.indexOf(0, offset);
+    if (end < 0) throw new Error('tree entry');
+    const entry = entries.subarray(offset, end);
+    offset = end + 1;
+    const tab = entry.indexOf(9);
+    if (tab < 0) throw new Error('tree entry');
+    const match = /^(100644|100755) blob ([a-f0-9]{40}|[a-f0-9]{64})$/.exec(entry.subarray(0, tab).toString('ascii'));
+    if (!match) throw new Error('unsupported tree entry');
+    const path = decoder.decode(entry.subarray(tab + 1));
+    const parts = path.split('/');
+    if (!path || parts.some(part => !part || part === '.' || part === '..' || part === '.git')
+      || expected.has(path)) throw new Error('unsafe tree path');
+    expected.set(path, { mode: match[1] === '100755' ? 0o755 : 0o644, oid: match[2] });
+    for (let i = 1; i < parts.length; i++) directories.add(parts.slice(0, i).join('/'));
+  }
+  const seen = new Set();
+  const visit = (directory, prefix = '') => {
+    for (const name of readdirSync(directory)) {
+      const path = prefix ? `${prefix}/${name}` : name;
+      const absolute = join(directory, name);
+      const stat = lstatSync(absolute);
+      if (stat.isDirectory()) {
+        if (!directories.has(path)) throw new Error('extra directory');
+        visit(absolute, path);
+        continue;
+      }
+      const entry = expected.get(path);
+      if (!entry || !stat.isFile() || (stat.mode & 0o777) !== entry.mode
+        || blobHash(absolute, stat) !== entry.oid) {
+        throw new Error('snapshot mismatch');
+      }
+      seen.add(path);
+    }
+  };
+  visit(snapshot);
+  if (seen.size !== expected.size) throw new Error('missing snapshot entry');
+} catch {
+  process.exitCode = 1;
+}
+NODE
+}
+
+prepare_staged_snapshot() {
+  local index_path entries entry metadata file mode oid stage
+  if ! git rev-parse --verify 'HEAD^{commit}' >/dev/null 2>&1; then
+    echo "security-commit-review: unborn staged review is unsupported; exact scope cannot be proven." >&2
+    return 1
+  fi
+  index_path="$(git rev-parse --path-format=absolute --git-path index)" || return 1
+  [[ -f "$index_path" && ! -L "$index_path" ]] || {
+    echo "security-commit-review: staged index is unavailable or unsupported." >&2
+    return 1
+  }
+  # All staged readers share one frozen selection. Never write-tree, checkout,
+  # or refresh the caller's index/object database to materialize it.
+  cp "$index_path" "$gate_temp_dir/index" || return 1
+  chmod 600 "$gate_temp_dir/index" || return 1
+  export GIT_INDEX_FILE="$gate_temp_dir/index"
+  # ls-files --stage cannot distinguish intent-only placeholders from genuinely
+  # staged empty blobs. Ask Git for both cached-tree interpretations instead;
+  # reject unsupported intent entries before any scanner or materialization.
+  git diff --cached --raw -z --no-abbrev --no-renames --no-ext-diff --no-textconv \
+    --ita-visible-in-index >"$gate_temp_dir/intent-visible" || return 1
+  git diff --cached --raw -z --no-abbrev --no-renames --no-ext-diff --no-textconv \
+    --ita-invisible-in-index >"$gate_temp_dir/intent-invisible" || return 1
+  if ! cmp -s "$gate_temp_dir/intent-visible" "$gate_temp_dir/intent-invisible"; then
+    echo "security-commit-review: intent-to-add index entries are unsupported; stage actual content before review." >&2
+    return 1
+  fi
+  staged_snapshot="$gate_temp_dir/staged-snapshot"
+  mkdir -m 700 "$staged_snapshot" || return 1
+  entries="$gate_temp_dir/index-entries"
+  git ls-files --stage -z >"$entries" || return 1
+  while IFS= read -r -d '' entry; do
+    metadata="${entry%%$'\t'*}"
+    file="${entry#*$'\t'}"
+    read -r mode oid stage <<<"$metadata"
+    if [[ "$stage" != 0 || ( "$mode" != 100644 && "$mode" != 100755 ) ]] \
+      || ! valid_oid "$oid" || [[ -z "$file" || "$file" == /* ]] \
+      || [[ "/$file/" == *'/../'* || "/$file/" == *'/./'* || "/$file/" == *'//'* ]] \
+      || [[ "/$file/" == */.[gG][iI][tT]/* ]]; then
+      echo "security-commit-review: unresolved or unsupported staged entry; refusing snapshot." >&2
+      return 1
+    fi
+    # Symlinks/submodules are rejected above, so no staged path can redirect
+    # writes or scanner reads outside this private regular-file tree.
+    mkdir -p "$(dirname "$staged_snapshot/$file")" || return 1
+    [[ ! -e "$staged_snapshot/$file" ]] || return 1
+    git cat-file blob "$oid" >"$staged_snapshot/$file" || return 1
+    chmod "${mode#100}" "$staged_snapshot/$file" || return 1
+  done <"$entries"
+}
+
 prepare_scan_scope() {
   if [[ "$MODE" == "staged" ]]; then
-    return 0
+    prepare_staged_snapshot
+    return
   fi
 
   if [[ "$MODE" == "all" ]]; then
@@ -174,7 +318,8 @@ prepare_scan_scope() {
     index=$((index + 1))
     snapshot="$gate_temp_dir/tracked-snapshot-$index"
     mkdir -m 700 "$snapshot"
-    if ! git archive --format=tar "$tip" | tar -xf - -C "$snapshot"; then
+    if ! node "$ROOT/scripts/lib/local-required-gate/run.mjs" --materialize "$tip" "$snapshot" \
+      || ! verify_snapshot "$tip" "$snapshot"; then
       echo "security-commit-review: failed to create exact snapshot for $tip." >&2
       return 1
     fi
@@ -343,7 +488,7 @@ secret_scan() {
       echo "  Finding summary: no staged files, so no staged secrets to scan."
       return 0
     fi
-    gitleaks git --staged --redact --no-banner --log-level warn .
+    gitleaks git --staged --redact --no-banner --log-level warn . || return
     echo "  Finding summary: no staged secrets detected."
     return
   fi
@@ -431,7 +576,7 @@ dependency_audit() {
   echo "  Scanner: osv-scanner"
   echo "  Database: local offline cache"
   if [[ "$MODE" == "staged" ]]; then
-    osv-scanner scan source --offline-vulnerabilities --recursive --verbosity error .
+    (cd "$staged_snapshot" && osv-scanner scan source --offline-vulnerabilities --recursive --verbosity error .)
     return
   fi
   local entry tip snapshot
@@ -464,9 +609,9 @@ write_scope_targets() {
     git diff --cached --name-only --diff-filter=ACMR -z >"$source_file" || return 1
     while IFS= read -r -d '' file; do
       if [[ "$kind" == "review" ]] && path_matches_review_scope "$file"; then
-        printf '%s\0%s\0' "$ROOT" "$file" >>"$output"
+        printf '%s\0%s\0' "$staged_snapshot" "$file" >>"$output"
       elif [[ "$kind" == "control" ]] && path_matches_control_scope "$file"; then
-        printf '%s\0%s\0' "$ROOT" "$file" >>"$output"
+        printf '%s\0%s\0' "$staged_snapshot" "$file" >>"$output"
       fi
     done <"$source_file"
     return
@@ -557,7 +702,7 @@ control_plane_scan() {
 security_policy_contract() {
   if [[ "$MODE" == "staged" ]]; then
     local policy_pattern
-    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/security\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
+    policy_pattern='^(scripts/security-commit-review\.sh|scripts/tests/security-review-chain\.test\.mjs|scripts/tests/runtime-security-headers\.mjs|package\.json|vercel\.json|\.githooks/[^/]+|\.github/workflows/(security|webpack)\.ya?ml|\.codex/agents/security-(triage|fixer)\.toml|\.(codex|agents)/skills/security-commit-review/)'
     if staged_scope_matches "$policy_pattern"; then
       :
     else
@@ -576,8 +721,8 @@ security_policy_contract() {
   fi
 
   if [[ "$MODE" == "staged" ]]; then
-    node scripts/tests/security-review-chain.test.mjs
-    node scripts/tests/runtime-security-headers.mjs
+    (cd "$staged_snapshot" && node scripts/tests/security-review-chain.test.mjs) || return
+    (cd "$staged_snapshot" && node scripts/tests/runtime-security-headers.mjs) || return
     return
   fi
   local entry tip snapshot

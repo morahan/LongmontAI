@@ -1,39 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Activity, ArrowRight, CheckCircle2, Clock3, Radar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import modelWatchStatus from '../data/modelWatch.generated.json';
+import { countDistinctModels } from '../lib/modelWatchPresentation';
 import {
   latestBriefingModelIds,
+  modelCatalogAsOf,
   modelWatchModels,
   modelWatchSnapshots,
 } from '../data/modelWatch';
-import {
-  countDistinctModels,
-  isModelWatchSnapshotStatus,
-  type ModelWatchSnapshotStatus,
-} from '../lib/modelWatchPresentation';
 
 const ModelWatch: React.FC = () => {
-  const [snapshotStatus, setSnapshotStatus] = useState<ModelWatchSnapshotStatus>(modelWatchStatus);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetch('/api/model-watch', { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
-          throw new Error('Model Watch snapshot is unavailable.');
-        }
-        return response.json();
-      })
-      .then((status: unknown) => {
-        if (isModelWatchSnapshotStatus(status)) setSnapshotStatus(status);
-      })
-      .catch(() => undefined);
-
-    return () => controller.abort();
-  }, []);
-
   const briefingModelIds = new Set<string>(latestBriefingModelIds);
   const briefingModels = latestBriefingModelIds
     .map((id) => modelWatchModels.find((model) => model.id === id))
@@ -43,10 +20,10 @@ const ModelWatch: React.FC = () => {
     .sort((a, b) => (b.releaseDateSort ?? '').localeCompare(a.releaseDateSort ?? ''))
     .slice(0, 8);
   const detectedModelCount = countDistinctModels([
-    ...snapshotStatus.detectedModels,
+    ...modelWatchStatus.detectedModels,
     ...modelWatchModels.map((model) => model.name),
   ]);
-  const checkedAt = new Date(snapshotStatus.checkedAt);
+  const checkedAt = new Date(modelWatchStatus.checkedAt);
   const checkedLabel = Number.isNaN(checkedAt.getTime())
     ? 'Awaiting first check'
     : checkedAt.toLocaleString('en-US', {
@@ -85,16 +62,8 @@ const ModelWatch: React.FC = () => {
           <p>models detected</p>
         </div>
         <div>
-          <span>{snapshotStatus.successfulSources}/{snapshotStatus.totalSources}</span>
-          <p>sources captured</p>
-        </div>
-        <div>
-          <span>Reviewed</span>
-          <p>snapshot publication</p>
-        </div>
-        <div>
-          <span>0</span>
-          <p>AI credits used</p>
+          <span>{modelWatchStatus.successfulSources}/{modelWatchStatus.totalSources}</span>
+          <p>sources healthy</p>
         </div>
       </section>
 
@@ -103,7 +72,7 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Clock3 size={16} />
-              Reviewed snapshot {checkedLabel}
+              Source snapshot {checkedLabel}
             </div>
             <h2 id="snapshot-heading">Latest Signals</h2>
           </div>
@@ -134,9 +103,9 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Radar size={16} />
-              August 19 briefing
+              Catalog snapshot {modelCatalogAsOf} (UTC)
             </div>
-            <h2 id="briefing-models-heading">Models Covered in the Latest Edition</h2>
+            <h2 id="briefing-models-heading">Current Models and Tools</h2>
           </div>
         </div>
         <div className="model-watch-release-list model-watch-briefing-list">
@@ -163,9 +132,9 @@ const ModelWatch: React.FC = () => {
           <div>
             <div className="model-watch-eyebrow">
               <Radar size={16} />
-              Active watchlist
+              Historical archive
             </div>
-            <h2 id="models-heading">Other Recent Releases</h2>
+            <h2 id="models-heading">Earlier Releases</h2>
           </div>
         </div>
         <div className="model-watch-release-list">
