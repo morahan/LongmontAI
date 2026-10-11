@@ -827,7 +827,7 @@ if (module) {
     for (const p of ['justfile', 'scripts/loop-merge-push.mjs', 'scripts/loop-push.sh']) file(f.repo, p, p === 'scripts/loop-merge-push.mjs' ? engineBytes : readFileSync(join(implementationRoot, p)));
     commit(f.repo, 'fixture accepted dispatcher', ['justfile', 'scripts/loop-merge-push.mjs', 'scripts/loop-push.sh']); git(f.repo, 'push', 'origin', 'main');
     const source = branch(f, 'side-source', { 'side.txt': 'side\n' }, git(f.repo, 'rev-parse', 'HEAD')); prepare(f); const before = snapshot(f.repo), beforeRefs = refs(f.repo);
-    for (const recipe of ['loop-merge-push', 'loop-push-merge']) {
+    for (const recipe of ['loop-merge-push-strict']) {
       const r = command(f.repo, 'just', [recipe, '0', '--dry-run']); assert.equal(r.status, 0, `${recipe}: ${r.stderr}`); assert.match(r.stdout, /dry-run/); assert.doesNotMatch(r.stdout, /"complete"\s*:\s*true/);
     }
     const legacy = command(f.repo, 'bash', ['scripts/loop-push.sh', '0', '--merge-prune', '--dry-run']); assert.equal(legacy.status, 0, legacy.stderr); assert.match(legacy.stdout, /dry-run/);
