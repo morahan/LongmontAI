@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync, chmodSync, symlinkSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { availableParallelism, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -35,6 +35,16 @@ const calls18 = ['security:review', 'lint', 'release:check', 'release:self-test'
   'test:newsletter', 'test:mobile-contract', 'test:flows-contract', 'test:tools-matrix',
   'build', 'test:mobile'];
 const outcomes = [];
+// Parallel workers: the parent spawns LMP_WORKERS children that claim scenarios through atomic mkdir.
+// Scenarios sharing a fixture across iterations claim one group so they stay on a single worker.
+// LMP_ONLY_FAILED=1 reruns only scenarios that failed or never ran in the previous run (fix-and-continue loop).
+const claimDir = process.env.LMP_CLAIM_DIR;
+const workers = Number(process.env.LMP_WORKERS || Math.min(8, availableParallelism()));
+const parallelParent = !claimDir && workers > 1;
+const lastRunFile = join(tmpdir(), 'lai-merge-all-last-run.json');
+const previouslyPassed = process.env.LMP_ONLY_FAILED === '1' && existsSync(lastRunFile) ? new Set(JSON.parse(readFileSync(lastRunFile, 'utf8')).passed) : new Set();
+const ownedGroups = new Set();
+const claimGroup = name => /^E-required-failure-/.test(name) ? 'E-required-failure' : name;
 function command(cwd, program, args, extra = {}) {
   const result = spawnSync(program, args, { cwd, encoding: 'utf8', env: process.env, timeout: 60_000, ...extra });
   if (result.error) throw result.error;
@@ -126,11 +136,18 @@ function assert18(f) {
   assert.ok(mainStream); assert.equal(mainStream.split('|')[2], remoteMain(f), 'outgoing local_oid exact accepted MAIN candidate');
 }
 async function scenario(name, targets, body) {
-  console.log(`START ${name}`);
+  const group = claimGroup(name);
+  if (previouslyPassed.has(group)) { outcomes.push({ name, targets, passed: true, cached: true }); return; }
+  if (parallelParent) return;
+  if (claimDir && !ownedGroups.has(group)) {
+    try { mkdirSync(join(claimDir, `claim-${group}`)); ownedGroups.add(group); }
+    catch (error) { if (error.code === 'EEXIST') return; throw error; }
+  }
+  console.log(`START ${name}`); const started = Date.now();
   try { await body(); outcomes.push({ name, targets, passed: true }); }
   catch (error) { outcomes.push({ name, targets, passed: false, error: error.stack || String(error) }); }
   writeFileSync(join(evidence, 'results.json'), JSON.stringify({ suppliedEnginePath, enginePath, engineDigest, testDigest, evidence, outcomes }, null, 2));
-  console.log(`${outcomes.at(-1).passed ? 'PASS' : 'FAIL'} ${name}`);
+  console.log(`${outcomes.at(-1).passed ? 'PASS' : 'FAIL'} ${name} ${((Date.now() - started) / 1000).toFixed(1)}s`);
 }
 
 await scenario('oracle-selfcheck-real-Git-and-exact18-scheduling', [], async () => {
@@ -871,6 +888,20 @@ if (module) {
     const nonrepo = command(f.home, process.execPath, [enginePath, '0', '--dry-run']); assert.notEqual(nonrepo.status, 0);
   });
 }
+if (claimDir) writeFileSync(join(claimDir, `outcomes-${process.pid}.json`), JSON.stringify(outcomes.filter(o => !o.cached)));
+if (parallelParent) {
+  const claims = mkdtempSync(join(evidence, 'claims-'));
+  const codes = await Promise.all(Array.from({ length: workers }, (_, id) => new Promise(done => {
+    const child = spawn(process.execPath, process.argv.slice(1), { env: { ...originalEnv, LMP_CLAIM_DIR: claims }, stdio: ['ignore', 'pipe', 'pipe'] });
+    for (const stream of [child.stdout, child.stderr]) {
+      let buffered = '';
+      stream.on('data', chunk => { buffered += chunk; const lines = buffered.split('\n'); buffered = lines.pop(); for (const line of lines) if (/^(START|PASS|FAIL) /.test(line) || stream === child.stderr) console.log(`[w${id}] ${line}`); });
+    }
+    child.on('close', code => done(code));
+  })));
+  for (const f of readdirSync(claims).filter(f => /^outcomes-\d+\.json$/.test(f))) outcomes.push(...JSON.parse(readFileSync(join(claims, f), 'utf8')));
+  if (codes.some(c => c !== 0) && !outcomes.some(o => !o.passed)) outcomes.push({ name: 'worker-process', targets: [], passed: false, error: `worker exit codes ${codes}` });
+}
 const requiredTargets = Array.from({ length: 13 }, (_, i) => String(i + 1).padStart(3, '0'));
 const coverage = Object.fromEntries(requiredTargets.map(target => [target, { scenarios: outcomes.filter(o => o.targets.includes(target)).map(o => ({ name: o.name, passed: o.passed })), passed: outcomes.some(o => o.targets.includes(target)) && outcomes.filter(o => o.targets.includes(target)).every(o => o.passed) }]));
 // Concrete acceptance obligations, resolved only by an actual PASS outcome.
@@ -896,7 +927,8 @@ const requiredAdvancedScenarios = [
 const unresolvedCoverage = requiredAdvancedScenarios.filter(([name]) => !outcomes.some(o => o.name === name && o.passed)).map(([name, targets]) => ({ name, targets, reason: outcomes.some(o => o.name === name) ? 'required scenario failed; see actual outcome/evidence' : 'required scenario not exercised' }));
 for (const gap of unresolvedCoverage) for (const target of gap.targets) { coverage[target].passed = false; (coverage[target].missingEvidence ||= []).push(gap.name); }
 writeFileSync(join(evidence, 'results.json'), JSON.stringify({ suppliedEnginePath, enginePath, engineDigest, testDigest, evidence, outcomes, coverage, unresolvedCoverage, note: 'Fixture passes prove behavior only; listed unresolved coverage prevents full13 acceptance.' }, null, 2));
-if (outcomes.some(o => !o.passed) || unresolvedCoverage.length || !module) process.exitCode = 1;
+if (outcomes.some(o => !o.passed) || (!claimDir && unresolvedCoverage.length) || !module) process.exitCode = 1;
+if (!claimDir) writeFileSync(lastRunFile, JSON.stringify({ passed: [...new Set(outcomes.filter(o => o.passed).map(o => claimGroup(o.name)))].filter(g => outcomes.filter(o => claimGroup(o.name) === g).every(o => o.passed)) }));
 for (const key of Object.keys(process.env)) if (!(key in originalEnv)) delete process.env[key];
 Object.assign(process.env, originalEnv);
 console.log(`Independent merge-all evidence: ${evidence}`);
