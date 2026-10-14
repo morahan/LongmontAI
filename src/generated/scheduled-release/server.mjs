@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-10-14-sense-of-wonder",
   "publishAt": "2026-10-14T11:00:00-06:00",
   "publishAtMs": 1791997200000,
-  "releaseRevision": "bb4f7b842ea5fe70b27861e9",
+  "releaseRevision": "9bbb26948aeffe71ea4b4033",
   "source": {
     "manifest": "src/articles/drafts/2026.10.14-sense-of-wonder.release.json",
     "article": "src/articles/drafts/2026.10.14-sense-of-wonder.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "1ccb0d6650cb979fb80adbad0beeb28244bc148eb30e0eddbc0a558597bb47b7"
+    "sha256": "94c3e230b8f59210d846e15479295703e684f49f65b43a23d983b1221874a61e"
   },
   "slideshow": {
     "id": "agent-factory",

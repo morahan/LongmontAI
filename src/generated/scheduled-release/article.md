@@ -8,21 +8,28 @@ summary: "Meta reaches the frontier with Muse Wonder, AI prices keep falling, ag
 ---
 
 ## A Sense of Wonder
+
 For two years, Meta was the AI lab that was always *about* to catch up. On October 12 it did. Its new **Muse Wonder** models now score within a few points of the best from Anthropic and OpenAI, and the larger one ranks fourth in the world on a leading independent benchmark.
 
-Meta was not the only story. Prices kept falling: a capable Claude model now costs ten cents per million tokens of input, roughly 750,000 words. AI "agents" got their own email accounts, sandboxes, and spending limits. Google made Gemini 4 Argon available worldwide, and Claude learned to make video by writing code. Robotaxis raised billions, and gasoline-only cars fell below half of global new-car sales for the first time. Here in Colorado, Waymo is six weeks into public rides in Denver, and the state is still writing the rules for its new AI law.
+Meta was not the only story. Prices kept falling: a capable Claude model now costs ten cents per million tokens of input (a million tokens is roughly 750,000 words). AI "agents" got their own email accounts, sandboxes, and spending limits. Google made Gemini 4 Argon available worldwide, and Claude learned to make video by writing code. Robotaxis raised billions, and gasoline-only cars fell below half of global new-car sales for the first time. Here in Colorado, Waymo is six weeks into public rides in Denver, and the state is still writing the rules for its new AI law.
 
 **In this edition:**
 
 - **Meta's Muse Wonder**: what it is, and how the two versions differ
-- **The other big releases**: GPT-6 for everyone, Claude Haiku 5.5, Gemini 4 Argon, Grok Bot's model routing, Claude Motion, Fish Audio Drama 3, and more
+- **The other big model releases**: GPT-6 for everyone, Claude Haiku 5.5, Gemini 4 Argon, Grok Bot's model routing, Claude Motion, Fish Audio Drama 3, and more
 - **What AI costs now**: prices and independent scores for 19 leading models
 - **Agents get their own badges**: accounts, sandboxes, and budgets for AI workers
 - **Safety and security**: what the labs disclosed this fortnight
-- **Robots and robotaxis**, and **the shift away from gasoline**
+- **AI in science**: hundreds of AI-produced math results, and images read from brain scans
+- **Robots and robotaxis**, and **gasoline-only cars drop below half of global sales**
 - **AI at home**: new smart displays and tablets
-- **Colorado**: Waymo in Denver, the new AI law, and local projects
-- **Key dates**, **names to get right**, **takeaways**, and **video demos**
+- **Colorado**: Waymo in Denver, the rewritten AI law, and campus news
+- **Talk philosophy with Sensi**: our organizer's Grok Bot for big questions
+- **Key dates**, **names that are easy to mix up**, and **takeaways**
+- **Video demos**, plus an animated explainer: **Vector RAG vs. Graph RAG**
+- **Download the PDF slideshows**: four free decks covering this fortnight
+- **Five years of GitHub activity**: our organizer's contribution chart
+- **About our sources**
 
 This edition covers **October 1–13, 2026**.
 
@@ -31,13 +38,17 @@ This edition covers **October 1–13, 2026**.
 ![Meta's official "Introducing Muse Wonder" announcement card: the word WONDER repeated in faint type around a blue headline.](/weekly-screenshots/2026.10.14/muse-wonder-announcement.jpg)
 
 **What happened:** On October 12, [Meta released two new AI models](https://about.fb.com/news/2026/10/introducing-muse-wonder-models/): **Muse Wonder** and the larger **Muse Wonder Full**. Some news coverage spells the second one "Wonderful," but Meta's official name is Wonder Full, two words. Both were built by Meta Superintelligence Labs and trained at Meta's gigawatt-scale Prometheus data center. Mark Zuckerberg called them "a much larger and more advanced class of models that brings us to the frontier."
+
 ### What the two models share
+
 - **Active Memory:** carries "what matters to you across conversations" and recalls the details that matter for the current task.
 - **Active Focus:** keeps working when a task gets hard, tries other approaches, recovers from errors, and checks in before important actions.
-- **Reads almost anything:** text, images, video, and audio, with a context window of about 1 million tokens, roughly 750,000 words ([model card](https://research.meta.ai/static/muse-wonder-model-card)).
+- **Reads almost anything:** text, images, video, and audio, with a context window (how much it can take in at once) of about 1 million tokens ([model card](https://research.meta.ai/static/muse-wonder-model-card)).
 - **Not open-source:** unlike Meta's earlier Llama models, neither can be downloaded.
 - **Safety:** Meta calls them its "most aligned" models yet. A full safety report is promised "soon" but is not yet published.
+
 ### How they differ
+
 Meta has not disclosed the size, design, or speed of either model. The published differences come down to access, price, and a few points of capability.
 
 | | Muse Wonder | Muse Wonder Full |
@@ -48,7 +59,8 @@ Meta has not disclosed the size, design, or speed of either model. The published
 | Independent score (Artificial Analysis) | 52 | 56, fourth-highest of any model tested |
 | Speed | 115 tokens per second | Not measurable without an API |
 
-**One caution:** [VentureBeat reports](https://venturebeat.com/technology/metas-new-muse-wonder-and-muse-wonder-full-models-achieve-frontier-performance-but-only-the-weaker-one-is-available-via-api) that Muse Code subscriptions default to a "Contributor mode" that may use what you submit to train Meta's models. The developer API does not.
+**One caution:** [VentureBeat reports](https://venturebeat.com/technology/metas-new-muse-wonder-and-muse-wonder-full-models-achieve-frontier-performance-but-only-the-weaker-one-is-available-via-api) that Muse Code subscriptions default to a "Contributor mode" that may use what you submit to train Meta's models. The developer API, which programmers use to build the model into their own apps, does not.
+
 ### How they score
 
 ![Bar chart from Meta's model card comparing Muse Wonder Full and Muse Wonder across seven benchmarks: DeepSWE 79.0 vs 78.8, JobBench 75.3 vs 70.5, HealthBench Pro 62.3 vs 60.5, SWE-Marathon 57.5 vs 53.1, Terminal-Bench 4.0 57.1 vs 52.0, AutomationBench 45.4 vs 39.1, Harvey legal 13.1 vs 10.0. Full leads every row.](/weekly-screenshots/2026.10.14/muse-wonder-benchmarks.png)
@@ -61,7 +73,11 @@ Meta has not disclosed the size, design, or speed of either model. The published
 **Why it matters:** there are now four credible frontier labs, not three. Muse Wonder costs the same as Claude Opus 5.5 and is worth testing on real work, especially coding. Read the data terms before using Wonder Full.
 
 ## The other big model releases
+
+Meta had company. OpenAI, Anthropic, Google, and others also shipped major models and tools this fortnight.
+
 ### GPT-6 comes to every ChatGPT user
+
 On October 7, OpenAI made **GPT-6** the default model across ChatGPT: GPT-6 Sol for paid plans and GPT-6 Luna for Free and Go users, rolling out from October 8. ChatGPT has more than 1.2 billion weekly users ([MacRumors](https://www.macrumors.com/2026/10/07/chatgpt-intelligent-ui/), quoting OpenAI).
 
 - **Intelligent UI:** answers can now include live charts, forms, calculators, and buttons built on the fly. GPT-6 can also start answering while it is still thinking or searching ([TechCrunch](https://techcrunch.com/2026/10/07/chatgpt-is-getting-a-lot-more-visual-with-the-launch-of-a-new-interface/)).
@@ -69,6 +85,7 @@ On October 7, OpenAI made **GPT-6** the default model across ChatGPT: GPT-6 Sol 
 - **Same name, two versions:** the October models run in ChatGPT's Chat tab. Codex and ChatGPT Work keep the September versions under the same names.
 
 **Why it matters:** hundreds of millions of people will start expecting AI answers to include working tools, not just text.
+
 ### Claude Haiku 5.5: a capable model for a dime
 
 ![Anthropic's Claude Haiku 5.5 announcement card: the model name in serif type over a collage of yellow, cream, and blue paper shapes.](/weekly-screenshots/2026.10.14/claude-haiku-5-5.jpg)
@@ -82,6 +99,7 @@ On October 7, Anthropic released [**Claude Haiku 5.5**](https://www.anthropic.co
 - **Also announced:** Anthropic halved the cache price for Claude Sonnet 5.5, which it says cuts the cost of most agent work by about 20%. Max and Team subscribers get new monthly API credits of $100 to $500.
 
 **Why it matters:** sorting email, filling forms, and routing tickets now cost almost nothing to automate, as long as a person approves anything that leaves the building.
+
 ### Gemini 4 Argon is now generally available
 
 On October 13, Google made **Gemini 4 Argon**, its newest flagship, [generally available worldwide](https://blog.google/innovation-and-ai/products/gemini-app/gemini-4-argon-availability/), after a limited preview that began September 30.
@@ -89,6 +107,7 @@ On October 13, Google made **Gemini 4 Argon**, its newest flagship, [generally a
 - **Who gets it:** developers and businesses on the paid Gemini API, Google AI Ultra subscribers in the Antigravity coding tool, and Pro and Ultra subscribers in the Gemini app and Search.
 - **Price:** $2 input / $10 output per million tokens through November 30, then $4 / $20 from December 1.
 - **How it scores:** it has the top independent score on DeepSWE, a test of long software projects (78.8), and an overall intelligence score of 53. It also debuted at the top of the LMArena text leaderboard (preliminary).
+
 ### Grok Bot will use rival AI models
 
 On October 7, Elon Musk [announced](https://x.com/elonmusk/status/2107724314451878104) that **Grok Bot**, the personal agent app from SpaceX's AI division (formerly xAI), will route each task to whichever model is most likely to do it best, including competitors' models.
@@ -99,6 +118,7 @@ On October 7, Elon Musk [announced](https://x.com/elonmusk/status/21077243144518
 - **Also from SpaceXAI:** on October 8 it became a founding corporate patron of DHH's [Omacom Foundation](https://omarchy.org/news/2026/10/spacexai-joins-as-founding-corporate-patron/), contributing $1.5 million in Grok tokens to maintain and develop the open-source Omarchy Linux setup.
 
 **Why it matters:** an AI company publicly routing work to a rival's model is a strong sign that the models themselves are becoming interchangeable parts, and the app on top is where companies now compete.
+
 ### Claude Motion: animated video, written as code
 
 On October 8, Anthropic released [**Claude Motion**](https://claude.com/resources/articles/dashboards-and-motion) in beta. Describe an explainer, a product walkthrough, or a chart you want brought to life, attach any data or images, and Claude produces a short animation you can download as an MP4 video.
@@ -111,6 +131,7 @@ On October 8, Anthropic released [**Claude Motion**](https://claude.com/resource
 **Video editing inside Claude** arrives through partners. Higgsfield's **Katana**, which connects to Claude through MCP (a standard way to plug outside tools into an AI app), lets you upload a reference clip and produce editable motion graphics and launch videos.
 
 #### Resources for making video with Claude
+
 - [**Prompt Motion**](https://prompt-motion.com/): a free gallery of 230+ motion videos made with Claude Opus 5.5, each paired with the exact prompt or skill that made it, plus a link to the creator. Pick one, paste its prompt, and swap in your own product.
 - [**Charlie Hills' 16 Apple-style animations**](https://x.com/charliejhills/status/2109956200507076799) made with Claude Motion, with prompts.
 - [**"The New Claude Motion Is Awesome"**](https://www.youtube.com/watch?v=hbPvZvpu9KU) (YouTube, Paul J Lipsky): a hands-on walkthrough.
@@ -126,17 +147,18 @@ On October 13, Fish Audio released [**Drama 3**](https://fish.audio/blog/fish-au
 - **Open weights:** the model can be downloaded from [Hugging Face](https://huggingface.co/fishaudio/drama-3). It is free for research, and free for commercial use by companies earning under $500,000 a year. Cloning a real person's voice without consent is prohibited.
 - **Price:** $10 per million characters through November 12, an 80% launch discount off its $50 list price.
 - **Independent results:** Artificial Analysis [ranks it](https://x.com/ArtificialAnlys/status/2110081938140582085) first among open-weight voice models on all three of its speech leaderboards, and first overall for pronunciation (93.2%). In head-to-head listening tests against all models it places 10th, so closed models such as ElevenLabs still lead on overall voice quality.
+- **Coming later:** regenerating a single word inside a finished recording is in invite-only testing.
 
 ![Artificial Analysis text-to-speech leaderboard, open-weight models: Fish Audio Drama 3 Preview ranks first with an Elo of 1243, ahead of Breeze TTS 2 (1221), Fish Audio S2 Pro (1118), Step Audio EditX (1097), and Mistral's Voxtral TTS (1088).](/weekly-screenshots/2026.10.14/artificial-analysis-tts-leaderboard-open-weights.jpg)
 
-- **Coming later:** regenerating a single word inside a finished recording is in invite-only testing.
-
 ### Mistral Large 4: Europe's big model, with weights promised
+
 On October 6, Mistral opened a preview of [**Mistral Large 4**](https://mistral.ai/news/mistral-large-4/), its largest model yet: about 1 trillion parameters, 160+ languages, trained on 3,800 NVIDIA GPUs in Mistral's own European data centers.
 
 - **Price:** $1.36 input / $4.18 output per million tokens, currently on sale for half that.
 - **Open weights are promised "by the end of the month."** Until then, Artificial Analysis lists it as proprietary. It scores 38, level with GPT-6 Luna.
 - **An unusual offer:** vetted security partners and state authorities get a version with "reduced moderation and expanded cyber capabilities."
+
 ### Image, video, voice, and open models
 
 | Release | Date | What it does |
@@ -153,17 +175,26 @@ On October 6, Mistral opened a preview of [**Mistral Large 4**](https://mistral.
 | [Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) (Alibaba) | Oct 9 | Fast image model; open weights, but commercial use needs a license |
 
 *Date of first availability on [Vercel](https://vercel.com/changelog/grok-imagine-video-1-5-lite-on-ai-gateway); xAI's own release notes don't date it.
+
 ### A new kind of model: decision models
-In one week, four companies shipped models that **answer instead of write**. They return a yes or no, a choice, or a score with a confidence level, in a single quick step. They are OpenAI's [Decisions API](https://developers.openai.com/api/docs/guides/decisions) (Oct 6), Microsoft's [Decision-1](https://commandline.microsoft.com/microsoft-decision-1-model-foundry/) (Oct 9, about 4 cents per million input tokens), Liquid AI's free [d1 models](https://www.liquid.ai/blog/d1-open) (Oct 7), and Perplexity's updated [decider](https://docs.perplexity.ai/docs/resources/changelog), now 2 cents per million.
+
+In one week, four companies shipped models that **answer instead of write**. They return a yes or no, a choice, or a score with a confidence level, in a single quick step. The four releases:
+
+- OpenAI's [Decisions API](https://developers.openai.com/api/docs/guides/decisions) (Oct 6)
+- Microsoft's [Decision-1](https://commandline.microsoft.com/microsoft-decision-1-model-foundry/) (Oct 9), about 4 cents per million input tokens
+- Liquid AI's free [d1 models](https://www.liquid.ai/blog/d1-open) (Oct 7)
+- Perplexity's updated [decider](https://docs.perplexity.ai/docs/resources/changelog), now 2 cents per million
 
 **Why it matters:** much of what AI assistants do behind the scenes is sorting and routing. Doing that with a decision model costs a fraction of a full chatbot answer.
 
 ## What AI costs now
+
 AI companies charge developers by the **token**, a chunk of text about three-quarters of a word long. Prices are quoted per million tokens. Input (what you send) costs less than output (what the model writes). "Cached" input, text the model has already seen, such as standing instructions, is cheaper still.
 
 ![Scatter chart of Artificial Analysis Intelligence Index against blended API price on a log scale. Claude Opus 5.5 is highest at about $8. Claude Sonnet 5.5, Gemini 4 Argon, and GPT-6.1 Sol cluster near $4 with index scores of 52 to 56. Claude Fable 5.1 and GPT-6 Astra sit at $20 with scores around 53. Muse Wonder is at $8 and 52. Claude Haiku 5.5 and GPT-6 Luna are cheapest at $0.20, scoring 43 and 38.](/weekly-screenshots/2026.10.14/frontier-price-vs-intelligence.png)
 
 ### List prices
+
 U.S. dollars per million tokens, from each company's pricing page, checked October 13, 2026.
 
 **Flagships**
@@ -201,19 +232,21 @@ U.S. dollars per million tokens, from each company's pricing page, checked Octob
 | GPT-6 Luna | $0.10 | $0.01 | $0.50 |
 
 Sources: [OpenAI](https://developers.openai.com/api/docs/pricing), [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing), [Google](https://ai.google.dev/gemini-api/docs/pricing), [xAI](https://docs.x.ai/docs/models/grok-4.7), [Meta](https://dev.meta.ai/docs/pricing-rate-limits), [Moonshot](https://platform.kimi.ai/docs/pricing/chat), [Z.ai](https://docs.z.ai/guides/overview/pricing), [Mistral](https://docs.mistral.ai/models/mistral-large-4-0), [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing), [Alibaba Cloud](https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max).
+
 ### The fine print
+
 - **Price changes ahead:** Gemini 4 Argon doubles on December 1, and Gemini 3.8 Flash on January 1. Mistral Large 4 is on sale at half price with no end date announced.
-- **Long requests cost more on some models:**
+- **Long requests cost more on some models.** The surcharge applies to the whole request:
   - GPT-6 family, above 272,000 tokens: about 2× input and 1.5× output.
   - Grok 4.7, at 200,000 tokens and above: 2× input and output.
   - Claude Haiku 5.5, above 100,000 tokens: 5× input and output.
-
-  The surcharge applies to the whole request. Claude's larger models, Gemini, and Muse Wonder charge the same rate up to 1 million tokens.
-
+- **No long-request surcharge:** Claude's larger models, Gemini, and Muse Wonder charge the same rate up to 1 million tokens.
 - **Speed costs extra:** OpenAI's Fast mode is 2× the price and Ultrafast is 6×. Claude Opus 5.5's fast mode is $8 / $40, and Google's Priority tier is 1.8×.
 - **Waiting saves money:** OpenAI, Anthropic, Google, and Mistral cut about 50% for non-urgent "batch" jobs. DeepSeek is half price off-peak.
 - **Open models:** DeepSeek V4.1 Flash, Kimi K3, and GLM-5.3 can be downloaded and run on your own hardware. Mistral Large 4's weights are promised for later this month.
+
 ### Your real cost is price per task
+
 The list price is only half the story. Some models write far more to finish the same job, and you pay for every token. Independent tester Artificial Analysis measured what each model costs to complete its benchmark tasks:
 
 | Model | List price (input / output) | Tokens written to finish the tests | Cost per task |
@@ -229,13 +262,15 @@ Haiku 5.5 and Luna have identical prices. Haiku is the smarter of the two (43 vs
 
 ![Chart: "In nearly a third of matchups, the cheaper AI model cost more to run." Gemini 3 Flash lists at $3 per million output tokens versus GPT-5.4's $15, yet costs $705 in total across 12 test sets versus GPT-5.4's $509. Source: Chen et al., The Price Reversal Phenomenon, arXiv 2603.23971v2, May 2026.](/weekly-screenshots/2026.10.14/price-reversal-cheaper-model-cost-more.png)
 
-The cheapest models from Anthropic and OpenAI now sit in the same price range as China's low-cost models, which makes this check even more important ([Social Capital](https://research.socialcapital.com/p/the-hidden-cost-of-cheap-ai-models), Oct 11).
+The cheapest models from Anthropic and OpenAI now sit in the same price range as China's low-cost models, which makes this check even more important ([Social Capital](https://research.socialcapital.com/p/the-hidden-cost-of-cheap-ai-models), October 11).
 
 ![Chart: "Anthropic and OpenAI now price their cheapest AI models in China's range." Output prices per million tokens: Claude Haiku 5.5 $0.50, GPT-6 Luna $0.50, Gemini 3.5 Flash-Lite $2.50, Xiaomi MiMo-V2.6-Flash $0.28, Alibaba Qwen3.8-Flash-Next $0.47, Z.ai GLM-5.3-Flash $0.50, DeepSeek V4.1 Flash $0.60 off-peak. Independent test scores range from 22 to 43.](/weekly-screenshots/2026.10.14/cheap-models-priced-in-chinas-range.png)
 
 **Why it matters:** to know what a model really costs, run one real job and divide the bill by the number of tasks it finished.
-### How they score
-Every score below comes from an independent tester or an official leaderboard, not from the company's own announcement. Higher is better. "n/l" means not yet listed.
+
+### How the models score
+
+Every score below comes from an independent tester or an official leaderboard, not from the company's own announcement. Higher is better. "n/l" means not yet listed. Office work is rated on an Elo scale, the head-to-head rating system used in chess.
 
 | Model | Overall intelligence | Coding agents | DeepSWE (software projects) | Terminal-Bench 4.0 | Office work (Elo) |
 | --- | --- | --- | --- | --- | --- |
@@ -268,7 +303,9 @@ Sources: Artificial Analysis [Intelligence Index](https://artificialanalysis.ai/
 - **Scores vary with the tester.** The same model can score several points differently depending on who runs the test and how. Compare models on your own work before switching.
 
 ## Agents get their own badges
-An **AI agent** is software that carries out tasks on its own: sending email, editing files, buying things. This fortnight, agents got the trappings of an employee: their own accounts, their own sandboxes, and their own budgets. Each is a natural place for a person to approve what the agent does.
+
+An **AI agent** is software that carries out tasks on its own: sending email, editing files, buying things. This fortnight, agents got the trappings of an employee: their own accounts, their own sandboxes (fenced-off spaces where they can work without reaching anything else), and their own budgets. Each is a natural place for a person to approve what the agent does.
+
 ### Google's Gemini agent gets its own email address
 
 ![Google Cloud's "Gemini at Work '26" event logo: the words Gemini, at Work, and '26 in rounded multicolor pill shapes on a dark background.](/weekly-screenshots/2026.10.14/gemini-at-work-agent.png)
@@ -280,6 +317,7 @@ At [Gemini at Work on October 8](https://cloud.google.com/blog/products/ai-machi
 - **Spending limits:** hard caps on each project's AI spend, plus automatic routing to the cheapest model that can do the job. It uses Gemini or Anthropic's Claude.
 - **Connections:** Workspace, Microsoft 365, Slack, Jira, Salesforce, Snowflake, and more.
 - **Availability:** in preview for finance and legal firms. Google has not announced pricing. Early testers include On, Shopify, and PayPal ([TechCrunch](https://techcrunch.com/2026/10/08/google-brings-agentic-ai-to-gemini-starting-with-businesses/)).
+
 ### Windows builds a sandbox for agents
 
 ![Microsoft's "Windows Hybrid intelligence" title card: the Windows logo and the words Hybrid intelligence on a pale blue gradient, with an orbit linking Local and Cloud.](/weekly-screenshots/2026.10.14/windows-hybrid-intelligence.png)
@@ -288,23 +326,30 @@ On October 7, Microsoft released [**Microsoft Execution Containers (MXC)**](http
 
 - **Supported now:** OpenAI's Codex, GitHub Copilot, OpenClaw, Replit, LM Studio, NVIDIA OpenShell, and Unsloth. Claude Code, Hermes Agent, Perplexity, and Manus are coming.
 - **Also announced:** MAI Code 1.1 Flash, a coding model compressed to run locally on Windows PCs, and the Surface Laptop Ultra with an NVIDIA RTX Spark chip and up to 128 GB of memory, on sale October 16.
+
 ### Anthropic lets one agent manage a thousand
+
 On October 9, Anthropic released **dynamic workflows** for Claude Managed Agents in beta ([release notes](https://platform.claude.com/docs/en/release-notes/overview)). One agent splits a big job across many others and combines their results.
 
 - **Scale:** up to 1,000 agents over a run's lifetime, about 64 at a time, for up to 24 hours ([docs](https://platform.claude.com/docs/en/managed-agents/workflow-runs)).
 - **Cost:** normal model prices plus $0.08 per session-hour, with no separate fee.
 - **Budget:** a spending limit pauses the run, though it can slightly overshoot while requests in flight finish.
+
 ### Assistants for everyone else
+
 - [**Hark Pro**](https://hark.com/articles/introducing-hark-pro) (Oct 6) is a free personal assistant for web, iPhone, and Android that books, shops, schedules, and **pays bills**. It can operate up to six web browsers at once on its own cloud computer. Paid plans ($20 and $100 a month) only add usage. Hark is a new company from Figure founder Brett Adcock, separate from Figure.
 - [**Claude Dashboards**](https://claude.com/resources/articles/dashboards-and-motion) (Oct 8, beta): live business dashboards built from company data, with every number linked to its source query. Claude Docs, Slides, and Design also became available on every plan, including Free. Claude also arrived [inside Google Docs, Sheets, and Slides](https://claude.com/resources/articles/claude-now-works-in-google-docs-sheets-and-slides) (Oct 6, beta).
 - [**Perplexity Computer Automations**](https://www.perplexity.ai/changelog) (Oct 5): Perplexity's agent can now run tasks on a schedule or when something happens.
 - [**Cursor Remote Control**](https://cursor.com/changelog/remote-control-local-agents) (Oct 6): programmers can check on and redirect coding agents running on their own computer from an iPhone.
+
 ### Agents that shop at your business
 
 ![Personal Agent Protocol announcement card listing launch partners Meta, Sierra, Genesys, Instinct, Rocket, Shopify, Stripe, and Walmart.](/weekly-screenshots/2026.10.14/personal-agent-protocol.png)
 
 On October 6, Sierra and Meta proposed the [**Personal Agent Protocol**](https://sierra.ai/blog/introducing-personal-agent-protocol), an open standard for how a customer's AI agent deals with a business's systems. The agent can browse as a guest, and the customer decides whether it can only look or can also act. Shopify, Stripe, and Walmart are launch partners, and payments will come in a later version.
+
 ### From doing the work to running the factory
+
 The people building these tools describe a new kind of job: directing many agents rather than doing each task yourself.
 
 ![Two posts on X. Tibo (@thsottiaux), who leads OpenAI's Codex: "Over the next 28 days, each day we'll either ship one thing that is a clear improvement and relevant for most codex/work users or ship a full reset." Below, DHH (@dhh): "Every developer needs an AI shed: An always-on machine running on their tailscale network where the majority of their herdr agents are running."](/weekly-screenshots/2026.10.14/x-posts-tibo-dhh-always-on-agents.jpg)
@@ -320,8 +365,10 @@ The two sketches above are widely shared online without a credited author. They 
 
 {{slideshow:agent-factory}}
 
-**How many agents could the world run?** Research group Epoch AI [estimates](https://epoch.ai/publications/estimating-the-agent-population) (Oct 2) that the memory chips shipped through 2027 could run 33 to 171 million top-tier AI agents at the same time, or billions of cheaper ones.
+**How many agents could the world run?** On October 2, research group Epoch AI [estimated](https://epoch.ai/publications/estimating-the-agent-population) that the memory chips shipped through 2027 could run 33 to 171 million top-tier AI agents at the same time, or billions of cheaper ones.
+
 ### Four actions that need a human sign-off
+
 Each of these launches touches at least one of four actions. Before an agent can take one, decide who approves it.
 
 | Action | Example from this fortnight | Question to answer first |
@@ -334,6 +381,9 @@ Each of these launches touches at least one of four actions. Before an agent can
 **Why it matters:** an agent with its own login is like an employee you never interviewed. Give it the narrowest access and the smallest budget, and make sure a person signs off before it sends, pays, changes, or publishes anything. An audit trail only helps if someone reads it.
 
 ## Safety and security
+
+OpenAI disclosed safety setbacks, Meta's safety report is still pending, and Anthropic launched a security program and updated its usage rules.
+
 - **OpenAI** disclosed [safety regressions in GPT-6](https://deploymentsafety.openai.com/gpt-6-october), now the default model for every ChatGPT user (see above).
 - **Meta's** full safety report for Muse Wonder is promised but not yet published.
 - **Anthropic's Cyber Mission** (Oct 8) includes [**OSS Scanner**](https://www.anthropic.com/news/anthropic-cyber-mission), a free, opt-in service that scans open-source software for security bugs and sends the maintainers a report with a suggested fix. Anthropic says "the reports are model-generated and sent without human review," and expects more than 90% to be accurate. The same program created a critical-infrastructure defense group with 11 founding partners, including CrowdStrike, Palo Alto Networks, and Rockwell Automation.
@@ -341,33 +391,44 @@ Each of these launches touches at least one of four actions. Before an agent can
 - **Security access is expanding.** Anthropic [widened its program](https://www.anthropic.com/news/cyber-verification-program) giving vetted security professionals fewer restrictions (Oct 6). Mistral is offering vetted partners a less-moderated version of Large 4.
 
 ## AI in science
+
+Two stories show AI at work in research: a large public release of math results, and a faster way to rebuild images from brain scans.
+
 ### OpenAI publishes hundreds of AI-produced math results
+
 ![New York Times headline: "OpenAI Releases Findings on 377 Math Problems, Further Roiling Field." Subhead: "After a previous solution angered mathematicians, the company characterized the new release as being more responsive to concerns about A.I. disrupting research."](/weekly-screenshots/2026.10.14/nyt-openai-377-math-problems.jpg)
 
 On October 6, OpenAI [released a public collection](https://github.com/openai/math) of mathematics results produced by an unreleased internal model ([New York Times](https://www.nytimes.com/2026/10/06/science/openai-math-problems.html)).
-- **Scale:** the model was given about 4,000 problems. OpenAI organized the results into 372 families of findings. Each result used about three hours of ChatGPT Pro computing time.
+
+- **Scale:** the model was given about 4,000 problems. OpenAI organized the results into 372 families of findings. (The Times headline counts 377; OpenAI's own catalog lists 372 families.) Each result used about three hours of ChatGPT Pro computing time.
 - **Corrections in public:** the collection launched with 722 write-ups. A day later, OpenAI withdrew three after finding a sign error and revised 14 others, leaving 719.
 - **Checkable proofs:** about 42% of the main results have been formally verified in Lean, a programming language that mechanically checks mathematical proofs.
 - **Context:** the release follows OpenAI's September claim about the Navier-Stokes equations, which drew sharp criticism from mathematicians ([Scientific American](https://www.scientificamerican.com/article/openai-claims-blockbuster-math-breakthrough-amid-swirl-of-controversy/)). OpenAI says this release responds to concerns about AI disrupting research.
+
 ### Reading images from brain scans
+
 ![MIT Technology Review comparison of images people viewed (left of each pair) and images reconstructed from their brain scans (right): a clock tower, a stop sign by the sea, frisbee players, a man holding a glass, a sleeping woman, a hotel bed, giraffes, a surfer, a skier, a glass with a banana, and two birds on a branch.](/weekly-screenshots/2026.10.14/brain-it-fmri-image-reconstruction.jpg)
 
-[MIT Technology Review](https://www.technologyreview.com/2026/10/01/1145588/ai-mind-reading-reconstructs-what-youre-looking-at/) (Oct 1) covered **Brain-IT**, a system from Michal Irani's lab at the Weizmann Institute that reconstructs the images a person is looking at from fMRI brain scans.
+On October 1, [MIT Technology Review](https://www.technologyreview.com/2026/10/01/1145588/ai-mind-reading-reconstructs-what-youre-looking-at/) covered **Brain-IT**, a system from Michal Irani's lab at the Weizmann Institute that reconstructs the images a person is looking at from fMRI brain scans.
+
 - **What's new:** earlier tools needed about 40 hours of brain-scan data from each new person. Brain-IT gets comparable results from **one hour** ([paper](https://arxiv.org/abs/2510.25976)).
 - **Not perfect:** in one example, a cake came back as three sandwiches.
 - **Not brand-new:** the research was first posted in October 2025 and presented at ICLR 2026. This fortnight brought wider attention, not a new release.
 
 ## Robots and robotaxis
 
+Big money kept flowing into robotaxis, and humanoid robots gained a new leader and new skills.
+
 ![A white Waymo robotaxi parked at a curb in front of a modern building.](/weekly-screenshots/2026.10.14/waymo-5b-debt-financing.png)
 
 - **Waymo borrowed $5 billion** (Oct 8), its [first-ever loan](https://waymo.com/blog/2026/10/waymo-closes-5-billion-debt-financing/). PIMCO, Blackstone, and Sixth Street led the lenders, after Waymo raised $16 billion from investors earlier this year. It now serves 15 U.S. cities, including Denver (see Colorado below). Big lenders betting on robotaxi revenue is a sign autonomy is starting to look like infrastructure.
-- **Tesla says it has 300+ Cybercabs in Austin** and promised "Dallas soon" (Oct 10). That count is [Tesla's claim](https://x.com/robotaxi/status/2108981691436224816) and is disputed: an independent tracker counted about 105 driverless vehicles, and a federal safety inquiry is due October 30. The same day, [Elon Musk said](https://www.youtube.com/watch?v=wJasRLuu_LA&t=2066s) robot hands are the main obstacle for the Optimus humanoid robot, and production will ramp up slowly.
+- **Tesla says it has 300+ Cybercabs in Austin** and promised "Dallas soon" (Oct 10). That count is [Tesla's claim](https://x.com/robotaxi/status/2108981691436224816) and is disputed: an independent tracker counted about 105 driverless vehicles, and Tesla's answers to a federal safety inquiry are due October 30. The same day, [Elon Musk said](https://www.youtube.com/watch?v=wJasRLuu_LA&t=2066s) robot hands are the main obstacle for the Optimus humanoid robot, and production will ramp up slowly.
 - **Boston Dynamics hired an AI leader as CEO.** [Rohit Prasad](https://bostondynamics.com/news/boston-dynamics-appoints-rohit-prasad-as-chief-executive-officer/), who ran Alexa and AI research at Amazon, took over on October 7. Owner Hyundai plans to put Atlas humanoid robots to work from 2028.
 - **A robot learned cornhole from a video.** In a [Google demonstration](https://developers.googleblog.com/gemini-4-argon-for-robotics/) (Oct 13), Gemini 4 Argon, a general-purpose AI model rather than one built for robots, taught Apptronik's Apollo humanoid to play in four steps. It watched a person throw and mapped the motion to the robot's joints. It used the robot's cameras to locate the board and built a physics simulation. It practiced in the simulation. Then, on the real robot, it adjusted each throw by centimeters until seven went in a row. Google says simulated practice raised real-world task success from 56% to 75%. It has not said how many attempts the demo took.
 - **Also:** AWS and NVIDIA released [free robot-building tools](https://aws.amazon.com/blogs/physical-ai/introducing-aws-physical-ai-toolchain/) (Oct 7). XPENG says its IRON humanoid will begin deliveries in early 2027 ([TechNode](https://technode.com/2026/10/13/xpeng-plans-humanoid-robot-deliveries-in-2027-and-european-rollout-later-that-year)). Warehouse-robot company Ultra raised $50 million ([Fortune](https://fortune.com/2026/10/09/ultra-raises-62-million-fast-growing-robots-service-tie-up-ai-research-firm-physical-intelligence/)). NVIDIA is [reportedly](https://www.humanoidsdaily.com/news/nvidia-figure-billion-investment-talks-report) in talks to invest about $1 billion more in Figure AI.
 
 ## Gasoline-only cars drop below half of global sales
+
 For the first time, cars that run only on gasoline made up **less than half of new vehicles sold worldwide**. In the first six months of 2026, they were 49% of global sales, down from 52% a year earlier and 73% in 2021. The figures come from Mobility Global (formerly S&P Global Mobility), as reported by [Nikkei](https://asia.nikkei.com/business/automobiles/gas-vehicles-fall-under-50-of-global-new-auto-sales-for-first-time) and [Electrek](https://electrek.co/2026/10/05/gas-cars-fall-below-50-percent-global-new-car-sales/).
 
 | Type of new vehicle | Sold, Jan–Jun 2026 | Share of global sales |
@@ -380,6 +441,8 @@ For the first time, cars that run only on gasoline made up **less than half of n
 **This does not mean half of new cars are electric.** Most of the shift went to conventional hybrids, which still burn gasoline. Fully electric cars are about one in six new vehicles. Counting plug-in hybrids, the [International Energy Agency](https://www.iea.org/reports/global-ev-outlook-2026/executive-summary) estimates electric cars were about a quarter of global sales in 2025 and projects about 28% in 2026. China is the exception: there, electric cars were nearly 55% of new sales in 2025.
 
 ## AI at home
+
+Apple and Amazon both launched new AI-powered screens for the home, though few households pay for AI yet.
 
 ![Apple HomeView lineup: five square smart displays on speaker bases showing a clock, a FaceTime call, a photo, the weather, and music.](/weekly-screenshots/2026.10.14/apple-homeview-lineup.jpg)
 
@@ -395,17 +458,24 @@ For the first time, cars that run only on gasoline made up **less than half of n
 
 ## Colorado
 
+Closer to home: Waymo's first weeks in Denver, more self-driving and drone projects on the way, a rewritten state AI law, and news from Colorado campuses.
+
 ![Waymo's "Now serving" launch graphic: Denver, San Diego, and Tampa skylines behind a Waymo Ojai van and a Jaguar I-PACE robotaxi.](/weekly-screenshots/2026.10.14/waymo-denver-launch.png)
 
 ### Waymo in Denver, six weeks in
+
 - **Timeline:** Waymo [announced Denver in September 2025](https://waymo.com/blog/shorts/were-elevating-the-waymo-experience-in-the-mile-high-city/) as its first city with regular snow. It began [driverless rides for employees on July 8](https://waymo.com/blog/shorts/ro-den-lv-sd-tmpa/) and [opened to the public on September 1](https://waymo.com/blog/2026/09/ride-in-denver-san-diego-tampa/). Waymo says tens of thousands signed up in each new city, and riders are admitted from the waitlist in batches.
 - **Where it goes:** about 60 square miles, roughly from DU to just south of Thornton and from Sloan's Lake to Central Park, including downtown, RiNo, Capitol Hill, and Cherry Creek ([Colorado Sun](https://coloradosun.com/2026/09/01/waymo-rides-begin-denver-sept-1/)). The fleet is "dozens" of vehicles. There are no highway or airport trips yet, and DIA says talks are ongoing. Waymo has not published Denver ride numbers.
 - **Incidents:** in August, police [cited a human driver](https://www.cbsnews.com/colorado/news/denver-drivers-question-waymo-behavior-chain-reaction-crash/) after a stopped Waymo was hit in a chain-reaction crash near Denver Health. On September 20, a Waymo [drove into the South Pearl Street Farmers Market](https://www.9news.com/article/news/community/transportation/waymo-vehicles-draw-attention-after-construction-farmers-market-incidents-in-denver/73-2cbe10ab-a1f8-4624-a5e4-4321cf3a87d4) while vendors were setting up.
 - **Nationally:** Waymo has driven [271.3 million miles with no one at the wheel](https://waymo.com/safety/impact/) through June 2026. TechCrunch [estimates](https://techcrunch.com/2026/09/24/waymo-is-scaling-fast-heres-what-the-fleet-data-shows/) about 500,000 paid rides a week on about 4,000 vehicles. Waymo's goal is 1 million rides a week by the end of the year.
+
 ### More autonomy on Front Range roads and skies
+
 - **Zoox**, Amazon's robotaxi company, will test a small fleet with safety drivers in Denver this winter to learn to drive in snow ([Denverite](https://denverite.com/2026/10/02/zoox-denver-testing/)). No passengers yet.
 - **Drone delivery:** Wing and Walmart [named Denver](https://wing.com/news/wing-walmart-new-metros-nations-largest-drone-delivery-network) for drone delivery starting in 2027 (Oct 5). Northglenn is drafting the state's first rules for drone hubs, and Parker and Castle Rock have paused hub applications ([CPR](https://www.cpr.org/2026/10/05/delivery-drones-coming-denver-regulations/)).
+
 ### Colorado's AI law, rewritten
+
 - **The original Colorado AI Act never took effect.** Lawmakers [repealed and replaced it with SB26-189](https://leg.colorado.gov/bills/sb26-189), signed May 14. The new law focuses on transparency. When software helps make an important decision about you, such as in hiring, lending, housing, insurance, or health care, you must be told. If the decision goes against you, you are owed a plain-language explanation within 30 days, and you can correct your data and ask for a human review. It takes effect **January 1, 2027**. The attorney general enforces it, and individuals cannot sue under it.
 - **Public comment is open.** The attorney general released [draft rules](https://coag.gov/ai/) on October 6, covering this law and a new chatbot-safety law. The **public hearing is October 26 at 10 a.m.**, in Denver and on Zoom, and written comments close at 11:59 p.m. that night.
 - **Other AI laws passed in 2026:**
@@ -413,11 +483,14 @@ For the first time, cars that run only on gasoline made up **less than half of n
   - [HB26-1195](https://leg.colorado.gov/bills/hb26-1195) bans marketing AI as therapy and requires a licensed clinician to stay involved. It took effect August 12.
   - [HB26-1139](https://leg.colorado.gov/bills/hb26-1139) requires a clinician to review AI-driven insurance denials. It takes effect January 1, 2027.
 - **Vetoed:** Governor Polis vetoed a bill that would have required a licensed driver aboard heavy self-driving trucks ([HB26-1286](https://leg.colorado.gov/bills/hb26-1286)), his second such veto. He also vetoed a bill on "surveillance pricing," which sets prices or wages from personal data ([HB26-1210](https://leg.colorado.gov/bills/hb26-1210)).
+
 ### Colorado campuses
+
 - **CU Boulder** [unveiled DeepSFU](https://www.colorado.edu/today/2026/10/12/ai-deepfakes-are-getting-spookier-scientists-cu-have-developed-better-way-spot-them) (Oct 12), a tool that spots deepfakes in live video calls, even over compressed video. CU says it is more than 143 times faster than earlier methods. CU's AI Symposium is [October 21](https://www.colorado.edu/studentlife/ai-symposium).
 - **First "AI Engaged" campuses:** on October 6, the state [recognized six schools](https://mailchi.mp/dhe.state.co.us/aiengaged) for AI education: Aims Community College, Colorado School of Mines, CSU Global, MSU Denver, the University of Denver, and UNC. The designation carries no funding.
 
 ## Talk philosophy with Sensi
+
 [**Sensi — Consciousness & Physics**](https://x.ai/bot/EkfSB8lfqHBQUgCFHVHez) is a public Grok Bot built by our organizer for long conversations about the mind and the universe: the hard problem of consciousness, integrated information theory, panpsychism, and the structure of physical law. It starts from the basics for newcomers, goes deeper for anyone who knows the theories, and argues both sides. Add it to your Grok Bot app and bring a question to the next meetup.
 
 ![Wikipedia article "Roko's basilisk," describing a thought experiment in which a future artificial superintelligence would punish anyone who knew of its potential existence but did not help bring it about. It originated in a 2010 post on the LessWrong forum.](/weekly-screenshots/2026.10.14/rokos-basilisk-wikipedia.jpg)
@@ -425,6 +498,8 @@ For the first time, cars that run only on gasoline made up **less than half of n
 **A question to start with:** [Roko's basilisk](https://en.wikipedia.org/wiki/Roko%27s_basilisk) is a 2010 thought experiment from the LessWrong forum. It imagines a future AI that punishes anyone who knew it could exist but didn't help create it. Critics call it a version of Pascal's wager, but it remains a good test of how we reason about AI risk. Is it a real argument, or a trick of decision theory?
 
 ## Key dates
+
+Upcoming dates from this edition.
 
 | Date | What happens |
 | --- | --- |
@@ -437,9 +512,10 @@ For the first time, cars that run only on gasoline made up **less than half of n
 | Nov 12 | Anthropic's 2026 Usage Policy takes effect; Fish Audio Drama 3 launch pricing ends |
 | Nov 13 | Apple HomeView ships |
 | Dec 1 | Gemini 4 Argon's developer price doubles |
-| Jan 1, 2027 | Colorado's new AI law and chatbot law take effect; Gemini 3.8 Flash price doubles |
+| Jan 1, 2027 | Colorado's new AI law, chatbot law, and AI insurance-denial law take effect; Gemini 3.8 Flash price doubles |
 
 ## Names that are easy to mix up
+
 - **Muse Wonder Full** is Meta's larger model; "Wonderful" is a common misspelling. Only the smaller **Muse Wonder** is sold to developers.
 - **GPT-6 Sol** in ChatGPT's Chat tab is the October version. Codex and ChatGPT Work use the September version under the same name. Neither is **GPT-6.1 Sol**, a separate developer model.
 - **Mistral Large 4** is described as open, but its weights are not yet released.
@@ -447,6 +523,7 @@ For the first time, cars that run only on gasoline made up **less than half of n
 - **Hark** is Brett Adcock's new assistant company, separate from his robotics company Figure.
 
 ## Takeaways
+
 1. **Meta is a real contender now.** Muse Wonder costs the same as Claude Opus 5.5 and scores close to the top. Only the smaller model is sold to developers.
 2. **Read the data terms.** Muse Code's default mode may use your work for training. Check every AI subscription for a similar setting.
 3. **Measure cost per task, not per token.** Haiku 5.5 and GPT-6 Luna list at the same price, but one costs three times more per task.
@@ -457,9 +534,11 @@ For the first time, cars that run only on gasoline made up **less than half of n
 8. **Colorado businesses that use AI in key decisions should weigh in by October 26.** The new law is about notice, explanation, and human review, and the rules are still being written.
 
 ## Video demos
+
 See this fortnight's releases in action. Each link opens the original video.
 
 **Claude and AI video**
+
 - [**Claude Motion launch**](https://x.com/claudeai/status/2108271552991252810) (Anthropic, 1:22): live dashboards and animated explainers that Claude builds from code. Also on [YouTube](https://www.youtube.com/watch?v=en0GuyhieQk).
 - [**Higgsfield Katana**](https://x.com/higgsfield/status/2108294775644585998) (Higgsfield, 1:18): video editing and motion graphics inside Claude.
 - [**Prompt Motion example**](https://x.com/Voxyz_ai/status/2107868554209235257) (Vox, 0:16): a kinetic-type video made from a two-sentence Claude prompt.
@@ -467,18 +546,22 @@ See this fortnight's releases in action. Each link opens the original video.
 - [**"The New Claude Motion Is Awesome"**](https://www.youtube.com/watch?v=hbPvZvpu9KU) (Paul J Lipsky, YouTube): a hands-on walkthrough.
 
 **Google Gemini 4 Argon**
+
 - [**Gemini 4 Argon launch**](https://x.com/sundarpichai/status/2110038898009407584) (Sundar Pichai, 0:51): Google's launch video for its newest flagship model.
 - [**Apollo learns cornhole**](https://x.com/TheHumanoidHub/status/2110076696133296288) (The Humanoid Hub, 0:37): Gemini 4 Argon teaching a humanoid robot to throw by watching a person.
 
 **AI voice**
+
 - [**Fish Audio Drama 3 launch**](https://x.com/FishAudio/status/2110038429199450126) (Fish Audio): AI voices directed in plain language, changing emotion mid-sentence.
 
 ## Vector RAG vs. Graph RAG, animated
-How does an AI find the right facts in a company's data? This 60-second animation answers one question two ways. Vector search retrieves the text that *sounds* most like the question. A knowledge graph follows the links between records, so it can find answers spread across several of them. The companies and data in the example are made up.
+
+How does an AI find the right facts in a company's data? One common answer is RAG, short for retrieval-augmented generation: the AI looks up relevant records before it writes a reply. This 60-second animation answers one question two ways. Vector search retrieves the text that *sounds* most like the question. A knowledge graph follows the links between records, so it can find answers spread across several of them. The companies and data in the example are made up.
 
 {{video:/weekly-screenshots/2026.10.14/vector-vs-graph-rag.mp4}}
 
 ## Download the PDF slideshows
+
 Four slide decks covering this fortnight, each made with a different AI tool. Free to download and share.
 
 - [**Two Weeks of AI Progress, Charted**](/documents/2026.10.14/grok-longmontai-oct14-ai-progress.pdf) (made with Grok · 16 slides · 1.8 MB): small models, frontier prices, Muse Wonder, and agent fleets.
@@ -487,6 +570,7 @@ Four slide decks covering this fortnight, each made with a different AI tool. Fr
 - [**The Stack Learns to Move**](/documents/2026.10.14/muse-slideshow-october-14.pdf) (made with Muse · 13 slides · 0.7 MB): nineteen releases across models, tools, chips, and robots.
 
 ## Five years of GitHub activity
+
 This chart shows the organizer's own GitHub contributions (commits plus pull requests, issues, and reviews) over the past five years. For four years there was almost nothing. Then, in early 2026, activity jumped and has stayed high.
 
 ![Line chart titled "Commit trends, github.com/morahan" covering Oct 15, 2021 to Oct 14, 2026, showing 7-day, 30-day and yearly rolling averages of daily GitHub contributions. The lines stay near zero from 2021 through 2025, apart from small bumps in mid-2024 and spring 2025, then climb steeply from about February 2026: the 7-day average peaks above 80 per day, the 30-day average reaches about 49 per day, and the yearly average rises to about 23 per day by October 2026. Summary figures: 8,642 total contributions, 323 active days, a best day of 324 contributions on May 21, 2026, and a current and longest streak of 130 days, from June 7 to October 14, 2026.](/weekly-screenshots/2026.10.14/github-commits-5-years.png)
@@ -495,9 +579,10 @@ This chart shows the organizer's own GitHub contributions (commits plus pull req
 - **Best day:** 324 contributions on May 21, 2026.
 - **Current streak:** 130 days in a row, since June 7.
 
-Source: the organizer's GitHub contributions calendar ([github.com/morahan](https://github.com/morahan)), Oct 15, 2021 – Oct 14, 2026.
+Source: the organizer's GitHub contributions calendar ([github.com/morahan](https://github.com/morahan)), October 15, 2021, to October 14, 2026.
 
 ## About our sources
+
 Primary sources include Meta's announcement, research blog, model card, and pricing page; OpenAI's GPT-6 system card and developer changelog; Anthropic's Haiku 5.5, Cyber Mission, and Usage Policy posts and Claude Platform documentation; Mistral's announcement and documentation; Google's Gemini at Work, Gemini Robotics, Nano Banana 2.1, and EmbeddingGemma 2 posts; Microsoft's Windows and MAI posts; Waymo, Boston Dynamics, Apple, Amazon, Hark, Sierra, Cursor, Suno, and xAI announcements; and Colorado's General Assembly, Attorney General, Department of Higher Education, and CU Boulder. Independent scores come from Artificial Analysis and the official Terminal-Bench 4.0 leaderboard. Prices were checked October 13, 2026, and can change. Benchmark claims from companies are labeled as theirs. Tesla's fleet count, XPENG's timeline, Ultra's funding, and NVIDIA's talks with Figure come from executive remarks or press reports, not company filings. Local details from the Colorado Sun, Denverite, CPR, 9News, and CBS Colorado are attributed in the text.
 
 Meetup Q&A from [Meetup.com](http://Meetup.com) will be folded in if collected within 48 hours of the session.
