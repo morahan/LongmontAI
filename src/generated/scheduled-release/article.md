@@ -96,6 +96,7 @@ On October 7, Elon Musk [announced](https://x.com/elonmusk/status/21077243144518
 - **Named partners:** Anthropic's Claude Opus 5.5, Midjourney for images, and Suno for music, "and other leading APIs."
 - **What's live:** [9to5Mac reports](https://9to5mac.com/2026/10/07/grok-bot-just-got-a-lot-smarter-thanks-to-anthropics-claude/) Grok Bot can already use Claude Opus 5.5. Midjourney and Suno were announced without a date, and no routing rules have been published.
 - **What it isn't:** this applies to the Grok Bot agent app, not the Grok chatbot or the developer API.
+- **Also from SpaceXAI:** on October 8 it became a founding corporate patron of DHH's [Omacom Foundation](https://omarchy.org/news/2026/10/spacexai-joins-as-founding-corporate-patron/), contributing $1.5 million in Grok tokens to maintain and develop the open-source Omarchy Linux setup.
 
 **Why it matters:** an AI company publicly routing work to a rival's model is a strong sign that the models themselves are becoming interchangeable parts, and the app on top is where companies now compete.
 ### Claude Motion: animated video, written as code
@@ -125,6 +126,9 @@ On October 13, Fish Audio released [**Drama 3**](https://fish.audio/blog/fish-au
 - **Open weights:** the model can be downloaded from [Hugging Face](https://huggingface.co/fishaudio/drama-3). It is free for research, and free for commercial use by companies earning under $500,000 a year. Cloning a real person's voice without consent is prohibited.
 - **Price:** $10 per million characters through November 12, an 80% launch discount off its $50 list price.
 - **Independent results:** Artificial Analysis [ranks it](https://x.com/ArtificialAnlys/status/2110081938140582085) first among open-weight voice models on all three of its speech leaderboards, and first overall for pronunciation (93.2%). In head-to-head listening tests against all models it places 10th, so closed models such as ElevenLabs still lead on overall voice quality.
+
+![Artificial Analysis text-to-speech leaderboard, open-weight models: Fish Audio Drama 3 Preview ranks first with an Elo of 1243, ahead of Breeze TTS 2 (1221), Fish Audio S2 Pro (1118), Step Audio EditX (1097), and Mistral's Voxtral TTS (1088).](/weekly-screenshots/2026.10.14/artificial-analysis-tts-leaderboard-open-weights.jpg)
+
 - **Coming later:** regenerating a single word inside a finished recording is in invite-only testing.
 
 ### Mistral Large 4: Europe's big model, with weights promised
@@ -144,6 +148,7 @@ On October 6, Mistral opened a preview of [**Mistral Large 4**](https://mistral.
 | [Nova 2.5 Sonic](https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-nova-2.5-sonic/) (Amazon) | Oct 5 | Faster speech-to-speech conversations at the same price |
 | [EmbeddingGemma 2](https://blog.google/innovation-and-ai/technology/developers-tools/embeddinggemma-2/) (Google) | Oct 6 | Free, open model for searching your own text, images, audio, and video |
 | [Kolibri](https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/) (Aleph Alpha) | Oct 3 | Free, open English–German model |
+| [Beam](https://reflection.ai/blog/introducing-beam) (Reflection AI) | Oct 5 | 501B-parameter model under an open license; weights promised later in October, waitlist for now |
 | [Mellum2.1](https://blog.jetbrains.com/ai/2026/10/mellum2-1-gets-to-work-a-fast-open-model-for-coding-agents/) (JetBrains) | Oct 8 | Free, open coding model that runs on your own hardware |
 | [Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) (Alibaba) | Oct 9 | Fast image model; open weights, but commercial use needs a license |
 
@@ -219,6 +224,14 @@ The list price is only half the story. Some models write far more to finish the 
 | Muse Wonder | $4.00 / $20.00 | not published | **$4.52** |
 
 Haiku 5.5 and Luna have identical prices. Haiku is the smarter of the two (43 vs. 38), but it writes about three times as much, so each task costs three times more. Source: [Artificial Analysis](https://artificialanalysis.ai/models/claude-haiku-5-5).
+
+**This is not a one-off.** In a study called ["The Price Reversal Phenomenon"](https://arxiv.org/abs/2603.23971), researchers at Stanford, Berkeley, and Microsoft ran 8 reasoning models on 12 test sets. In 106 of 336 head-to-head matchups, nearly a third, the model with the *cheaper* list price cost more in total. In one pairing, Gemini 3 Flash listed at a fifth of GPT-5.4's output price but cost $705 to complete all the tests, against GPT-5.4's $509. The researchers traced more than 95% of the gap to "thinking" tokens, the hidden reasoning a model writes before it answers.
+
+![Chart: "In nearly a third of matchups, the cheaper AI model cost more to run." Gemini 3 Flash lists at $3 per million output tokens versus GPT-5.4's $15, yet costs $705 in total across 12 test sets versus GPT-5.4's $509. Source: Chen et al., The Price Reversal Phenomenon, arXiv 2603.23971v2, May 2026.](/weekly-screenshots/2026.10.14/price-reversal-cheaper-model-cost-more.png)
+
+The cheapest models from Anthropic and OpenAI now sit in the same price range as China's low-cost models, which makes this check even more important ([Social Capital](https://research.socialcapital.com/p/the-hidden-cost-of-cheap-ai-models), Oct 11).
+
+![Chart: "Anthropic and OpenAI now price their cheapest AI models in China's range." Output prices per million tokens: Claude Haiku 5.5 $0.50, GPT-6 Luna $0.50, Gemini 3.5 Flash-Lite $2.50, Xiaomi MiMo-V2.6-Flash $0.28, Alibaba Qwen3.8-Flash-Next $0.47, Z.ai GLM-5.3-Flash $0.50, DeepSeek V4.1 Flash $0.60 off-peak. Independent test scores range from 22 to 43.](/weekly-screenshots/2026.10.14/cheap-models-priced-in-chinas-range.png)
 
 **Why it matters:** to know what a model really costs, run one real job and divide the bill by the number of tasks it finished.
 ### How they score
@@ -304,6 +317,10 @@ The people building these tools describe a new kind of job: directing many agent
 ![Handwritten slide: "We will: create new agents, manage fleets of agents, allocate resources, choose the models and harnesses, establish evals, spend more time thinking."](/weekly-screenshots/2026.10.14/we-will-direct-agent-fleets.jpg)
 
 The two sketches above are widely shared online without a credited author. They capture the shift well: each step up means less typing and more deciding. You choose which agents to run, which models to trust, how to check their work, and where the money goes.
+
+{{slideshow:agent-factory}}
+
+**How many agents could the world run?** Research group Epoch AI [estimates](https://epoch.ai/publications/estimating-the-agent-population) (Oct 2) that the memory chips shipped through 2027 could run 33 to 171 million top-tier AI agents at the same time, or billions of cheaper ones.
 ### Four actions that need a human sign-off
 Each of these launches touches at least one of four actions. Before an agent can take one, decide who approves it.
 
@@ -371,6 +388,10 @@ For the first time, cars that run only on gasoline made up **less than half of n
 ![Amazon's new Alexa tablet showing its home screen with apps and the time.](/weekly-screenshots/2026.10.14/amazon-alexa-tablets.jpg)
 
 - **Amazon Alexa Tablets** (Oct 8): [three sizes](https://www.aboutamazon.com/news/devices/new-amazon-alexa-tablets-alexa-plus) at $230, $330, and $500 with the Alexa+ assistant built in. In a reversal, they run Google's Android 16 with the Play Store instead of Amazon's Fire OS. Alexa+ can answer questions about whatever is on the screen. They ship in the U.S. on October 14.
+
+![a16z chart: "More and More Households are Paying for AI." The share of U.S. households with paid AI subscriptions rose from near zero in January 2023 to 2.2% in April 2026. Source: PNC Research internal data, July 13, 2026.](/weekly-screenshots/2026.10.14/a16z-households-paying-for-ai.jpg)
+
+- **Few households pay for AI yet.** About 2.2% of U.S. households had a paid AI subscription in April 2026, up from near zero in early 2023, according to PNC data published by [a16z](https://www.a16z.news/p/state-of-markets-ii) (Sep 30). Subscribers spent about $31 a month on average. The data comes from PNC's customer households, so treat it as a strong signal rather than a census.
 
 ## Colorado
 
@@ -464,6 +485,17 @@ Four slide decks covering this fortnight, each made with a different AI tool. Fr
 - [**Robots on the Road, Robots at Work**](/documents/2026.10.14/grok-longmontai-oct14-robotics-ai.pdf) (made with Grok · 13 slides · 1.5 MB): Waymo safety data, robotaxis, humanoids, and what it means for the Front Range.
 - [**The Intelligence Age: 14 Days of AI**](/documents/2026.10.14/manus-intelligence-age-14-days-of-ai.pdf) (made with Manus · 10 slides · 0.4 MB): the five most consequential moves and a builder's read.
 - [**The Stack Learns to Move**](/documents/2026.10.14/muse-slideshow-october-14.pdf) (made with Muse · 13 slides · 0.7 MB): nineteen releases across models, tools, chips, and robots.
+
+## Five years of GitHub activity
+This chart shows the organizer's own GitHub contributions (commits plus pull requests, issues, and reviews) over the past five years. For four years there was almost nothing. Then, in early 2026, activity jumped and has stayed high.
+
+![Line chart titled "Commit trends, github.com/morahan" covering Oct 15, 2021 to Oct 14, 2026, showing 7-day, 30-day and yearly rolling averages of daily GitHub contributions. The lines stay near zero from 2021 through 2025, apart from small bumps in mid-2024 and spring 2025, then climb steeply from about February 2026: the 7-day average peaks above 80 per day, the 30-day average reaches about 49 per day, and the yearly average rises to about 23 per day by October 2026. Summary figures: 8,642 total contributions, 323 active days, a best day of 324 contributions on May 21, 2026, and a current and longest streak of 130 days, from June 7 to October 14, 2026.](/weekly-screenshots/2026.10.14/github-commits-5-years.png)
+
+- **8,642 contributions** in five years, and 8,418 of them in the last twelve months.
+- **Best day:** 324 contributions on May 21, 2026.
+- **Current streak:** 130 days in a row, since June 7.
+
+Source: the organizer's GitHub contributions calendar ([github.com/morahan](https://github.com/morahan)), Oct 15, 2021 – Oct 14, 2026.
 
 ## About our sources
 Primary sources include Meta's announcement, research blog, model card, and pricing page; OpenAI's GPT-6 system card and developer changelog; Anthropic's Haiku 5.5, Cyber Mission, and Usage Policy posts and Claude Platform documentation; Mistral's announcement and documentation; Google's Gemini at Work, Gemini Robotics, Nano Banana 2.1, and EmbeddingGemma 2 posts; Microsoft's Windows and MAI posts; Waymo, Boston Dynamics, Apple, Amazon, Hark, Sierra, Cursor, Suno, and xAI announcements; and Colorado's General Assembly, Attorney General, Department of Higher Education, and CU Boulder. Independent scores come from Artificial Analysis and the official Terminal-Bench 4.0 leaderboard. Prices were checked October 13, 2026, and can change. Benchmark claims from companies are labeled as theirs. Tesla's fleet count, XPENG's timeline, Ultra's funding, and NVIDIA's talks with Figure come from executive remarks or press reports, not company filings. Local details from the Colorado Sun, Denverite, CPR, 9News, and CBS Colorado are attributed in the text.

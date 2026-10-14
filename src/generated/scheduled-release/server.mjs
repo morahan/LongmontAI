@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-10-14-sense-of-wonder",
   "publishAt": "2026-10-14T11:00:00-06:00",
   "publishAtMs": 1791997200000,
-  "releaseRevision": "e8d9220151b1e8efcf237602",
+  "releaseRevision": "bb4f7b842ea5fe70b27861e9",
   "source": {
     "manifest": "src/articles/drafts/2026.10.14-sense-of-wonder.release.json",
     "article": "src/articles/drafts/2026.10.14-sense-of-wonder.md",
@@ -12,15 +12,87 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "02d52087c7bc5089de903fd5e99b8f50664d7d39261520836f9901bb16c957e8"
+    "sha256": "1ccb0d6650cb979fb80adbad0beeb28244bc148eb30e0eddbc0a558597bb47b7"
   },
-  "slideshow": null,
+  "slideshow": {
+    "id": "agent-factory",
+    "title": "From doing the task to running the factory",
+    "description": "Six hand-drawn sketches on how AI agents change knowledge work: from waiting on one person to running a line of agents, what starts an agent, the agent loop, prompts and skills, and the software factory.",
+    "slides": [
+      {
+        "title": "Today: a line of agents waits on one person",
+        "path": "agent-factory-01-today-agents-wait-on-you.jpg"
+      },
+      {
+        "title": "The future: agents run the line while you design it",
+        "path": "agent-factory-02-future-agents-run-the-line.jpg"
+      },
+      {
+        "title": "What starts an agent: a schedule, a webhook, an incident, feedback, a bug hunt, or another agent",
+        "path": "agent-factory-03-what-starts-an-agent.jpg"
+      },
+      {
+        "title": "The agent loop: trigger, agent works, check, repeat",
+        "path": "agent-factory-04-trigger-work-check-repeat.jpg"
+      },
+      {
+        "title": "Prompts and skills: turn a repeated task into a reusable skill",
+        "path": "agent-factory-05-prompts-and-skills.jpg"
+      },
+      {
+        "title": "From agentic loop to software factory: many loops chained together",
+        "path": "agent-factory-06-agentic-loop-to-software-factory.jpg"
+      }
+    ]
+  },
   "media": {
+    "a16z-households-paying-for-ai.jpg": {
+      "file": "media/a16z-households-paying-for-ai.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/a16z-households-paying-for-ai.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "46e8379ba92d41185f16e88c804f0ecea62ec8eaab32772f0dc4500c93d40548"
+    },
     "abstraction-staircase-run-the-factory.jpg": {
       "file": "media/abstraction-staircase-run-the-factory.jpg",
       "sourceUrl": "/weekly-screenshots/2026.10.14/abstraction-staircase-run-the-factory.jpg",
       "contentType": "image/jpeg",
       "sha256": "8627c1fadda2f8efebf8d9f08f17bcb21d87aea0daf77308eda94ed3e4c3a39a"
+    },
+    "agent-factory-01-today-agents-wait-on-you.jpg": {
+      "file": "media/agent-factory-01-today-agents-wait-on-you.jpg",
+      "sourceUrl": null,
+      "contentType": "image/jpeg",
+      "sha256": "dbc6173166f94360d7b3dc173556599147a2f8ed1f232b7e9f8928ccfa5f098c"
+    },
+    "agent-factory-02-future-agents-run-the-line.jpg": {
+      "file": "media/agent-factory-02-future-agents-run-the-line.jpg",
+      "sourceUrl": null,
+      "contentType": "image/jpeg",
+      "sha256": "47e540f7ad11e8e9d72f810b27b10ff5e3b2e3afde1e9e11d8b3fe2015229854"
+    },
+    "agent-factory-03-what-starts-an-agent.jpg": {
+      "file": "media/agent-factory-03-what-starts-an-agent.jpg",
+      "sourceUrl": null,
+      "contentType": "image/jpeg",
+      "sha256": "fd7636df4e906311f62651d3e7cfe4293df9a29f4585fc97c2950ad252106a24"
+    },
+    "agent-factory-04-trigger-work-check-repeat.jpg": {
+      "file": "media/agent-factory-04-trigger-work-check-repeat.jpg",
+      "sourceUrl": null,
+      "contentType": "image/jpeg",
+      "sha256": "d85c3eee20e8160a92222f6e6042d41e7896e23ee14d5aea62d3aa8ceca26485"
+    },
+    "agent-factory-05-prompts-and-skills.jpg": {
+      "file": "media/agent-factory-05-prompts-and-skills.jpg",
+      "sourceUrl": null,
+      "contentType": "image/jpeg",
+      "sha256": "7af1514d8175a52e1c4dae42920bdd870caacae41f45d55d4a0e6425f065d605"
+    },
+    "agent-factory-06-agentic-loop-to-software-factory.jpg": {
+      "file": "media/agent-factory-06-agentic-loop-to-software-factory.jpg",
+      "sourceUrl": null,
+      "contentType": "image/jpeg",
+      "sha256": "295ea122a0d2f963883ce78c54ee46ba236200133ed758f21457de62bfc18454"
     },
     "amazon-alexa-tablets.jpg": {
       "file": "media/amazon-alexa-tablets.jpg",
@@ -34,11 +106,23 @@ const release = Object.freeze({
       "contentType": "image/jpeg",
       "sha256": "078a8a8c824afd8d17ca6e7d2ab6d23cb57381f57405440463a0e7f2f4373098"
     },
+    "artificial-analysis-tts-leaderboard-open-weights.jpg": {
+      "file": "media/artificial-analysis-tts-leaderboard-open-weights.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/artificial-analysis-tts-leaderboard-open-weights.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "adddd3605a629f5bc1b7d691f90a1b17da3995f1d39c53c73f949317ace75f9a"
+    },
     "brain-it-fmri-image-reconstruction.jpg": {
       "file": "media/brain-it-fmri-image-reconstruction.jpg",
       "sourceUrl": "/weekly-screenshots/2026.10.14/brain-it-fmri-image-reconstruction.jpg",
       "contentType": "image/jpeg",
       "sha256": "310978b3ef573d0dba6ae729ab7dfbb4d50b4bb034c41169dc5cbb2611f42c25"
+    },
+    "cheap-models-priced-in-chinas-range.png": {
+      "file": "media/cheap-models-priced-in-chinas-range.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/cheap-models-priced-in-chinas-range.png",
+      "contentType": "image/png",
+      "sha256": "6b9233026f2e086e3eefc8e4a7ab594b80f19eb9c00beefd0b8eb0c643e631d2"
     },
     "claude-haiku-5-5.jpg": {
       "file": "media/claude-haiku-5-5.jpg",
@@ -63,6 +147,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.10.14/gemini-at-work-agent.png",
       "contentType": "image/png",
       "sha256": "9e09bce527525c97c28e6a7326ca8165ee810051b9e734f0dccb1380cc16f782"
+    },
+    "github-commits-5-years.png": {
+      "file": "media/github-commits-5-years.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/github-commits-5-years.png",
+      "contentType": "image/png",
+      "sha256": "aa892ac12d8ef6000181b27f7b84c19a5b9b321c7b5f3042cc250e124c179186"
     },
     "grok-longmontai-oct14-ai-progress.pdf": {
       "file": "media/grok-longmontai-oct14-ai-progress.pdf",
@@ -111,6 +201,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.10.14/personal-agent-protocol.png",
       "contentType": "image/png",
       "sha256": "e7712f11a5fe1cd32929ee55ec2d76a729e8278735391811df84cb7cf0763e7f"
+    },
+    "price-reversal-cheaper-model-cost-more.png": {
+      "file": "media/price-reversal-cheaper-model-cost-more.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/price-reversal-cheaper-model-cost-more.png",
+      "contentType": "image/png",
+      "sha256": "56c50d6c3d369226c844edc4bad39bea209807ecf56e834b91ab7038fa7d6813"
     },
     "rokos-basilisk-wikipedia.jpg": {
       "file": "media/rokos-basilisk-wikipedia.jpg",
