@@ -137,6 +137,18 @@ On October 8, Anthropic released [**Claude Motion**](https://claude.com/resource
 - [**"The New Claude Motion Is Awesome"**](https://www.youtube.com/watch?v=hbPvZvpu9KU) (YouTube, Paul J Lipsky): a hands-on walkthrough.
 - [**Claude Motion help guide**](https://support.claude.com/en/articles/17454997-get-started-with-claude-motion): how to start, edit, and export.
 
+#### What 30 seconds of AI video actually costs
+
+In an X Article on October 13, ["What 30 Seconds of AI Video Actually Cost"](https://x.com/babaieamamayi/status/2110039240994398524), Maeve (@babaieamamayi) priced out a 30-second clip made with a generative video model. The numbers are illustrative assumptions, not measured costs: Google's Veo 3.1 Fast at $0.10 per generated second, six 8-second shots cut down to 30 finished seconds, $10 of supporting costs, and labor at $25 an hour.
+
+![Table and bar chart titled "Generation is one part of the budget," comparing the total cost of a 30-second AI video at different numbers of takes per shot, assuming Veo 3.1 Fast at $0.10 per generated second, six 8-second shots, $10 of supporting costs, and labor at $25 an hour. One take per shot: 48 paid seconds, $4.80 of generation, 2 hours of labor ($50), $64.80 total. Three takes per shot: 144 paid seconds, $14.40 of generation, 3 hours of labor ($75), $99.40 total. Six takes per shot: 288 paid seconds, $28.80 of generation, 5 hours of labor ($125), $163.80 total. In the stacked bars, labor is by far the largest segment in every scenario.](/weekly-screenshots/2026.10.14/ai-video-30-second-budget.jpg)
+
+- **One take per shot:** $64.80 in total.
+- **Three takes per shot:** $99.40, of which only $14.40 is generation (144 paid seconds). Three hours of labor make up most of the rest.
+- **Six takes per shot:** $163.80.
+
+The point: generating the footage is a small part of the budget. The human time spent choosing, re-running, and editing shots costs far more.
+
 ### Fish Audio Drama 3: AI voices you direct like an actor
 
 ![Fish Audio Drama 3 announcement image: four people seated and standing around a kitchen table, with the words Drama 3 in large white type.](/weekly-screenshots/2026.10.14/fish-audio-drama-3.png)
@@ -173,6 +185,7 @@ On October 6, Mistral opened a preview of [**Mistral Large 4**](https://mistral.
 | [Beam](https://reflection.ai/blog/introducing-beam) (Reflection AI) | Oct 5 | 501B-parameter model under an open license; weights promised later in October, waitlist for now |
 | [Mellum2.1](https://blog.jetbrains.com/ai/2026/10/mellum2-1-gets-to-work-a-fast-open-model-for-coding-agents/) (JetBrains) | Oct 8 | Free, open coding model that runs on your own hardware |
 | [Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) (Alibaba) | Oct 9 | Fast image model; open weights, but commercial use needs a license |
+| [FLUX 3 Video](https://x.com/bfl_ai/status/2110386847528681774) (Black Forest Labs) | Oct 14 | Up to 2× faster and 50% cheaper in native 2K and 4K, per the company (pricing page not yet updated) |
 
 *Date of first availability on [Vercel](https://vercel.com/changelog/grok-imagine-video-1-5-lite-on-ai-gateway); xAI's own release notes don't date it.
 
@@ -268,6 +281,26 @@ The cheapest models from Anthropic and OpenAI now sit in the same price range as
 
 **Why it matters:** to know what a model really costs, run one real job and divide the bill by the number of tasks it finished.
 
+### Subscriptions vs. paying per token
+
+A flat monthly subscription can be worth far more than its price. On October 5, research firm SemiAnalysis published ["Anthropic Subscriptions Offer 5x+ More Value Than OpenAI"](https://newsletter.semianalysis.com/p/anthropic-subscriptions-offer-5x). It measures "API value": a plan's full monthly usage limit, priced at each lab's own list API rates, using a typical agent workload (mostly cached input).
+
+![SemiAnalysis bar chart titled "GPT-6.1 Sol and Claude Opus 5.5: API value by plan," showing the monthly API-price value of each plan's full usage limit. $200 plans: Claude Max 20x (Opus 5.5) $11,726, or 58.6 times the fee, versus ChatGPT Pro 200 (GPT-6.1 Sol) $2,084, or 10.4 times. $100 plans: Claude Max 5x $5,725 (57.3 times) versus ChatGPT Pro 100 $1,055 (10.6 times). $20 plans: Claude Pro $1,178 (58.9 times) versus ChatGPT Plus $211 (10.6 times).](/weekly-screenshots/2026.10.14/semianalysis-subscription-api-value-by-plan.jpg)
+
+| Plan price | Claude (Opus 5.5) | ChatGPT (GPT-6.1 Sol) |
+| --- | --- | --- |
+| $200 a month | Max 20x: $11,726 (58.6×) | Pro 200: $2,084 (10.4×) |
+| $100 a month | Max 5x: $5,725 (57.3×) | Pro 100: $1,055 (10.6×) |
+| $20 a month | Pro: $1,178 (58.9×) | Plus: $211 (10.6×) |
+
+- **These are maximums.** The figures assume you use every bit of your plan's limit.
+- **On the flagship models, the gap mostly closes.** GPT-6 Astra on Pro 200 is worth about $2,897 a month, and Claude Fable 5.1 on Max 20x about $2,485.
+- **Press coverage:** [The Register](https://www.theregister.com/ai-and-ml/2026/10/06/anthropic-claude-subscription-plan-provides-more-value-than-openais-study-says/5301470).
+
+**One user's experience:** developer David Ondrej [posted](https://x.com/DavidOndrej1/status/2106245725315367129) on October 2 that he had been paying $1,200 a month for six $200 Codex plans, and that since Opus 5.5, one $200 Claude subscription handles the same amount of tokens. That is his personal claim, and Ondrej is behind Cloudroom, an agent platform (see "Assistants for everyone else" below).
+
+**Why it matters:** heavy users may get far more from a flat subscription than from paying per token, but plan limits change, and on the flagship models the value is much closer.
+
 ### How the models score
 
 Every score below comes from an independent tester or an official leaderboard, not from the company's own announcement. Higher is better. "n/l" means not yet listed. Office work is rated on an Elo scale, the head-to-head rating system used in chess.
@@ -335,12 +368,18 @@ On October 9, Anthropic released **dynamic workflows** for Claude Managed Agents
 - **Cost:** normal model prices plus $0.08 per session-hour, with no separate fee.
 - **Budget:** a spending limit pauses the run, though it can slightly overshoot while requests in flight finish.
 
+**Subagents vs. agent teams.** Claude Code's [documentation](https://code.claude.com/docs/en/agent-teams) describes two ways to split up work. **Subagents** each do a piece of the job and report their results back to one main agent. Experimental **agent teams** work more like coworkers: members share a task list, claim work from it, and message each other directly. Agent teams must be switched on with an experimental setting.
+
+![Claude Code documentation diagram titled "Compare with subagents." On the left, Subagents: a main agent spawns three subagents, each does its work and produces a result, and all results are reported back to the main agent. On the right, Agent Teams: a main agent acting as team lead spawns the team and assigns tasks to a shared task list; three teammates claim tasks from that list, do their own work, and communicate directly with one another. Caption: "Subagents report results back to the main agent. In agent teams, teammates share a task list, claim work, and communicate directly with each other."](/weekly-screenshots/2026.10.14/claude-subagents-vs-agent-teams.jpg)
+
 ### Assistants for everyone else
 
 - [**Hark Pro**](https://hark.com/articles/introducing-hark-pro) (Oct 6) is a free personal assistant for web, iPhone, and Android that books, shops, schedules, and **pays bills**. It can operate up to six web browsers at once on its own cloud computer. Paid plans ($20 and $100 a month) only add usage. Hark is a new company from Figure founder Brett Adcock, separate from Figure.
 - [**Claude Dashboards**](https://claude.com/resources/articles/dashboards-and-motion) (Oct 8, beta): live business dashboards built from company data, with every number linked to its source query. Claude Docs, Slides, and Design also became available on every plan, including Free. Claude also arrived [inside Google Docs, Sheets, and Slides](https://claude.com/resources/articles/claude-now-works-in-google-docs-sheets-and-slides) (Oct 6, beta).
 - [**Perplexity Computer Automations**](https://www.perplexity.ai/changelog) (Oct 5): Perplexity's agent can now run tasks on a schedule or when something happens.
 - [**Cursor Remote Control**](https://cursor.com/changelog/remote-control-local-agents) (Oct 6): programmers can check on and redirect coding agents running on their own computer from an iPhone.
+- [**Cloudroom**](https://x.com/cloudroom_dev/status/2108444487488004220) (Oct 9) says it spawned 110 cloud agents from one prompt in 57 seconds: 10 Claude Sonnet agents, each running 10 Claude Haiku agents. [Cloudroom](https://www.cloudroom.dev/) is an open-source platform that runs coding agents such as Claude Code and Codex in isolated sandboxes, on your own computer or in the cloud. It is linked to developer David Ondrej. This is a vendor demo.
+- [**Phone control for Hermes Agent**](https://hermes-agent.nousresearch.com/docs/plugins/phone-harness) (Oct 13): "phone-harness," a community plugin by ShawnPana ([code](https://github.com/ShawnPana/phone-harness)) for Nous Research's Hermes Agent, lets the agent read the screen of an iPhone (through Mac iPhone Mirroring) or an Android phone (through adb, Android's developer connection) and operate it: open apps, tap, swipe, scroll, and type. Every action requires your approval by default. It is a community plugin, not an official Nous release.
 
 ### Agents that shop at your business
 
@@ -356,6 +395,8 @@ The people building these tools describe a new kind of job: directing many agent
 
 - **Shipping every day:** on October 4, OpenAI's Codex lead [Tibo Sottiaux promised](https://x.com/thsottiaux/status/2106845241357824205) that for the next 28 days the team would ship one clear improvement for Codex users every day, or "a full reset."
 - **An "AI shed":** the same day, Ruby on Rails creator [DHH wrote](https://x.com/dhh/status/2106755814421565495) that every developer needs an always-on machine on their private network where most of their AI agents run.
+- **Anthropic rebuilt its source control for agents:** in an [engineering post](https://www.anthropic.com/engineering/redesigning-source-control) on October 13, "Redesigning source control at Anthropic," the company says merged code changes went from about 2,500 a day in May to more than 30,000 a day in September, leaving it "bottlenecked by developer infrastructure built for human (rather than agent) scale." Seven engineers built a new version-control system called Scion, plus a code-review tool called Antique, and moved Anthropic's main codebase off git in five months. Anthropic says checkouts now take seconds instead of minutes.
+- **A floor plan you can walk through:** builder @everestchris6 [posted](https://x.com/everestchris6/status/2110036224320884998) on October 13 that Claude Opus 5.5 turned a floor plan into a 3D house you can walk through in a web browser, built with the three.js graphics library. That is his personal claim.
 
 ![Hand-drawn staircase diagram. A stick figure climbs four steps labeled "do the task," "run agents," "design loops," and "run the factory," with an arrow labeled "more abstract." The top step shows a figure overseeing a conveyor belt of robots.](/weekly-screenshots/2026.10.14/abstraction-staircase-run-the-factory.jpg)
 
@@ -423,6 +464,7 @@ Big money kept flowing into robotaxis, and humanoid robots gained a new leader a
 
 - **Waymo borrowed $5 billion** (Oct 8), its [first-ever loan](https://waymo.com/blog/2026/10/waymo-closes-5-billion-debt-financing/). PIMCO, Blackstone, and Sixth Street led the lenders, after Waymo raised $16 billion from investors earlier this year. It now serves 15 U.S. cities, including Denver (see Colorado below). Big lenders betting on robotaxi revenue is a sign autonomy is starting to look like infrastructure.
 - **Tesla says it has 300+ Cybercabs in Austin** and promised "Dallas soon" (Oct 10). That count is [Tesla's claim](https://x.com/robotaxi/status/2108981691436224816) and is disputed: an independent tracker counted about 105 driverless vehicles, and Tesla's answers to a federal safety inquiry are due October 30. The same day, [Elon Musk said](https://www.youtube.com/watch?v=wJasRLuu_LA&t=2066s) robot hands are the main obstacle for the Optimus humanoid robot, and production will ramp up slowly.
+- **Tesla's next-generation Roadster** will be unveiled on Thursday, October 15, at 7:55 p.m. Central time, in a [livestream](https://x.com/Tesla/status/2110165104713183485). The event was postponed from October 1 because of weather ([Electrek](https://electrek.co/2026/10/13/tesla-roadster-event-thursday-nine-years-delays/)).
 - **Boston Dynamics hired an AI leader as CEO.** [Rohit Prasad](https://bostondynamics.com/news/boston-dynamics-appoints-rohit-prasad-as-chief-executive-officer/), who ran Alexa and AI research at Amazon, took over on October 7. Owner Hyundai plans to put Atlas humanoid robots to work from 2028.
 - **A robot learned cornhole from a video.** In a [Google demonstration](https://developers.googleblog.com/gemini-4-argon-for-robotics/) (Oct 13), Gemini 4 Argon, a general-purpose AI model rather than one built for robots, taught Apptronik's Apollo humanoid to play in four steps. It watched a person throw and mapped the motion to the robot's joints. It used the robot's cameras to locate the board and built a physics simulation. It practiced in the simulation. Then, on the real robot, it adjusted each throw by centimeters until seven went in a row. Google says simulated practice raised real-world task success from 56% to 75%. It has not said how many attempts the demo took.
 - **Also:** AWS and NVIDIA released [free robot-building tools](https://aws.amazon.com/blogs/physical-ai/introducing-aws-physical-ai-toolchain/) (Oct 7). XPENG says its IRON humanoid will begin deliveries in early 2027 ([TechNode](https://technode.com/2026/10/13/xpeng-plans-humanoid-robot-deliveries-in-2027-and-european-rollout-later-that-year)). Warehouse-robot company Ultra raised $50 million ([Fortune](https://fortune.com/2026/10/09/ultra-raises-62-million-fast-growing-robots-service-tie-up-ai-research-firm-physical-intelligence/)). NVIDIA is [reportedly](https://www.humanoidsdaily.com/news/nvidia-figure-billion-investment-talks-report) in talks to invest about $1 billion more in Figure AI.
@@ -503,6 +545,7 @@ Upcoming dates from this edition.
 
 | Date | What happens |
 | --- | --- |
+| Oct 15 | Tesla's next-generation Roadster unveiling, 7:55 p.m. CT (livestream) |
 | Oct 16 | Surface Laptop Ultra goes on sale |
 | Oct 21 | CU Boulder AI Symposium |
 | Oct 24 | Perplexity's developer API retires several older OpenAI models |

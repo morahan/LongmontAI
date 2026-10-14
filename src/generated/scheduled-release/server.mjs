@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-10-14-sense-of-wonder",
   "publishAt": "2026-10-14T11:00:00-06:00",
   "publishAtMs": 1791997200000,
-  "releaseRevision": "9bbb26948aeffe71ea4b4033",
+  "releaseRevision": "f054b34d9fd3670d126f10a1",
   "source": {
     "manifest": "src/articles/drafts/2026.10.14-sense-of-wonder.release.json",
     "article": "src/articles/drafts/2026.10.14-sense-of-wonder.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "94c3e230b8f59210d846e15479295703e684f49f65b43a23d983b1221874a61e"
+    "sha256": "480a3120b1724aa7a28855fb2c9cda21c7a34197a172d6b067ce9aa70e9b25c3"
   },
   "slideshow": {
     "id": "agent-factory",
@@ -94,6 +94,12 @@ const release = Object.freeze({
       "contentType": "image/jpeg",
       "sha256": "295ea122a0d2f963883ce78c54ee46ba236200133ed758f21457de62bfc18454"
     },
+    "ai-video-30-second-budget.jpg": {
+      "file": "media/ai-video-30-second-budget.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/ai-video-30-second-budget.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "1aafa9aecc67f9902d117fa9bb829406ae8a58ed23e98753f3b9d87121ac538f"
+    },
     "amazon-alexa-tablets.jpg": {
       "file": "media/amazon-alexa-tablets.jpg",
       "sourceUrl": "/weekly-screenshots/2026.10.14/amazon-alexa-tablets.jpg",
@@ -129,6 +135,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.10.14/claude-haiku-5-5.jpg",
       "contentType": "image/jpeg",
       "sha256": "861b07d4d8d5b674c1f804f101bebdfc2d2d93f7af8ccf62a96c4d2d37e813c7"
+    },
+    "claude-subagents-vs-agent-teams.jpg": {
+      "file": "media/claude-subagents-vs-agent-teams.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/claude-subagents-vs-agent-teams.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "a5024fc2f4d4a59555e52a45cf93bdc9e7d558f22ea74a170d6f49bf4371ba26"
     },
     "fish-audio-drama-3.png": {
       "file": "media/fish-audio-drama-3.png",
@@ -213,6 +225,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.10.14/rokos-basilisk-wikipedia.jpg",
       "contentType": "image/jpeg",
       "sha256": "8dc14ea4ba82616d36458ac5a088016e5cf08bc37a162cd0f16345fc19aa5bef"
+    },
+    "semianalysis-subscription-api-value-by-plan.jpg": {
+      "file": "media/semianalysis-subscription-api-value-by-plan.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/semianalysis-subscription-api-value-by-plan.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "c54128ba9bd874ba28efda271de12d7bda5e66f887a3b5792b06a7b1cb277eb7"
     },
     "vector-vs-graph-rag.mp4": {
       "file": "media/vector-vs-graph-rag.mp4",
