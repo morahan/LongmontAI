@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-10-14-sense-of-wonder",
   "publishAt": "2026-10-14T11:00:00-06:00",
   "publishAtMs": 1791997200000,
-  "releaseRevision": "3c6eafa191d1a265173325a3",
+  "releaseRevision": "e8d9220151b1e8efcf237602",
   "source": {
     "manifest": "src/articles/drafts/2026.10.14-sense-of-wonder.release.json",
     "article": "src/articles/drafts/2026.10.14-sense-of-wonder.md",
@@ -12,10 +12,16 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "da09c0358753f487b4b71d80dcecb6fa49b28d5731d8c3db7d4aba5695e2ade6"
+    "sha256": "02d52087c7bc5089de903fd5e99b8f50664d7d39261520836f9901bb16c957e8"
   },
   "slideshow": null,
   "media": {
+    "abstraction-staircase-run-the-factory.jpg": {
+      "file": "media/abstraction-staircase-run-the-factory.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/abstraction-staircase-run-the-factory.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "8627c1fadda2f8efebf8d9f08f17bcb21d87aea0daf77308eda94ed3e4c3a39a"
+    },
     "amazon-alexa-tablets.jpg": {
       "file": "media/amazon-alexa-tablets.jpg",
       "sourceUrl": "/weekly-screenshots/2026.10.14/amazon-alexa-tablets.jpg",
@@ -27,6 +33,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.10.14/apple-homeview-lineup.jpg",
       "contentType": "image/jpeg",
       "sha256": "078a8a8c824afd8d17ca6e7d2ab6d23cb57381f57405440463a0e7f2f4373098"
+    },
+    "brain-it-fmri-image-reconstruction.jpg": {
+      "file": "media/brain-it-fmri-image-reconstruction.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/brain-it-fmri-image-reconstruction.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "310978b3ef573d0dba6ae729ab7dfbb4d50b4bb034c41169dc5cbb2611f42c25"
     },
     "claude-haiku-5-5.jpg": {
       "file": "media/claude-haiku-5-5.jpg",
@@ -88,11 +100,23 @@ const release = Object.freeze({
       "contentType": "image/png",
       "sha256": "ae67d3a1de89db3581e880285759888178e5a57c0872785e8fe61c8a56040088"
     },
+    "nyt-openai-377-math-problems.jpg": {
+      "file": "media/nyt-openai-377-math-problems.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/nyt-openai-377-math-problems.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "46703dd6b0e02705d218edb8b376ce28eadec1a39e3e02b54485bbc7b143607d"
+    },
     "personal-agent-protocol.png": {
       "file": "media/personal-agent-protocol.png",
       "sourceUrl": "/weekly-screenshots/2026.10.14/personal-agent-protocol.png",
       "contentType": "image/png",
       "sha256": "e7712f11a5fe1cd32929ee55ec2d76a729e8278735391811df84cb7cf0763e7f"
+    },
+    "rokos-basilisk-wikipedia.jpg": {
+      "file": "media/rokos-basilisk-wikipedia.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/rokos-basilisk-wikipedia.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "8dc14ea4ba82616d36458ac5a088016e5cf08bc37a162cd0f16345fc19aa5bef"
     },
     "vector-vs-graph-rag.mp4": {
       "file": "media/vector-vs-graph-rag.mp4",
@@ -112,11 +136,23 @@ const release = Object.freeze({
       "contentType": "image/png",
       "sha256": "9e9ff42c8a95dc2cea6f3808aa9aea9a2586bc3c3cbbc045d92c8f8449c1ce74"
     },
+    "we-will-direct-agent-fleets.jpg": {
+      "file": "media/we-will-direct-agent-fleets.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/we-will-direct-agent-fleets.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "71bd5b19661710cb150aa66a695861b673acebc576de2a5090c5766450133569"
+    },
     "windows-hybrid-intelligence.png": {
       "file": "media/windows-hybrid-intelligence.png",
       "sourceUrl": "/weekly-screenshots/2026.10.14/windows-hybrid-intelligence.png",
       "contentType": "image/png",
       "sha256": "e15afb47bd6253987c3aec9bd95d227f8c8e717ea13ac59e578c7beef995a503"
+    },
+    "x-posts-tibo-dhh-always-on-agents.jpg": {
+      "file": "media/x-posts-tibo-dhh-always-on-agents.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/x-posts-tibo-dhh-always-on-agents.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "3e1f745f4721564fdc34578812534dfb7a9989c203be238e8afbc60fe33bcf1f"
     }
   }
 });

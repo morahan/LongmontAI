@@ -291,6 +291,19 @@ On October 9, Anthropic released **dynamic workflows** for Claude Managed Agents
 ![Personal Agent Protocol announcement card listing launch partners Meta, Sierra, Genesys, Instinct, Rocket, Shopify, Stripe, and Walmart.](/weekly-screenshots/2026.10.14/personal-agent-protocol.png)
 
 On October 6, Sierra and Meta proposed the [**Personal Agent Protocol**](https://sierra.ai/blog/introducing-personal-agent-protocol), an open standard for how a customer's AI agent deals with a business's systems. The agent can browse as a guest, and the customer decides whether it can only look or can also act. Shopify, Stripe, and Walmart are launch partners, and payments will come in a later version.
+### From doing the work to running the factory
+The people building these tools describe a new kind of job: directing many agents rather than doing each task yourself.
+
+![Two posts on X. Tibo (@thsottiaux), who leads OpenAI's Codex: "Over the next 28 days, each day we'll either ship one thing that is a clear improvement and relevant for most codex/work users or ship a full reset." Below, DHH (@dhh): "Every developer needs an AI shed: An always-on machine running on their tailscale network where the majority of their herdr agents are running."](/weekly-screenshots/2026.10.14/x-posts-tibo-dhh-always-on-agents.jpg)
+
+- **Shipping every day:** on October 4, OpenAI's Codex lead [Tibo Sottiaux promised](https://x.com/thsottiaux/status/2106845241357824205) that for the next 28 days the team would ship one clear improvement for Codex users every day, or "a full reset."
+- **An "AI shed":** the same day, Ruby on Rails creator [DHH wrote](https://x.com/dhh/status/2106755814421565495) that every developer needs an always-on machine on their private network where most of their AI agents run.
+
+![Hand-drawn staircase diagram. A stick figure climbs four steps labeled "do the task," "run agents," "design loops," and "run the factory," with an arrow labeled "more abstract." The top step shows a figure overseeing a conveyor belt of robots.](/weekly-screenshots/2026.10.14/abstraction-staircase-run-the-factory.jpg)
+
+![Handwritten slide: "We will: create new agents, manage fleets of agents, allocate resources, choose the models and harnesses, establish evals, spend more time thinking."](/weekly-screenshots/2026.10.14/we-will-direct-agent-fleets.jpg)
+
+The two sketches above are widely shared online without a credited author. They capture the shift well: each step up means less typing and more deciding. You choose which agents to run, which models to trust, how to check their work, and where the money goes.
 ### Four actions that need a human sign-off
 Each of these launches touches at least one of four actions. Before an agent can take one, decide who approves it.
 
@@ -309,6 +322,23 @@ Each of these launches touches at least one of four actions. Before an agent can
 - **Anthropic's Cyber Mission** (Oct 8) includes [**OSS Scanner**](https://www.anthropic.com/news/anthropic-cyber-mission), a free, opt-in service that scans open-source software for security bugs and sends the maintainers a report with a suggested fix. Anthropic says "the reports are model-generated and sent without human review," and expects more than 90% to be accurate. The same program created a critical-infrastructure defense group with 11 founding partners, including CrowdStrike, Palo Alto Networks, and Rockwell Automation.
 - **Anthropic's [2026 Usage Policy](https://www.anthropic.com/news/2026-usage-policy-update)** takes effect November 12. Among other changes, any machine that Claude controls on its own must have a qualified operator who can watch it and stop it.
 - **Security access is expanding.** Anthropic [widened its program](https://www.anthropic.com/news/cyber-verification-program) giving vetted security professionals fewer restrictions (Oct 6). Mistral is offering vetted partners a less-moderated version of Large 4.
+
+## AI in science
+### OpenAI publishes hundreds of AI-produced math results
+![New York Times headline: "OpenAI Releases Findings on 377 Math Problems, Further Roiling Field." Subhead: "After a previous solution angered mathematicians, the company characterized the new release as being more responsive to concerns about A.I. disrupting research."](/weekly-screenshots/2026.10.14/nyt-openai-377-math-problems.jpg)
+
+On October 6, OpenAI [released a public collection](https://github.com/openai/math) of mathematics results produced by an unreleased internal model ([New York Times](https://www.nytimes.com/2026/10/06/science/openai-math-problems.html)).
+- **Scale:** the model was given about 4,000 problems. OpenAI organized the results into 372 families of findings. Each result used about three hours of ChatGPT Pro computing time.
+- **Corrections in public:** the collection launched with 722 write-ups. A day later, OpenAI withdrew three after finding a sign error and revised 14 others, leaving 719.
+- **Checkable proofs:** about 42% of the main results have been formally verified in Lean, a programming language that mechanically checks mathematical proofs.
+- **Context:** the release follows OpenAI's September claim about the Navier-Stokes equations, which drew sharp criticism from mathematicians ([Scientific American](https://www.scientificamerican.com/article/openai-claims-blockbuster-math-breakthrough-amid-swirl-of-controversy/)). OpenAI says this release responds to concerns about AI disrupting research.
+### Reading images from brain scans
+![MIT Technology Review comparison of images people viewed (left of each pair) and images reconstructed from their brain scans (right): a clock tower, a stop sign by the sea, frisbee players, a man holding a glass, a sleeping woman, a hotel bed, giraffes, a surfer, a skier, a glass with a banana, and two birds on a branch.](/weekly-screenshots/2026.10.14/brain-it-fmri-image-reconstruction.jpg)
+
+[MIT Technology Review](https://www.technologyreview.com/2026/10/01/1145588/ai-mind-reading-reconstructs-what-youre-looking-at/) (Oct 1) covered **Brain-IT**, a system from Michal Irani's lab at the Weizmann Institute that reconstructs the images a person is looking at from fMRI brain scans.
+- **What's new:** earlier tools needed about 40 hours of brain-scan data from each new person. Brain-IT gets comparable results from **one hour** ([paper](https://arxiv.org/abs/2510.25976)).
+- **Not perfect:** in one example, a cake came back as three sandwiches.
+- **Not brand-new:** the research was first posted in October 2025 and presented at ICLR 2026. This fortnight brought wider attention, not a new release.
 
 ## Robots and robotaxis
 
@@ -368,6 +398,10 @@ For the first time, cars that run only on gasoline made up **less than half of n
 
 ## Talk philosophy with Sensi
 [**Sensi — Consciousness & Physics**](https://x.ai/bot/EkfSB8lfqHBQUgCFHVHez) is a public Grok Bot built by our organizer for long conversations about the mind and the universe: the hard problem of consciousness, integrated information theory, panpsychism, and the structure of physical law. It starts from the basics for newcomers, goes deeper for anyone who knows the theories, and argues both sides. Add it to your Grok Bot app and bring a question to the next meetup.
+
+![Wikipedia article "Roko's basilisk," describing a thought experiment in which a future artificial superintelligence would punish anyone who knew of its potential existence but did not help bring it about. It originated in a 2010 post on the LessWrong forum.](/weekly-screenshots/2026.10.14/rokos-basilisk-wikipedia.jpg)
+
+**A question to start with:** [Roko's basilisk](https://en.wikipedia.org/wiki/Roko%27s_basilisk) is a 2010 thought experiment from the LessWrong forum. It imagines a future AI that punishes anyone who knew it could exist but didn't help create it. Critics call it a version of Pascal's wager, but it remains a good test of how we reason about AI risk. Is it a real argument, or a trick of decision theory?
 
 ## Key dates
 
