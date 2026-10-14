@@ -366,6 +366,9 @@ For the first time, cars that run only on gasoline made up **less than half of n
 - **CU Boulder** [unveiled DeepSFU](https://www.colorado.edu/today/2026/10/12/ai-deepfakes-are-getting-spookier-scientists-cu-have-developed-better-way-spot-them) (Oct 12), a tool that spots deepfakes in live video calls, even over compressed video. CU says it is more than 143 times faster than earlier methods. CU's AI Symposium is [October 21](https://www.colorado.edu/studentlife/ai-symposium).
 - **First "AI Engaged" campuses:** on October 6, the state [recognized six schools](https://mailchi.mp/dhe.state.co.us/aiengaged) for AI education: Aims Community College, Colorado School of Mines, CSU Global, MSU Denver, the University of Denver, and UNC. The designation carries no funding.
 
+## Talk philosophy with Sensi
+[**Sensi — Consciousness & Physics**](https://x.ai/bot/EkfSB8lfqHBQUgCFHVHez) is a public Grok Bot built by our organizer for long conversations about the mind and the universe: the hard problem of consciousness, integrated information theory, panpsychism, and the structure of physical law. It starts from the basics for newcomers, goes deeper for anyone who knows the theories, and argues both sides. Add it to your Grok Bot app and bring a question to the next meetup.
+
 ## Key dates
 
 | Date | What happens |
@@ -414,6 +417,19 @@ See this fortnight's releases in action. Each link opens the original video.
 
 **AI voice**
 - [**Fish Audio Drama 3 launch**](https://x.com/FishAudio/status/2110038429199450126) (Fish Audio): AI voices directed in plain language, changing emotion mid-sentence.
+
+## Vector RAG vs. Graph RAG, animated
+How does an AI find the right facts in a company's data? This 60-second animation answers one question two ways. Vector search retrieves the text that *sounds* most like the question. A knowledge graph follows the links between records, so it can find answers spread across several of them. The companies and data in the example are made up.
+
+{{video:/weekly-screenshots/2026.10.14/vector-vs-graph-rag.mp4}}
+
+## Download the PDF slideshows
+Four slide decks covering this fortnight, each made with a different AI tool. Free to download and share.
+
+- [**Two Weeks of AI Progress, Charted**](/documents/2026.10.14/grok-longmontai-oct14-ai-progress.pdf) (made with Grok · 16 slides · 1.8 MB): small models, frontier prices, Muse Wonder, and agent fleets.
+- [**Robots on the Road, Robots at Work**](/documents/2026.10.14/grok-longmontai-oct14-robotics-ai.pdf) (made with Grok · 13 slides · 1.5 MB): Waymo safety data, robotaxis, humanoids, and what it means for the Front Range.
+- [**The Intelligence Age: 14 Days of AI**](/documents/2026.10.14/manus-intelligence-age-14-days-of-ai.pdf) (made with Manus · 10 slides · 0.4 MB): the five most consequential moves and a builder's read.
+- [**The Stack Learns to Move**](/documents/2026.10.14/muse-slideshow-october-14.pdf) (made with Muse · 13 slides · 0.7 MB): nineteen releases across models, tools, chips, and robots.
 
 ## About our sources
 Primary sources include Meta's announcement, research blog, model card, and pricing page; OpenAI's GPT-6 system card and developer changelog; Anthropic's Haiku 5.5, Cyber Mission, and Usage Policy posts and Claude Platform documentation; Mistral's announcement and documentation; Google's Gemini at Work, Gemini Robotics, Nano Banana 2.1, and EmbeddingGemma 2 posts; Microsoft's Windows and MAI posts; Waymo, Boston Dynamics, Apple, Amazon, Hark, Sierra, Cursor, Suno, and xAI announcements; and Colorado's General Assembly, Attorney General, Department of Higher Education, and CU Boulder. Independent scores come from Artificial Analysis and the official Terminal-Bench 4.0 leaderboard. Prices were checked October 13, 2026, and can change. Benchmark claims from companies are labeled as theirs. Tesla's fleet count, XPENG's timeline, Ultra's funding, and NVIDIA's talks with Figure come from executive remarks or press reports, not company filings. Local details from the Colorado Sun, Denverite, CPR, 9News, and CBS Colorado are attributed in the text.

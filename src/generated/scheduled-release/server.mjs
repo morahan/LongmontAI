@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-10-14-sense-of-wonder",
   "publishAt": "2026-10-14T11:00:00-06:00",
   "publishAtMs": 1791997200000,
-  "releaseRevision": "96e66ce59d3793c527f6b6a9",
+  "releaseRevision": "3c6eafa191d1a265173325a3",
   "source": {
     "manifest": "src/articles/drafts/2026.10.14-sense-of-wonder.release.json",
     "article": "src/articles/drafts/2026.10.14-sense-of-wonder.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "c85d760a14f5587ebfeb5b915831a1101630336ec981e61dbf239db897dd4e5d"
+    "sha256": "da09c0358753f487b4b71d80dcecb6fa49b28d5731d8c3db7d4aba5695e2ade6"
   },
   "slideshow": null,
   "media": {
@@ -52,6 +52,30 @@ const release = Object.freeze({
       "contentType": "image/png",
       "sha256": "9e09bce527525c97c28e6a7326ca8165ee810051b9e734f0dccb1380cc16f782"
     },
+    "grok-longmontai-oct14-ai-progress.pdf": {
+      "file": "media/grok-longmontai-oct14-ai-progress.pdf",
+      "sourceUrl": "/documents/2026.10.14/grok-longmontai-oct14-ai-progress.pdf",
+      "contentType": "application/pdf",
+      "sha256": "a4fd4ad10001e45140fc3ea441de65f29b0edc662ce0c6e4f925e48320af7b96"
+    },
+    "grok-longmontai-oct14-robotics-ai.pdf": {
+      "file": "media/grok-longmontai-oct14-robotics-ai.pdf",
+      "sourceUrl": "/documents/2026.10.14/grok-longmontai-oct14-robotics-ai.pdf",
+      "contentType": "application/pdf",
+      "sha256": "774511d3688203bd094ca998c16e17dd3f4b25e522f04ffadb6d0e77135c4743"
+    },
+    "manus-intelligence-age-14-days-of-ai.pdf": {
+      "file": "media/manus-intelligence-age-14-days-of-ai.pdf",
+      "sourceUrl": "/documents/2026.10.14/manus-intelligence-age-14-days-of-ai.pdf",
+      "contentType": "application/pdf",
+      "sha256": "6135ec02f23936fd32ece0b4b63cef3596a9885907c0bd149e314655d3a514b4"
+    },
+    "muse-slideshow-october-14.pdf": {
+      "file": "media/muse-slideshow-october-14.pdf",
+      "sourceUrl": "/documents/2026.10.14/muse-slideshow-october-14.pdf",
+      "contentType": "application/pdf",
+      "sha256": "6b3ac50546b27c1138a8f2ea98b5dbb622686ffeabb13df2a196319145a3bcfe"
+    },
     "muse-wonder-announcement.jpg": {
       "file": "media/muse-wonder-announcement.jpg",
       "sourceUrl": "/weekly-screenshots/2026.10.14/muse-wonder-announcement.jpg",
@@ -69,6 +93,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.10.14/personal-agent-protocol.png",
       "contentType": "image/png",
       "sha256": "e7712f11a5fe1cd32929ee55ec2d76a729e8278735391811df84cb7cf0763e7f"
+    },
+    "vector-vs-graph-rag.mp4": {
+      "file": "media/vector-vs-graph-rag.mp4",
+      "sourceUrl": "/weekly-screenshots/2026.10.14/vector-vs-graph-rag.mp4",
+      "contentType": "video/mp4",
+      "sha256": "7b0c1b10e96ab4efb2a82ffb73f82a3eef1de25ae2ebf1a641f42a626102dcc6"
     },
     "waymo-5b-debt-financing.png": {
       "file": "media/waymo-5b-debt-financing.png",
