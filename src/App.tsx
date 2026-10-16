@@ -13,6 +13,7 @@ const ModelWatch = lazy(() => import('./pages/ModelWatch'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Timeline = lazy(() => import('./pages/Timeline'));
 const Newsletter = lazy(() => import('./pages/Newsletter'));
+const Timer = lazy(() => import('./pages/Timer'));
 
 function RouteDocumentTitle() {
   const { pathname } = useLocation();
@@ -76,6 +77,7 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/newsletter" element={<Newsletter />} />
+            <Route path="/timer" element={<Timer />} />
             <Route path="/about" element={
               <div className="text-center py-20">
                 <h1 className="text-4xl font-bold mb-4">About AI Innovations</h1>

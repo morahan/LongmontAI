@@ -12,6 +12,7 @@ const routeTitles: ReadonlyArray<readonly [string, string | undefined]> = [
   ['/leaderboard', 'Leaderboard'],
   ['/timeline', 'AI Timeline'],
   ['/newsletter', 'Newsletter'],
+  ['/timer', 'Hourglass Timer'],
   ['/about', 'About'],
 ];
 
