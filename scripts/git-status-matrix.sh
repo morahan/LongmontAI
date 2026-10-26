@@ -62,6 +62,29 @@ default_branch() {
   for b in main master; do git -C "$dir" show-ref -q --verify "refs/heads/$b" && { printf '%s' "$b"; return; }; done
   git -C "$dir" symbolic-ref --short -q HEAD || printf main
 }
+# Name of the commit in a *_HEAD file ($2) of worktree $1: branch-ish via name-rev, else its short sha
+headname() {
+  local n; n="$(head -1 "$2" 2>/dev/null)"
+  git -C "$1" name-rev --name-only --no-undefined "$n" 2>/dev/null || printf '%s' "${n:0:7}"
+}
+# Merge/rebase/am/cherry-pick/revert/bisect in progress in worktree $1, e.g. "MERGING fix/foo" (empty if none).
+# Read-only; --git-path resolves the per-worktree state files, so linked worktrees work too.
+inprogress() {
+  local d="$1" i n s="" g=()
+  mapfile -t g < <(git -C "$d" rev-parse --git-path rebase-merge --git-path rebase-apply --git-path MERGE_HEAD \
+    --git-path CHERRY_PICK_HEAD --git-path REVERT_HEAD --git-path BISECT_LOG 2>/dev/null)
+  for i in "${!g[@]}"; do [ "${g[i]#/}" = "${g[i]}" ] && g[i]="$d/${g[i]}"; done
+  if [ -d "${g[0]:-}" ]; then n="$(sed 's#^refs/heads/##' "${g[0]}/head-name" 2>/dev/null)"; s="REBASING${n:+ $n}"
+  elif [ -d "${g[1]:-}" ] && [ -e "${g[1]}/applying" ]; then s="AM (applying patches)"
+  elif [ -d "${g[1]:-}" ]; then n="$(sed 's#^refs/heads/##' "${g[1]}/head-name" 2>/dev/null)"; s="REBASING${n:+ $n}"
+  elif [ -e "${g[2]:-}" ]; then s="MERGING $(headname "$d" "${g[2]}")"
+  elif [ -e "${g[3]:-}" ]; then s="CHERRY-PICKING $(headname "$d" "${g[3]}")"
+  elif [ -e "${g[4]:-}" ]; then s="REVERTING $(headname "$d" "${g[4]}")"; fi
+  [ -e "${g[5]:-}" ] && s="${s:+$s, }BISECTING"
+  printf '%s' "$s" | clean
+}
+# Short lowercase tag for a branch-table note: "MERGING fix/foo" -> "merging"
+iptag() { local t="${1%% *}"; t="${t%,}"; printf '%s' "${t,,}"; }
 # Up to 5 commits in a range, then "+N more": title count range
 clist() {
   printf '    %s (%s):\n' "$1" "$2"
@@ -102,7 +125,7 @@ scan() {
 
   local prs="" np="n/a" slug
   if [ "$has_origin" = 1 ] && [ "$has_gh" = 1 ]; then
-    slug="$(git -C "$dir" remote get-url origin | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
+    slug="$(git -C "$dir" remote get-url origin | sed -E 's#^.*github\.com[:/]##; s#\.git$##')"
     if prs="$(gh pr list -R "$slug" --state open --limit 200 \
         --json number,headRefName,title,isDraft \
         --jq '.[] | "\(.headRefName)\t#\(.number)\(if .isDraft then " [draft]" else "" end) \(.title)"' 2>/dev/null | clean)"; then
@@ -122,23 +145,25 @@ scan() {
     abm="no remote"; nr="-"
   fi
 
-  local remote_ok=0 cur ok bad=0
+  local remote_ok=0 cur ok bad=0 ip
   [ "$has_origin" = 1 ] && [ "$nr" = 1 ] && [ "$abm" = "+0/-0" ] && [ "$np" = 0 ] && remote_ok=1
   cur="$(git -C "$dir" symbolic-ref --short -q HEAD || echo "detached at $(git -C "$dir" rev-parse --short HEAD)")"
-  if [ "$cur" = "$def" ] && [ "$nl" = 1 ] && [ "$wt" = 1 ] && [ "$st" = 0 ] && [ "$dirty" = 0 ] && [ "$remote_ok" = 1 ]; then ok=✅; else ok=❌; bad=1; fi
+  ip="$(inprogress "$dir")"
+  if [ -z "$ip" ] && [ "$cur" = "$def" ] && [ "$nl" = 1 ] && [ "$wt" = 1 ] && [ "$st" = 0 ] && [ "$dirty" = 0 ] && [ "$remote_ok" = 1 ]; then ok=✅; else ok=❌; bad=1; fi
   printf "$fmt" "$name" "$nl" "$nr" "$np" "$wt" "$st" "$dirty" "$abm" "$ok" >"$out.row"
   echo "$nl $nr $np $wt $st $dirty $bad" >"$out.tot"
 
   # ---- per-branch table ----
   local base="$def" k v p b s t
   git -C "$dir" rev-parse -q --verify "refs/remotes/origin/$def" >/dev/null && base="origin/$def"
-  local -A wt_of=() st_of=() pr_of=(); local detached=() dhead=() hd=""
+  local -A wt_of=() st_of=() pr_of=() prune_of=(); local detached=() dhead=() hd=""
   while read -r k v; do
     case "$k" in
       worktree) p="$v"; hd="" ;;
       HEAD) hd="$v" ;;
       branch) wt_of["${v#refs/heads/}"]="$p" ;;
       detached) detached+=("$p"); dhead+=("$hd") ;;
+      prunable) prune_of["$p"]=1 ;;
     esac
   done < <(git -C "$dir" worktree list --porcelain)
   while IFS= read -r s; do
@@ -151,20 +176,22 @@ scan() {
   remotes="$(git -C "$dir" for-each-ref --format='%(refname:short)' refs/remotes/origin | grep -v -E '^origin(/HEAD)?$' | sed 's#^origin/##')"
   branches="$( { grep -Fx "$def" <<<"$locals"; grep -vFx "$def" <<<"$locals"; comm -13 <(sort <<<"$locals") <(sort <<<"$remotes"); } | grep . )"
 
-  local rows="" commits="" l r ref wp dy dyc sc note vm vmc ahead a bh sy syc h
+  local rows="" commits="" l r ref wp dy dyc sc note vm vmc ahead a bh sy syc h wip
   while IFS= read -r b; do
     [ -n "$b" ] || continue
     l="·"; r="·"; git -C "$dir" rev-parse -q --verify "refs/heads/$b" >/dev/null && l="●"
     git -C "$dir" rev-parse -q --verify "refs/remotes/origin/$b" >/dev/null && r="●"
     ref="$b"; [ "$l" = "·" ] && ref="origin/$b"
-    wp="—"; dy="—"; dyc=""
+    wp="—"; dy="—"; dyc=""; wip=""
     if [ -n "${wt_of[$b]:-}" ]; then
       wp="$(shortpath "${wt_of[$b]}")"
       if [ ! -d "${wt_of[$b]}" ]; then dy="gone"; elif ! dy="$(git -C "${wt_of[$b]}" status --porcelain 2>/dev/null | wc -l | tr -d ' '; exit "${PIPESTATUS[0]}")"; then dy="?"; fi
       [ "$dy" != 0 ] && dyc="$cY"
+      [ -d "${wt_of[$b]}" ] && t="$(inprogress "${wt_of[$b]}")" && [ -n "$t" ] && wip="${cR}$(iptag "$t")${cX} "
     fi
     s="${st_of[$b]:-0}"; sc=""; [ "$s" != 0 ] && sc="$cY"
-    note=""; vm="—"; vmc=""; ahead=0
+    note="$wip"; vm="—"; vmc=""; ahead=0
+    [ -n "${wt_of[$b]:-}" ] && [ -n "${prune_of[${wt_of[$b]}]:-}" ] && note+="${cD}worktree prunable (git worktree prune)${cX} "
     if [ "$b" != "$def" ]; then
       read -r a bh <<<"$(ab "$ref" "$base")"; vm="+${a:-?}/-${bh:-?}"
       if [ "${a:-1}" = 0 ]; then vmc="$cD"; note+="${cD}merged, prunable${cX} "; else vmc="$cC"; ahead=1; fi
@@ -199,14 +226,17 @@ scan() {
     if [ -d "$p" ]; then
       dy="$(git -C "$p" status --porcelain 2>/dev/null | wc -l | tr -d ' '; exit "${PIPESTATUS[0]}")" || dy="?"
       note="${cY}detached worktree${cX}"
+      [ -n "${prune_of[$p]:-}" ] && note="${cD}detached, prunable (git worktree prune)${cX}"
+      t="$(inprogress "$p")" && [ -n "$t" ] && note="${cR}$(iptag "$t")${cX} $note"
     else
       dy="gone"; note="${cD}gone, prunable (git worktree prune)${cX}"
     fi
     rows+="$(brow "(detached $h)" "·" "·" "$(shortpath "$p")" "$cY" "$dy" "" "—" "+${a:-?}/-${bh:-?}" "$cD" "—" "$da" "$note")"$'\n'
   done
-  printf '%s' $'\n'"${cB}── $name${cX}  ${cD}(on $cur, compared against $base)${cX}"$'\n'"$rows" >"$out.table"
+  printf '%s' $'\n'"${cB}── $name${cX}  ${cD}(on $cur, compared against $base)${cX}${ip:+ ${cR}⚠ $ip${cX}}"$'\n'"$rows" >"$out.table"
 
   local d=""
+  [ -n "$ip" ] && d+="  in progress: $ip (finish or abort it in $(shortpath "$(cd "$dir" && pwd)"))"$'\n'
   [ "$st" -gt 0 ] && d+="  stashes:"$'\n'"$(git -C "$dir" stash list | clean | sed 's/^/    /')"$'\n'
   [ "$dirty" -gt 0 ] && d+="  dirty files (first 15):"$'\n'"$(git -C "$dir" status --short | clean | head -15 | sed 's/^/    /')"$'\n'
   [ -n "$commits" ] && d+="  commits not in sync with origin:"$'\n'"$commits"
@@ -255,4 +285,4 @@ printf '%s' "$table"
 printf '%s' "$details"
 echo
 printf '%s\n' "${cD}L/R = local/remote branch exists · base = each repo's default branch (origin/HEAD, else main, else master) · vs base = commits ahead/behind it · ↑ unpushed ↓ unpulled · age = last commit${cX}"
-[ "$all_ok" -eq 0 ] && echo "default-branch-only, clean and level with origin ✅" || echo "❌ = not on the default branch, extra branches, PRs, worktrees, stashes, dirty files, default-branch drift, failed fetch or no remote"
+[ "$all_ok" -eq 0 ] && echo "default-branch-only, clean and level with origin ✅" || echo "❌ = not on the default branch, extra branches, PRs, worktrees, stashes, dirty files, merge/rebase in progress, default-branch drift, failed fetch or no remote"
