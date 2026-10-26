@@ -58,3 +58,7 @@ loop-push-merge minutes="2" *args:
 [positional-arguments]
 loop-merge-push-strict minutes="2" *args:
     @node scripts/loop-merge-push.mjs "$@"
+
+# Source-control matrix for this repo: local/remote branches, open PRs, worktrees, stashes, dirty files, commits vs default branch and origin
+status:
+    @scripts/git-status-matrix.sh
