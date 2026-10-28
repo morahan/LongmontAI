@@ -25,6 +25,37 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    "agent-factory": {
+        "id": "agent-factory",
+        "title": "From doing the task to running the factory",
+        "description": "Six hand-drawn sketches on how AI agents change knowledge work: from waiting on one person to running a line of agents, what starts an agent, the agent loop, prompts and skills, and the software factory.",
+        "slides": [
+            {
+                "title": "Today: a line of agents waits on one person",
+                "src": "/slideshows/2026.10.14/agent-factory/agent-factory-01-today-agents-wait-on-you.jpg"
+            },
+            {
+                "title": "The future: agents run the line while you design it",
+                "src": "/slideshows/2026.10.14/agent-factory/agent-factory-02-future-agents-run-the-line.jpg"
+            },
+            {
+                "title": "What starts an agent: a schedule, a webhook, an incident, feedback, a bug hunt, or another agent",
+                "src": "/slideshows/2026.10.14/agent-factory/agent-factory-03-what-starts-an-agent.jpg"
+            },
+            {
+                "title": "The agent loop: trigger, agent works, check, repeat",
+                "src": "/slideshows/2026.10.14/agent-factory/agent-factory-04-trigger-work-check-repeat.jpg"
+            },
+            {
+                "title": "Prompts and skills: turn a repeated task into a reusable skill",
+                "src": "/slideshows/2026.10.14/agent-factory/agent-factory-05-prompts-and-skills.jpg"
+            },
+            {
+                "title": "From agentic loop to software factory: many loops chained together",
+                "src": "/slideshows/2026.10.14/agent-factory/agent-factory-06-agentic-loop-to-software-factory.jpg"
+            }
+        ]
+    },
     'host-then-cheap-stack': {
     "id": "host-then-cheap-stack",
     "title": "The teammate, then the Flash",

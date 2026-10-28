@@ -1,0 +1,27 @@
+{
+  "editionId": "edition-2026-10-28-opening-the-books",
+  "meetingDate": "2026-10-28",
+  "timezone": "America/Denver",
+  "publishAt": "2026-10-28T11:30:00-06:00",
+  "status": "scheduled",
+  "article": "src/articles/drafts/2026.10.28-opening-the-books.md",
+  "assetFolder": "2026.10.28",
+  "assetRoot": "src/articles/drafts/assets/2026.10.28",
+  "slideshowId": "opening-the-books",
+  "slideshow": {
+    "id": "opening-the-books",
+    "title": "Opening the Books",
+    "description": "Nine slides on October 14–27, 2026: Anthropic's S-1 revenue, compute costs and customers, GPT-6.1 Terra, Genie 4, Apple's AI hardware, and what Nvidia and SpaceX earn from AI compute.",
+    "slides": [
+      { "title": "Opening the Books: fourteen days of AI, October 14–27, 2026", "path": "slide-01.png" },
+      { "title": "Anthropic's quarterly revenue grew from $376M to $11.6B in five quarters", "path": "slide-02.png" },
+      { "title": "Anthropic's compute cost fell from 251% to 48% of revenue; first operating profit of $974M", "path": "slide-03.png" },
+      { "title": "Anthropic customers: 11,900+ spending $100K, about 900% net revenue retention, $6.6M revenue per employee", "path": "slide-04.png" },
+      { "title": "GPT-6.1 Terra: $1 / $5 per million tokens, 50.3% on Terminal-Bench 4.0, over 3x faster than Sol", "path": "slide-05.png" },
+      { "title": "Genie 4 adds sound and live text steering to real-time simulated worlds", "path": "slide-06.png" },
+      { "title": "Apple: iMac M6 up to 5x faster on-device AI, iPad mini A20 Pro, Apple TV 4K at $299", "path": "slide-07.png" },
+      { "title": "Nvidia earns about $40B per gigawatt with Rubin; SpaceX's AI segment grew 830%", "path": "slide-08.png" },
+      { "title": "Read the filing. Check the receipt.", "path": "slide-09.png" }
+    ]
+  }
+}
