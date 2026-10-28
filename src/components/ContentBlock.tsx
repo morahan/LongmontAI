@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { ContentItem } from '../articles';
 import DocumentEmbed from './DocumentEmbed';
 import Slideshow from './Slideshow';
+import ImageGallery from './ImageGallery';
 import { SlideshowDeck } from '../articles/slideshows';
 import ChineseModelReleaseWidgets from '../articles/chinese-model-release-widgets';
 
@@ -32,7 +33,14 @@ const markdownComponents = {
         // Two or more images with nothing but whitespace between them render as a gallery grid.
         const elements = node?.children?.filter((child: any) => child.type !== 'text' || child.value.trim()) ?? [];
         if (elements.length > 1 && elements.every((child: any) => child.type === 'element' && child.tagName === 'img')) {
-            return <div className="article-gallery">{children}</div>;
+            return (
+                <ImageGallery
+                    images={elements.map((child: any) => ({
+                        src: String(child.properties?.src ?? ''),
+                        alt: String(child.properties?.alt ?? ''),
+                    }))}
+                />
+            );
         }
 
         return <p className="mb-6 leading-relaxed" {...props}>{children}</p>;
