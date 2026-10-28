@@ -4093,107 +4093,43 @@ iframe {
   background: #000000;
 }
 
-.article-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  width: min(1120px, calc(100vw - 3rem));
-  margin: 2rem 0 3rem 50%;
-  transform: translateX(-50%);
-}
-
-.article-gallery-thumb {
-  display: block;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  background: #050507;
-  box-shadow: var(--glass-shadow);
-  cursor: zoom-in;
-  transition: border-color 180ms ease, transform 180ms ease;
-}
-
-.article-gallery-thumb:hover,
-.article-gallery-thumb:focus-visible {
-  border-color: rgba(59, 130, 246, 0.72);
-  transform: translateY(-2px);
-}
-
-.article-gallery-thumb img {
-  display: block;
-  width: 100%;
+.article-gallery-frame {
   aspect-ratio: 16 / 9;
-  object-fit: contain;
 }
 
-.gallery-lightbox {
+.article-gallery-frame:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.75);
+  outline-offset: -2px;
+}
+
+/* Fallback when the element Fullscreen API is unavailable (e.g. iPhone Safari). */
+.article-gallery-frame.is-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 4rem 4.5rem 1.5rem;
-  background: #050507;
+  aspect-ratio: auto;
+  border: 0;
+  background: #000000;
 }
 
-.gallery-lightbox > img {
-  max-width: 100%;
-  max-height: calc(100% - 4rem);
-  object-fit: contain;
-  border-radius: 6px;
+.article-gallery-frame.is-expanded img {
+  height: calc(100% - 3.5rem);
 }
 
-.gallery-lightbox-caption {
-  max-width: 60rem;
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  text-align: center;
-}
-
-.gallery-lightbox-bar {
+.article-gallery-caption {
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
+  bottom: 0;
+  margin: 0;
+  padding: 0.85rem 4rem;
   color: var(--text-secondary);
-  font-family: var(--font-mono);
-}
-
-.gallery-lightbox-bar button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-left: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  background: rgba(24, 24, 27, 0.8);
-  color: #ffffff;
-}
-
-.gallery-lightbox-bar button:hover,
-.gallery-lightbox-bar button:focus-visible {
-  border-color: rgba(59, 130, 246, 0.75);
-}
-
-@media (max-width: 640px) {
-  .gallery-lightbox {
-    padding: 3.75rem 0.5rem 1rem;
-  }
-
-  .gallery-lightbox-caption {
-    font-size: 0.85rem;
-  }
+  font-size: 0.95rem;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 640px) {
