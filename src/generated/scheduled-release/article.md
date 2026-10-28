@@ -27,12 +27,14 @@ The products kept coming too. OpenAI's **GPT-6.1 Terra** cut the price of a capa
 - **Mathematics**: checking an AI's proof about Landau–Siegel zeros
 - **Computing**: a quantum error-correction record from Broomfield, and Google's magic states
 - **Key dates**, **takeaways**, and **about our sources**
+- **DeepSeek-V4 explained**: four slides on a model that grades its own work
+- **Galleries**: our organizer's Grok slides and Notebook deck
 
 This edition covers **October 14–27, 2026**.
 
 {{slideshow:opening-the-books}}
 
-[Download the nine-slide briefing (PDF)](/documents/2026.10.28/opening-the-books-briefing.pdf)
+[Download the eight-slide briefing (PDF)](/documents/2026.10.28/opening-the-books-briefing.pdf)
 
 ## Anthropic opens its books
 
@@ -267,5 +269,49 @@ We label every claim by where it comes from:
 - **Press and filing analyses**: SpaceX's segment figures come from consistent secondary reports of its official results, which we could not extract directly.
 - **Independent benchmarks**: Artificial Analysis and Vals results are comparisons under their own test conditions.
 - **Primary research**: the *Science* paper and arXiv preprints are research results, not settled conclusions.
+
+## DeepSeek-V4 explained: the model grades its own work
+
+Most chatbots learned their manners through **reinforcement learning from human feedback (RLHF)**: people rank answers, a separate scoring model learns their taste, and the chatbot is trained to please the scorer. DeepSeek's [V4 technical report](https://arxiv.org/abs/2606.19348) describes a different loop for tasks without a clear right answer, such as writing, design, and tool use. "We dispense with these conventional scalar-based reward models," it says (section 5.1.1). Instead, "the actor network natively functions as the GRM," a generative reward model: the model being trained writes its own rubric-guided evaluation, and reinforcement learning improves the answers and the judging together, with what DeepSeek calls "a minimal set of diverse human annotations."
+
+The catch: a model grading itself can learn blind spots or reward hacking, as [Fireworks AI's analysis](https://fireworks.ai/blog/what-deepseek-v4-says-about-training-platforms) points out. The report was first posted in April. We include it here because it is one of the clearest departures from the classic recipe ([InstructGPT, 2022](https://arxiv.org/abs/2203.02155)).
+
+![DeepSeek-V4 explainer, slide 1 of 4: The model grades its own work. Step 1, a rubric: curated rubric-guided training data. Step 2, actor equals judge: the actor network evaluates each attempt. Step 3, reinforcement learning trains the answers and the grading together.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-01.png)
+![DeepSeek-V4 explainer, slide 2 of 4: Traditional RLHF, the old loop: fine-tune on answers people write, people rank several model answers, a separate reward model learns to predict the rankings as one number, and the model is optimized against that number with a leash to keep it close.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-02.png)
+![DeepSeek-V4 explainer, slide 3 of 4: Side by side: who judges, a separate scorer versus the model itself; what it gives, one number versus a written critique; human input, many ranked comparisons versus a minimal set of diverse human annotations.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-03.png)
+![DeepSeek-V4 explainer, slide 4 of 4: Why it matters: feedback that scales with the model. Cheaper, with fewer labels; smarter, with a reasoning judge; the risk, a self-judge can learn blind spots or reward hacking.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-04.png)
+
+## Gallery: our organizer's Grok slides
+
+Our organizer made these slides with Grok for today's meetup. Their claims are Grok's summaries and have not been checked against the ledger behind this edition.
+
+![Grok slide: Open weights, open roads. Frontier-class models reach the desk, robotaxis publish their numbers, agents learn to ask first. Tags: Muse Spark Open on two Mac Studios, Tesla's first safety report, Claude Duet asks first.](/weekly-screenshots/2026.10.28/grok-open-weights-open-roads.png)
+![Grok slide: Humanoids reach the production line. Tesla Optimus in Fremont, Agility Digit 5 early access in the first half of 2027, and the Agile One SN reference humanoid in early 2027.](/weekly-screenshots/2026.10.28/grok-humanoids-reach-production-line.png)
+![Grok slide: Colorado writes the rules. Two Colorado AI laws take effect January 1, 2027: the ADMT Act, SB 26-189, on consequential decisions, and the Chatbot Act, HB 26-1263; the Attorney General's public hearing was October 26.](/weekly-screenshots/2026.10.28/grok-colorado-writes-the-rules.png)
+![Grok slide: Three things to try this week. Try one open model, read one safety report, and write down the four actions your agents must ask about: send, pay, sign, delete.](/weekly-screenshots/2026.10.28/grok-three-things-to-try.png)
+
+## Gallery: the Notebook deck
+
+A 19-page deck on enterprise AI governance, supplied by our organizer. It is AI-generated, and several of its claims, including its incident statistics, go beyond what this edition has verified. Read it as a discussion prompt, not a source.
+
+![Notebook deck, page 1 of 19: Redrawing the boundaries of enterprise AI.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-01.jpg)
+![Notebook deck, page 2 of 19: The old AI reality versus the new AI reality.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-02.jpg)
+![Notebook deck, page 3 of 19: Act I: the frontier closes.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-03.jpg)
+![Notebook deck, page 4 of 19: Act II: the intelligence divide, a chart of model access.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-04.jpg)
+![Notebook deck, page 5 of 19: Act II: the intelligence divide, model capability crossing a critical cyber threshold.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-05.jpg)
+![Notebook deck, page 6 of 19: The Anthropic incidents, the DeepSeek evasions, and the threat vector.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-06.jpg)
+![Notebook deck, page 7 of 19: Act II: the open rebellion.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-07.jpg)
+![Notebook deck, page 8 of 19: A table comparing Claude Opus 5.5, Gemini 4 Argon, Kimi K3.1 Pro and Meta Muse Spark.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-08.jpg)
+![Notebook deck, page 9 of 19: Intelligence versus cost per completed agentic task.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-09.jpg)
+![Notebook deck, page 10 of 19: Price cards for Claude Haiku 5.5, DeepSeek V4.1 Flash, MiniMax M3.1 Flash and GPT-6.1 Sol.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-10.jpg)
+![Notebook deck, page 11 of 19: Sticker price versus actual cost realities.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-11.jpg)
+![Notebook deck, page 12 of 19: Agentic routing architecture.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-12.jpg)
+![Notebook deck, page 13 of 19: AI models must now be governed as non-human employees.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-13.jpg)
+![Notebook deck, page 14 of 19: Act III: taming the swarm.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-14.jpg)
+![Notebook deck, page 15 of 19: Architectural foundation for AI agent governance.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-15.jpg)
+![Notebook deck, page 16 of 19: Secure AI agent lifecycle: dynamic authorization and revocation.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-16.jpg)
+![Notebook deck, page 17 of 19: Co-worker agents and workspace identities.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-17.jpg)
+![Notebook deck, page 18 of 19: Cross-platform discovery and containment.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-18.jpg)
+![Notebook deck, page 19 of 19: Strategic audit: AI agent deployment and governance readiness checklist.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-19.jpg)
 
 *Curated by Intelligence.*

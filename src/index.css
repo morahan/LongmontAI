@@ -4093,6 +4093,36 @@ iframe {
   background: #000000;
 }
 
+.article-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  width: min(1120px, calc(100vw - 3rem));
+  margin: 2rem 0 3rem 50%;
+  transform: translateX(-50%);
+}
+
+.article-gallery .article-media {
+  width: auto;
+  margin: 0;
+  transform: none;
+}
+
+/* Alt text stays on each image; the grid shows thumbnails without long captions. */
+.article-gallery .article-media figcaption {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .article-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    width: min(100%, calc(100vw - 1.5rem));
+    margin: 1.5rem auto 2.25rem;
+    transform: none;
+  }
+}
+
 .article-media figcaption {
   max-width: 54rem;
   margin: 0.85rem auto 0;

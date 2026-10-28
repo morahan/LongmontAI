@@ -29,6 +29,12 @@ const markdownComponents = {
             return <>{children}</>;
         }
 
+        // Two or more images with nothing but whitespace between them render as a gallery grid.
+        const elements = node?.children?.filter((child: any) => child.type !== 'text' || child.value.trim()) ?? [];
+        if (elements.length > 1 && elements.every((child: any) => child.type === 'element' && child.tagName === 'img')) {
+            return <div className="article-gallery">{children}</div>;
+        }
+
         return <p className="mb-6 leading-relaxed" {...props}>{children}</p>;
     },
     ul: ({ node, ...props }: any) => <ul className="list-disc ml-6 mb-6 space-y-2" {...props} />,

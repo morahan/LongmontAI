@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic Oct 28 briefing: canonical brand, nine slides, an image PDF and one article chart.
+"""Deterministic Oct 28 briefing: canonical brand, eight slides, an image PDF and one article chart.
 
 Uses Playwright's bundled headless Chromium + macOS sips and Python stdlib; no network.
 Only Oct 28 scratch and private draft assets are written.
@@ -24,7 +24,7 @@ if not SHELLS:
 CHROMIUM = str(SHELLS[-1])
 HTML = ROOT / 'html'
 SLIDES = ROOT / 'slides'
-TOTAL = 9
+TOTAL = 8
 
 
 def image(file):
@@ -95,15 +95,12 @@ SLIDE_DATA = [
      'Source: deepmind.google/blog · vendor claims, no benchmarks published', ''),
     ('APPLE / OCTOBER 13–27', 'Apple puts the model on the desk',
      'A run of press releases, no keynote. Siri AI arrives in beta, outside the EU.',
-     [('iMac with M6', '5×', 'On-device AI vs M4 · from $1,499'), ('iPad mini · A20 Pro', '4.5×', 'Faster AI · from $699'), ('Apple TV 4K', '$299', 'Siri AI beta · ships Nov 13')], False,
+     [('iMac with M6', '5×', 'On-device AI vs the M4 iMac'), ('iPad mini · A20 Pro', '4.5×', 'AI vs the previous iPad mini'), ('Apple TV 4K · A19', '2×', 'GPU vs the previous Apple TV 4K')], False,
      'Source: apple.com/newsroom · Apple performance claims', ''),
     ('FOLLOW THE COMPUTE', 'The money is in the gigawatts',
      'Nvidia’s Aug 26 call and SpaceX’s Oct 20 call put prices on AI capacity.',
      [('Nvidia revenue per GW', '$40B', 'Rubin, vs ~$18B for Hopper'), ('SpaceX AI segment', '+830%', '$7.56B in Q3, 52% of revenue'), ('SpaceX Q3 capex to AI', '$16.4B', 'Of $19.6B total')], False,
      'Nvidia earnings call remarks · SpaceX Q3 2026 results, as reported', ''),
-    ('LONGMONT AI / THIS WEEK', 'Read the filing.<br>Check the receipt.',
-     'Bring one number you verified yourself.', [], True,
-     'CURATED BY INTELLIGENCE. · longmontai.com', ''),
 ]
 
 

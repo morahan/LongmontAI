@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-10-28-opening-the-books",
   "publishAt": "2026-10-28T11:30:00-06:00",
   "publishAtMs": 1793208600000,
-  "releaseRevision": "6cb3cb3aecf1cf8c9a33271f",
+  "releaseRevision": "76d9a100a65f2798ea92f195",
   "source": {
     "manifest": "src/articles/drafts/2026.10.28-opening-the-books.release.json",
     "article": "src/articles/drafts/2026.10.28-opening-the-books.md",
@@ -12,12 +12,12 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "ff7aa43d50a50145c344b9e5e875a824c6c50ab110f9aa77988b119701086680"
+    "sha256": "9d8e598fbd441115b5fe4f4d2ee63d5cf260c3450f6f44126d731efa302324f6"
   },
   "slideshow": {
     "id": "opening-the-books",
     "title": "Opening the Books",
-    "description": "Nine slides on October 14–27, 2026: Anthropic's S-1 revenue, compute costs and customers, GPT-6.1 Terra, Genie 4, Apple's AI hardware, and what Nvidia and SpaceX earn from AI compute.",
+    "description": "Eight slides on October 14–27, 2026: Anthropic's S-1 revenue, compute costs and customers, GPT-6.1 Terra, Genie 4, Apple's AI hardware, and what Nvidia and SpaceX earn from AI compute.",
     "slides": [
       {
         "title": "Opening the Books: fourteen days of AI, October 14–27, 2026",
@@ -44,16 +44,12 @@ const release = Object.freeze({
         "path": "slide-06.png"
       },
       {
-        "title": "Apple: iMac M6 up to 5x faster on-device AI, iPad mini A20 Pro, Apple TV 4K at $299",
+        "title": "Apple: iMac M6 up to 5x faster on-device AI vs the M4 iMac; iPad mini 4.5x AI vs the previous iPad mini; Apple TV 4K 2x GPU vs the previous model",
         "path": "slide-07.png"
       },
       {
         "title": "Nvidia earns about $40B per gigawatt with Rubin; SpaceX's AI segment grew 830%",
         "path": "slide-08.png"
-      },
-      {
-        "title": "Read the filing. Check the receipt.",
-        "path": "slide-09.png"
       }
     ]
   },
@@ -62,73 +58,229 @@ const release = Object.freeze({
       "file": "media/anthropic-compute-share-of-revenue-s1.png",
       "sourceUrl": "/weekly-screenshots/2026.10.28/anthropic-compute-share-of-revenue-s1.png",
       "contentType": "image/png",
-      "sha256": "ffa6b11d16b964b714d5f3b9d1fe6d08b4168c48439601fc16e17f85d6be9b50"
+      "sha256": "e5d2bb038dd7a86bb2660c66fecf82e03088cf22111d94ab3e5fae377f2f0c77"
     },
     "anthropic-quarterly-revenue-s1.png": {
       "file": "media/anthropic-quarterly-revenue-s1.png",
       "sourceUrl": "/weekly-screenshots/2026.10.28/anthropic-quarterly-revenue-s1.png",
       "contentType": "image/png",
-      "sha256": "fc42e4aa9677ae9a75bd2c62067b96996c1050af9b59b0aa4a93141b66f2e65f"
+      "sha256": "0f4247cb4f9c7ea2d33983c5da55b37b34a370bf637237f6585e007a27e245a5"
+    },
+    "deepseek-v4-self-judge-01.png": {
+      "file": "media/deepseek-v4-self-judge-01.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-01.png",
+      "contentType": "image/png",
+      "sha256": "81ec55335fe03944a02b6f33ba93b0d95ed9bb8646e3821f70d87c92b5580300"
+    },
+    "deepseek-v4-self-judge-02.png": {
+      "file": "media/deepseek-v4-self-judge-02.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-02.png",
+      "contentType": "image/png",
+      "sha256": "673e00905ee12e51fe032a3e2e40d552a5c3ab72f6bbda932a0955bc2b0eca86"
+    },
+    "deepseek-v4-self-judge-03.png": {
+      "file": "media/deepseek-v4-self-judge-03.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-03.png",
+      "contentType": "image/png",
+      "sha256": "84de80a0c9d1bebd3e15aed61b1d5977376f5aa63dac34f21ad4b5054a29e9d4"
+    },
+    "deepseek-v4-self-judge-04.png": {
+      "file": "media/deepseek-v4-self-judge-04.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-04.png",
+      "contentType": "image/png",
+      "sha256": "d2908d11985ddb81abfc99795895b87e3a9306b7aebfd733668bac34bdd8221c"
+    },
+    "grok-colorado-writes-the-rules.png": {
+      "file": "media/grok-colorado-writes-the-rules.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/grok-colorado-writes-the-rules.png",
+      "contentType": "image/png",
+      "sha256": "4478fb04f3afe16009e552f32a4199936e81eeb229d19640d1fdedc40b401109"
+    },
+    "grok-humanoids-reach-production-line.png": {
+      "file": "media/grok-humanoids-reach-production-line.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/grok-humanoids-reach-production-line.png",
+      "contentType": "image/png",
+      "sha256": "4bd2e50457b27d3b3e1b1501201b05f7d59c6e52ad55981cfb1feaf125bd7873"
+    },
+    "grok-open-weights-open-roads.png": {
+      "file": "media/grok-open-weights-open-roads.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/grok-open-weights-open-roads.png",
+      "contentType": "image/png",
+      "sha256": "96852815d28e32abceadcd4fa36497a8126b480a6068744445f7a1293a42d9fd"
+    },
+    "grok-three-things-to-try.png": {
+      "file": "media/grok-three-things-to-try.png",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/grok-three-things-to-try.png",
+      "contentType": "image/png",
+      "sha256": "affff16559873ad748aa68d645bf9ac9348b668f5870f8db31c69a5c59fa2e6f"
+    },
+    "notebook-enterprise-ai-boundaries-01.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-01.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-01.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "73e5f66f416f915709568b6224e14b77016717c27994d076e7c18a451e1380d9"
+    },
+    "notebook-enterprise-ai-boundaries-02.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-02.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-02.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "b2ae54cf16805049251e5e0284d313c8cbde0fedbe56aa92f9c6868ae61070dc"
+    },
+    "notebook-enterprise-ai-boundaries-03.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-03.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-03.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "89efb12c08b649a1b68eaec9a17aba2a1a8c4953686d7b8f433ae7ddee2263f3"
+    },
+    "notebook-enterprise-ai-boundaries-04.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-04.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-04.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "cb33297addcfe7f3e13edfb776db8226567f78d459a92575c5c2c67e761a5202"
+    },
+    "notebook-enterprise-ai-boundaries-05.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-05.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-05.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "0d929e909c15115578201aec00c2c372b07706616c43d179d2017b1722187d52"
+    },
+    "notebook-enterprise-ai-boundaries-06.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-06.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-06.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "8230695c0590ee3f2e016a33a50dc7f7e31d15fe36ad4a50db6cd6a2b84a2949"
+    },
+    "notebook-enterprise-ai-boundaries-07.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-07.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-07.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "675394120383935283d7ca50d2293f5f9883fe08eb8f57a42cfe45b99e1b9e40"
+    },
+    "notebook-enterprise-ai-boundaries-08.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-08.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-08.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "73f892223c1e0dfb39fc651a944b13cb8d6bbd4a2077936c4dcc1ce7091426c2"
+    },
+    "notebook-enterprise-ai-boundaries-09.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-09.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-09.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "b8a61803af383fc87e564c815b202e1593f0e3a370ae815d18b2d0e5cbac990a"
+    },
+    "notebook-enterprise-ai-boundaries-10.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-10.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-10.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "8d53d972352fd2f57f190d13a7c0fb3ceb5b71d09907ad56e99ef50cbce136b7"
+    },
+    "notebook-enterprise-ai-boundaries-11.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-11.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-11.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "58764bb350c6acf732232f533ff9059d0b905e8a9ca31b4fb3556b5e6af34fc0"
+    },
+    "notebook-enterprise-ai-boundaries-12.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-12.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-12.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "918d16a0062573950193e469b93698670f48d4632c4d6f11033f85daab499310"
+    },
+    "notebook-enterprise-ai-boundaries-13.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-13.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-13.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "cf2c3618a17e0714e8b8b4c2cb8df192e16fd6cb196ae8e01b65885d97e5bb15"
+    },
+    "notebook-enterprise-ai-boundaries-14.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-14.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-14.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "faba5b9e2f121b2a8fdb12e2177f9597fea2e3173410e82885df8dceac6c12f4"
+    },
+    "notebook-enterprise-ai-boundaries-15.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-15.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-15.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "884539c0125e2f4880306ad42e10d57213906856e95d2e71e4e00a91daba0d04"
+    },
+    "notebook-enterprise-ai-boundaries-16.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-16.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-16.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "d714742b6194136fc3e033b145629e7ec39380c5ff7d07847681fed71591f21d"
+    },
+    "notebook-enterprise-ai-boundaries-17.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-17.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-17.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "37065d3b07c0e2b5c1e584837f505f771560538c0777ff51ef7cb121aa4a62b6"
+    },
+    "notebook-enterprise-ai-boundaries-18.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-18.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-18.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "d30221c34f77e6aed6867e3ba11d66af6a9713f434077af1e946784fd5387c5a"
+    },
+    "notebook-enterprise-ai-boundaries-19.jpg": {
+      "file": "media/notebook-enterprise-ai-boundaries-19.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-19.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "2d5523824d74755e8f06c107ac08686e75ae444e2e448d4769cbed77e857e6d1"
     },
     "opening-the-books-briefing.pdf": {
       "file": "media/opening-the-books-briefing.pdf",
       "sourceUrl": "/documents/2026.10.28/opening-the-books-briefing.pdf",
       "contentType": "application/pdf",
-      "sha256": "4986766ec77515eaff9a643af14c0a09a1e0f481e7f3350cf945c0afbf7c8bd4"
+      "sha256": "4c37efb40e7b822478489f4f663a84b422d7b3115dcd6c2fbb92d4bd07ad485c"
     },
     "slide-01.png": {
       "file": "media/slide-01.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "60ac3b626821f3fe16cba6b7e515ca2734dfa143ec2c09f23fe855326c37b26d"
+      "sha256": "94c17ea9da491779b5152f0d9d4b74fae69ed60ab32068e1a70afa89ad535343"
     },
     "slide-02.png": {
       "file": "media/slide-02.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "fc42e4aa9677ae9a75bd2c62067b96996c1050af9b59b0aa4a93141b66f2e65f"
+      "sha256": "0f4247cb4f9c7ea2d33983c5da55b37b34a370bf637237f6585e007a27e245a5"
     },
     "slide-03.png": {
       "file": "media/slide-03.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "ffa6b11d16b964b714d5f3b9d1fe6d08b4168c48439601fc16e17f85d6be9b50"
+      "sha256": "e5d2bb038dd7a86bb2660c66fecf82e03088cf22111d94ab3e5fae377f2f0c77"
     },
     "slide-04.png": {
       "file": "media/slide-04.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "916fc1ee718832da97b6cbd58d9100d8fd2e4c439da16000852eeef7a890d48b"
+      "sha256": "91863b50206a65a825e9225f5a33ac875dd209514ce32e1e5555b7c7e9d65203"
     },
     "slide-05.png": {
       "file": "media/slide-05.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "c15daed01cbab83cfde79f76ee33ca4fe90b8494682e55e5652d4c64ac04bf51"
+      "sha256": "d6237fdf7e02abcb8e75fdc168740e8d294bd7f359bf556a0cdf6d489ba8b7c9"
     },
     "slide-06.png": {
       "file": "media/slide-06.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "aba2089134e21e264806c260334dae38a9da2ff79ac8f56153f4ae7830891637"
+      "sha256": "8412e96be98a572fe5de08366c1a16f7d61a26bf2670e8a98ef26a36d8d03f3c"
     },
     "slide-07.png": {
       "file": "media/slide-07.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "5403703b7a4f0dffc85d222bb33579941896b0035249d043b95d9542fb86d215"
+      "sha256": "8fd914fc191d59b30ee0824db86b3c4be0e9a096b7231339690982b1e239b4b5"
     },
     "slide-08.png": {
       "file": "media/slide-08.png",
       "sourceUrl": null,
       "contentType": "image/png",
-      "sha256": "fac4ddcf241f06972cda36e3d365b9caef49bdce1a54dc1e23d32742658ddd34"
-    },
-    "slide-09.png": {
-      "file": "media/slide-09.png",
-      "sourceUrl": null,
-      "contentType": "image/png",
-      "sha256": "ba377253fa27415bc80af8117549b7d3947ccfc1d533a328aac7afa5c5fddc25"
+      "sha256": "0749dd4034ef1c4f6e58e72d9e0ae7d5b0b651ca6f8494d54d809a7bf951fe87"
     }
   }
 });
