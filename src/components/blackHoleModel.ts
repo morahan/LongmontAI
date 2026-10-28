@@ -13,7 +13,7 @@ export interface BlackHoleState {
 export const BLACK_HOLE_RADIUS = 185;
 export const BLACK_HOLE_CORE = 5;
 export const BLACK_HOLE_MAX_STARS = 192;
-export const BLACK_HOLE_MAX_SPARKS = 32;
+export const BLACK_HOLE_MAX_SPARKS = 16;
 export const BLACK_HOLE_MAX_DELTA = 1 / 30;
 export const createBlackHole = (): BlackHoleState => ({
     stars: new Map(), sparks: [], captures: 0, recaptures: 0,
@@ -124,7 +124,9 @@ export function stepBlackHole(
         if (next.captured) {
             captures += 1;
             // Recaptured sparks do not spawn more sparks: no runaway cascade.
-            if (sparks.length <= BLACK_HOLE_MAX_SPARKS - 4) sparks.push(...createHawkingJets(center, captures));
+            if (captures % 2 === 0 && sparks.length <= BLACK_HOLE_MAX_SPARKS - 4) {
+                sparks.push(...createHawkingJets(center, captures));
+            }
         }
     });
     return { stars, sparks, captures, recaptures };
