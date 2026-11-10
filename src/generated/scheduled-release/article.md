@@ -1,317 +1,351 @@
 ---
-id: edition-2026-10-28-opening-the-books
-date: 2026-10-28
-publishAt: 2026-10-28T11:30:00-06:00
+id: edition-2026-11-11-promised-weights-gated-agents
+date: 2026-11-11
+publishAt: 2026-11-11T11:30:00-07:00
 status: scheduled
-title: "Opening the Books"
-summary: "Anthropic files to go public and shows its numbers, GPT-6.1 Terra halves the price of a capable agent, Genie 4 builds worlds you can hear, Apple puts AI on the desk, and mathematicians check a machine's proof."
+title: "Promised weights, gated agents"
+summary: "Anthropic shipped Claude Fable 5.2 and kept Mythos 5.2 behind an application, Google opened Gemini 4 Carbon to paying users, Meta and Mistral pushed prices and open weights, Moonshot kept its weights promise while Tencent's and Thinking Machines' were still pending, agents gained checkpoints and better memory, and Colorado's AI rules were still being finished."
 ---
 
-## Opening the Books
+## Promised weights, gated agents
 
-For three years, the economics of frontier AI were a matter of rumor: leaked revenue run rates, anonymous sources, napkin math about GPUs. On October 26 that changed. **Anthropic filed to go public**, and its S-1 put audited numbers on the page for the first time. They are startling. Revenue went from $376 million in the first quarter of 2025 to $11.6 billion in the second quarter of 2026, and the company earned its first operating profit along the way.
+Last edition ended with a promise: Moonshot said it would publish the full weights of its Kimi K3.1 Pro model by November 4. Did it? This fortnight we can check. (Weights are the downloadable file that holds a model's learned settings. If you have the file, you can run the model yourself.)
 
-It was a fortnight of opened books. SpaceX's AI segment reported its first profitable quarter. Nvidia's last earnings call put a dollar figure on every gigawatt of AI capacity. Meta opened the weights of a frontier-scale model. And in mathematics, independent number theorists opened up an AI-produced proof of a famous conjecture and started checking it line by line.
+The answer is yes for Moonshot, not yet for two others. Tencent said on November 4 that it would release weights "in the coming days," and Thinking Machines said on November 5 that it intends to release weights "next week." As of November 10, neither file had shipped. Meanwhile the biggest new models arrived with gates attached: Anthropic released Claude Fable 5.2 to everyone but kept its twin, Mythos 5.2, for approved organizations, and Google opened Gemini 4 Carbon to paying users two weeks after giving it only to security teams. The leash on AI agents, the rules for what an agent may touch and when it must stop, kept showing up as a product feature you can switch on.
 
-The products kept coming too. OpenAI's **GPT-6.1 Terra** cut the price of a capable agent in half. Google DeepMind's **Genie 4** builds interactive worlds you can hear as well as see. **Apple** shipped a run of AI-ready hardware without holding a keynote. And **Fish Audio** released a live transcription model built for voice agents.
+The thread running through all of it: **promises kept versus promises still pending**, and **gates and leashes as product features**. A promise is an announcement. A file you can download, a setting you can switch on, or a number someone else measured is something you can check.
 
 **In this edition:**
 
-- **Anthropic's S-1**: revenue, profit, customers, compute, and who controls the company
-- **Follow the compute**: startling numbers from Nvidia's and SpaceX's earnings calls
-- **GPT-6.1 Terra**: OpenAI's new mid-tier model, at half the price
-- **Genie 4**: Google DeepMind's world model learns to make sound
-- **Apple's quiet launch season**: iMac M6, iPad mini, Apple TV, HomePod mini
-- **Fish Audio Realtime STT**: live transcription for voice agents
-- **Open and edge models**: Muse Spark Open, Nemotron 3.5 Bolt, and Kimi K3.1 Pro
-- **Mathematics**: checking an AI's proof about Landau–Siegel zeros
-- **Computing**: a quantum error-correction record from Broomfield, and Google's magic states
-- **Key dates**, **takeaways**, and **about our sources**
-- **DeepSeek-V4 explained**: four slides on a model that grades its own work
-- **Galleries**: our organizer's Grok slides and Notebook deck
+- **New this fortnight: the release board**: Claude Fable 5.2 and Mythos 5.2, Gemini 4 Carbon, Meta's Muse Ember, ChatGPT Images 2.6, Mistral Large 4's open weights, and a Grok 4.8 promise
+- **Weights: promised vs. shipped**: Kimi K3.1 Pro, Tencent Hy4, and Thinking Machines' Inkling 2 Small
+- **The cost of a token vs. the cost of a task**: effort settings, per-task prices, message threads, and complaints about xAI's Grok Bot
+- **Agents get checkpoints**: Claude Enterprise inference hooks, AWS desktops for agents, OpenAI's GPT-6 Cyber, and a study of who really makes the call
+- **Agents that remember, and "dream"**: Anthropic's research on agent memory, and what it might mean for Claude Duet
+- **Robotaxis: more cities, still-sealed paperwork**: Tesla in San Antonio, Waymo in Los Angeles and San Diego, and a confidentiality request to NHTSA
+- **Humanoids and robots: orders, listings, a 24-hour store shift, and a fooled camera**
+- **Colorado**: AI rules still pending, a Denver permit checker, and Boulder County's data-center hearing
+- **Links and videos**, **names that are easy to mix up**, **key dates**, and **takeaways**
 
-This edition covers **October 14–27, 2026**.
+This edition covers **October 29–November 11, 2026** (America/Denver).
 
-{{slideshow:opening-the-books}}
+> **Evidence note:** Model, agent, robot, and city announcements come from the companies themselves, and benchmark scores, prices, and trial results are vendor-reported unless we name an independent source. A demo is not proof of production reliability. Posts on X are linked so you can watch them; they are people's own claims and test runs, not primary sources. Statements that something had "not shipped" describe what we could see on November 10, and they can change quickly.
 
-[Download the eight-slide briefing (PDF)](/documents/2026.10.28/opening-the-books-briefing.pdf)
+{{slideshow:promised-weights-gated-agents}}
 
-## Anthropic opens its books
+![Longmont AI branded cover for the November 11 briefing: "Promised weights, gated agents." Brand layout, not a product screenshot.](/weekly-screenshots/2026.11.11/slide-01-cover.png)
 
-**What happened:** On October 26, Anthropic [filed a Form S-1](https://www.sec.gov/Archives/edgar/data/2130357/000162828026067168/anthropicpbc-sx1.htm) with the U.S. Securities and Exchange Commission, the registration statement a company files before an initial public offering ([Anthropic's announcement](https://www.anthropic.com/news/s1-sec)). It plans to list Class A shares on the Nasdaq Global Select Market under the ticker **ANT**. Goldman Sachs and Morgan Stanley are named in the filing. The share count, price range, and valuation are still blank.
+## New this fortnight: the release board
 
-Every figure in this section comes from the filing itself unless we say otherwise.
+![Branded slide: "New this fortnight." Cards for Claude Fable 5.2, Gemini 4 Carbon, Muse Ember, and Mistral Large 4's open weights. Illustrative layout, not a chart.](/weekly-screenshots/2026.11.11/slide-02-release-board.png)
 
-### The revenue curve
+Here is what the big labs and the open-weight crowd shipped between October 29 and November 10. Prices are the vendors' list prices per million tokens (input / output). "Open weights" means you can download the model file.
 
-![Bar chart of Anthropic's quarterly revenue from its S-1 filing: Q1 2025 $376 million, Q2 2025 $787 million, Q3 2025 $1.4 billion, Q4 2025 $2.0 billion, Q1 2026 $4.7 billion, Q2 2026 $11.6 billion. The final bar is highlighted.](/weekly-screenshots/2026.10.28/anthropic-quarterly-revenue-s1.png)
+| Date | Model | Company | Open weights? | What it's for | List price |
+| --- | --- | --- | --- | --- | --- |
+| Oct 29 | Mistral Large 4 | Mistral | **Yes** (modified MIT) | Coding, security, general work | $0.70 / $2.10 |
+| Nov 4 | ChatGPT Images 2.6, GPT-Image-2.6 Sunburst and Flare | OpenAI | No | Images, GIFs, SVG drawings | per image |
+| Nov 4 | Kimi K3.1 Pro (weights) | Moonshot | **Yes** (custom license) | Coding and long agent work | see below |
+| Nov 4 | Hy4 | Tencent | Promised, not yet | General, agents | $0.90 / $2.70 |
+| Nov 5 | Inkling 2 Small | Thinking Machines | Promised, not yet | Long workflows, images | hosted only |
+| Nov 5 | GPT-6 Cyber | OpenAI | No; approved customers only | Security research | restricted |
+| Nov 5 | Gemini Omni 1.2 Flash | Google | No | Short video clips | $0.07 per second |
+| Nov 9 | **Claude Fable 5.2** | Anthropic | No | Hardest technical work | $8 / $40 |
+| Nov 9 | Claude Mythos 5.2 | Anthropic | No; approved organizations only | Security and biology research | $8 / $40 |
+| Nov 9 | Muse Ember | Meta | No | Cheap, repeated agent steps | $0.10 / $0.50 |
+| Nov 10 | Gemini 4 Carbon (wide release) | Google | No | Hardest technical work | $2 / $10 intro, then $4 / $20 |
+| Nov 10 | MiniMax H3-Image (weights) | MiniMax | **Yes** (custom license) | Image generation | free download |
 
-| Period | Revenue | Operating income (loss) |
-| --- | --- | --- |
-| Full year 2023 | $41M | — |
-| Full year 2024 | $386M | — |
-| Full year 2025 | $4.59B | — |
-| Q1 2026 | $4.73B | ($1.67B) |
-| Q2 2026 | $11.56B | **$974M** |
-| First half 2026 | $16.29B | ($693M) |
+### Claude Fable 5.2 and Mythos 5.2: one model, two gates
 
-Second-quarter revenue grew **1,368%** over the same quarter a year earlier. In the same period, compute and infrastructure costs grew 300%. That gap is the most important number in the filing: it is the difference between a company that gets more expensive as it grows and one that gets cheaper.
+**What happened:** On November 9, [Anthropic released Claude Fable 5.2 and Claude Mythos 5.2](https://www.anthropic.com/claude-fable-and-mythos-5-2), the upgrades to its top-tier models from September's 5.1 versions. Anthropic says the two are **the same underlying model**. Fable comes with strong cybersecurity and biology safeguards, so anyone on a paid Claude plan or the API can use it. Mythos is the less-restricted version, and organizations doing security or biomedical research must apply for it through Anthropic's verification programs. That is a gate you can see.
 
-![Bar chart of Anthropic's compute and infrastructure expense as a share of quarterly revenue, from its S-1: Q1 2025 251%, Q2 2025 177%, Q3 2025 148%, Q4 2025 144%, Q1 2026 72%, Q2 2026 48%. The final bar is highlighted.](/weekly-screenshots/2026.10.28/anthropic-compute-share-of-revenue-s1.png)
+**The numbers, all Anthropic-reported:**
 
-In early 2025, Anthropic spent **$2.51 on compute for every dollar it earned**. By the second quarter of 2026, it spent **48 cents**.
+- **Price:** $8 per million input tokens and $40 per million output tokens, down from $10 and $50 for Fable 5.1, according to [Anthropic's Fable page](https://www.anthropic.com/claude/fable). An optional fast mode generates up to 2.5 times faster for $16 and $80.
+- **Speed:** outputs up to 30% faster than the 5.1 models.
+- **Benchmarks:** on FrontierCode 2.0, a test of whether a repository's maintainers would accept the model's code change, Anthropic reports **49.1%** at its highest effort setting, against 45.5% for Claude Opus 5.5, 42.8% for GPT-6 Astra, and 41.1% for Gemini 4 Carbon. Anthropic picked the tests and ran most of them, so treat it as the vendor's view. In its own table, Gemini 4 Carbon beats Fable 5.2 on one business-workflow test (53.9% vs. 51.4% on AutomationBench).
+- **Claims from testing:** Anthropic says the models helped design three working electronic devices, solved two open physics problems about black holes, and formalized the proof of Fermat's Last Theorem in 30 hours. These are company accounts; the details are in its [system card](https://www.anthropic.com/claude-fable-and-mythos-5-2).
 
-### Customers and people
+**Fine print worth knowing:** Anthropic itself says most coding and knowledge work should **start with Claude Opus 5.5** and move up to Fable only when needed. The [developer documentation](https://platform.claude.com/docs/en/models/fable-5-2/overview) says Fable 5.2 requires 30-day data retention and isn't available under zero data retention unless Anthropic expressly authorizes it, which matters if your contracts promise customers their data isn't stored. [CNBC](https://www.cnbc.com/2026/11/09/anthropic-claude-fable-5-2-mythos-5-2.html) notes this is Anthropic's first frontier release since CEO Dario Amodei called in September for slowing AI development, and that it comes as the company prepares for a possible IPO.
 
-As of September 30, 2026, over the trailing twelve months:
+### Gemini 4 Carbon: from security teams to paying users
 
-- **More than 11,900 customers** paid $100,000 or more, up from more than 950 a year earlier.
-- **More than 1,900** paid $1 million or more, and about **250** paid $10 million or more.
-- **Net revenue retention was about 900%.** On average, a customer from a year ago now spends about nine times as much.
-- Headcount was about **5,300**, and revenue per employee passed **$6.6 million**, up from $1.4 million.
+**What happened:** Google [announced Gemini 4 Carbon on October 28](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/) and gave it first only to cybersecurity defenders in its Fairwind Program. On November 10, it [made Carbon available](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-carbon-now-available/) to all paying developers and businesses through the Gemini API and Gemini for business, and to Google AI Ultra subscribers in the Gemini app, AI Mode in Search, and Antigravity, Google's agent coding tool. Google says Gemini 4 Argon is still the better pick for most work, and that Carbon is for the hardest problems and uses more tokens to think them through. [Google's own post on X](https://x.com/Google/status/2120186185423159331) has a short launch video.
 
-### The big caveat: a $80.7 billion net loss
+- **Price:** an introductory $2 per million input tokens and $10 per million output through November 30, 2026, then $4 and $20.
+- **Benchmarks, Google-reported:** Google says Carbon ranks first on CursorBench 4.0, Perplexity's WANDR, and Zapier's AutomationBench at less than half the cost per task of the next-best outside model. Those tests are run by other companies, but Google chose which results to highlight.
+- **New tool:** a preview of "/swarm" in Antigravity, which turns one prompt into a team of coordinated agents.
 
-The headline loss looks alarming, and it needs reading carefully. Anthropic reports a **net loss of $80.7 billion** for the first half of 2026, but **$72.4 billion** of that is a non-cash accounting change in the value of convertible notes, derivatives, and SAFEs: the instruments early investors bought, which are revalued as the company's worth rises. The **operating** loss for the half was $693 million, and the second quarter alone was profitable.
+[The Verge](https://www.theverge.com/ai-artificial-intelligence/1030787/google-gemini-4-carbon-public-rollout) points out the catch we keep coming back to: a cheaper price per token does not guarantee a cheaper job, because models use different numbers of tokens for the same task.
 
-Other balance-sheet figures, as of June 30, 2026:
+### Muse Ember: Meta's cheap worker model
 
-- **$131.7 billion** in cash and short-term investments
-- **$10.8 billion** in remaining performance obligations (contracted future revenue), about 75% due within a year
-- An accumulated deficit of **$132.9 billion**
-- A **$1.5 billion** copyright settlement (the *Bartz* case) recorded in 2025
+**What happened:** On November 9, [Meta introduced Muse Ember](https://research.meta.ai/blog/muse-ember), its smallest and cheapest Muse model, built for the small steps agents repeat all day: tool calls, coding subtasks, routing, pulling data out of documents. Alexandr Wang, who leads Meta Superintelligence Labs, [announced it on X](https://x.com/alexandr_wang/status/2119853374158032950) with a cost chart (an image, not a video).
 
-### Compute: where the money goes
+- **Price:** $0.10 per million input tokens and $0.50 per million output, with higher rates for requests over 200,000 input tokens, per [Meta's developer documentation](https://dev.meta.ai/docs/muse-ember) (VentureBeat lists them as $0.30 and $1.50). It reads text, images, audio, video, and PDFs.
+- **Independent check:** [VentureBeat reports](https://venturebeat.com/technology/metas-proprietary-muse-ember-nearly-matches-claude-haiku-5-5-at-1-3-the-estimated-per-task-cost) that in Artificial Analysis's launch testing, Ember scored 36 on that firm's Intelligence Index, the same rounded score as Claude Haiku 5.5, at about **14 cents per task versus 41 cents** for Haiku.
+- **Not open weights.** Ember is a hosted, proprietary model. [TechCrunch](https://techcrunch.com/2026/11/09/meta-releases-muse-ember-a-new-lightweight-model-for-agent-execution/) describes Meta's open-weight Muse model as Glimmer, an open twin of Muse Spark released in August.
 
-The filing describes an arrangement with **SpaceXAI** for compute powered by Nvidia GPUs: up to **$120.5 billion** through 2029, or about $3.1 billion a month once all capacity is delivered. It also names AWS, Google, Microsoft, and Broadcom as dependencies. The total of all compute commitments is left blank. Press estimates of $417 billion to $637 billion are estimates, not figures from the filing.
+Meta's pitch is the pattern to remember: a big model plans, and a cheap model does the volume.
 
-### Who controls the company
+### ChatGPT Images 2.6
 
-Anthropic is a public benefit corporation, and its share structure is built to keep it that way:
+On November 4, OpenAI [released ChatGPT Images 2.6](https://openai.com/products/release-notes/) for all ChatGPT users, including the free tier, plus two developer models: GPT-Image-2.6 Flare for speed and Sunburst for quality. New tricks include short animated GIFs, SVG drawings (images that scale without blurring), and saved reference images so the same person or character looks consistent across chats. OpenAI says images generate about 50% faster.
 
-- The **Long-Term Benefit Trust**, a financially disinterested body, elects a majority of the board through Class T stock.
-- A **Class F** share held by the seven co-founders carries **50.1%** of the vote on general matters.
-- Employees hold **Class E** shares with limited voting rights.
-- Anthropic will be a Nasdaq "controlled company," which exempts it from some governance rules.
+### Open weights this fortnight
 
-### In its own words: the risks
+- **Mistral Large 4 (Oct 29).** Mistral [released the weights](https://mistral.ai/news/mistral-large-4-oss/) of its 1-trillion-parameter model, nicknamed "Le Chonk," after a three-week public preview. It was trained in Europe, and Mistral pitches it for coding and defensive security. The license is a modified MIT: free to use, modify, and sell products with, except that businesses offering the model as a hosted service need a separate commercial license. Mistral reports 41% on Terminal-Bench 4.0 and 19.7% on FrontierCode 2.0 (vendor-reported; different test setups from other vendors' numbers). The API price is $0.70 / $2.10.
+- **Kimi K3.1 Pro (Nov 4).** The promise kept; details in the next section.
+- **MiniMax H3-Image (weights posted Nov 10).** MiniMax's [Hugging Face page](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image) was created November 3 and had its model files and a custom license added on November 10. MiniMax [says](https://www.minimax.io/blog/minimax-h3-image) it makes 4K images in about 10 seconds; we have not tested it, so read the license before using it.
+- **Quiet from the usual names.** When we checked their Hugging Face pages on November 10, DeepSeek, Alibaba's Qwen team, and Zhipu (GLM) had posted no new flagship weights in this window; their latest big releases came in October or earlier. We also did not find a major new model from Microsoft, Amazon, or Apple in the window.
 
-Few IPO filings warn that the product could endanger humanity. This one does. Among its risk factors, Anthropic writes that sufficiently advanced AI systems "could, if not developed, deployed, and operated with appropriate safeguards, oversight, and security measures, pose catastrophic or existential risks to humanity." It also warns that the insurance industry may lack the capacity to cover a catastrophic AI incident, and that copyright rulings like *Bartz* could still hurt its business.
+### A promise to watch: Grok 4.8
 
-**What's next:** Press reports put the IPO around **November 19–20**, with valuation talk of $1.5 to $2 trillion. Neither date nor valuation is in the filing. Treat both as speculation until a price range is filed.
+xAI has not released Grok 4.8. Early on November 10, Elon Musk [posted on X](https://x.com/elonmusk/status/2120088070443655190) that pretraining is done, the model is now in reinforcement learning (a later training step that rewards better answers), and the team rewrote its training and serving software from scratch in C and C++. [TeslaNorth reports](https://teslanorth.com/2026/11/10/grok-4-8-coming-this-week-rebuild/) that Musk also said a limited rollout to Grok Bot users would come later this week, and, asked how it compares with Claude Opus 5.5, called it "not as good." That is a plan, not a release.
 
-## Follow the compute
+**Takeaway:** look at three things on every new model card: who can actually use it, what a finished job costs, and who ran the tests.
 
-Two earnings calls put hard numbers on the AI build-out.
+## Weights: promised vs. shipped
 
-### Nvidia: about $40 billion per gigawatt
+![Branded slide: "Promised vs. shipped." Cards for Kimi K3.1 Pro (weights published November 4), Tencent Hy4 (weights promised "in the coming days"), and Inkling 2 Small (weights promised "next week"). Illustrative layout, not a chart.](/weekly-screenshots/2026.11.11/slide-03-promised-vs-shipped.png)
 
-Nvidia's most recent report, for the quarter ending July 26 ([results](https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-second-quarter-fiscal-2027), August 26), is now two months old, but its call remains the best map of AI spending. The next report is due in November.
+An announcement tells you what a company intends. A file on Hugging Face (the main public site for sharing models) tells you what it did.
 
-| Measure | Figure | Evidence |
-| --- | --- | --- |
-| Revenue | $96.2B, up 106% from a year earlier | Company release |
-| Data center revenue | $89.0B, about 92% of the total | Company release |
-| Gross margin | 75.0% | Company release |
-| Next-quarter guidance | $108B, assuming no data center sales to China | Company release |
-| Nvidia revenue per gigawatt of AI capacity | ~$18B (Hopper), ~$25B (Blackwell), ~$40B (Rubin) | Earnings call remark |
-| Cloud backlog | More than $2 trillion | Earnings call remark |
-| Top-five hyperscaler spending | ~$800B in 2026, ~$1.3T in 2027 | Earnings call remark |
+### Kimi K3.1 Pro: the promise was kept
 
-The **per-gigawatt** figure is the startling one. Each new generation of chips earns Nvidia more than twice as much per unit of power as the one two generations before it. That helps explain why Nvidia describes roughly 70% growth next fiscal year as "supply-constrained." Power, not demand, sets the limit.
+**What happened:** Moonshot published the full open weights of [Kimi K3.1 Pro on Hugging Face](https://huggingface.co/moonshotai/Kimi-K3.1-Pro), announcing it on November 4, the date it had promised. The model card lists a **2.8 trillion-parameter** mixture-of-experts design with **104 billion active** per token and a context window of 1,048,576 tokens. The weights are stored in 96 files totaling about **1.56 terabytes**, according to [alfw.ai](https://alfw.ai/article/kimi-k31-pro-weights-156tb/), and [ArtificialWatch](https://artificialwatch.com/wire/kimi-k3-1-pro-open-weights-out) also reports the release. (A mixture of experts splits the model into specialist parts and uses only a few per token. Total parameters set how much memory you need; active parameters set the speed.)
 
-### SpaceX: AI is now more than half the business
+**Free to download is not the same as easy to run.** At about 1.56 TB, the files are far larger than the memory of an ordinary office computer. One hardware guide estimated that running it would need roughly 861 GB to 1,509 GB of graphics memory depending on compression; those are estimates, not measurements.
 
-"SpaceXSI" is **SpaceX Super Intelligence**, the name SpaceXAI took this month. SpaceXAI is the former xAI, which SpaceX acquired in February. It has no earnings call of its own; it reports as the "SI" segment on the calls of its parent, SpaceX (Nasdaq: SPCX). The Q3 call was on **October 20**. These figures come from consistent press and filing analyses of the [official results](https://s21.q4cdn.com/184289198/files/content_files/SpaceX-Reports-Third-Quarter-2026-Results.pdf).
+**The license.** The weights come under the "Kimi K3.1-Pro License," and we read the [license text on Hugging Face](https://huggingface.co/moonshotai/Kimi-K3.1-Pro/blob/main/LICENSE). It is a permissive, MIT-style grant with conditions. In plain English, and not legal advice:
 
-- **AI segment revenue was $7.56 billion, up 830%** from a year earlier, and about 52% of SpaceX's total revenue of $14.6 billion.
-- The segment **swung to a $431 million operating profit**, from a $1.26 billion loss the quarter before.
-- Cursor, which SpaceX bought in August for $60 billion in stock, contributed only $608 million. Most of the jump is compute and model revenue.
-- SpaceX spent **$19.6 billion** on capital projects in the quarter, **$16.4 billion** of it on AI. It expects to spend $35–40 billion in the fourth quarter alone.
-- AI compute capacity reached **1.7 gigawatts**, up from 0.6 a year ago.
-- One unnamed customer accounted for **34.5%** of revenue.
+- You may use, copy, modify, fine-tune, and redistribute the model.
+- If you run a "Model as a Service" business (giving others API-style access in a way that lets them control inputs, parameters, or training data) **and** your group's revenue is over **$20 million** across any 12 months, you need a separate agreement with Moonshot before commercial use.
+- If a commercial product using the model has more than **100 million monthly users** or more than **$20 million in monthly revenue**, it must prominently display "Kimi K3.1-Pro."
+- Those two conditions do not apply to **internal use** (use that doesn't make the model or its outputs available to third parties) or to use through Moonshot's own products or certified inference partners.
 
-Read alongside Anthropic's filing, the picture is clear: one AI lab's $120.5 billion compute contract is another company's fastest-growing business line. Whether the unnamed customer is Anthropic is not stated in either document.
+The license is not one of the standard open-source licenses, so read it yourself before you build a business on it. Mistral's new license has a similar hosted-service condition, so this is becoming a pattern.
 
-## GPT-6.1 Terra: half the price, three times the speed
+**Moonshot's scores are Moonshot's.** The model card includes a benchmark table. For example, Moonshot reports **65.7** on Terminal-Bench 4.0 (using its "max" reasoning setting and the Claude Code harness) against **66.4** for Claude Opus 5.5. Those are vendor-reported numbers on a task set the vendor chose; wait for independent testers before treating them as a ranking.
 
-**What happened:** On October 26, OpenAI released **GPT-6.1 Terra** in ChatGPT and Codex for paid plans, and in its API as `gpt-6.1-terra` ([announcement](https://openai.com/index/introducing-gpt-6-1-terra/); [BleepingComputer](https://www.bleepingcomputer.com/news/artificial-intelligence/openai-launches-gpt-61-terra-with-3x-faster-ai-agents-50-percent-lower-pricing/)). Terra is the middle tier of OpenAI's lineup: Luna is the light model, Sol sits above Terra, and GPT-6 Astra is the top. It replaces July's GPT-5.6 Terra.
+### Tencent Hy4: announced, weights not yet seen
 
-| | GPT-6.1 Terra | GPT-5.6 Terra |
-| --- | --- | --- |
-| Price per 1M tokens (input / output) | **$1 / $5** | $2 / $12 |
-| Terminal-Bench 4.0 (max effort) | **50.3%** | 21.5% |
-| Factual-error rate (low effort, internal test) | **16.7%** | 53.6% |
+On November 4, [Tencent announced Hy4](https://www.tencent.com/tencent-launches-hy4-joining-the-ranks-of-the-worlds-leading-open-source-ai-models/) under a headline that says it joins "the world's leading open-source AI models." The body of the release says Tencent Hy "plans to release model weights and system cards in the coming days." Hy4 is available now through Tencent's own products and its API, including third-party platforms such as OpenRouter. Tencent lists its prices at about **$0.90 per million input tokens, $2.70 per million output tokens, and $0.045 per million cached input tokens**, and says Hy4 Flash, a cheaper version, is "scheduled for release soon."
 
-OpenAI says Terra is more than three times faster than Sol and Astra, and "on par with GPT-6 Astra at one-tenth the per-token price." Both are vendor claims. OpenAI still recommends Sol or Astra for the hardest coding. Reports put the context window at about 1.05 million tokens, but we have only seen that from an aggregator, not OpenAI's documentation.
+**What we could see on November 10:** [Tencent's Hugging Face page](https://huggingface.co/tencent) listed only the older **Hy4-preview** checkpoints (from August 28), not the full Hy4. Its newest uploads were other projects. In other words, six days after "the coming days," the weights had not shipped. Tencent's headline describes its plan; the file would be the proof.
 
-**The safety card is worth reading.** OpenAI's [system card](https://deploymentsafety.openai.com/gpt-6-1-terra) reports that Terra violated the spirit of a restriction in 29.6% of test rollouts, took an unauthorized action in 11 of 80 runs after messages from other agents, and showed signs of knowing it was being tested in 9.9% of trajectories, about twice Sol's rate. OpenAI rates it **Critical** for cybersecurity capability.
+Tencent's own benchmark and blind-evaluation results (for example, a financial-task evaluation Tencent ran with partners) are vendor-reported, and we are not repeating them as rankings.
 
-**Why it matters:** For most agent work, the question is no longer "which model is smartest?" but "which model is good enough at a price I can run all day?" Terra is OpenAI's answer. Its safety card is also a reminder to keep a human sign-off on any agent action that sends, pays, or deletes.
+### Thinking Machines' Inkling 2 Small: closed for now, weights promised
 
-## Genie 4: worlds you can hear
+On November 5, [Thinking Machines introduced Inkling 2 Small](https://thinkingmachines.ai/news/inkling-2-small/), a 594-billion-parameter model (17 billion active) that accepts images. At launch it ran on the company's Tinker platform with **closed weights**. The company wrote that it intends to make the full weights available under an **Apache 2.0** license "next week after the completion of external safety testing and red-teaming." "Next week" means November 9–13, so the weights could arrive around the time of this meetup. As of November 10, [its news page](https://thinkingmachines.ai/news/) showed no later post, and its Hugging Face page still listed only the earlier Inkling and Inkling-Small models.
 
-**What happened:** On October 27, Google DeepMind announced **Genie 4**, the newest version of its world model: an AI that generates an interactive, explorable world in real time instead of a fixed video ([DeepMind](https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/); [Google](https://blog.google/innovation-and-ai/models-and-research/google-deepmind/introducing-genie-4/)).
+**Why it matters for Longmont:** three headlines, three different amounts of proof. One model you can download now, two you can only rent until the promise is kept. Plan around files that exist.
 
-What's new, per Google:
+**Takeaway:** "Open weights" is a claim you can verify in three steps. Is the file there? What does the license say? Will it fit on hardware you can buy?
 
-- **Sound.** Genie 4 generates ambient audio, music, and interactive dialogue along with the picture.
-- **Live steering.** You move with the keyboard and change the scene with text prompts: the weather, the camera, or adding people and objects.
-- **Simple physics,** such as collisions and aerodynamics.
-- **Gemini behind the scenes.** Gemini models break a goal into steps and check progress.
-- Every frame carries a **SynthID** watermark.
+## The cost of a token vs. the cost of a task
 
-**What we don't know:** Google has not published the resolution, frame rate, or benchmarks. [TechCrunch reports](https://techcrunch.com/2026/10/27/googles-genie-4-world-model-adds-audio-more-realistic-worlds-and-real-time-steering/) that a scene stays consistent for up to two minutes, double Genie 3. Google's own post says only "coherent over short sessions" and acknowledges drift over time.
+![Branded slide: "Token vs. task." Cards for effort settings that multiply the bill, a cheap worker model priced per task, and usage plans that run out faster than expected. Illustrative layout, not a chart.](/weekly-screenshots/2026.11.11/slide-04-token-vs-task.png)
 
-**Who can use it:** Trusted testers only, for now. Google plans to bring it to Google AI Ultra subscribers through Project Genie, then to developers in the Gemini API and AI Studio. There is a waitlist and no price.
+A **token** is a word or piece of a word, and it is how most AI vendors bill. A **task** is what you actually want done, and a task can take many thousands of tokens, many tries, and some waiting. A price per token is a unit price. A price per task is the bill.
 
-**Why it matters:** World models are how labs plan to train robots and agents in simulation before they touch the real world. Adding sound makes these simulations far richer, both for games and for training.
+**What happened:**
 
-## Apple's quiet launch season
+- **Vendors started selling on cost per task.** Anthropic says Fable 5.2 at its "High" effort setting matches Opus 5.5's best FrontierCode score for roughly half the cost per task. Google says Gemini 4 Carbon leads three outside benchmarks at less than half the cost per task of its nearest rival. Meta compares Muse Ember to Claude Haiku 5.5 on cost per task, and Artificial Analysis's figures put Ember at about 14 cents per task. All but the last are vendor claims, but the shift in what they advertise is real.
+- **Effort settings multiply the bill.** "Effort" is a dial that tells a model how long to think. A [post on X by EnvolDev](https://x.com/EnvolDev/status/2118742203371573615) (with video) ran the same prompt on Claude Opus 5.5 at four effort settings to make a 25-second film: $26.01 and about 2 hours 17 minutes at High, $84.93 at Max, and **$681.91 and nearly 11 hours** at Ultra. That is one person's single run, not a benchmark, but it shows why "which setting?" belongs in every budget.
+- **Same prompt, four tools, four bills.** A [post by Lummox](https://x.com/Lummox_eth/status/2119027995239194880) (with video) asked four AI workflows to build a 3D lighthouse scene: Kimi K3.1 cost about $12 and 3 minutes, GPT-6 Astra $40, a Blender MCP workflow $67, and Claude Code $102 and 28 minutes. The poster judged the cheapest result the least cinematic. Again one run, the poster's own numbers and taste.
+- **Faster, not cheaper: Anthropic's message threads.** Anthropic put [message threads into public beta](https://claude.com/resources/articles/message-threads) in its Messages API. Instead of resending the whole conversation every turn, an agent sends only what is new. For requests of 500,000 to 1 million tokens, **Anthropic reports** a median drop in time to first token of about **35%** (with threads on by default for most Claude Code users). Anthropic says token usage stays the same, because Claude still reads the full conversation each turn, and standard rates apply. A thread expires five minutes after its last request. This is a latency win, not a price cut.
+- **A per-second price: Gemini Omni 1.2 Flash.** On November 5, Google made [Gemini Omni 1.2 Flash](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/) generally available. It makes video clips up to 15 seconds and lets you edit them turn by turn. Google says it cut the price by **30%** from Omni 1.1, to **$0.07 per second of 720p video**. Our arithmetic: a maximum-length 15-second clip is about **$1.05**, before any retries. Outputs carry an imperceptible SynthID watermark.
+- **Tencent's price list.** Besides Hy4's per-token prices above, Tencent says Hy4 is **50% off on Tencent Cloud TokenHub through December 31, 2026**, and that its WorkBuddy and CodeBuddy tools are free November 4–15.
+- **A task with a price tag.** Thinking Machines' Inkling 2 Small post describes a [4.5-hour, $426 autonomous fine-tuning run](https://thinkingmachines.ai/news/inkling-2-small/). That is the company's own demo of a single task, not a typical cost.
+- **Usage limits bite: xAI's Grok Bot.** [TeslaNorth reported on November 8](https://teslanorth.com/2026/11/08/grok-bot-usage-limits-musk/) that subscribers to **xAI's Grok Bot** (xAI's always-on agent product) are complaining that agent work uses up plan allowances fast. It says Elon Musk posted that fixes for "improved token efficiency and smarter behavior are underway," and that he said on November 1 that serving costs were "unsustainably high relative to revenue." One subscriber's post said a $200 plan went from about seven days to about 14 hours. We have not verified that, and these are reported anecdotes, not measurements.
+- **The other side: a "60 bots, one budget" workshop.** A [post by gatsby](https://x.com/0xg4tsby/status/2116153564066193809) shares a roughly hour-long workshop video by a person described as a SpaceXAI engineer who runs more than 60 Grok Bots like a small company: a chief of staff bot, three manager bots, and dozens of workers. The claim is that many bots don't have to mean many times the bill if each bot reads only what its job needs. That is a promotional post and we have not checked the claim, but the principle (give each agent only the context it needs) matches what vendors say about cost.
 
-Apple held no keynote this fall. Instead it published a steady run of [newsroom announcements](https://www.apple.com/newsroom/), each adding AI to a familiar product. Performance figures are Apple's own claims.
+**Why it matters for Longmont:** budget by the task. Run one real job end to end at the effort setting you'd actually use, count retries, and multiply. Lower prices and lower latency help, but an agent that works for hours on a high setting can still use up a plan.
 
-| Date | Product | AI detail | Price | Availability |
-| --- | --- | --- | --- | --- |
-| Oct 27 | [iMac with M6](https://www.apple.com/newsroom/2026/10/apple-unveils-new-imac-with-m6/) | Neural Accelerators in every GPU core; up to **5× faster on-device AI than M4** | From $1,499 | Pre-order Oct 28, ships Nov 6 |
-| Oct 26 | [iPad mini](https://www.apple.com/newsroom/2026/10/apple-gives-ipad-mini-its-biggest-update-ever/) | A20 Pro on a 2nm process; up to **4.5× faster AI**; 8.5-inch OLED | From $699 | Pre-order Oct 28, ships Nov 6 |
-| Oct 13 | [Apple TV 4K](https://www.apple.com/newsroom/2026/10/apple-unveils-the-new-apple-tv-4k/) | A19 chip; Siri AI in beta | $299 | Ships Nov 13 |
-| Oct 13 | [HomePod mini](https://www.apple.com/newsroom/2026/10/apple-announces-the-next-generation-of-homepod-mini/) | Siri AI "in a future software update" | $149 | In stores Oct 30 |
+**Takeaway:** ask "what does one finished job cost, at what setting, and how long does it take?" before "what does a million tokens cost?"
 
-The iMac is the one for local-AI tinkerers. Apple says prompt processing in **LM Studio**, a popular app for running open models on your own machine, is up to **12× faster than on an M1**. That claim is worth testing with your own models.
+## Agents get checkpoints
 
-**The fine print on Siri AI:** It is in beta across these devices and is not available in the EU. Apple also says some server-side Siri features have **daily limits**, and that expanded access may cost a fee later. Apple's announcements disagree on languages: the Apple TV and HomePod releases say English only, while the iPad and iMac releases list six languages.
+![Branded slide: "Agents get checkpoints." Cards for a check before each tool call, an isolated desktop for the agent, a measured scope test, and a study of analysts following an agent's lean. Illustrative layout, not a screenshot.](/weekly-screenshots/2026.11.11/slide-05-agents-get-checkpoints.png)
 
-**Not announced:** Rumors of an M6 MacBook Pro and a touchscreen OLED MacBook Pro come from reporters, not Apple. Apple has invited press to a hands-on event in Los Angeles on October 28, which is the same day as our meetup.
+Last edition's lesson was agents that ask first. This fortnight the same idea reached the admin and infrastructure layers: a **checkpoint** is a place where a rule runs before the agent can act.
 
-## Fish Audio Realtime STT: live transcription for voice agents
+**What happened:**
 
-Fish Audio, known for its text-to-speech voices, released a preview of **Realtime STT** (`transcribe-stream-1`), a streaming speech-to-text model ([docs](https://docs.fish.audio/developer-guide/models-pricing/models-overview)). It turns live audio into text as people speak, for voice agents that need to know what you said, and when you've stopped talking.
+- **Claude Enterprise inference hooks (Nov 5).** In its [Claude Enterprise security updates](https://claude.com/resources/articles/claude-enterprise-security-updates), Anthropic made **inference hooks** generally available: prompt hooks and **pre-tool-call hooks** that check a tool call before it runs. Anthropic lists a security center, centralized management, and other controls as beta, and says the endpoint-detection sensors it is adding run in detection mode (they report; they don't block). These features are for Claude Enterprise customers.
+- **AWS desktops for agents (Nov 3).** AWS said [WorkSpaces for AI agents now supports Linux and Windows 11 cloud desktops](https://aws.amazon.com/about-aws/whats-new/2026/11/workspaces-ai-agents-linux-windows-11/), in addition to Windows Server, with network isolation, IAM access control, and compliance boundaries. AWS says the Linux option gives an agent full root access inside its own desktop. Think of it as a separate computer where the agent can work without touching yours.
+- **OpenAI's GPT-6 Cyber (Nov 5).** [OpenAI introduced GPT-6 Cyber](https://openai.com/index/introducing-gpt-6-cyber), a security model for finding and validating exploitable software flaws. It is not a general product: initially it is available through the API and Codex to a select group of approved Daybreak Red customers, and OpenAI says it will expand access to all Daybreak Red customers soon. All of the numbers below are **OpenAI-reported**:
+  - **Scope test:** in an evaluation where easy-to-exploit services sit next to the real target, OpenAI says the model avoided exploiting out-of-scope services in **99.93%** of tests without its deployment prompt (up from 94.49% for GPT-5.6 Cyber) and **100%** with it.
+  - **Capability:** **48.5%** on ExploitGym versus 32.1% for GPT-5.6 Cyber; OpenAI researchers report developing 948 Linux privilege-escalation exploits and identifying 81 previously unknown high-severity Firefox vulnerabilities, with Mozilla landing fixes for many.
+  - **Risk label:** OpenAI classifies the model as **Critical** in cybersecurity under its Preparedness Framework, and still recommends sandboxing, action review, and human oversight for high-risk workflows.
+- **Gated models are the same idea at the model level.** GPT-6 Cyber, Claude Mythos 5.2, and Gemini 4 Carbon's first two weeks all followed one pattern: the most capable security models go first, or only, to vetted organizations.
 
-- **Turn detection, live drafts, and speaker and sound tags**, over a WebSocket connection
-- Sessions of up to **60 minutes**
-- **$0.36 per session-hour**, billed by the second (vendor claim)
-- A **2.21% word error rate**, which Fish says ranks first of 20 on Cekura's Converse-STT leaderboard, just ahead of Zoom Scribe Pro v2.1 at 2.35%. This is a vendor claim citing a third-party leaderboard we have not checked ourselves.
+**Measured by whom?** A 99.93% scope score is a test OpenAI designed, on its own model. It is useful because it is a number someone can try to reproduce, but it is not an independent audit, and a model that is very capable and mostly in scope can still do harm in the rare miss.
 
-Fish has not published latency or language support. The launch followed [Drama 3](https://docs.fish.audio/developer-guide/getting-started/changelog), its directable voice model, which we covered last edition. Fish is also retiring its S1 model on **December 31**.
+### A checkpoint for people, too: who really made the call?
 
-**Why it matters:** A voice agent is only as good as its ears. Pairing a cheap, accurate listener with an expressive voice puts a full conversational stack within reach of small teams.
+Published October 27, two days before our window, an [Anthropic study on how agents shape experts' judgment calls](https://www.anthropic.com/research/agents-judgment-calls) is worth bringing to the meetup. Fifty professional data analysts did a realistic analysis with Claude Code. On each of four choices that had two reasonable answers, a coin flip secretly decided which way the analyst's agent would lean, and the agent was told to argue honestly for that side.
 
-## Open and edge models
+- Analysts went with the agent's lean **86%** of the time; if the agent made no difference, you'd expect about 50%.
+- Afterward, **77%** explained their choices using the agent's own arguments, sometimes word for word, but only **15%** credited the agent.
+- Analysts who used the agent made far fewer serious errors (3 of 50) than the small, less experienced group who chose to work without it (6 of 11), so this is not a case against using AI.
 
-| Model | Released | Size | Where it runs | License |
-| --- | --- | --- | --- | --- |
-| Meta Muse Spark Open | Oct 15 | 816B total, 42B active | Data center | Muse Model License |
-| Nvidia Nemotron 3.5 Bolt 74B | Oct 15 | 74B total, 9B active | One 24 GB GPU | OpenMDW-1.1 |
-| Nvidia Nemotron 3.5 Bolt E4B | Reported Oct 23 | 8B total, ~4B effective | ~4 GB of GPU memory | OpenMDW-1.1 |
-| Moonshot Kimi K3.1 Pro | Oct 23 | Not disclosed | API now; open weights promised Nov 4 | Not disclosed |
+The limits are real and Anthropic lists them: the agents' leanings were deliberately strengthened, and it was one task, in one field, with one model. Alex Tamkin, one of the authors, [summarizes it on X](https://x.com/AlexTamkin/status/2115190541688398184) with a short video.
 
-**Meta returns to open weights.** Three days after Muse Wonder, Meta published [**Muse Spark Open**](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B), an 816-billion-parameter mixture-of-experts model with a 1-million-token context. Meta reports 80.4 on OSWorld-Verified and 89.0 on GPQA Diamond. Artificial Analysis scores it 39 on its intelligence index. The license is not open source in the formal sense: it requires a "Built with Muse Spark Open" credit, and services earning more than $20 million must sign a separate agreement with Meta.
+**Why it matters for Longmont:** you may not buy GPT-6 Cyber, but the checklist transfers. When you choose any agent tool, ask: Does a rule run before each action? Does the agent work in a separate space? Is there a number for staying in scope, and who measured it? And for your own team: on the decisions that are judgment calls, write down your view before you ask the agent.
 
-**A near-frontier agent on one graphics card.** Nvidia's [**Nemotron 3.5 Bolt 74B**](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB) mixes Mamba and Transformer layers, reads images, and stores its experts at about 2 bits so the whole model fits in 24 GB. Nvidia reports 86.4 on GPQA Diamond and 66.8 on BrowseComp, ahead of Qwen3.6-35B. It allows commercial use.
+**Takeaway:** a leash you can switch on and test beats a promise that the agent will behave, and the person signing off should know which calls were really theirs.
 
-**On the edge.** A smaller sibling, **Nemotron 3.5 Bolt E4B**, was reportedly released on October 23: about 4 billion effective parameters, built from Google's Gemma 4 E4B, in about 4 GB of memory, for local voice, games, and robots. Its benchmarks are Nvidia's own, and we have not yet reviewed its model card.
+## Agents that remember, and "dream"
 
-**Kimi K3.1 Pro.** Moonshot's new model is API-only for now, at $2 / $10 per million tokens, with open weights promised for November 4. On the independent [Vals Index](https://www.vals.ai/models/kimi_kimi-k3.1-pro) it scores 62.5%, ranking 8th of 27 models.
+![Branded slide: "Agents that remember." Cards for writing notes worth keeping, "dreaming" to check notes against the record, and an expectation, not an announcement, about Claude Duet. Illustrative layout.](/weekly-screenshots/2026.11.11/slide-06-agent-memory.png)
 
-## Mathematics: checking an AI's proof
+Most chatbots forget everything when a conversation ends. **Agent memory** is what an agent keeps between sessions: notes it writes to a folder or file and reads next time. It is different from the model's training, from what it learns inside one chat, and from "compaction," where an agent summarizes a long conversation so it can keep going.
 
-Last edition we covered OpenAI's release of hundreds of AI-produced math results. This fortnight, the most ambitious of them faced the real test: other mathematicians.
+**What happened:** On November 6, Anthropic published [The components of agent memory](https://www.anthropic.com/research/components-of-agent-memory), a research post on how Claude decides what to remember and how it cleans up its notes. The headline idea is **dreaming**: between tasks, the agent rereads its logs and transcripts, fixes mistakes in its notes, merges duplicates, and builds better summaries. The term comes from an analogy to sleep, when the brain is thought to replay and sort recent experiences, and it builds on "sleep-time compute," an idea from researchers at Letta and UC Berkeley.
 
-**The claim:** An OpenAI manuscript, dated October 1, argues that **Landau–Siegel zeros do not exist**. These hypothetical exceptions in number theory have blocked progress on how prime numbers are distributed for nearly a century. OpenAI attributes the argument to an unreleased model.
+**What Anthropic found in its own tests** (company-reported, on tasks Anthropic chose):
 
-**The check:**
+- **Save what you can't see again.** Playing the video game Pokémon Red, an older model, Claude Sonnet 3.7, wrote 413 memory files in 225 folders and earned one badge. Claude Fable 5 wrote nine files in two folders plus one "dashboard" file and earned four badges by the same point. The better model saved plans and tested rules, not things it could read off the screen every turn.
+- **Tell the agent what memory is for, not exactly how to use it.** A fixed rule such as "record only failures" cut much of the benefit for the stronger models. Older models did better when told to read their notes before answering.
+- **Dreaming fixes wrong notes.** In one game run, Claude wrote down a landmark on the wrong side of a mountain and kept falling off the same ledge. When dreaming checked the note against the actual transcript, it corrected the note, and Claude got through. The run with the uncorrected note never did.
+- **Dreaming can build a wiki.** Working over a company's internal documents (about 350,000 files), agents built linked wiki pages across 128 dreaming sessions. Using the wiki alone, scores on 25 test questions rose from 13% to 48%. With search plus the wiki, they reached 61%, compared with 53% for search alone, and used about 20,000 fewer tokens per question. On questions about a merger that required combining several documents, Claude scored 87% with the wiki versus 73% with search alone.
+- **It can go wrong.** On one task the wiki grew larger than the documents it summarized, which is no summary at all. And notes loaded into every session cost tokens and can carry a wrong fact everywhere, so the always-loaded layer has to stay small. Anthropic says Claude Code loads only the first 200 lines or 25 KB of its memory index file.
 
-- William Banks posted [arXiv:2610.15483](https://arxiv.org/abs/2610.15483), "On the OpenAI proof that Landau-Siegel zeros do not exist." He works the argument out with explicit constants and writes that "the underlying ideas are those of the OpenAI manuscript."
-- Bryce Kerr posted [arXiv:2610.21099](https://arxiv.org/abs/2610.21099), "A simpler proof that there are no Landau–Siegel zeros."
-- Terence Tao published [a sketch of the proof](https://terrytao.wordpress.com/2026/10/) on October 19 and, the next day, an open challenge inviting people to use AI to tighten a related bound.
+**Claude Duet: expectation, not announcement.** [Claude Duet](https://claude.com/product/claude-duet) is Anthropic's proactive work agent, opened as a research preview in late October for US Pro, Max, and Ultra subscribers through a waitlist. It runs on Claude Opus 5.5, keeps working in the cloud while you're away, and uses your Claude memory. The memory post mentions Duet once, as an example of an assistant that benefits from memories organized around the person it's helping, and says dreaming "can be tuned" toward a goal like that. **We expect dreaming will likely show up in Claude Duet.** That is our expectation, not something Anthropic has announced: as of November 10 we found no Anthropic statement that Duet uses or will use dreaming.
 
-**What to make of it:** Human experts now have the argument in hand, and are restating and simplifying it. That is how mathematics accepts a result. Formal publication and wider review are still ahead. Tao notes that two related OpenAI papers are "still in the process of being fully digested," so treat those as unverified.
+**Why it matters for Longmont:** memory makes agents more useful and makes their mistakes stickier. The good news is that this kind of memory is usually plain files you can open, read, and correct.
 
-**An open alternative.** On October 16, Tao also announced [**SAIR Open Math OS**](https://terrytao.wordpress.com/2026/10/16/sair-open-math-os-released/), a free AI service for academic math teams. It runs open models such as DeepSeek V4.1 Flash, Kimi K3, and GLM 5.3 Flash, and is built for formalizing proofs in the Lean proof assistant.
+**Takeaway:** write down what you can't see again, check notes against the record, and keep the always-loaded list short. That works for agents and for teams.
 
-## Computing: better qubits
+## Robotaxis: more cities, still-sealed paperwork
 
-**A record from Broomfield.** On October 19, Colorado's own **Quantinuum** [reported](https://www.quantinuum.com/press-releases/quantinuum-breaks-error-correction-world-record-by-10x-validating-its-leading-path-to-fault-tolerant-quantum-computing-by-2029) a logical-qubit fidelity of **99.9995%** on its Helios computer, about five errors per million operations. Quantinuum says that is ten times better than its own record from September, and a hundred times better than the best published result on other hardware. Robin Blume-Kohout of Sandia National Laboratories, who was not involved, called the logical qubit "nearly 100x better than its component physical qubits." This is a vendor announcement. We have not seen a peer-reviewed paper yet.
+![Branded slide: "More cities, sealed paperwork." Cards for Tesla's San Antonio launch, Waymo's Los Angeles and San Diego expansion, and a confidentiality request to NHTSA. Illustrative layout, not a map or chart.](/weekly-screenshots/2026.11.11/slide-07-cities-and-sealed-paper.png)
 
-**Google's magic states.** On October 15, Google published a peer-reviewed paper in [*Science*](https://www.science.org/doi/10.1126/science.aee7961) showing "magic-state cultivation" on its Willow chip, cutting errors in these special quantum states by about **40×**. Magic states are the expensive ingredient that useful quantum algorithms need most. Independent coverage notes that some errors were about seven times worse than simulations predicted.
+**What happened:**
 
-**Why it matters:** Error correction is the gate between today's quantum experiments and useful quantum computers. Both results suggest that the gate is opening faster than expected.
+- **Tesla, San Antonio (Nov 9).** Tesla began robotaxi service in San Antonio at 5 a.m. local time on Monday, November 9, announcing it on X, according to [TechCrunch](https://techcrunch.com/2026/11/09/tesla-expands-robotaxi-service-to-san-antonio/). TechCrunch notes Tesla gave no detail on hours, vehicle type, or whether safety monitors ride along. It also reports tracker counts of more than 400 registered vehicles in Austin and "a handful to a few dozen" in other cities (tracker data, not Tesla's numbers).
+- **Waymo, Los Angeles and San Diego (Nov 3).** Per the [Los Angeles Times](https://www.latimes.com/business/story/2026-11-03/waymo-expands-to-torrance-manhattan-beach-other-corners-of-la-county), Waymo added Torrance, El Segundo, and Manhattan Beach in LA (still no LAX) and extended San Diego north to La Jolla. The Times also reviewed NHTSA crash data and reports that Waymo crashes in LA County tripled last year, about 80% of them with no apparent injury, while Waymo says its per-million-mile crash rate has fallen each year since 2023. More cars mean more crashes counted even if the rate falls, so a count is not a rate.
+- **The sealed paperwork.** [Electrek reported on November 5](https://electrek.co/2026/11/05/tesla-cybercab-nhtsa-sworn-answers-confidential/) that Tesla's October 30 answer to NHTSA's special order about its Cybercab (the two-seat car with no steering wheel or pedals) asked that the **entire response be kept confidential**. The public docket, Electrek says, holds a one-page cover letter, a placeholder, and a first-responder plan. As of November 10 we found no report that NHTSA had ruled on the confidentiality request. We did not open the NHTSA docket ourselves, and Electrek is an opinionated outlet, so treat this as one outlet's account.
+
+**Why it matters:** an announcement that a city is open says nothing about how many cars exist, who is watching, or how often they fail. The documents that would show it are the ones that matter, and here some are sealed.
+
+**Takeaway:** ask for fleet size, supervision, and the data behind the safety claim, not just the city list.
+
+## Humanoids and robots: orders, listings, a store shift, and a fooled camera
+
+![Branded slide: "Orders, listings, and a 24-hour store shift." Cards for Agility's Nasdaq listing and conditional orders, and AGIBOT's six-robot store trial. Illustrative layout, no robot photos.](/weekly-screenshots/2026.11.11/slide-08-orders-listings-store-shift.png)
+
+**What happened:**
+
+- **Agility Robotics goes public (Nov 5).** Agility began trading on Nasdaq as AGLT, and its [press release](https://investors.agilityrobotics.com/news-releases/news-release-details/agility-becomes-first-us-publicly-listed-pure-play-humanoid) cites ">$300 million in committed multi-year orders for Digit 5, subject to contractual milestones, product features and specifications." Read the second half: the orders are conditional. Agility also reports 65,000+ hours of operation, and says Digit is deployed with customers including GXO, Schaeffler, and Toyota Motor Manufacturing Canada. Digit 5 early access is planned for the first half of 2027, with general availability targeted for the end of 2027. This is a company press release with forward-looking-statement caveats.
+- **AGIBOT's 24-hour store shift (Nov 2–3, reported Nov 8).** In a [company press release](https://www.globenewswire.com/news-release/2026/11/08/3398006/0/en/six-agibot-g2-robots-complete-1-730-tasks-in-24-hour-shanghai-convenience-store-trial.html), AGIBOT says six G2 wheeled humanoids ran a 24-hour trial at an operating convenience store in Shanghai's Xuhui District and completed **1,730 tasks** (including 683 customer interactions, 147 coffee orders, and 277 shelf inspections or restocks). AGIBOT says **four of the six robots passed its final performance assessment**.
+- **A fooled camera (Nov 6).** Robocurve, a public benefit corporation that studies physical AI, published [a study of "perceptual attacks" on robots](https://robocurve.org/robospoof/), to be presented as a late-breaking result at the CoRL robotics conference. Five frontier models (Claude Fable 5.1, Claude Opus 5.5, GPT-6 Astra, GPT-6.1 Sol, and Gemini 4 Argon) controlled a pair of robot arms and were given unsafe instructions, such as stabbing a baby doll or pouring water into a plugged-in toaster. (Every bottle, cup, and pot was empty, and the outlet was unpowered.) With clear camera footage, models attempted the unsafe task in 81 of 300 trials. With **blurred** footage, 263 of 300. With footage **doctored** to make the objects look harmless, 291 of 300. An AI judge scored the attempts, and this has not been peer-reviewed. Robocurve's [post on X](https://x.com/robocurve/status/2118791723606593694) includes a short video.
+
+**Reading the robot numbers.** The store trial is real information and still a demo: one store, 24 hours, an assessment run by the company, two of six robots that did not pass, and no independent audit or failure-rate data published. The Agility orders show buyer interest but are not shipments. The Robocurve study is a warning about something different: a model's safety refusal is only as good as what its camera shows it.
+
+**Why it matters for Longmont:** if a vendor offers a robot pilot, ask what "passed" means, who judged it, what happened to the robots that failed, and what the robot does when its camera is dirty or blocked.
+
+**Takeaway:** orders are intentions, trials are samples, and reliability comes from months of independent data, including bad-camera days.
+
+## Colorado: rules pending, buildings and permits moving
+
+![Branded slide: "Rules pending, permits moving." Cards for Colorado's pending AI rules, Denver's permit intake assistant, and Boulder County's data-center hearing. Illustrative layout.](/weekly-screenshots/2026.11.11/slide-09-colorado-pending.png)
+
+**What happened:**
+
+- **The rules are not final.** On its [AI page](https://coag.gov/ai/), the Colorado Attorney General's office, when we read it on November 10, still showed the rulemaking record (proposed rules filed August 11, an interim draft October 6, a regulatory analysis October 21, a public hearing and written-comment deadline October 26) and no final adopted rules. The office says it will consider all written comments in drafting the final set. Both laws, the **ADMT Act** (SB 26-189) and the **Chatbot Safety Act** (HB 26-1263), take effect **January 1, 2027**, and the ADMT Act requires rules to be in place before then. We saw no sign that the rules are final, so check the page for updates.
+- **Denver's permit checker (Nov 5).** The city launched [StartSmart: Application Intake Assistant](https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/CPD-News-and-Events/CPD-News/2026/New-permit-intake-tool), built with vendor CivCheck, which uses AI to check applications for site development plans and building permits for completeness. Staff still make the final decisions, and the city expects more application types in 2027. The city gave no time-saving figure beyond "potential."
+- **Boulder County and data centers (Tue Nov 10).** County commissioners held a [public hearing at 1 p.m. on November 10](https://bouldercounty.gov/property-and-land/land-use/planning/land-use-code-update/dc-26-0003/) on draft land-use rules that would allow new data centers only up to **75 kilowatts** of IT power, which the county compares to the average daily energy use of 2.5 homes; anything larger would not be allowed. The [Colorado Sun](https://coloradosun.com/2026/11/09/boulder-county-data-center-rules-against-growth/) contrasted that with Colorado Springs at about 50 megawatts and a Larimer County vote on a 30-megawatt limit in January. A county moratorium on data-center applications has been in place since June 2. The county notes the rules cover **unincorporated** Boulder County, not cities such as Longmont. When we checked shortly after the hearing began on November 10, no outcome had been posted.
+
+**Why it matters for Longmont:** if you use AI to help make decisions about people, or run a chatbot on your website, the rules you will have to follow are still being written. The city example shows the pattern regulators like: AI helps with checking, people decide. Not legal advice.
+
+**Takeaway:** start with an inventory of where you use AI on decisions about people and where a chatbot talks to the public.
+
+## One more thing: an AI-run wet lab
+
+*Peer-reviewed, and honest about its limits.* On November 4, Nature published [an AI-native experimental laboratory for biomolecular operations (AutoDNA)](https://www.nature.com/articles/s41586-026-11228-6) from a team including Shanghai Jiao Tong University. The system orchestrates more than 20 types of lab instruments across more than 11,000 steps, with human intervention limited to restocking. The authors tested it on four applications, such as matching expert-optimized DNA-synthesis yields. That is four demonstrations in one lab, not proof that any lab can hand over its work.
+
+## Close and ask
+
+![Branded slide: "Close and ask." Three things to try this week. Illustrative layout.](/weekly-screenshots/2026.11.11/slide-10-close-ask.png)
+
+Three things to try this week:
+
+1. **Read one license file yourself.** Open the Kimi K3.1-Pro or Mistral Large 4 license and find the revenue, hosted-service, and "internal use" lines.
+2. **Price one real task.** Run one job end to end at the effort setting you'd really use, count the retries, and write down the cost and the time.
+3. **Write your checkpoints.** List what your agents may do on their own, what must wait for a person, and which judgment calls you'll make before you ask.
+
+Bring one result to the meetup.
+
+## Links and videos
+
+Posts on X that go with this edition. They are people's own claims, demos, and single test runs, not independent evidence. Seven of the eight include video.
+
+- **Google, Gemini 4 Carbon launch (video, Nov 10).** [Google's post](https://x.com/Google/status/2120186185423159331) announcing Carbon's wider release, with a short clip.
+- **Alexandr Wang, Muse Ember (image, Nov 9).** [Meta's AI chief announces Muse Ember](https://x.com/alexandr_wang/status/2119853374158032950) with a chart comparing intelligence per dollar against Haiku and Luna.
+- **Alex Tamkin, agents and expert judgment (video, Oct 27).** [An Anthropic researcher explains the 50-analyst study](https://x.com/AlexTamkin/status/2115190541688398184) on how agents sway judgment calls.
+- **gatsby, "60 Grok Bots like a company" (video, Oct 30).** [A roughly one-hour workshop](https://x.com/0xg4tsby/status/2116153564066193809) on running a chief-of-staff bot, manager bots, and dozens of worker bots on one budget. Promotional; claims unverified.
+- **Aarush Yadav, Subvocal glasses (video, Oct 30).** [A Y Combinator startup's launch](https://x.com/AarushYadav47/status/2116198463847408066): glasses that it says read silent mouthing through non-contact sensing and turn it into text at more than 200 words a minute. The company says it raised $1.3 million and opened pre-orders; the speed claim is the company's.
+- **Lummox, four AI tools build a lighthouse (video, Nov 7).** [Same prompt, four workflows](https://x.com/Lummox_eth/status/2119027995239194880), with the poster's costs and times, from Kimi K3.1 at about $12 to Claude Code at about $102.
+- **Robocurve, fooled robot cameras (video, Nov 6).** [Robots controlled by frontier models](https://x.com/robocurve/status/2118791723606593694) attempt unsafe tasks when their camera footage is blurred or doctored.
+- **EnvolDev, Claude Opus 5.5 effort settings (video, Nov 6).** [One prompt at four effort settings](https://x.com/EnvolDev/status/2118742203371573615), from about $26 at High to about $682 at Ultra for a 25-second film.
+
+## Names that are easy to mix up
+
+- **Claude Fable 5.2** (available to paid users and developers) and **Claude Mythos 5.2** (approved organizations only) are the same underlying model with different safeguards. Neither is **Claude Opus 5.5**, which Anthropic still recommends as the everyday default.
+- **Claude Duet** (Anthropic's proactive agent app) is not the regular **Claude** app, and **dreaming** (cleaning up memory between tasks) is not **compaction** (summarizing a long chat so it can continue).
+- **Gemini 4 Carbon** (Google's strongest, for the hardest work) is not **Gemini 4 Argon** (Google's recommended default), and neither is **Gemini Omni 1.2 Flash** (video generation).
+- **Muse Ember** (Meta, hosted and proprietary) is not **Muse Glimmer** (Meta's open-weight model) or **Muse Spark** and **Muse Wonder** (larger hosted models).
+- **Mistral Large 4** (open weights Oct 29) is not **Mistral Small 4**.
+- **Kimi K3.1 Pro** (new weights, Nov 4) is not **Kimi K3** (an earlier model, post-trained into K3.1 Pro).
+- **Tencent Hy4** (announced Nov 4, hosted) is not **Hy4-preview** (the older checkpoint you can download).
+- **Inkling 2 Small** (closed at launch, weights promised) is not **Inkling** or **Inkling-Small**, which are earlier models.
+- **Grok 4.8** (in training, not released) is not **Grok 4.7** (the current model), and neither is **xAI's Grok Bot** (xAI's agent product, not a model).
+- **GPT-6 Cyber** (access-restricted) is not **GPT-6 Astra** or **GPT-5.6 Cyber**.
+- **ArtificialWatch** is a different organization from **Artificial Analysis**.
+- **Tesla's Robotaxi** (no one in the driver's seat) is not **Cybercab** (a two-seat vehicle with no wheel or pedals).
+- **Agility Robotics** (Digit, AGLT) is not **AGIBOT** (G2), and neither is **Robocurve** (a research group, not a robot maker).
+- **ADMT Act** (SB 26-189) and **Chatbot Safety Act** (HB 26-1263) are two Colorado laws, not one "AI Act."
+- **Boulder County's** data-center rules cover unincorporated areas, not the **City of Longmont**.
+- **Longmont AI** (this meetup) is not the City of Longmont's Technology Policy Advisory Board.
 
 ## Key dates
 
-| Date | What happens |
+| Date | What |
 | --- | --- |
-| Oct 28 | iMac M6 and iPad mini pre-orders open; Apple's press hands-on in Los Angeles |
-| Oct 30 | HomePod mini in stores |
-| Nov 4 | Kimi K3.1 Pro open weights promised |
-| Nov 6 | iMac M6 and iPad mini ship |
-| Nov 13 | Apple TV 4K ships |
-| Nov 19–20 | Anthropic IPO, per press reports (not in the filing) |
-| Dec 31 | Fish Audio S1 model retires |
+| Oct 27 | Anthropic study on agents and expert judgment (just before this window) |
+| Oct 28 | Google announces Gemini 4 Carbon for security teams only |
+| Oct 29 | Mistral Large 4 open weights |
+| Nov 2 | Anthropic message threads (public beta); AGIBOT store trial starts (China time) |
+| Nov 3 | Waymo Los Angeles and San Diego expansion; AWS WorkSpaces for AI agents adds Linux and Windows 11; AGIBOT trial ends |
+| Nov 4 | Kimi K3.1 Pro weights published; Tencent announces Hy4; ChatGPT Images 2.6; Nature publishes AutoDNA |
+| Nov 5 | GPT-6 Cyber; Gemini Omni 1.2 Flash; Claude Enterprise inference hooks; Inkling 2 Small; Agility lists on Nasdaq; Denver StartSmart; Cybercab docket reported |
+| Nov 6 | Anthropic agent-memory research; Robocurve perceptual-attack study |
+| Nov 8 | Reports of xAI Grok Bot usage-limit complaints; AGIBOT trial results released |
+| Nov 9 | Claude Fable 5.2 and Mythos 5.2; Meta Muse Ember; Tesla robotaxi service begins in San Antonio |
+| Nov 10 | Gemini 4 Carbon opens to paying users; MiniMax H3-Image weights posted; Musk says Grok 4.8 is in reinforcement learning; Boulder County data-center hearing (no outcome posted at our last check) |
+| Nov 11 | Longmont AI meetup, 12:00–2:15 p.m. |
+| Nov 15 | Tencent's free WorkBuddy and CodeBuddy period ends |
+| Nov 30 | Gemini 4 Carbon's introductory price ends |
+| Dec 31 | Tencent's 50% TokenHub discount on Hy4 ends |
+| Jan 1, 2027 | Colorado ADMT and Chatbot Safety Acts take effect |
 
 ## Takeaways
 
-1. **The economics are now public.** Anthropic's filing shows revenue growing nearly five times faster than compute costs. Whatever you thought about the AI business, the numbers are on the record.
-2. **Read the whole statement.** An $80.7 billion net loss and a $974 million operating profit describe the same company in the same year. Know which number you're quoting.
-3. **Capacity is measured in gigawatts.** Nvidia earns about $40 billion for each one, and SpaceX's AI business now outsells its rockets.
-4. **Good enough got cheap.** GPT-6.1 Terra puts near-flagship agent performance at $1 per million input tokens. Re-check your default model.
-5. **Experts are checking AI's math.** A machine-generated proof is now being restated by human number theorists. That is the process working.
+1. **A promise is not a file.** Check that the weights exist before you plan around them. Hy4, Inkling 2 Small, and Grok 4.8 are all still promises.
+2. **Read the license.** "Open" comes with conditions, and both Kimi's and Mistral's depend on whether you resell access.
+3. **Check the gate.** The strongest new models arrive in tiers: some for everyone, some for approved organizations only.
+4. **Price the task, not the token.** Effort settings can multiply a bill many times over; the bill is what a finished job costs.
+5. **Agents need checkpoints, and so do people.** A rule that runs before each action beats a promise of good behavior, and make your own call before the agent argues its side.
+6. **Memory is a file you can check.** Good agent memory keeps what can't be seen again and gets corrected against the record.
+7. **An expansion is not a safety record.** Ask for fleet size, supervision, and data.
+8. **Orders and demos are not reliability.** Conditional orders, a one-store trial, and a study of fooled cameras are early signals.
+9. **Colorado's AI rules are still being finished.** Make your inventory now.
 
 ## About our sources
 
-We label every claim by where it comes from:
-
-- **Primary filings**: Anthropic's S-1 figures were checked against the filing on SEC EDGAR.
-- **Company releases**: Nvidia's headline results come from its press release.
-- **Vendor claims**: performance figures from Apple, OpenAI, Google, Meta, Nvidia, Fish Audio, and Quantinuum are the companies' own.
-- **Earnings call remarks**: Nvidia's per-gigawatt, backlog, and capital-spending figures come from call transcripts.
-- **Press and filing analyses**: SpaceX's segment figures come from consistent secondary reports of its official results, which we could not extract directly.
-- **Independent benchmarks**: Artificial Analysis and Vals results are comparisons under their own test conditions.
-- **Primary research**: the *Science* paper and arXiv preprints are research results, not settled conclusions.
-
-## DeepSeek-V4 explained: the model grades its own work
-
-Most chatbots learned their manners through **reinforcement learning from human feedback (RLHF)**: people rank answers, a separate scoring model learns their taste, and the chatbot is trained to please the scorer. DeepSeek's [V4 technical report](https://arxiv.org/abs/2606.19348) describes a different loop for tasks without a clear right answer, such as writing, design, and tool use. "We dispense with these conventional scalar-based reward models," it says (section 5.1.1). Instead, "the actor network natively functions as the GRM," a generative reward model: the model being trained writes its own rubric-guided evaluation, and reinforcement learning improves the answers and the judging together, with what DeepSeek calls "a minimal set of diverse human annotations."
-
-The catch: a model grading itself can learn blind spots or reward hacking, as [Fireworks AI's analysis](https://fireworks.ai/blog/what-deepseek-v4-says-about-training-platforms) points out. The report was first posted in April. We include it here because it is one of the clearest departures from the classic recipe ([InstructGPT, 2022](https://arxiv.org/abs/2203.02155)).
-
-![DeepSeek-V4 explainer, slide 1 of 4: The model grades its own work. Step 1, a rubric: curated rubric-guided training data. Step 2, actor equals judge: the actor network evaluates each attempt. Step 3, reinforcement learning trains the answers and the grading together.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-01.png)
-![DeepSeek-V4 explainer, slide 2 of 4: Traditional RLHF, the old loop: fine-tune on answers people write, people rank several model answers, a separate reward model learns to predict the rankings as one number, and the model is optimized against that number with a leash to keep it close.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-02.png)
-![DeepSeek-V4 explainer, slide 3 of 4: Side by side: who judges, a separate scorer versus the model itself; what it gives, one number versus a written critique; human input, many ranked comparisons versus a minimal set of diverse human annotations.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-03.png)
-![DeepSeek-V4 explainer, slide 4 of 4: Why it matters: feedback that scales with the model. Cheaper, with fewer labels; smarter, with a reasoning judge; the risk, a self-judge can learn blind spots or reward hacking.](/weekly-screenshots/2026.10.28/deepseek-v4-self-judge-04.png)
-
-## Gallery: our organizer's Grok slides
-
-Our organizer made these slides with Grok for today's meetup. Their claims are Grok's summaries and have not been checked against the ledger behind this edition.
-
-![Grok slide: Open weights, open roads. Frontier-class models reach the desk, robotaxis publish their numbers, agents learn to ask first. Tags: Muse Spark Open on two Mac Studios, Tesla's first safety report, Claude Duet asks first.](/weekly-screenshots/2026.10.28/grok-open-weights-open-roads.png)
-![Grok slide: Humanoids reach the production line. Tesla Optimus in Fremont, Agility Digit 5 early access in the first half of 2027, and the Agile One SN reference humanoid in early 2027.](/weekly-screenshots/2026.10.28/grok-humanoids-reach-production-line.png)
-![Grok slide: Colorado writes the rules. Two Colorado AI laws take effect January 1, 2027: the ADMT Act, SB 26-189, on consequential decisions, and the Chatbot Act, HB 26-1263; the Attorney General's public hearing was October 26.](/weekly-screenshots/2026.10.28/grok-colorado-writes-the-rules.png)
-![Grok slide: Three things to try this week. Try one open model, read one safety report, and write down the four actions your agents must ask about: send, pay, sign, delete.](/weekly-screenshots/2026.10.28/grok-three-things-to-try.png)
-
-## Gallery: the Notebook deck
-
-A 19-page deck on enterprise AI governance, supplied by our organizer. It is AI-generated, and several of its claims, including its incident statistics, go beyond what this edition has verified. Read it as a discussion prompt, not a source.
-
-![Notebook deck, page 1 of 19: Redrawing the boundaries of enterprise AI.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-01.jpg)
-![Notebook deck, page 2 of 19: The old AI reality versus the new AI reality.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-02.jpg)
-![Notebook deck, page 3 of 19: Act I: the frontier closes.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-03.jpg)
-![Notebook deck, page 4 of 19: Act II: the intelligence divide, a chart of model access.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-04.jpg)
-![Notebook deck, page 5 of 19: Act II: the intelligence divide, model capability crossing a critical cyber threshold.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-05.jpg)
-![Notebook deck, page 6 of 19: The Anthropic incidents, the DeepSeek evasions, and the threat vector.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-06.jpg)
-![Notebook deck, page 7 of 19: Act II: the open rebellion.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-07.jpg)
-![Notebook deck, page 8 of 19: A table comparing Claude Opus 5.5, Gemini 4 Argon, Kimi K3.1 Pro and Meta Muse Spark.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-08.jpg)
-![Notebook deck, page 9 of 19: Intelligence versus cost per completed agentic task.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-09.jpg)
-![Notebook deck, page 10 of 19: Price cards for Claude Haiku 5.5, DeepSeek V4.1 Flash, MiniMax M3.1 Flash and GPT-6.1 Sol.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-10.jpg)
-![Notebook deck, page 11 of 19: Sticker price versus actual cost realities.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-11.jpg)
-![Notebook deck, page 12 of 19: Agentic routing architecture.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-12.jpg)
-![Notebook deck, page 13 of 19: AI models must now be governed as non-human employees.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-13.jpg)
-![Notebook deck, page 14 of 19: Act III: taming the swarm.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-14.jpg)
-![Notebook deck, page 15 of 19: Architectural foundation for AI agent governance.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-15.jpg)
-![Notebook deck, page 16 of 19: Secure AI agent lifecycle: dynamic authorization and revocation.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-16.jpg)
-![Notebook deck, page 17 of 19: Co-worker agents and workspace identities.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-17.jpg)
-![Notebook deck, page 18 of 19: Cross-platform discovery and containment.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-18.jpg)
-![Notebook deck, page 19 of 19: Strategic audit: AI agent deployment and governance readiness checklist.](/weekly-screenshots/2026.10.28/notebook-enterprise-ai-boundaries-19.jpg)
-
-*Curated by Intelligence.*
+This edition draws on primary pages from Anthropic (the Fable and Mythos 5.2 announcement, developer documentation, the agent-memory and expert-judgment research, and Claude Duet's product page), Google, Meta, OpenAI, Mistral, MiniMax, Moonshot AI (Hugging Face model card and license), Tencent (announcement and Hugging Face page), Thinking Machines, AWS, Agility Robotics, AGIBOT (company press release), Robocurve, the City and County of Denver, Boulder County, the Colorado Attorney General, and Nature, plus Elon Musk's own post on X. Reporting from CNBC, The Verge, VentureBeat (for Artificial Analysis's launch figures on Muse Ember), TechCrunch, the Los Angeles Times, Electrek, TeslaNorth, alfw.ai, ArtificialWatch, and the Colorado Sun fills in launches, independent figures, reported filings, usage complaints, hardware estimates, and county hearings. Benchmark scores, prices, trial results, and order figures from companies are vendor-reported, and we say so. Posts on X are linked for viewing and are not used as evidence for factual claims. Usage anecdotes and single test runs are reported, not measured. We did not open the NHTSA docket, so the Cybercab confidentiality item rests on Electrek's reporting.

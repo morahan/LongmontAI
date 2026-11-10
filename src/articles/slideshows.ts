@@ -25,6 +25,45 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    "opening-the-books": {
+        "id": "opening-the-books",
+        "title": "Opening the Books",
+        "description": "Eight slides on October 14–27, 2026: Anthropic's S-1 revenue, compute costs and customers, GPT-6.1 Terra, Genie 4, Apple's AI hardware, and what Nvidia and SpaceX earn from AI compute.",
+        "slides": [
+            {
+                "title": "Opening the Books: fourteen days of AI, October 14–27, 2026",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-01.png"
+            },
+            {
+                "title": "Anthropic's quarterly revenue grew from $376M to $11.6B in five quarters",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-02.png"
+            },
+            {
+                "title": "Anthropic's compute cost fell from 251% to 48% of revenue; first operating profit of $974M",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-03.png"
+            },
+            {
+                "title": "Anthropic customers: 11,900+ spending $100K, about 900% net revenue retention, $6.6M revenue per employee",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-04.png"
+            },
+            {
+                "title": "GPT-6.1 Terra: $1 / $5 per million tokens, 50.3% on Terminal-Bench 4.0, over 3x faster than Sol",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-05.png"
+            },
+            {
+                "title": "Genie 4 adds sound and live text steering to real-time simulated worlds",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-06.png"
+            },
+            {
+                "title": "Apple: iMac M6 up to 5x faster on-device AI vs the M4 iMac; iPad mini 4.5x AI vs the previous iPad mini; Apple TV 4K 2x GPU vs the previous model",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-07.png"
+            },
+            {
+                "title": "Nvidia earns about $40B per gigawatt with Rubin; SpaceX's AI segment grew 830%",
+                "src": "/slideshows/2026.10.28/opening-the-books/slide-08.png"
+            }
+        ]
+    },
     "agent-factory": {
         "id": "agent-factory",
         "title": "From doing the task to running the factory",
