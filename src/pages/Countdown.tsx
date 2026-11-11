@@ -20,12 +20,12 @@ const INTERVAL_DAYS = 14;
 const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
 const JUST_HIT_ZERO_DURATION_MS = 8000;
 // Update these together when rotating Discord invites (match Discord expires_at).
-// Invite m8aSxgd7q expires 2026-11-04T20:17:53Z (Nov 4, 2026 1:17 PM MST), so
-// valid for Oct 14 and Oct 28 only — Nov 11 noon Denver is after expiry.
+// Invite rU9JxSmXj expires 2026-12-11T17:47:58Z (Dec 11, 2026 10:47 AM MST), so
+// valid for Nov 11, Nov 25, and Dec 9 — Dec 23 noon Denver is after expiry.
 // The QR code and its click-through link both derive from this one URL (quickchart).
-const DISCORD_INVITE_URL = 'https://discord.gg/m8aSxgd7q';
-const DISCORD_INVITE_FIRST_MEETUP: CalendarDate = { year: 2026, month: 10, day: 14 };
-const DISCORD_INVITE_VALID_FOR_MEETUPS = 2;
+const DISCORD_INVITE_URL = 'https://discord.gg/rU9JxSmXj';
+const DISCORD_INVITE_FIRST_MEETUP: CalendarDate = { year: 2026, month: 11, day: 11 };
+const DISCORD_INVITE_VALID_FOR_MEETUPS = 3;
 const DISCORD_QR_OPENING_WINDOW_MINUTES = 10;
 const DISCORD_QR_POST_MEETUP_WINDOW_MINUTES = 30;
 

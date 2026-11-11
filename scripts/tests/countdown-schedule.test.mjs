@@ -57,8 +57,8 @@ test('invitation opens only during first ten minutes and thirty minutes after me
   }
 });
 
-test('configured invitation is current for exactly two meetup occurrences', () => {
-  for (const [month, day, current] of [[9, 30, false], [10, 14, true], [10, 28, true], [11, 11, false]]) {
+test('configured invitation is current for exactly three meetup occurrences', () => {
+  for (const [month, day, current] of [[10, 28, false], [11, 11, true], [11, 25, true], [12, 9, true], [12, 23, false]]) {
     assert.equal(page.isDiscordInviteCurrent(schedule.denverNoon({ year: 2026, month, day })), current);
   }
 });
