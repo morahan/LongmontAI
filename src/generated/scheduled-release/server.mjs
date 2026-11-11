@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-11-promised-weights-gated-agents",
   "publishAt": "2026-11-11T11:30:00-07:00",
   "publishAtMs": 1794421800000,
-  "releaseRevision": "09f10108464ffd0a8dc1120f",
+  "releaseRevision": "e1f227074ec6f6f5a7a02a52",
   "source": {
     "manifest": "src/articles/drafts/2026.11.11-promised-weights-gated-agents.release.json",
     "article": "src/articles/drafts/2026.11.11-promised-weights-gated-agents.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "1dd26a28eccc5f8fb48a20bcf097a2eb028d9d5a9e191df39b116a022c882481"
+    "sha256": "7d1c9f2fc5007b5e7760b80a489c33397e0e0293b73c7ec243503a9310bce68e"
   },
   "slideshow": {
     "id": "promised-weights-gated-agents",
@@ -62,6 +62,192 @@ const release = Object.freeze({
     ]
   },
   "media": {
+    "fortnight-in-charts-01-cover.jpg": {
+      "file": "media/fortnight-in-charts-01-cover.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-01-cover.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "c4e655db58e06f550c8d892b8a76c84ca427f391026ac86873430910dbd87ae6"
+    },
+    "fortnight-in-charts-02-fable-5-2-benchmark-table.jpg": {
+      "file": "media/fortnight-in-charts-02-fable-5-2-benchmark-table.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-02-fable-5-2-benchmark-table.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "e3cdac33473d88f49db659fdd375bd08fa90709e06243fbd51b0cf11a8af4593"
+    },
+    "fortnight-in-charts-03-frontiercode-accuracy-vs-cost.jpg": {
+      "file": "media/fortnight-in-charts-03-frontiercode-accuracy-vs-cost.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-03-frontiercode-accuracy-vs-cost.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "48e3832fd6b424fad82feb72c6eed557fffd79bf8d34b21a369b73186fa9d95e"
+    },
+    "fortnight-in-charts-04-kimi-five-weeks-behind-frontier.jpg": {
+      "file": "media/fortnight-in-charts-04-kimi-five-weeks-behind-frontier.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-04-kimi-five-weeks-behind-frontier.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "8aa2b8891d2aa7587ca6f2a10092d3e7d75489c91eb18cc6932d23e937e5b38a"
+    },
+    "fortnight-in-charts-05-gdpx-leaderboard.jpg": {
+      "file": "media/fortnight-in-charts-05-gdpx-leaderboard.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-05-gdpx-leaderboard.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "c5cd3269be2839de88c707259ceafbfa6aa1e67376aa8f7d026b3f5a0e693a64"
+    },
+    "fortnight-in-charts-06-lifeval-everyday-tasks.jpg": {
+      "file": "media/fortnight-in-charts-06-lifeval-everyday-tasks.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-06-lifeval-everyday-tasks.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "119df832103b49b1cda82973edbd4134387b8e9d2874a148684080c8425337a6"
+    },
+    "fortnight-in-charts-07-cost-of-benchmark-scores.jpg": {
+      "file": "media/fortnight-in-charts-07-cost-of-benchmark-scores.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-07-cost-of-benchmark-scores.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "692d3d32804b5914cdd7deb42f4531118a2a286ef994af1d12b0046f07f6800f"
+    },
+    "fortnight-in-charts-08-meta-active-memory-eval.jpg": {
+      "file": "media/fortnight-in-charts-08-meta-active-memory-eval.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-08-meta-active-memory-eval.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "339f98ff10a0929c487e94f914d09be911117b7cdc40a810b8d2c95f165f7f22"
+    },
+    "fortnight-in-charts-09-talk-how-developers-work-with-ai.jpg": {
+      "file": "media/fortnight-in-charts-09-talk-how-developers-work-with-ai.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-09-talk-how-developers-work-with-ai.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "43404e175da96876ad828439d32f275cdae01b71d2240c989df0e4872340c73d"
+    },
+    "fortnight-in-charts-10-talk-three-parts-of-the-system.jpg": {
+      "file": "media/fortnight-in-charts-10-talk-three-parts-of-the-system.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-10-talk-three-parts-of-the-system.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "69d8970997104043828e26b9f8768838c68b55195f43e4a04c96b479c29d20e0"
+    },
+    "fortnight-in-charts-11-talk-what-wakes-the-agent.jpg": {
+      "file": "media/fortnight-in-charts-11-talk-what-wakes-the-agent.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-11-talk-what-wakes-the-agent.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "e2ea0b50b491305b62cf6f41a4e529c0ec1b93f1a0fb8c3c2c4fe20cb81848d5"
+    },
+    "fortnight-in-charts-12-talk-when-you-hit-send.jpg": {
+      "file": "media/fortnight-in-charts-12-talk-when-you-hit-send.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-12-talk-when-you-hit-send.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "886ce400fd0043f6b40fd78cc6bdac8d8f8337ffbe0cd3b5e6caabaf7b9ee748"
+    },
+    "fortnight-in-charts-13-talk-the-agents-computer.jpg": {
+      "file": "media/fortnight-in-charts-13-talk-the-agents-computer.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-13-talk-the-agents-computer.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "15bfb86662d4adbd24bba4ac07e8a44fd098cf1a6566ca3309836fd5e83f1437"
+    },
+    "fortnight-in-charts-14-dreaming-memory-representations.jpg": {
+      "file": "media/fortnight-in-charts-14-dreaming-memory-representations.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-14-dreaming-memory-representations.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "af1d6962c2e109441cc662998e3e4a91d1507feba6cba8b57e0432f87717124d"
+    },
+    "fortnight-in-charts-15-agents-fix-it-fast-rule.jpg": {
+      "file": "media/fortnight-in-charts-15-agents-fix-it-fast-rule.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-15-agents-fix-it-fast-rule.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "98813401eb0209a78dfefb58e7fa987ed9478802c7a81f2099a12383e27172fc"
+    },
+    "fortnight-in-charts-16-cve-publication-pace.jpg": {
+      "file": "media/fortnight-in-charts-16-cve-publication-pace.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-16-cve-publication-pace.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "4a64482a5426383c450ee3ec34663950b0a68b7abc13ab3b09a4d546a86c6c07"
+    },
+    "fortnight-in-charts-17-simulated-network-attack-objectives.jpg": {
+      "file": "media/fortnight-in-charts-17-simulated-network-attack-objectives.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-17-simulated-network-attack-objectives.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "7bee69e6668d429f06402777d77c7ffdffe9a5acff06281e15bbf0739453d9d7"
+    },
+    "fortnight-in-charts-18-metr-evidence-shared.jpg": {
+      "file": "media/fortnight-in-charts-18-metr-evidence-shared.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-18-metr-evidence-shared.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "d0251b7a8df93914b961831a9522ad0e23e519e5433f13aac5e4a312e4f0721a"
+    },
+    "fortnight-in-charts-19-anthropic-518-billion-compute-plan.jpg": {
+      "file": "media/fortnight-in-charts-19-anthropic-518-billion-compute-plan.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-19-anthropic-518-billion-compute-plan.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "ffdc646b86e1abf7fc2922ebb5eadcb542421b0973a08da2700763bf6dda48f7"
+    },
+    "fortnight-in-charts-20-net-cash-anthropic-alphabet-meta.jpg": {
+      "file": "media/fortnight-in-charts-20-net-cash-anthropic-alphabet-meta.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-20-net-cash-anthropic-alphabet-meta.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "c1a41db919dfca083fb63c0eac6c95ad4cbaa8a1aaa2612440b813357377857b"
+    },
+    "fortnight-in-charts-21-anthropic-ai-bill-tops-payroll.jpg": {
+      "file": "media/fortnight-in-charts-21-anthropic-ai-bill-tops-payroll.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-21-anthropic-ai-bill-tops-payroll.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "8b2861989a0560de04246eb1cc5d3811a60b72a1b0caac1fc5b7b2288e1eff07"
+    },
+    "fortnight-in-charts-22-nvidia-dollar-flow-model.jpg": {
+      "file": "media/fortnight-in-charts-22-nvidia-dollar-flow-model.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-22-nvidia-dollar-flow-model.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "3dda3922820385c9ab36bef30b7372520eb305dcdcb463afea2f35c3dcae63ea"
+    },
+    "fortnight-in-charts-23-big-tech-capex-apple.jpg": {
+      "file": "media/fortnight-in-charts-23-big-tech-capex-apple.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-23-big-tech-capex-apple.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "86c91357904aa2acb433077e0899952fc92e01499131d408582951a35b54ec3f"
+    },
+    "fortnight-in-charts-24-gpu-rental-price-changes.jpg": {
+      "file": "media/fortnight-in-charts-24-gpu-rental-price-changes.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-24-gpu-rental-price-changes.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "260cf1fa5ede2e40f5d920925eeade24281d924f5867bff2f7075cd752e49ebb"
+    },
+    "fortnight-in-charts-25-space-hardware-investment.jpg": {
+      "file": "media/fortnight-in-charts-25-space-hardware-investment.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-25-space-hardware-investment.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "78d6f9ef74a2b697a94555de9121fabc0e688d9ce575054b77f3cd2ee767754e"
+    },
+    "fortnight-in-charts-26-gallup-ai-use-at-work.jpg": {
+      "file": "media/fortnight-in-charts-26-gallup-ai-use-at-work.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-26-gallup-ai-use-at-work.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "1c79a6814e33fdf10d20008d624795b790580dbb8f38db1079d5b50de9e40f01"
+    },
+    "fortnight-in-charts-27-ai-optimism-by-country.jpg": {
+      "file": "media/fortnight-in-charts-27-ai-optimism-by-country.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-27-ai-optimism-by-country.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "f54fe7b31f3d3eef0dd75dab53472342b569570da5df6910a5d05604b272621d"
+    },
+    "fortnight-in-charts-28-grades-in-the-age-of-ai.jpg": {
+      "file": "media/fortnight-in-charts-28-grades-in-the-age-of-ai.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-28-grades-in-the-age-of-ai.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "48905c42824a185b5568b7b69f5ff9d2d9e41063548571a6c22d44be7ee254ba"
+    },
+    "fortnight-in-charts-29-tesla-fsd-miles-per-collision.jpg": {
+      "file": "media/fortnight-in-charts-29-tesla-fsd-miles-per-collision.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-29-tesla-fsd-miles-per-collision.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "56f25a762ba686215c24d94f13d3d7786ca058f5fc1af21aeb689167682714f1"
+    },
+    "fortnight-in-charts-30-three-questions.jpg": {
+      "file": "media/fortnight-in-charts-30-three-questions.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.11/fortnight-in-charts-30-three-questions.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "a5f7e76ad493f0c16d118047a6f01f31469de744d22fc4ca4602c0b45736973b"
+    },
+    "fortnight-in-charts.pdf": {
+      "file": "media/fortnight-in-charts.pdf",
+      "sourceUrl": "/documents/2026.11.11/fortnight-in-charts.pdf",
+      "contentType": "application/pdf",
+      "sha256": "c0e1a2248f457a412862b5a09f294cca94340c5e6051bddf3487765a11619554"
+    },
     "promised-weights-gated-agents-briefing.pdf": {
       "file": "media/promised-weights-gated-agents-briefing.pdf",
       "sourceUrl": "/documents/2026.11.11/promised-weights-gated-agents-briefing.pdf",

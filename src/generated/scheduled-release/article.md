@@ -353,3 +353,40 @@ This edition draws on primary pages from Anthropic (the Fable and Mythos 5.2 ann
 {{slideshow:promised-weights-gated-agents}}
 
 [Download the ten-slide briefing (PDF)](/documents/2026.11.11/promised-weights-gated-agents-briefing.pdf)
+
+## The fortnight in charts
+
+Thirty slides of charts and talk slides we saved between editions, each with one takeaway. Every slide names where the chart came from and what kind of evidence it is: a vendor's own numbers, a survey, an outside analysis, or one person's post.
+
+![Cover slide: The fortnight in charts.](/weekly-screenshots/2026.11.11/fortnight-in-charts-01-cover.jpg)
+![Fable 5.2 tops most rows of Anthropic's table. Anthropic's benchmark table comparing Claude Fable 5.2 with Fable 5.1, Opus 5.5 and GPT-6 Astra.](/weekly-screenshots/2026.11.11/fortnight-in-charts-02-fable-5-2-benchmark-table.jpg)
+![More effort is not always more score. FrontierCode 2.0 score against cost per task for five models at several effort settings.](/weekly-screenshots/2026.11.11/fortnight-in-charts-03-frontiercode-accuracy-vs-cost.jpg)
+![Kimi K3.1 Pro sits about five weeks behind the US frontier. Intelligence index over twelve months, with Kimi K3.1 Pro about five weeks behind the fitted US frontier trend.](/weekly-screenshots/2026.11.11/fortnight-in-charts-04-kimi-five-weeks-behind-frontier.jpg)
+![On expert work, the best model scores 12%. GDPx leaderboard led by Claude Opus 5.5 at 12%, beside a radar chart of model scores by domain.](/weekly-screenshots/2026.11.11/fortnight-in-charts-05-gdpx-leaderboard.jpg)
+![Everyday tasks: about 83%, with less waiting. LifeEval chart of average reward against minutes per attempt for five GPT models.](/weekly-screenshots/2026.11.11/fortnight-in-charts-06-lifeval-everyday-tasks.jpg)
+![The price of a given score keeps falling. Cost per task to reach a 25% or 75% score on four benchmarks, falling with each model release.](/weekly-screenshots/2026.11.11/fortnight-in-charts-07-cost-of-benchmark-scores.jpg)
+![Meta says Muse now remembers better. Two Meta bar charts: an active memory eval at 90% against 76%, and a personal superintelligence index at 47% against 38%.](/weekly-screenshots/2026.11.11/fortnight-in-charts-08-meta-active-memory-eval.jpg)
+![From copy and paste to always-on agents. Talk slide showing four stages of how developers work with AI, ending in always-on agents.](/weekly-screenshots/2026.11.11/fortnight-in-charts-09-talk-how-developers-work-with-ai.jpg)
+![The agent runs on a server and works on its own computer. Talk slide showing apps and channels, a server that runs the agent, and the agent's own computer.](/weekly-screenshots/2026.11.11/fortnight-in-charts-10-talk-three-parts-of-the-system.jpg)
+![Seven things can wake an agent. Talk slide listing seven wake-up sources feeding a router, a queue and an "anything worth saying?" check.](/weekly-screenshots/2026.11.11/fortnight-in-charts-11-talk-what-wakes-the-agent.jpg)
+![The database is the truth. Notifications only nudge.. Talk slide with four steps after you hit send: sending, the turn, watching and ordering.](/weekly-screenshots/2026.11.11/fortnight-in-charts-12-talk-when-you-hit-send.jpg)
+![The agent's computer sleeps when idle. Talk slide showing the agent's virtual machine, and what happens when it goes to sleep and wakes up.](/weekly-screenshots/2026.11.11/fortnight-in-charts-13-talk-the-agents-computer.jpg)
+![Dreaming rewrites memory between sessions. Two Anthropic diagrams of dreaming: building memory representations, and writing to the injected context.](/weekly-screenshots/2026.11.11/fortnight-in-charts-14-dreaming-memory-representations.jpg)
+![One team's rule: fix it fast. Slide text: agents fix every error hit by a user and verify their own work with no human in the loop.](/weekly-screenshots/2026.11.11/fortnight-in-charts-15-agents-fix-it-fast-rule.jpg)
+![Software flaws arrive at four times last year's pace. A chart of new CVEs published per day rising to 593, beside a chart of PHP running 69.3% of websites.](/weekly-screenshots/2026.11.11/fortnight-in-charts-16-cve-publication-pace.jpg)
+![DeepSeek edged OpenAI in a simulated attack. Objectives completed in a simulated network attack by tokens used, for six models.](/weekly-screenshots/2026.11.11/fortnight-in-charts-17-simulated-network-attack-objectives.jpg)
+![METR saw more evidence than the public did. METR table of AI R&D evidence types, marking what was shared with METR and what is in the public report.](/weekly-screenshots/2026.11.11/fortnight-in-charts-18-metr-evidence-shared.jpg)
+![Anthropic plans $518 billion of compute spending. Headline: Anthropic plans to spend $518 billion on cloud and data centers.](/weekly-screenshots/2026.11.11/fortnight-in-charts-19-anthropic-518-billion-compute-plan.jpg)
+![Anthropic holds $125 billion in net cash. Net cash bar chart: Anthropic $125.4bn, Alphabet $140.0bn, Meta minus $1.2bn.](/weekly-screenshots/2026.11.11/fortnight-in-charts-20-net-cash-anthropic-alphabet-meta.jpg)
+![Anthropic's AI bill now tops its payroll. Three figures: 250x internal Claude usage, over 90% of new code written by Claude, 5,300 employees.](/weekly-screenshots/2026.11.11/fortnight-in-charts-21-anthropic-ai-bill-tops-payroll.jpg)
+![$1 of chips becomes $17.80 of AI revenue. A flow from $1 of Nvidia cost of goods to Nvidia, SpaceXAI, Anthropic and customer value.](/weekly-screenshots/2026.11.11/fortnight-in-charts-22-nvidia-dollar-flow-model.jpg)
+![Apple is sitting out the spending race. Big Tech capital spending indexed to Q1 2023 and as a share of sales, with Apple flat.](/weekly-screenshots/2026.11.11/fortnight-in-charts-23-big-tech-capex-apple.jpg)
+![GPU rental prices are going up. Table of GPU hourly rental prices before and after a November 15 increase.](/weekly-screenshots/2026.11.11/fortnight-in-charts-24-gpu-rental-price-changes.jpg)
+![Space hardware: $17 billion a year, six times the builders. Private investment in space hardware without SpaceX, beside the number of companies building satellites each year.](/weekly-screenshots/2026.11.11/fortnight-in-charts-25-space-hardware-investment.jpg)
+![Three in ten US workers use AI every week. Gallup lines for US employees using AI at work daily and a few times a week, Q2 2025 to Q2 2026.](/weekly-screenshots/2026.11.11/fortnight-in-charts-26-gallup-ai-use-at-work.jpg)
+![Americans rank near the bottom on AI optimism. Table of the top five and bottom five countries by share expecting AI to mostly help.](/weekly-screenshots/2026.11.11/fortnight-in-charts-27-ai-optimism-by-country.jpg)
+![Same tool, two outcomes in class. Illustration of grades splitting into two groups, with a study inset: practice up 48%, exam down 17%.](/weekly-screenshots/2026.11.11/fortnight-in-charts-28-grades-in-the-age-of-ai.jpg)
+![Tesla reports 6 million miles per major collision on FSD. Post listing Tesla's reported miles per major collision with and without FSD (Supervised).](/weekly-screenshots/2026.11.11/fortnight-in-charts-29-tesla-fsd-miles-per-collision.jpg)
+![Closing slide: three questions for any chart.](/weekly-screenshots/2026.11.11/fortnight-in-charts-30-three-questions.jpg)
+
+[Download the fortnight in charts (PDF)](/documents/2026.11.11/fortnight-in-charts.pdf)
