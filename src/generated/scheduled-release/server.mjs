@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-11-promised-weights-gated-agents",
   "publishAt": "2026-11-11T11:30:00-07:00",
   "publishAtMs": 1794421800000,
-  "releaseRevision": "bce1ce4b65c464f7514aaa4d",
+  "releaseRevision": "09f10108464ffd0a8dc1120f",
   "source": {
     "manifest": "src/articles/drafts/2026.11.11-promised-weights-gated-agents.release.json",
     "article": "src/articles/drafts/2026.11.11-promised-weights-gated-agents.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "23e0128d34def4bc8bdf36c33eca3f34e25e3ad5e3dae8c643a2cc93d3044edb"
+    "sha256": "1dd26a28eccc5f8fb48a20bcf097a2eb028d9d5a9e191df39b116a022c882481"
   },
   "slideshow": {
     "id": "promised-weights-gated-agents",
@@ -62,6 +62,12 @@ const release = Object.freeze({
     ]
   },
   "media": {
+    "promised-weights-gated-agents-briefing.pdf": {
+      "file": "media/promised-weights-gated-agents-briefing.pdf",
+      "sourceUrl": "/documents/2026.11.11/promised-weights-gated-agents-briefing.pdf",
+      "contentType": "application/pdf",
+      "sha256": "f12719ca87068490c3b1824912df490599c7b3f5369e7e096a15e89af7bc01aa"
+    },
     "slide-01-cover.png": {
       "file": "media/slide-01-cover.png",
       "sourceUrl": "/weekly-screenshots/2026.11.11/slide-01-cover.png",
@@ -120,7 +126,7 @@ const release = Object.freeze({
       "file": "media/slide-10-close-ask.png",
       "sourceUrl": "/weekly-screenshots/2026.11.11/slide-10-close-ask.png",
       "contentType": "image/png",
-      "sha256": "2a5653e197b3218d52a56d59c0245285cf53c82fe4a04f42330895e3c043b4eb"
+      "sha256": "033c8423122be7f11a065e581c29eaededbf71067b9c9231a04da3dd463488c7"
     }
   }
 });

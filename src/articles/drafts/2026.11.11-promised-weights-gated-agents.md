@@ -29,15 +29,13 @@ The thread running through all of it: **promises kept versus promises still pend
 
 This edition covers **October 29–November 11, 2026** (America/Denver).
 
-> **Evidence note:** Model, agent, robot, and city announcements come from the companies themselves, and benchmark scores, prices, and trial results are vendor-reported unless we name an independent source. A demo is not proof of production reliability. Posts on X are linked so you can watch them; they are people's own claims and test runs, not primary sources. Statements that something had "not shipped" describe what we could see on November 10, and they can change quickly.
+> **Evidence note:** Model, agent, robot, and city announcements come from the companies themselves, and benchmark scores, prices, and trial results are vendor-reported unless we name an independent source. A demo is not proof of production reliability. Posts on X are linked so you can watch them; they are people's own claims and test runs, not primary sources. Statements that something had "not shipped" describe what was public on November 10, and they can change quickly.
 
-{{slideshow:promised-weights-gated-agents}}
-
-![Longmont AI branded cover for the November 11 briefing: "Promised weights, gated agents." Brand layout, not a product screenshot.](/weekly-screenshots/2026.11.11/slide-01-cover.png)
+![Cover slide for the November 11 briefing: "Promised weights, gated agents."](/weekly-screenshots/2026.11.11/slide-01-cover.png)
 
 ## New this fortnight: the release board
 
-![Branded slide: "New this fortnight." Cards for Claude Fable 5.2, Gemini 4 Carbon, Muse Ember, and Mistral Large 4's open weights. Illustrative layout, not a chart.](/weekly-screenshots/2026.11.11/slide-02-release-board.png)
+![Slide: "New this fortnight." Cards for Claude Fable 5.2, Gemini 4 Carbon, Muse Ember, and Mistral Large 4's open weights.](/weekly-screenshots/2026.11.11/slide-02-release-board.png)
 
 Here is what the big labs and the open-weight crowd shipped between October 29 and November 10. Prices are the vendors' list prices per million tokens (input / output). "Open weights" means you can download the model file.
 
@@ -81,7 +79,7 @@ Here is what the big labs and the open-weight crowd shipped between October 29 a
 
 ### Muse Ember: Meta's cheap worker model
 
-**What happened:** On November 9, [Meta introduced Muse Ember](https://research.meta.ai/blog/muse-ember), its smallest and cheapest Muse model, built for the small steps agents repeat all day: tool calls, coding subtasks, routing, pulling data out of documents. Alexandr Wang, who leads Meta Superintelligence Labs, [announced it on X](https://x.com/alexandr_wang/status/2119853374158032950) with a cost chart (an image, not a video).
+**What happened:** On November 9, [Meta introduced Muse Ember](https://research.meta.ai/blog/muse-ember), its smallest and cheapest Muse model, built for the small steps agents repeat all day: tool calls, coding subtasks, routing, pulling data out of documents. Alexandr Wang, who leads Meta Superintelligence Labs, [announced it on X](https://x.com/alexandr_wang/status/2119853374158032950) with a cost chart.
 
 - **Price:** $0.10 per million input tokens and $0.50 per million output, with higher rates for requests over 200,000 input tokens, per [Meta's developer documentation](https://dev.meta.ai/docs/muse-ember) (VentureBeat lists them as $0.30 and $1.50). It reads text, images, audio, video, and PDFs.
 - **Independent check:** [VentureBeat reports](https://venturebeat.com/technology/metas-proprietary-muse-ember-nearly-matches-claude-haiku-5-5-at-1-3-the-estimated-per-task-cost) that in Artificial Analysis's launch testing, Ember scored 36 on that firm's Intelligence Index, the same rounded score as Claude Haiku 5.5, at about **14 cents per task versus 41 cents** for Haiku.
@@ -97,8 +95,8 @@ On November 4, OpenAI [released ChatGPT Images 2.6](https://openai.com/products/
 
 - **Mistral Large 4 (Oct 29).** Mistral [released the weights](https://mistral.ai/news/mistral-large-4-oss/) of its 1-trillion-parameter model, nicknamed "Le Chonk," after a three-week public preview. It was trained in Europe, and Mistral pitches it for coding and defensive security. The license is a modified MIT: free to use, modify, and sell products with, except that businesses offering the model as a hosted service need a separate commercial license. Mistral reports 41% on Terminal-Bench 4.0 and 19.7% on FrontierCode 2.0 (vendor-reported; different test setups from other vendors' numbers). The API price is $0.70 / $2.10.
 - **Kimi K3.1 Pro (Nov 4).** The promise kept; details in the next section.
-- **MiniMax H3-Image (weights posted Nov 10).** MiniMax's [Hugging Face page](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image) was created November 3 and had its model files and a custom license added on November 10. MiniMax [says](https://www.minimax.io/blog/minimax-h3-image) it makes 4K images in about 10 seconds; we have not tested it, so read the license before using it.
-- **Quiet from the usual names.** When we checked their Hugging Face pages on November 10, DeepSeek, Alibaba's Qwen team, and Zhipu (GLM) had posted no new flagship weights in this window; their latest big releases came in October or earlier. We also did not find a major new model from Microsoft, Amazon, or Apple in the window.
+- **MiniMax H3-Image (weights posted Nov 10).** MiniMax's [Hugging Face page](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image) was created November 3 and had its model files and a custom license added on November 10. MiniMax [says](https://www.minimax.io/blog/minimax-h3-image) it makes 4K images in about 10 seconds. That is the company's claim, so read the license before using it.
+- **Quiet from the usual names.** As of November 10, the Hugging Face pages for DeepSeek, Alibaba's Qwen team, and Zhipu (GLM) showed no new flagship weights in this window; their latest big releases came in October or earlier. Microsoft, Amazon, and Apple did not release a major new model in the window either.
 
 ### A promise to watch: Grok 4.8
 
@@ -108,7 +106,7 @@ xAI has not released Grok 4.8. Early on November 10, Elon Musk [posted on X](htt
 
 ## Weights: promised vs. shipped
 
-![Branded slide: "Promised vs. shipped." Cards for Kimi K3.1 Pro (weights published November 4), Tencent Hy4 (weights promised "in the coming days"), and Inkling 2 Small (weights promised "next week"). Illustrative layout, not a chart.](/weekly-screenshots/2026.11.11/slide-03-promised-vs-shipped.png)
+![Slide: "Promised vs. shipped." Cards for Kimi K3.1 Pro (weights published November 4), Tencent Hy4 (weights promised "in the coming days"), and Inkling 2 Small (weights promised "next week").](/weekly-screenshots/2026.11.11/slide-03-promised-vs-shipped.png)
 
 An announcement tells you what a company intends. A file on Hugging Face (the main public site for sharing models) tells you what it did.
 
@@ -118,7 +116,7 @@ An announcement tells you what a company intends. A file on Hugging Face (the ma
 
 **Free to download is not the same as easy to run.** At about 1.56 TB, the files are far larger than the memory of an ordinary office computer. One hardware guide estimated that running it would need roughly 861 GB to 1,509 GB of graphics memory depending on compression; those are estimates, not measurements.
 
-**The license.** The weights come under the "Kimi K3.1-Pro License," and we read the [license text on Hugging Face](https://huggingface.co/moonshotai/Kimi-K3.1-Pro/blob/main/LICENSE). It is a permissive, MIT-style grant with conditions. In plain English, and not legal advice:
+**The license.** The weights come under the "Kimi K3.1-Pro License," and the [license text is on Hugging Face](https://huggingface.co/moonshotai/Kimi-K3.1-Pro/blob/main/LICENSE). It is a permissive, MIT-style grant with conditions. In plain English, and not legal advice:
 
 - You may use, copy, modify, fine-tune, and redistribute the model.
 - If you run a "Model as a Service" business (giving others API-style access in a way that lets them control inputs, parameters, or training data) **and** your group's revenue is over **$20 million** across any 12 months, you need a separate agreement with Moonshot before commercial use.
@@ -133,13 +131,13 @@ The license is not one of the standard open-source licenses, so read it yourself
 
 On November 4, [Tencent announced Hy4](https://www.tencent.com/tencent-launches-hy4-joining-the-ranks-of-the-worlds-leading-open-source-ai-models/) under a headline that says it joins "the world's leading open-source AI models." The body of the release says Tencent Hy "plans to release model weights and system cards in the coming days." Hy4 is available now through Tencent's own products and its API, including third-party platforms such as OpenRouter. Tencent lists its prices at about **$0.90 per million input tokens, $2.70 per million output tokens, and $0.045 per million cached input tokens**, and says Hy4 Flash, a cheaper version, is "scheduled for release soon."
 
-**What we could see on November 10:** [Tencent's Hugging Face page](https://huggingface.co/tencent) listed only the older **Hy4-preview** checkpoints (from August 28), not the full Hy4. Its newest uploads were other projects. In other words, six days after "the coming days," the weights had not shipped. Tencent's headline describes its plan; the file would be the proof.
+**As of November 10:** [Tencent's Hugging Face page](https://huggingface.co/tencent) listed only the older **Hy4-preview** checkpoints (from August 28), not the full Hy4. Its newest uploads were other projects. In other words, six days after "the coming days," the weights had not shipped. Tencent's headline describes its plan; the file would be the proof.
 
-Tencent's own benchmark and blind-evaluation results (for example, a financial-task evaluation Tencent ran with partners) are vendor-reported, and we are not repeating them as rankings.
+Tencent's own benchmark and blind-evaluation results (for example, a financial-task evaluation Tencent ran with partners) are vendor-reported, so they are left out here.
 
 ### Thinking Machines' Inkling 2 Small: closed for now, weights promised
 
-On November 5, [Thinking Machines introduced Inkling 2 Small](https://thinkingmachines.ai/news/inkling-2-small/), a 594-billion-parameter model (17 billion active) that accepts images. At launch it ran on the company's Tinker platform with **closed weights**. The company wrote that it intends to make the full weights available under an **Apache 2.0** license "next week after the completion of external safety testing and red-teaming." "Next week" means November 9–13, so the weights could arrive around the time of this meetup. As of November 10, [its news page](https://thinkingmachines.ai/news/) showed no later post, and its Hugging Face page still listed only the earlier Inkling and Inkling-Small models.
+On November 5, [Thinking Machines introduced Inkling 2 Small](https://thinkingmachines.ai/news/inkling-2-small/), a 594-billion-parameter model (17 billion active) that accepts images. At launch it ran on the company's Tinker platform with **closed weights**. The company wrote that it intends to make the full weights available under an **Apache 2.0** license "next week after the completion of external safety testing and red-teaming." "Next week" means November 9–13, so the weights could arrive around the time this edition publishes. As of November 10, [its news page](https://thinkingmachines.ai/news/) showed no later post, and its Hugging Face page still listed only the earlier Inkling and Inkling-Small models.
 
 **Why it matters for Longmont:** three headlines, three different amounts of proof. One model you can download now, two you can only rent until the promise is kept. Plan around files that exist.
 
@@ -147,7 +145,7 @@ On November 5, [Thinking Machines introduced Inkling 2 Small](https://thinkingma
 
 ## The cost of a token vs. the cost of a task
 
-![Branded slide: "Token vs. task." Cards for effort settings that multiply the bill, a cheap worker model priced per task, and usage plans that run out faster than expected. Illustrative layout, not a chart.](/weekly-screenshots/2026.11.11/slide-04-token-vs-task.png)
+![Slide: "Token vs. task." Cards for effort settings that multiply the bill, a cheap worker model priced per task, and usage plans that run out faster than expected.](/weekly-screenshots/2026.11.11/slide-04-token-vs-task.png)
 
 A **token** is a word or piece of a word, and it is how most AI vendors bill. A **task** is what you actually want done, and a task can take many thousands of tokens, many tries, and some waiting. A price per token is a unit price. A price per task is the bill.
 
@@ -160,8 +158,8 @@ A **token** is a word or piece of a word, and it is how most AI vendors bill. A 
 - **A per-second price: Gemini Omni 1.2 Flash.** On November 5, Google made [Gemini Omni 1.2 Flash](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/) generally available. It makes video clips up to 15 seconds and lets you edit them turn by turn. Google says it cut the price by **30%** from Omni 1.1, to **$0.07 per second of 720p video**. Our arithmetic: a maximum-length 15-second clip is about **$1.05**, before any retries. Outputs carry an imperceptible SynthID watermark.
 - **Tencent's price list.** Besides Hy4's per-token prices above, Tencent says Hy4 is **50% off on Tencent Cloud TokenHub through December 31, 2026**, and that its WorkBuddy and CodeBuddy tools are free November 4–15.
 - **A task with a price tag.** Thinking Machines' Inkling 2 Small post describes a [4.5-hour, $426 autonomous fine-tuning run](https://thinkingmachines.ai/news/inkling-2-small/). That is the company's own demo of a single task, not a typical cost.
-- **Usage limits bite: xAI's Grok Bot.** [TeslaNorth reported on November 8](https://teslanorth.com/2026/11/08/grok-bot-usage-limits-musk/) that subscribers to **xAI's Grok Bot** (xAI's always-on agent product) are complaining that agent work uses up plan allowances fast. It says Elon Musk posted that fixes for "improved token efficiency and smarter behavior are underway," and that he said on November 1 that serving costs were "unsustainably high relative to revenue." One subscriber's post said a $200 plan went from about seven days to about 14 hours. We have not verified that, and these are reported anecdotes, not measurements.
-- **The other side: a "60 bots, one budget" workshop.** A [post by gatsby](https://x.com/0xg4tsby/status/2116153564066193809) shares a roughly hour-long workshop video by a person described as a SpaceXAI engineer who runs more than 60 Grok Bots like a small company: a chief of staff bot, three manager bots, and dozens of workers. The claim is that many bots don't have to mean many times the bill if each bot reads only what its job needs. That is a promotional post and we have not checked the claim, but the principle (give each agent only the context it needs) matches what vendors say about cost.
+- **Usage limits bite: xAI's Grok Bot.** [TeslaNorth reported on November 8](https://teslanorth.com/2026/11/08/grok-bot-usage-limits-musk/) that subscribers to **xAI's Grok Bot** (xAI's always-on agent product) are complaining that agent work uses up plan allowances fast. It says Elon Musk posted that fixes for "improved token efficiency and smarter behavior are underway," and that he said on November 1 that serving costs were "unsustainably high relative to revenue." One subscriber's post said a $200 plan went from about seven days to about 14 hours. That figure is unverified, and these are reported anecdotes, not measurements.
+- **The other side: a "60 bots, one budget" workshop.** A [post by gatsby](https://x.com/0xg4tsby/status/2116153564066193809) shares a roughly hour-long workshop video by a person described as a SpaceXAI engineer who runs more than 60 Grok Bots like a small company: a chief of staff bot, three manager bots, and dozens of workers. The claim is that many bots don't have to mean many times the bill if each bot reads only what its job needs. That is a promotional post and the claim is unverified, but the principle (give each agent only the context it needs) matches what vendors say about cost.
 
 **Why it matters for Longmont:** budget by the task. Run one real job end to end at the effort setting you'd actually use, count retries, and multiply. Lower prices and lower latency help, but an agent that works for hours on a high setting can still use up a plan.
 
@@ -169,7 +167,7 @@ A **token** is a word or piece of a word, and it is how most AI vendors bill. A 
 
 ## Agents get checkpoints
 
-![Branded slide: "Agents get checkpoints." Cards for a check before each tool call, an isolated desktop for the agent, a measured scope test, and a study of analysts following an agent's lean. Illustrative layout, not a screenshot.](/weekly-screenshots/2026.11.11/slide-05-agents-get-checkpoints.png)
+![Slide: "Agents get checkpoints." Cards for a check before each tool call, an isolated desktop for the agent, a measured scope test, and a study of analysts following an agent's lean.](/weekly-screenshots/2026.11.11/slide-05-agents-get-checkpoints.png)
 
 Last edition's lesson was agents that ask first. This fortnight the same idea reached the admin and infrastructure layers: a **checkpoint** is a place where a rule runs before the agent can act.
 
@@ -187,7 +185,7 @@ Last edition's lesson was agents that ask first. This fortnight the same idea re
 
 ### A checkpoint for people, too: who really made the call?
 
-Published October 27, two days before our window, an [Anthropic study on how agents shape experts' judgment calls](https://www.anthropic.com/research/agents-judgment-calls) is worth bringing to the meetup. Fifty professional data analysts did a realistic analysis with Claude Code. On each of four choices that had two reasonable answers, a coin flip secretly decided which way the analyst's agent would lean, and the agent was told to argue honestly for that side.
+Published October 27, two days before this edition's window, an [Anthropic study on how agents shape experts' judgment calls](https://www.anthropic.com/research/agents-judgment-calls) shows why people need checkpoints as well. Fifty professional data analysts did a realistic analysis with Claude Code. On each of four choices that had two reasonable answers, a coin flip secretly decided which way the analyst's agent would lean, and the agent was told to argue honestly for that side.
 
 - Analysts went with the agent's lean **86%** of the time; if the agent made no difference, you'd expect about 50%.
 - Afterward, **77%** explained their choices using the agent's own arguments, sometimes word for word, but only **15%** credited the agent.
@@ -201,7 +199,7 @@ The limits are real and Anthropic lists them: the agents' leanings were delibera
 
 ## Agents that remember, and "dream"
 
-![Branded slide: "Agents that remember." Cards for writing notes worth keeping, "dreaming" to check notes against the record, and an expectation, not an announcement, about Claude Duet. Illustrative layout.](/weekly-screenshots/2026.11.11/slide-06-agent-memory.png)
+![Slide: "Agents that remember." Cards for writing notes worth keeping, "dreaming" to check notes against the record, and an expectation, not an announcement, about Claude Duet.](/weekly-screenshots/2026.11.11/slide-06-agent-memory.png)
 
 Most chatbots forget everything when a conversation ends. **Agent memory** is what an agent keeps between sessions: notes it writes to a folder or file and reads next time. It is different from the model's training, from what it learns inside one chat, and from "compaction," where an agent summarizes a long conversation so it can keep going.
 
@@ -215,7 +213,7 @@ Most chatbots forget everything when a conversation ends. **Agent memory** is wh
 - **Dreaming can build a wiki.** Working over a company's internal documents (about 350,000 files), agents built linked wiki pages across 128 dreaming sessions. Using the wiki alone, scores on 25 test questions rose from 13% to 48%. With search plus the wiki, they reached 61%, compared with 53% for search alone, and used about 20,000 fewer tokens per question. On questions about a merger that required combining several documents, Claude scored 87% with the wiki versus 73% with search alone.
 - **It can go wrong.** On one task the wiki grew larger than the documents it summarized, which is no summary at all. And notes loaded into every session cost tokens and can carry a wrong fact everywhere, so the always-loaded layer has to stay small. Anthropic says Claude Code loads only the first 200 lines or 25 KB of its memory index file.
 
-**Claude Duet: expectation, not announcement.** [Claude Duet](https://claude.com/product/claude-duet) is Anthropic's proactive work agent, opened as a research preview in late October for US Pro, Max, and Ultra subscribers through a waitlist. It runs on Claude Opus 5.5, keeps working in the cloud while you're away, and uses your Claude memory. The memory post mentions Duet once, as an example of an assistant that benefits from memories organized around the person it's helping, and says dreaming "can be tuned" toward a goal like that. **We expect dreaming will likely show up in Claude Duet.** That is our expectation, not something Anthropic has announced: as of November 10 we found no Anthropic statement that Duet uses or will use dreaming.
+**Claude Duet: expectation, not announcement.** [Claude Duet](https://claude.com/product/claude-duet) is Anthropic's proactive work agent, opened as a research preview in late October for US Pro, Max, and Ultra subscribers through a waitlist. It runs on Claude Opus 5.5, keeps working in the cloud while you're away, and uses your Claude memory. The memory post mentions Duet once, as an example of an assistant that benefits from memories organized around the person it's helping, and says dreaming "can be tuned" toward a goal like that. **We expect dreaming will likely show up in Claude Duet.** That is our expectation, not an announcement: as of November 10, Anthropic had not said that Duet uses or will use dreaming.
 
 **Why it matters for Longmont:** memory makes agents more useful and makes their mistakes stickier. The good news is that this kind of memory is usually plain files you can open, read, and correct.
 
@@ -223,13 +221,13 @@ Most chatbots forget everything when a conversation ends. **Agent memory** is wh
 
 ## Robotaxis: more cities, still-sealed paperwork
 
-![Branded slide: "More cities, sealed paperwork." Cards for Tesla's San Antonio launch, Waymo's Los Angeles and San Diego expansion, and a confidentiality request to NHTSA. Illustrative layout, not a map or chart.](/weekly-screenshots/2026.11.11/slide-07-cities-and-sealed-paper.png)
+![Slide: "More cities, sealed paperwork." Cards for Tesla's San Antonio launch, Waymo's Los Angeles and San Diego expansion, and a confidentiality request to NHTSA.](/weekly-screenshots/2026.11.11/slide-07-cities-and-sealed-paper.png)
 
 **What happened:**
 
 - **Tesla, San Antonio (Nov 9).** Tesla began robotaxi service in San Antonio at 5 a.m. local time on Monday, November 9, announcing it on X, according to [TechCrunch](https://techcrunch.com/2026/11/09/tesla-expands-robotaxi-service-to-san-antonio/). TechCrunch notes Tesla gave no detail on hours, vehicle type, or whether safety monitors ride along. It also reports tracker counts of more than 400 registered vehicles in Austin and "a handful to a few dozen" in other cities (tracker data, not Tesla's numbers).
 - **Waymo, Los Angeles and San Diego (Nov 3).** Per the [Los Angeles Times](https://www.latimes.com/business/story/2026-11-03/waymo-expands-to-torrance-manhattan-beach-other-corners-of-la-county), Waymo added Torrance, El Segundo, and Manhattan Beach in LA (still no LAX) and extended San Diego north to La Jolla. The Times also reviewed NHTSA crash data and reports that Waymo crashes in LA County tripled last year, about 80% of them with no apparent injury, while Waymo says its per-million-mile crash rate has fallen each year since 2023. More cars mean more crashes counted even if the rate falls, so a count is not a rate.
-- **The sealed paperwork.** [Electrek reported on November 5](https://electrek.co/2026/11/05/tesla-cybercab-nhtsa-sworn-answers-confidential/) that Tesla's October 30 answer to NHTSA's special order about its Cybercab (the two-seat car with no steering wheel or pedals) asked that the **entire response be kept confidential**. The public docket, Electrek says, holds a one-page cover letter, a placeholder, and a first-responder plan. As of November 10 we found no report that NHTSA had ruled on the confidentiality request. We did not open the NHTSA docket ourselves, and Electrek is an opinionated outlet, so treat this as one outlet's account.
+- **The sealed paperwork.** [Electrek reported on November 5](https://electrek.co/2026/11/05/tesla-cybercab-nhtsa-sworn-answers-confidential/) that Tesla's October 30 answer to NHTSA's special order about its Cybercab (the two-seat car with no steering wheel or pedals) asked that the **entire response be kept confidential**. The public docket, Electrek says, holds a one-page cover letter, a placeholder, and a first-responder plan. As of November 10, there was no report that NHTSA had ruled on the confidentiality request. This item rests on Electrek's reporting, and Electrek is an opinionated outlet, so treat it as one outlet's account.
 
 **Why it matters:** an announcement that a city is open says nothing about how many cars exist, who is watching, or how often they fail. The documents that would show it are the ones that matter, and here some are sealed.
 
@@ -237,7 +235,7 @@ Most chatbots forget everything when a conversation ends. **Agent memory** is wh
 
 ## Humanoids and robots: orders, listings, a store shift, and a fooled camera
 
-![Branded slide: "Orders, listings, and a 24-hour store shift." Cards for Agility's Nasdaq listing and conditional orders, and AGIBOT's six-robot store trial. Illustrative layout, no robot photos.](/weekly-screenshots/2026.11.11/slide-08-orders-listings-store-shift.png)
+![Slide: "Orders, listings, and a 24-hour store shift." Cards for Agility's Nasdaq listing and conditional orders, and AGIBOT's six-robot store trial.](/weekly-screenshots/2026.11.11/slide-08-orders-listings-store-shift.png)
 
 **What happened:**
 
@@ -253,13 +251,13 @@ Most chatbots forget everything when a conversation ends. **Agent memory** is wh
 
 ## Colorado: rules pending, buildings and permits moving
 
-![Branded slide: "Rules pending, permits moving." Cards for Colorado's pending AI rules, Denver's permit intake assistant, and Boulder County's data-center hearing. Illustrative layout.](/weekly-screenshots/2026.11.11/slide-09-colorado-pending.png)
+![Slide: "Rules pending, permits moving." Cards for Colorado's pending AI rules, Denver's permit intake assistant, and Boulder County's data-center hearing.](/weekly-screenshots/2026.11.11/slide-09-colorado-pending.png)
 
 **What happened:**
 
-- **The rules are not final.** On its [AI page](https://coag.gov/ai/), the Colorado Attorney General's office, when we read it on November 10, still showed the rulemaking record (proposed rules filed August 11, an interim draft October 6, a regulatory analysis October 21, a public hearing and written-comment deadline October 26) and no final adopted rules. The office says it will consider all written comments in drafting the final set. Both laws, the **ADMT Act** (SB 26-189) and the **Chatbot Safety Act** (HB 26-1263), take effect **January 1, 2027**, and the ADMT Act requires rules to be in place before then. We saw no sign that the rules are final, so check the page for updates.
+- **The rules are not final.** On its [AI page](https://coag.gov/ai/), the Colorado Attorney General's office, as of November 10, still showed the rulemaking record (proposed rules filed August 11, an interim draft October 6, a regulatory analysis October 21, a public hearing and written-comment deadline October 26) and no final adopted rules. The office says it will consider all written comments in drafting the final set. Both laws, the **ADMT Act** (SB 26-189) and the **Chatbot Safety Act** (HB 26-1263), take effect **January 1, 2027**, and the ADMT Act requires rules to be in place before then. Check the page for updates.
 - **Denver's permit checker (Nov 5).** The city launched [StartSmart: Application Intake Assistant](https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/CPD-News-and-Events/CPD-News/2026/New-permit-intake-tool), built with vendor CivCheck, which uses AI to check applications for site development plans and building permits for completeness. Staff still make the final decisions, and the city expects more application types in 2027. The city gave no time-saving figure beyond "potential."
-- **Boulder County and data centers (Tue Nov 10).** County commissioners held a [public hearing at 1 p.m. on November 10](https://bouldercounty.gov/property-and-land/land-use/planning/land-use-code-update/dc-26-0003/) on draft land-use rules that would allow new data centers only up to **75 kilowatts** of IT power, which the county compares to the average daily energy use of 2.5 homes; anything larger would not be allowed. The [Colorado Sun](https://coloradosun.com/2026/11/09/boulder-county-data-center-rules-against-growth/) contrasted that with Colorado Springs at about 50 megawatts and a Larimer County vote on a 30-megawatt limit in January. A county moratorium on data-center applications has been in place since June 2. The county notes the rules cover **unincorporated** Boulder County, not cities such as Longmont. When we checked shortly after the hearing began on November 10, no outcome had been posted.
+- **Boulder County and data centers (Tue Nov 10).** County commissioners held a [public hearing at 1 p.m. on November 10](https://bouldercounty.gov/property-and-land/land-use/planning/land-use-code-update/dc-26-0003/) on draft land-use rules that would allow new data centers only up to **75 kilowatts** of IT power, which the county compares to the average daily energy use of 2.5 homes; anything larger would not be allowed. The [Colorado Sun](https://coloradosun.com/2026/11/09/boulder-county-data-center-rules-against-growth/) contrasted that with Colorado Springs at about 50 megawatts and a Larimer County vote on a 30-megawatt limit in January. A county moratorium on data-center applications has been in place since June 2. The county notes the rules cover **unincorporated** Boulder County, not cities such as Longmont. No outcome had been posted by the afternoon of November 10.
 
 **Why it matters for Longmont:** if you use AI to help make decisions about people, or run a chatbot on your website, the rules you will have to follow are still being written. The city example shows the pattern regulators like: AI helps with checking, people decide. Not legal advice.
 
@@ -271,7 +269,7 @@ Most chatbots forget everything when a conversation ends. **Agent memory** is wh
 
 ## Close and ask
 
-![Branded slide: "Close and ask." Three things to try this week. Illustrative layout.](/weekly-screenshots/2026.11.11/slide-10-close-ask.png)
+![Closing slide: three things to try this week, beside the Longmont AI parrot.](/weekly-screenshots/2026.11.11/slide-10-close-ask.png)
 
 Three things to try this week:
 
@@ -283,7 +281,7 @@ Bring one result to the meetup.
 
 ## Links and videos
 
-Posts on X that go with this edition. They are people's own claims, demos, and single test runs, not independent evidence. Seven of the eight include video.
+Posts on X that go with this edition. They are people's own claims, demos, and single test runs, not independent evidence.
 
 - **Google, Gemini 4 Carbon launch (video, Nov 10).** [Google's post](https://x.com/Google/status/2120186185423159331) announcing Carbon's wider release, with a short clip.
 - **Alexandr Wang, Muse Ember (image, Nov 9).** [Meta's AI chief announces Muse Ember](https://x.com/alexandr_wang/status/2119853374158032950) with a chart comparing intelligence per dollar against Haiku and Luna.
@@ -327,7 +325,7 @@ Posts on X that go with this edition. They are people's own claims, demos, and s
 | Nov 6 | Anthropic agent-memory research; Robocurve perceptual-attack study |
 | Nov 8 | Reports of xAI Grok Bot usage-limit complaints; AGIBOT trial results released |
 | Nov 9 | Claude Fable 5.2 and Mythos 5.2; Meta Muse Ember; Tesla robotaxi service begins in San Antonio |
-| Nov 10 | Gemini 4 Carbon opens to paying users; MiniMax H3-Image weights posted; Musk says Grok 4.8 is in reinforcement learning; Boulder County data-center hearing (no outcome posted at our last check) |
+| Nov 10 | Gemini 4 Carbon opens to paying users; MiniMax H3-Image weights posted; Musk says Grok 4.8 is in reinforcement learning; Boulder County data-center hearing (outcome not yet posted) |
 | Nov 11 | Longmont AI meetup, 12:00–2:15 p.m. |
 | Nov 15 | Tencent's free WorkBuddy and CodeBuddy period ends |
 | Nov 30 | Gemini 4 Carbon's introductory price ends |
@@ -348,4 +346,10 @@ Posts on X that go with this edition. They are people's own claims, demos, and s
 
 ## About our sources
 
-This edition draws on primary pages from Anthropic (the Fable and Mythos 5.2 announcement, developer documentation, the agent-memory and expert-judgment research, and Claude Duet's product page), Google, Meta, OpenAI, Mistral, MiniMax, Moonshot AI (Hugging Face model card and license), Tencent (announcement and Hugging Face page), Thinking Machines, AWS, Agility Robotics, AGIBOT (company press release), Robocurve, the City and County of Denver, Boulder County, the Colorado Attorney General, and Nature, plus Elon Musk's own post on X. Reporting from CNBC, The Verge, VentureBeat (for Artificial Analysis's launch figures on Muse Ember), TechCrunch, the Los Angeles Times, Electrek, TeslaNorth, alfw.ai, ArtificialWatch, and the Colorado Sun fills in launches, independent figures, reported filings, usage complaints, hardware estimates, and county hearings. Benchmark scores, prices, trial results, and order figures from companies are vendor-reported, and we say so. Posts on X are linked for viewing and are not used as evidence for factual claims. Usage anecdotes and single test runs are reported, not measured. We did not open the NHTSA docket, so the Cybercab confidentiality item rests on Electrek's reporting.
+This edition draws on primary pages from Anthropic (the Fable and Mythos 5.2 announcement, developer documentation, the agent-memory and expert-judgment research, and Claude Duet's product page), Google, Meta, OpenAI, Mistral, MiniMax, Moonshot AI (Hugging Face model card and license), Tencent (announcement and Hugging Face page), Thinking Machines, AWS, Agility Robotics, AGIBOT (company press release), Robocurve, the City and County of Denver, Boulder County, the Colorado Attorney General, and Nature, plus Elon Musk's own post on X. Reporting from CNBC, The Verge, VentureBeat (for Artificial Analysis's launch figures on Muse Ember), TechCrunch, the Los Angeles Times, Electrek, TeslaNorth, alfw.ai, ArtificialWatch, and the Colorado Sun fills in launches, independent figures, reported filings, usage complaints, hardware estimates, and county hearings. Benchmark scores, prices, trial results, and order figures from companies are vendor-reported, and we say so. Posts on X are linked for viewing and are not used as evidence for factual claims. Usage anecdotes and single test runs are reported, not measured. The Cybercab confidentiality item rests on Electrek's reporting.
+
+## The briefing in ten slides
+
+{{slideshow:promised-weights-gated-agents}}
+
+[Download the ten-slide briefing (PDF)](/documents/2026.11.11/promised-weights-gated-agents-briefing.pdf)
