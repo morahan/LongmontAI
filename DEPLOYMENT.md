@@ -25,7 +25,7 @@ This project is configured to automatically deploy to Vercel on every push to th
 4. **Deploy**
    - Click "Deploy"
    - Wait for the initial build to complete
-   - Your site will be live at `https://longmontai.vercel.app` (or similar)
+   - Your site will be live at `https://longmont-ai.vercel.app`
 
 ### Scheduled edition predeployment
 
@@ -86,8 +86,11 @@ To use a custom domain:
 
 ## Current Deployment
 
+The Vercel project is `longmont-ai` in the `morahan` team (moved from `workoutflow` on 2026-11-11). Pass `--scope morahan` to Vercel CLI commands.
+
 Your site will be available at:
-- Production: `https://longmontai.vercel.app`
+- Production: `https://longmontai.com` (`www.longmontai.com` redirects to it)
+- Vercel alias: `https://longmont-ai.vercel.app`
 - Every push will trigger a new deployment
 
 ## Troubleshooting
