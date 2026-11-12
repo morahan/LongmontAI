@@ -7,6 +7,7 @@ const routeTitles: ReadonlyArray<readonly [string, string | undefined]> = [
   ['/', undefined],
   ['/edition/:id', 'Edition'],
   ['/countdown', 'Meetup Countdown'],
+  ['/countdown/final', 'Final Countdown Demo'],
   ['/tools', 'AI Capabilities Matrix'],
   ['/model-watch', 'Model Watch'],
   ['/leaderboard', 'Leaderboard'],

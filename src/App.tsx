@@ -8,6 +8,7 @@ import Feed from './pages/Feed';
 
 const Edition = lazy(() => import('./pages/Edition'));
 const Countdown = lazy(() => import('./pages/Countdown'));
+const CountdownFinalDemo = lazy(() => import('./pages/Countdown').then((page) => ({ default: page.CountdownFinalDemo })));
 const ToolsPage = lazy(() => import('./pages/Tools'));
 const ModelWatch = lazy(() => import('./pages/ModelWatch'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
@@ -73,6 +74,7 @@ function App() {
             <Route path="/" element={<Feed />} />
             <Route path="/edition/:id" element={<Edition />} />
             <Route path="/countdown" element={<Countdown />} />
+            <Route path="/countdown/final" element={<CountdownFinalDemo />} />
             <Route path="/tools" element={<ToolsPage />} />
             <Route path="/model-watch" element={<ModelWatch />} />
             <Route path="/leaderboard" element={<Leaderboard />} />

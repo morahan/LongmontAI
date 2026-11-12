@@ -45,6 +45,8 @@ assert(csp.includes('https://fonts.gstatic.com'), 'Google Fonts files must remai
 assert(csp.includes('https://images.unsplash.com'), 'published article images must remain available');
 assert(csp.includes('https://quickchart.io'), 'countdown Discord QR images must remain available');
 assert(csp.includes('https://view.officeapps.live.com'), 'PowerPoint embeds must remain available');
+assert(csp.includes("frame-src 'self' https://view.officeapps.live.com https://www.youtube-nocookie.com"), 'countdown song embed must remain available');
+assert(headers.get('permissions-policy').includes('autoplay=(self "https://www.youtube-nocookie.com")'), 'countdown song embed must be allowed to autoplay');
 assert.equal(headers.get('cross-origin-opener-policy'), 'same-origin');
 assert.equal(headers.get('x-content-type-options'), 'nosniff');
 assert.equal(headers.get('x-frame-options'), 'DENY');

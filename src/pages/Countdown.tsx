@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Calendar, Clock } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Calendar, Clock, MapPin, Play, RotateCcw, VolumeX } from 'lucide-react';
 import {
   DENVER_TIME_ZONE,
   denverCalendarDate,
@@ -7,6 +7,18 @@ import {
   nextDenverMeetup,
   type CalendarDate,
 } from '../lib/meetupSchedule';
+import {
+  CELEBRATION_MS,
+  FINAL_COUNTDOWN_MS,
+  SONG,
+  finalEnergy,
+  showPhase,
+  songFrame,
+  songJoin,
+  songVideoTime,
+  type Phase,
+  type SongFrame,
+} from '../lib/countdownShow';
 
 // ─── LongmontAI Meetup Schedule ─────────────────────────────────────────────
 // Every other Wednesday at noon (America/Denver, MST or MDT)
@@ -17,8 +29,6 @@ const MEETUP_MONTH = 5; // 1-indexed
 const MEETUP_DAY = 27;
 const MEETUP_DURATION_HOURS = 1;
 const INTERVAL_DAYS = 14;
-const FINAL_COUNTDOWN_THRESHOLD_SECONDS = 60;
-const JUST_HIT_ZERO_DURATION_MS = 8000;
 // Update these together when rotating Discord invites (match Discord expires_at).
 // Invite rU9JxSmXj expires 2026-12-11T17:47:58Z (Dec 11, 2026 10:47 AM MST), so
 // valid for Nov 11, Nov 25, and Dec 9 — Dec 23 noon Denver is after expiry.
@@ -77,54 +87,45 @@ function isDiscordInviteCurrent(meetup: Date): boolean {
     && currentMeetupIndex < firstInviteMeetupIndex + DISCORD_INVITE_VALID_FOR_MEETUPS;
 }
 
-interface TimeLeft {
+interface TimeParts {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
-  total: number;
-  isLive: boolean;
-  isPastToday: boolean;
-  isFinalCountdown: boolean;
 }
 
-function computeTimeLeft(): TimeLeft {
-  const now = new Date();
-  const nextMeetup = getNextMeetup(now);
-  const endTime = getEndTime(nextMeetup);
-  const diff = nextMeetup.getTime() - now.getTime();
-
-  const live = now >= nextMeetup && now < endTime;
-
-  if (diff <= 0 && !live) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0, isLive: false, isPastToday: true, isFinalCountdown: false };
-  }
-
-  const absDiff = Math.max(0, diff);
-  const seconds = Math.floor((absDiff / 1000) % 60);
-  const minutes = Math.floor((absDiff / 1000 / 60) % 60);
-  const hours = Math.floor((absDiff / 1000 / 60 / 60) % 24);
-  const days = Math.floor(absDiff / 1000 / 60 / 60 / 24);
-
-  const isFinalCountdown = diff > 0 && diff <= FINAL_COUNTDOWN_THRESHOLD_SECONDS * 1000;
-
-  return { days, hours, minutes, seconds, total: diff, isLive: live, isPastToday: false, isFinalCountdown };
+function timeParts(msUntilMeetup: number): TimeParts {
+  const totalSeconds = Math.floor(Math.max(0, msUntilMeetup) / 1000);
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor(totalSeconds / 3600) % 24,
+    minutes: Math.floor(totalSeconds / 60) % 60,
+    seconds: totalSeconds % 60,
+  };
 }
 
 // ─── Audio (lazy, gated behind first user gesture) ──────────────────────────
 let audioContext: AudioContext | null = null;
 let reducedMotion = false;
 
-function ensureAudioContext(): AudioContext | null {
-  if (audioContext) return audioContext;
+function armAudioContext() {
   try {
     const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!Ctx) return null;
-    audioContext = new Ctx();
-    return audioContext;
+    if (!Ctx) return;
+    audioContext ??= new Ctx();
+    if (audioContext.state === 'suspended') void audioContext.resume();
   } catch {
-    return null;
+    audioContext = null;
   }
+}
+
+function playableAudioContext(): AudioContext | null {
+  if (reducedMotion || !audioContext || audioContext.state !== 'running') return null;
+  return audioContext;
+}
+
+function hasUserActivation(): boolean {
+  return navigator.userActivation?.hasBeenActive ?? false;
 }
 
 function detectReducedMotion() {
@@ -135,77 +136,251 @@ function detectReducedMotion() {
   }
 }
 
-function playFinalTick(remainingSeconds: number) {
-  if (reducedMotion) return;
-  const ctx = ensureAudioContext();
+// Unpitched so it sits under the song instead of clashing with its key.
+function playSubKick() {
+  const ctx = playableAudioContext();
   if (!ctx) return;
   const now = ctx.currentTime;
-  // Base C5 + climb with urgency. Faster envelope in the final 10 seconds.
-  const baseHz = 523.25;
-  const urgency = Math.max(0, FINAL_COUNTDOWN_THRESHOLD_SECONDS - remainingSeconds);
-  const freq = baseHz + urgency * 20;
-  const isFinalTen = remainingSeconds <= 10;
-  const dur = isFinalTen ? 0.15 : 0.3;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(freq, now);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, now);
+  osc.frequency.exponentialRampToValueAtTime(45, now + 0.18);
   gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  gain.gain.linearRampToValueAtTime(0.26, now + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
   osc.connect(gain).connect(ctx.destination);
   osc.start(now);
-  osc.stop(now + dur);
+  osc.stop(now + 0.32);
 }
 
-function playCelebrationSound() {
-  if (reducedMotion) return;
-  try {
-    const context = ensureAudioContext();
-    if (!context) return;
+function playZeroHit() {
+  const ctx = playableAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.22, now);
+  master.connect(ctx.destination);
 
-    const masterGain = context.createGain();
-    masterGain.gain.setValueAtTime(0.15, context.currentTime);
-    masterGain.connect(context.destination);
+  const voice = (
+    type: OscillatorType,
+    freq: number,
+    start: number,
+    duration: number,
+    peak: number,
+    destination: AudioNode = master,
+  ) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(peak, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    osc.connect(gain).connect(destination);
+    osc.start(start);
+    osc.stop(start + duration + 0.02);
+    return osc;
+  };
 
-    const playNote = (freq: number, startTime: number, duration: number) => {
-      const osc = context.createOscillator();
-      const g = context.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
+  const boom = voice('sine', 110, now, 1.8, 1);
+  boom.frequency.exponentialRampToValueAtTime(55, now + 0.12);
 
-      g.gain.setValueAtTime(0, startTime);
-      g.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-      osc.connect(g);
-      g.connect(masterGain);
-
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-
-    const now = context.currentTime;
-    playNote(523.25, now, 0.8);      // C5
-    playNote(659.25, now + 0.1, 0.8); // E5
-    playNote(783.99, now + 0.2, 0.8); // G5
-    playNote(1046.50, now + 0.3, 1.2); // C6
-  } catch (e) {
-    console.error('Audio playback failed', e);
+  const stabFilter = ctx.createBiquadFilter();
+  stabFilter.type = 'lowpass';
+  stabFilter.frequency.setValueAtTime(2400, now);
+  stabFilter.frequency.exponentialRampToValueAtTime(500, now + 1.3);
+  stabFilter.connect(master);
+  for (const freq of [440, 554.37, 659.25, 880]) {
+    voice('sawtooth', freq, now, 1.5, 0.13, stabFilter);
   }
+
+  [880, 1108.73, 1318.51, 1760].forEach((freq, index) => {
+    voice('triangle', freq, now + 0.45 + index * 0.09, 0.4, 0.16);
+  });
 }
 
 // ─── Demo override (dev only) ───────────────────────────────────────────────
-function readDemoOverride(): 'final' | 'zero' | 'invite' | 'invite-expired' | 'post-invite' | null {
+type DemoOverride = 'final' | 'zero' | 'invite' | 'invite-expired' | 'post-invite';
+
+const DEMO_STAGE: Record<DemoOverride, { phase: Phase; invite: boolean }> = {
+  final: { phase: 'final', invite: false },
+  zero: { phase: 'live', invite: false },
+  invite: { phase: 'live', invite: true },
+  'invite-expired': { phase: 'live', invite: true },
+  'post-invite': { phase: 'afterparty', invite: true },
+};
+
+function readDemoOverride(): DemoOverride | null {
   // Only honored in dev so production users see real timer behavior.
   // import.meta.env.DEV is replaced by Vite at build time.
   // @ts-ignore
   if (typeof import.meta === 'undefined' || !import.meta.env?.DEV) return null;
-  const p = new URLSearchParams(window.location.search);
-  const v = p.get('demo');
-  if (v === 'final' || v === 'zero' || v === 'invite' || v === 'invite-expired' || v === 'post-invite') return v;
-  return null;
+  const v = new URLSearchParams(window.location.search).get('demo');
+  return v !== null && v in DEMO_STAGE ? (v as DemoOverride) : null;
 }
+
+// ─── Song layer ─────────────────────────────────────────────────────────────
+// The site CSP is script-src 'self', so the YouTube IFrame API script cannot load.
+// The embed speaks the same JSON protocol over postMessage without it.
+const YOUTUBE_ORIGIN = 'https://www.youtube-nocookie.com';
+const YOUTUBE_PLAYING = 1;
+const YOUTUBE_BUFFERING = 3;
+const SONG_DRIFT_TOLERANCE_SECONDS = 1;
+const SONG_SEEK_INTERVAL_MS = 2000;
+const SONG_RETRY_INTERVAL_MS = 500;
+const SOUND_PROMPT_LEAD_SECONDS = 600;
+
+interface PlayerReport {
+  currentTime?: number;
+  playerState?: number;
+  muted?: boolean;
+}
+
+function parsePlayerReport(data: unknown): PlayerReport | null {
+  if (typeof data !== 'string') return null;
+  try {
+    const message = JSON.parse(data);
+    const info = message?.info;
+    if (!info || typeof info !== 'object') return null;
+    const report: PlayerReport = {};
+    if (typeof info.currentTime === 'number') report.currentTime = info.currentTime;
+    if (typeof info.playerState === 'number') report.playerState = info.playerState;
+    if (typeof info.muted === 'boolean') report.muted = info.muted;
+    return report;
+  } catch {
+    return null;
+  }
+}
+
+interface SongLayerProps {
+  frame: SongFrame;
+  soundArmed: boolean;
+  videoTimeNow: () => number;
+  onSoundBlocked: () => void;
+}
+
+const SongLayer: React.FC<SongLayerProps> = ({ frame, soundArmed, videoTimeNow, onSoundBlocked }) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  // Always starts at SONG.startAt, even when joining mid-song: an embed asked to autoplay
+  // from a later start sometimes never leaves the unstarted state. The drift correction
+  // below seeks a late joiner to the right place once playback is running.
+  const src = `${YOUTUBE_ORIGIN}/embed/${SONG.videoId}?enablejsapi=1&autoplay=1&mute=1&controls=0`
+    + `&start=${SONG.startAt}&playsinline=1&rel=0&disablekb=1&iv_load_policy=3`
+    + `&origin=${encodeURIComponent(window.location.origin)}`;
+  const player = useRef({
+    loaded: false,
+    heard: false,
+    inSync: false,
+    captionsOff: false,
+    unmuteSent: false,
+    report: {} as PlayerReport,
+    sentVolume: -1,
+    listenedAt: 0,
+    unmutedAt: 0,
+    playedAt: 0,
+    soughtAt: 0,
+  });
+
+  const post = useCallback((message: Record<string, unknown>) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ ...message, id: 1, channel: 'widget' }),
+      YOUTUBE_ORIGIN,
+    );
+  }, []);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== YOUTUBE_ORIGIN || event.source !== iframeRef.current?.contentWindow) return;
+      const state = player.current;
+      state.heard = true;
+      const report = parsePlayerReport(event.data);
+      if (!report) return;
+      Object.assign(state.report, report);
+      if (report.currentTime === undefined || state.report.playerState !== YOUTUBE_PLAYING) return;
+
+      const expected = videoTimeNow();
+      state.inSync = Math.abs(report.currentTime - expected) <= SONG_DRIFT_TOLERANCE_SECONDS;
+      if (!state.inSync && performance.now() - state.soughtAt > SONG_SEEK_INTERVAL_MS) {
+        state.soughtAt = performance.now();
+        post({ event: 'command', func: 'seekTo', args: [expected, true] });
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [post, videoTimeNow]);
+
+  // Runs on every clock frame: each branch only posts when the player is behind the frame.
+  useEffect(() => {
+    const state = player.current;
+    if (!state.loaded) return;
+    const at = performance.now();
+
+    if (!state.heard) {
+      if (at - state.listenedAt > SONG_RETRY_INTERVAL_MS) {
+        state.listenedAt = at;
+        post({ event: 'listening' });
+      }
+      return;
+    }
+
+    if (!state.captionsOff && state.report.playerState === YOUTUBE_PLAYING) {
+      state.captionsOff = true;
+      post({ event: 'command', func: 'unloadModule', args: ['captions'] });
+    }
+
+    const { playerState } = state.report;
+    // Unmuting before playback has started turns the muted autoplay into a blocked unmuted one,
+    // and a late joiner stays silent until the seek to the right place has landed.
+    if (soundArmed && playerState === YOUTUBE_PLAYING && state.inSync) {
+      if (frame.volume !== state.sentVolume) {
+        state.sentVolume = frame.volume;
+        post({ event: 'command', func: 'setVolume', args: [frame.volume] });
+      }
+      if (state.report.muted !== false && at - state.unmutedAt > SONG_RETRY_INTERVAL_MS) {
+        state.unmutedAt = at;
+        state.unmuteSent = true;
+        post({ event: 'command', func: 'unMute', args: [] });
+      }
+    }
+
+    if (playerState !== YOUTUBE_PLAYING && playerState !== YOUTUBE_BUFFERING && at - state.playedAt > SONG_SEEK_INTERVAL_MS) {
+      state.playedAt = at;
+      if (state.unmuteSent) {
+        // The browser stopped playback when we unmuted, so the page's activation did not
+        // reach the player. Fall back to muted playback and ask for a fresh gesture.
+        state.unmuteSent = false;
+        state.sentVolume = -1;
+        post({ event: 'command', func: 'mute', args: [] });
+        onSoundBlocked();
+      }
+      // An autoplay that never left the unstarted state ignores playVideo alone.
+      post({ event: 'command', func: 'seekTo', args: [videoTimeNow(), true] });
+      post({ event: 'command', func: 'playVideo', args: [] });
+    }
+  });
+
+  return (
+    <div className="countdown-song" style={{ opacity: frame.opacity }}>
+      <iframe
+        ref={iframeRef}
+        src={src}
+        title="The Final Countdown by Europe"
+        allow="autoplay; encrypted-media"
+        referrerPolicy="strict-origin-when-cross-origin"
+        tabIndex={-1}
+        aria-hidden="true"
+        onLoad={() => {
+          player.current.loaded = true;
+          player.current.listenedAt = performance.now();
+          player.current.playedAt = performance.now();
+          post({ event: 'listening' });
+        }}
+      />
+      <div className="countdown-song__scrim" />
+    </div>
+  );
+};
 
 // ─── Display components ─────────────────────────────────────────────────────
 interface DigitProps {
@@ -242,29 +417,63 @@ const Separator: React.FC<SeparatorProps> = ({ visible }) => (
   </div>
 );
 
-const FinalCountdownDisplay: React.FC<{ seconds: number }> = ({ seconds }) => {
-  const isFinalTen = seconds <= 10;
+type FinalTier = 'calm' | 'beat' | 'ten';
+
+const RING_RADIUS = 96;
+const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
+
+function finalTier(seconds: number): FinalTier {
+  if (seconds <= 10) return 'ten';
+  if (seconds <= 30) return 'beat';
+  return 'calm';
+}
+
+const FinalCountdownDisplay: React.FC<{ seconds: number; progress: number }> = ({ seconds, progress }) => {
+  const tier = finalTier(seconds);
+  const isSlam = seconds <= 3;
+  const motion = isSlam ? 'slam' : tier === 'calm' ? 'breathe' : 'beat';
   return (
-    <div className="flex flex-col items-center gap-3 my-6">
-      <div className={`text-xs sm:text-base font-mono uppercase tracking-[0.4em] ${isFinalTen ? 'text-[var(--color-pink)]' : 'text-[var(--color-cyan)]'} animate-final-pulse`}>
-        🎵 Final Countdown 🎵
+    <div className="countdown-final" data-tier={tier}>
+      <h1 className="countdown-final__eyebrow">{tier === 'ten' ? 'Here we go' : 'The Final Countdown'}</h1>
+      <div className="countdown-final__dial">
+        <svg className="countdown-final__ring" viewBox="0 0 200 200" aria-hidden="true">
+          <defs>
+            <linearGradient id="countdown-ring-gradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" style={{ stopColor: 'var(--color-cyan)' }} />
+              <stop offset="55%" style={{ stopColor: 'var(--color-purple)' }} />
+              <stop offset="100%" style={{ stopColor: 'var(--color-pink)' }} />
+            </linearGradient>
+          </defs>
+          <circle className="countdown-final__ring-track" cx="100" cy="100" r={RING_RADIUS} />
+          <circle
+            className="countdown-final__ring-progress"
+            cx="100"
+            cy="100"
+            r={RING_RADIUS}
+            stroke="url(#countdown-ring-gradient)"
+            strokeDasharray={RING_LENGTH}
+            strokeDashoffset={RING_LENGTH * (1 - progress)}
+          />
+        </svg>
+        {/* Keyed by the second so each one-shot animation replays in step with the clock. */}
+        {tier !== 'calm' && <span key={`pulse-${seconds}`} className="countdown-final__pulse" />}
+        {tier === 'ten' && (
+          <span key={`echo-${seconds}`} className="countdown-final__pulse countdown-final__pulse--echo" />
+        )}
+        <div
+          key={isSlam ? `shake-${seconds}` : 'steady'}
+          className={`countdown-final__number${isSlam ? ' countdown-final__number--shake' : ''}`}
+        >
+          <span
+            key={tier === 'calm' ? 'calm' : seconds}
+            className={`countdown-final__digit countdown-final__digit--${motion}`}
+            role="timer"
+          >
+            {seconds}
+          </span>
+        </div>
       </div>
-      <div
-        className={`font-black font-mono text-white tabular-nums leading-none ${
-          isFinalTen ? 'animate-final-thump' : 'animate-final-pulse'
-        }`}
-        style={{
-          fontSize: 'clamp(8rem, 30vw, 18rem)',
-          textShadow: isFinalTen
-            ? '0 0 60px rgba(255, 0, 128, 0.7), 0 0 30px rgba(255, 0, 128, 0.4)'
-            : '0 0 40px rgba(0, 240, 255, 0.6)',
-        }}
-      >
-        {String(seconds).padStart(2, '0')}
-      </div>
-      <div className="text-sm font-mono uppercase tracking-widest text-[var(--text-muted)]">
-        {isFinalTen ? 'almost there…' : 'seconds to showtime'}
-      </div>
+      <p className="countdown-final__caption">{tier === 'ten' ? 'almost there' : 'seconds to showtime'}</p>
     </div>
   );
 };
@@ -336,17 +545,6 @@ const DiscordInvite: React.FC<{ needsUpdate?: boolean }> = ({ needsUpdate = fals
 };
 
 // ─── Confetti ───────────────────────────────────────────────────────────────
-interface ConfettiPiece {
-  id: number;
-  x: number;
-  color: string;
-  size: number;
-  delay: number;
-  duration: number;
-  rotation: number;
-  drift: number;
-}
-
 const CONFETTI_COLORS = [
   'var(--color-cyan)',
   'var(--color-purple)',
@@ -356,82 +554,125 @@ const CONFETTI_COLORS = [
   '#ffffff',
 ];
 
-function Confetti({ count = 60 }: { count?: number }) {
-  const pieces = React.useMemo<ConfettiPiece[]>(() => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-      size: Math.random() * 8 + 4,
-      delay: Math.random() * 5,
-      duration: Math.random() * 3 + 3,
-      rotation: Math.random() * 360,
-      drift: (Math.random() - 0.5) * 150,
-    }));
-  }, [count]);
+function randomConfettiColor(): string {
+  return CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+}
+
+const Confetti = React.memo(function Confetti({ count }: { count: number }) {
+  const [pieces] = useState(() =>
+    Array.from({ length: count }, (_, id) => ({
+      id,
+      style: {
+        '--cx': `${Math.random() * 100}vw`,
+        '--cdrift': `${(Math.random() - 0.5) * 150}px`,
+        '--crot': `${Math.random() * 360}deg`,
+        '--cdur': `${Math.random() * 3 + 3}s`,
+        '--cdelay': `${Math.random() * 5}s`,
+        width: Math.random() * 8 + 4,
+        aspectRatio: '1',
+        backgroundColor: randomConfettiColor(),
+        borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+      } as React.CSSProperties,
+    })),
+  );
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-[60]" aria-hidden="true">
-      {pieces.map((p) => (
-        <div
-          key={p.id}
-          className="confetti-fall"
-          style={
-            {
-              '--cx': `${p.x}vw`,
-              '--cdrift': `${p.drift}px`,
-              '--crot': `${p.rotation}deg`,
-              '--cdur': `${p.duration}s`,
-              '--cdelay': `${p.delay}s`,
-              position: 'absolute',
-              width: p.size,
-              height: p.size,
-              backgroundColor: p.color,
-              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-              top: 0,
-              left: 0,
-            } as React.CSSProperties
-          }
-        />
+    <div className="countdown-confetti" aria-hidden="true">
+      {pieces.map((piece) => (
+        <div key={piece.id} className="confetti-fall" style={piece.style} />
       ))}
     </div>
   );
-}
+});
 
-const CelebrationOverlay: React.FC = () => {
+const BURST_PIECES = 110;
+
+const ConfettiBurst = React.memo(function ConfettiBurst() {
+  const [pieces] = useState(() =>
+    Array.from({ length: BURST_PIECES }, (_, id) => ({
+      id,
+      style: {
+        '--burst-angle': `${Math.random() * 360}deg`,
+        '--burst-distance': `${12 + Math.random() * 46}vmax`,
+        '--burst-spin': `${(Math.random() - 0.5) * 1080}deg`,
+        '--burst-size': `${6 + Math.random() * 10}px`,
+        '--burst-color': randomConfettiColor(),
+        '--delay': `${Math.random() * 0.12}s`,
+      } as React.CSSProperties,
+    })),
+  );
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <div className="text-center animate-celebration-pop">
-        <h2 className="text-6xl sm:text-8xl font-black text-white tracking-tighter mb-4 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
-          IT'S TIME!
-        </h2>
-        <div className="h-1 w-24 bg-gradient-to-r from-transparent via-[var(--accent-cyan)] to-transparent mx-auto" />
+    <div className="countdown-burst">
+      {pieces.map((piece) => (
+        <span key={piece.id} className="countdown-burst__piece" style={piece.style}>
+          <i />
+        </span>
+      ))}
+    </div>
+  );
+});
+
+// Every animation is offset by how far into the celebration the page mounted, so a
+// reload or a demo that starts after zero lands on the same frame as everyone else.
+const Celebration: React.FC<{ elapsedMs: number }> = ({ elapsedMs }) => {
+  const [mountedAtMs] = useState(elapsedMs);
+  return (
+    <div
+      className="countdown-celebration"
+      style={
+        {
+          '--celebration-elapsed': `${mountedAtMs}ms`,
+          '--celebration-duration': `${CELEBRATION_MS}ms`,
+        } as React.CSSProperties
+      }
+    >
+      <div className="countdown-celebration__rays" aria-hidden="true" />
+      <span className="countdown-celebration__shockwave" aria-hidden="true" />
+      <span className="countdown-celebration__shockwave" aria-hidden="true" />
+      <span className="countdown-celebration__shockwave" aria-hidden="true" />
+      <ConfettiBurst />
+      <div className="countdown-celebration__headline">
+        <h1 className="countdown-celebration__title">IT'S TIME!</h1>
+        <p className="countdown-celebration__subtitle">Longmont AI Meetup is live</p>
       </div>
+      <div className="countdown-celebration__flash" aria-hidden="true" />
     </div>
   );
 };
 
 // ─── Main page ──────────────────────────────────────────────────────────────
-const Countdown: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(computeTimeLeft);
-  const [isCelebrationActive, setIsCelebrationActive] = useState(false);
-  const [isFlashing, setIsFlashing] = useState(false);
-  const rafRef = useRef<number>(0);
-  const prevIsLive = useRef(timeLeft.isLive);
-  const prevSeconds = useRef<number>(-1);
+interface Tick {
+  now: Date;
+  nextMeetup: Date;
+  songJoinedAt: number | null;
+}
 
-  // Arm audio + detect reduced motion on mount
+function readTick(now: Date, previous: Tick | null): Tick {
+  const nextMeetup = getNextMeetup(now);
+  const msUntilMeetup = nextMeetup.getTime() - now.getTime();
+  return { now, nextMeetup, songJoinedAt: songJoin(previous?.songJoinedAt ?? null, msUntilMeetup) };
+}
+
+const realNow = () => new Date();
+
+const Countdown: React.FC<{ now?: () => Date }> = ({ now = realNow }) => {
+  const [tick, setTick] = useState<Tick>(() => readTick(now(), null));
+  const [soundArmed, setSoundArmed] = useState(hasUserActivation);
+  const [demo] = useState(readDemoOverride);
+  const lastCue = useRef('');
+  const disarmSound = useCallback(() => setSoundArmed(false), []);
+
   useEffect(() => {
     detectReducedMotion();
+    if (hasUserActivation()) armAudioContext();
     const arm = () => {
-      ensureAudioContext();
-      window.removeEventListener('click', arm);
-      window.removeEventListener('keydown', arm);
-      window.removeEventListener('touchstart', arm);
+      armAudioContext();
+      setSoundArmed(true);
     };
-    window.addEventListener('click', arm, { once: true, passive: true });
-    window.addEventListener('keydown', arm, { once: true });
-    window.addEventListener('touchstart', arm, { once: true, passive: true });
+    window.addEventListener('click', arm, { passive: true });
+    window.addEventListener('keydown', arm);
+    window.addEventListener('touchstart', arm, { passive: true });
     return () => {
       window.removeEventListener('click', arm);
       window.removeEventListener('keydown', arm);
@@ -439,49 +680,48 @@ const Countdown: React.FC = () => {
     };
   }, []);
 
-  // Main tick loop
   useEffect(() => {
-    const tick = () => {
-      const t = computeTimeLeft();
-      setTimeLeft(t);
-
-      // Detect entering live state (just hit zero)
-      if (t.isLive && !prevIsLive.current) {
-        playCelebrationSound();
-        setIsCelebrationActive(true);
-        setIsFlashing(true);
-        setTimeout(() => setIsCelebrationActive(false), JUST_HIT_ZERO_DURATION_MS);
-        setTimeout(() => setIsFlashing(false), 2000);
-      }
-      prevIsLive.current = t.isLive;
-
-      // Final-countdown musical tick on each whole-second decrease
-      if (
-        t.isFinalCountdown &&
-        t.seconds !== prevSeconds.current &&
-        prevSeconds.current !== -1
-      ) {
-        playFinalTick(t.seconds);
-      }
-      prevSeconds.current = t.seconds;
-
-      rafRef.current = requestAnimationFrame(tick);
+    const step = () => setTick((previous) => readTick(now(), previous));
+    let frame = requestAnimationFrame(function loop() {
+      step();
+      frame = requestAnimationFrame(loop);
+    });
+    // requestAnimationFrame stops in a hidden tab, where the song must still fade out on time.
+    const hiddenTabClock = window.setInterval(step, 500);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(hiddenTabClock);
     };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+  }, [now]);
 
-  // Demo override (dev only) — forces visual state for screenshot verification
-  const demo = readDemoOverride();
-  const isFinalCountdownEffective = demo === 'final' ? true : timeLeft.isFinalCountdown;
-  const isLiveEvent = demo === 'zero' || demo === 'invite' || demo === 'invite-expired' ? true : timeLeft.isLive;
+  const { now: nowDate, nextMeetup } = tick;
+  const meetupAt = nextMeetup.getTime();
+  const msUntilMeetup = meetupAt - nowDate.getTime();
+  const videoTimeNow = useCallback(() => songVideoTime(meetupAt - now().getTime()), [meetupAt, now]);
 
-  const now = new Date();
-  const nextMeetup = getNextMeetup(now);
-  const inviteMeetup = getMeetupWithActiveInviteWindow(now);
-  const isDiscordInviteVisible = demo === 'invite' || demo === 'invite-expired' || demo === 'post-invite' || shouldShowDiscordInvite(now, inviteMeetup);
+  const inviteMeetup = getMeetupWithActiveInviteWindow(nowDate);
+  const isDiscordInviteVisible = demo ? DEMO_STAGE[demo].invite : shouldShowDiscordInvite(nowDate, inviteMeetup);
   const needsDiscordInviteUpdate = demo === 'invite-expired' || (isDiscordInviteVisible && !isDiscordInviteCurrent(inviteMeetup));
-  const isPostMeetupInvite = !isLiveEvent && isDiscordInviteVisible;
+  const phase: Phase = demo ? DEMO_STAGE[demo].phase : showPhase(msUntilMeetup, isDiscordInviteVisible);
+
+  const song = tick.songJoinedAt === null ? null : songFrame(msUntilMeetup, tick.songJoinedAt);
+  const videoTime = songVideoTime(msUntilMeetup);
+  const isSoundPromptVisible = !soundArmed
+    && videoTime >= SONG.startAt - SOUND_PROMPT_LEAD_SECONDS
+    && videoTime < SONG.fadeOutTo;
+
+  const time = timeParts(msUntilMeetup);
+  // Rounded up so the digit reads 1 through the last second and zero belongs to the celebration.
+  const finalSeconds = ((Math.max(1, Math.ceil(msUntilMeetup / 1000)) - 1) % 60) + 1;
+  const tier = finalTier(finalSeconds);
+
+  useEffect(() => {
+    const cue = phase === 'celebration' ? 'zero' : phase === 'final' && tier === 'ten' ? `kick-${finalSeconds}` : '';
+    if (cue === lastCue.current) return;
+    lastCue.current = cue;
+    if (cue === 'zero') playZeroHit();
+    else if (cue) playSubKick();
+  }, [phase, tier, finalSeconds]);
 
   const meetupDateStr = nextMeetup.toLocaleDateString('en-US', {
     timeZone: DENVER_TIME_ZONE,
@@ -492,157 +732,178 @@ const Countdown: React.FC = () => {
   const meetupTimeZone = mountainTimeLabel(nextMeetup);
 
   return (
-    <div className="relative min-h-[80vh] flex flex-col items-center justify-center text-center">
-      {/* Live confetti: High density for initial celebration, sparse for general live state */}
-      {isCelebrationActive && <Confetti count={120} />}
-      {!isCelebrationActive && isLiveEvent && <Confetti count={30} />}
-
-      {/* Celebration Overlay */}
-      {isCelebrationActive && <CelebrationOverlay />}
-
-      {/* Background Flash */}
-      {isFlashing && (
-        <div className="fixed inset-0 bg-white/5 z-[55] pointer-events-none animate-flash-in-out" />
+    <div
+      className="countdown-stage relative min-h-[80vh] flex flex-col items-center justify-center text-center"
+      data-phase={phase}
+      style={{ '--energy': finalEnergy(msUntilMeetup).toFixed(3) } as React.CSSProperties}
+    >
+      {song && (
+        <SongLayer
+          frame={song}
+          soundArmed={soundArmed}
+          videoTimeNow={videoTimeNow}
+          onSoundBlocked={disarmSound}
+        />
       )}
 
-      {/* Hero badge */}
-      <div className="mb-6 sm:mb-8 animate-fade-in px-4 sm:px-0">
-        {isLiveEvent ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 text-[11px] sm:text-sm font-mono uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-live-pulse inline-block" />
-            Live Now — Longmont AI Meetup
+      {phase === 'final' && (
+        <>
+          <div className="countdown-aurora" aria-hidden="true">
+            <span />
+            <span />
+            <span />
           </div>
-        ) : isPostMeetupInvite ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
-            Keep the conversation going
-          </div>
-        ) : isFinalCountdownEffective ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--color-pink)]/40 bg-[var(--color-pink)]/10 text-[var(--color-pink)] text-[11px] sm:text-sm font-mono uppercase tracking-widest animate-final-pulse">
-            🎵 Final Countdown
-          </div>
-        ) : (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
-            <Calendar size={12} className="sm:!hidden" />
-            <Calendar size={14} className="hidden sm:block" />
-            Every Other Wednesday · {meetupDateStr}
-          </div>
-        )}
-      </div>
-
-      {/* Main heading */}
-      <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight animate-fade-in-delay px-4 sm:px-0">
-        {isLiveEvent ? (
-          <>
-            <span className="text-gradient-vibrant">Meetup in Progress</span>
-            <br />
-            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
-              Join the gathering — you're here!
-            </span>
-          </>
-        ) : isPostMeetupInvite ? (
-          <>
-            <span className="text-gradient-vibrant">Thanks for Joining</span>
-            <br />
-            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
-              Continue the conversation with Longmont AI
-            </span>
-          </>
-        ) : isFinalCountdownEffective ? (
-          <>
-            <span className="text-gradient-vibrant">Showtime</span>
-            <br />
-            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
-              Starting any moment…
-            </span>
-          </>
-        ) : (
-          <>
-            Next{' '}
-            <span className="text-gradient-vibrant">Longmont AI</span>
-            <br />
-            <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
-              Meetup Starts In
-            </span>
-          </>
-        )}
-      </h1>
-
-      {/* Countdown display: final countdown takes over the 4-digit row */}
-      {!isLiveEvent && isFinalCountdownEffective && (
-        <FinalCountdownDisplay seconds={timeLeft.seconds} />
+          {tier === 'ten' && <div key={finalSeconds} className="countdown-vignette" aria-hidden="true" />}
+        </>
       )}
 
-      {/* Standard 4-digit row */}
-      {!isLiveEvent && !isFinalCountdownEffective && (
-        <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 mb-10 animate-scale-in overflow-x-auto w-full px-4 sm:px-0 py-2">
-          <Digit value={timeLeft.days} label="Days" />
-          <Separator visible />
-          <Digit value={timeLeft.hours} label="Hours" />
-          <Separator visible />
-          <Digit value={timeLeft.minutes} label="Minutes" />
-          <Separator visible />
-          <Digit value={timeLeft.seconds} label="Seconds" />
-        </div>
+      {phase === 'live' && <Confetti count={30} />}
+      {phase === 'celebration' && <Celebration elapsedMs={-msUntilMeetup} />}
+
+      {isSoundPromptVisible && (
+        <button type="button" className="countdown-sound-chip">
+          <VolumeX size={14} aria-hidden="true" />
+          Tap anywhere for sound
+        </button>
       )}
 
-      {/* The meetup itself is animation-only, with the invite alongside it when scheduled. */}
-      {isLiveEvent && (
-        <div className={`countdown-live-experience ${isDiscordInviteVisible ? 'countdown-live-experience--with-invite' : ''}`}>
-          <div className="countdown-live-animation">
-            <AnimatedLogo compact={isDiscordInviteVisible} />
+      {/* The celebration owns the stage: nothing else renders until it hands over to live. */}
+      {phase !== 'celebration' && (
+        <div className={`countdown-content relative z-10 flex flex-col items-center w-full${phase === 'live' ? ' countdown-live-reveal' : ''}`}>
+          {phase !== 'final' && (
+            <>
+              {/* Hero badge */}
+              <div className="mb-6 sm:mb-8 animate-fade-in px-4 sm:px-0">
+                {phase === 'live' ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 text-[11px] sm:text-sm font-mono uppercase tracking-widest">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-live-pulse inline-block" />
+                    Live Now — Longmont AI Meetup
+                  </div>
+                ) : phase === 'afterparty' ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
+                    Keep the conversation going
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/5 text-[var(--accent-cyan)] text-[11px] sm:text-sm font-mono uppercase tracking-widest">
+                    <Calendar size={12} className="sm:!hidden" />
+                    <Calendar size={14} className="hidden sm:block" />
+                    Every Other Wednesday · {meetupDateStr}
+                  </div>
+                )}
+              </div>
+
+              {/* Main heading */}
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight animate-fade-in-delay px-4 sm:px-0">
+                {phase === 'live' ? (
+                  <>
+                    <span className="text-gradient-vibrant">Meetup in Progress</span>
+                    <br />
+                    <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
+                      Join the gathering — you're here!
+                    </span>
+                  </>
+                ) : phase === 'afterparty' ? (
+                  <>
+                    <span className="text-gradient-vibrant">Thanks for Joining</span>
+                    <br />
+                    <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
+                      Continue the conversation with Longmont AI
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Next{' '}
+                    <span className="text-gradient-vibrant">Longmont AI</span>
+                    <br />
+                    <span className="text-base sm:text-xl md:text-2xl font-normal text-[var(--text-secondary)]">
+                      Meetup Starts In
+                    </span>
+                  </>
+                )}
+              </h1>
+            </>
+          )}
+
+          {phase === 'final' && (
+            <FinalCountdownDisplay
+              seconds={finalSeconds}
+              progress={Math.min(1, Math.max(0, msUntilMeetup / FINAL_COUNTDOWN_MS))}
+            />
+          )}
+
+          {/* Standard 4-digit row */}
+          {phase === 'countdown' && (
+            <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 mb-10 animate-scale-in overflow-x-auto w-full px-4 sm:px-0 py-2">
+              <Digit value={time.days} label="Days" />
+              <Separator visible />
+              <Digit value={time.hours} label="Hours" />
+              <Separator visible />
+              <Digit value={time.minutes} label="Minutes" />
+              <Separator visible />
+              <Digit value={time.seconds} label="Seconds" />
+            </div>
+          )}
+
+          {/* The meetup itself is animation-only, with the invite alongside it when scheduled. */}
+          {phase === 'live' && (
+            <div className={`countdown-live-experience ${isDiscordInviteVisible ? 'countdown-live-experience--with-invite' : ''}`}>
+              <div className="countdown-live-animation">
+                <AnimatedLogo compact={isDiscordInviteVisible} />
+              </div>
+              {isDiscordInviteVisible && <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />}
+            </div>
+          )}
+
+          {phase === 'afterparty' && (
+            <div className="countdown-live-experience countdown-live-experience--with-invite">
+              <div className="countdown-live-animation">
+                <AnimatedLogo compact />
+              </div>
+              <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />
+            </div>
+          )}
+
+          {/* Meetup details */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-[var(--text-secondary)] animate-fade-in-late">
+            <div className="flex items-center gap-2">
+              <MapPin size={14} className="text-[var(--accent-cyan)]" />
+              <span>Longmont, Colorado</span>
+            </div>
+            <span className="hidden sm:block text-white/20">·</span>
+            <div className="flex items-center gap-2">
+              <Clock size={14} className="text-[var(--accent-cyan)]" />
+              <span>12:00 PM {meetupTimeZone}</span>
+            </div>
           </div>
-          {isDiscordInviteVisible && <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />}
-        </div>
-      )}
 
-      {isPostMeetupInvite && (
-        <div className="countdown-live-experience countdown-live-experience--with-invite">
-          <div className="countdown-live-animation">
-            <AnimatedLogo compact />
-          </div>
-          <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />
-        </div>
-      )}
+          {/* Next meetup date */}
+          {phase === 'countdown' && (
+            <p className="mt-3 text-sm text-[var(--text-muted)] animate-fade-in-late">
+              Next Meetup — {meetupDateStr} at Noon {meetupTimeZone}
+            </p>
+          )}
 
-      {/* Meetup details */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-[var(--text-secondary)] animate-fade-in-late">
-        <div className="flex items-center gap-2">
-          <MapPin size={14} className="text-[var(--accent-cyan)]" />
-          <span>Longmont, Colorado</span>
-        </div>
-        <span className="hidden sm:block text-white/20">·</span>
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-[var(--accent-cyan)]" />
-          <span>12:00 PM {meetupTimeZone}</span>
-        </div>
-      </div>
-
-      {/* Next meetup date */}
-      {!isLiveEvent && !isFinalCountdownEffective && (
-        <p className="mt-3 text-sm text-[var(--text-muted)] animate-fade-in-late">
-          Next Meetup — {meetupDateStr} at Noon {meetupTimeZone}
-        </p>
-      )}
-
-      {/* CTA during live */}
-      {isLiveEvent && (
-        <div className="mt-6 animate-fade-in-late">
-          <a
-            href="https://www.meetup.com/longmontai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-base font-semibold text-white transition-all"
-            style={{
-              background: 'linear-gradient(135deg, var(--color-purple), var(--color-pink))',
-            }}
-          >
-            Join the Meetup
-          </a>
+          {/* CTA during live */}
+          {phase === 'live' && (
+            <div className="mt-6 animate-fade-in-late">
+              <a
+                href="https://www.meetup.com/longmontai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-base font-semibold text-white transition-all"
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-purple), var(--color-pink))',
+                }}
+              >
+                Join the Meetup
+              </a>
+            </div>
+          )}
         </div>
       )}
 
       {/* Pulsing glow behind the counter */}
-      {!isLiveEvent && !isFinalCountdownEffective && (
+      {phase === 'countdown' && (
         <div
           className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none"
           aria-hidden="true"
@@ -654,6 +915,84 @@ const Countdown: React.FC = () => {
             }}
           />
         </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Final countdown demo (/countdown/final) ────────────────────────────────
+const DEMO_LEAD_IN_SECONDS = 68;
+const DEMO_REPLAY_AFTER_SECONDS = 15;
+
+interface DemoRun {
+  id: number;
+  meetupAt: number;
+  clock: () => Date;
+}
+
+function readDemoStartSeconds(): number | null {
+  const raw = new URLSearchParams(window.location.search).get('at');
+  if (raw === null || raw.trim() === '') return null;
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) ? seconds : null;
+}
+
+function startDemoRun(offsetSeconds: number): DemoRun {
+  const startedAt = performance.now();
+  const meetupAt = getNextMeetup(new Date()).getTime();
+  const simulatedStart = meetupAt + offsetSeconds * 1000;
+  return {
+    id: startedAt,
+    meetupAt,
+    clock: () => new Date(simulatedStart + performance.now() - startedAt),
+  };
+}
+
+export const CountdownFinalDemo: React.FC = () => {
+  const [run, setRun] = useState<DemoRun | null>(() => {
+    const startSeconds = readDemoStartSeconds();
+    return startSeconds === null ? null : startDemoRun(startSeconds);
+  });
+  const [canReplay, setCanReplay] = useState(false);
+
+  useEffect(() => {
+    if (!run) return undefined;
+    const replayAt = run.meetupAt + DEMO_REPLAY_AFTER_SECONDS * 1000;
+    const check = () => setCanReplay(run.clock().getTime() >= replayAt);
+    check();
+    const interval = window.setInterval(check, 500);
+    return () => window.clearInterval(interval);
+  }, [run]);
+
+  const play = () => setRun(startDemoRun(-DEMO_LEAD_IN_SECONDS));
+
+  if (!run) {
+    return (
+      <section className="countdown-demo" aria-labelledby="countdown-demo-title">
+        <p className="countdown-demo__eyebrow">Meetup countdown preview</p>
+        <h1 id="countdown-demo-title" className="countdown-demo__title">
+          <span className="text-gradient-vibrant">The Final Countdown</span>
+        </h1>
+        <p className="countdown-demo__copy">
+          Replay the last minute before a Longmont AI meetup starts. Turn your sound on.
+        </p>
+        <button type="button" className="countdown-demo__button countdown-demo__button--play" onClick={play}>
+          <Play size={18} aria-hidden="true" />
+          Play the Final Countdown
+        </button>
+      </section>
+    );
+  }
+
+  // One wrapper element, because the layout stretches every direct child of the page container.
+  return (
+    <div>
+      <Countdown key={run.id} now={run.clock} />
+      {canReplay && (
+        <button type="button" className="countdown-demo__button countdown-demo__button--replay" onClick={play}>
+          <RotateCcw size={14} aria-hidden="true" />
+          Replay
+        </button>
       )}
     </div>
   );
