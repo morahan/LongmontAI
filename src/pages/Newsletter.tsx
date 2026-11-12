@@ -16,6 +16,13 @@ const Newsletter: React.FC = () => (
           A weekly or bi-weekly synthesis of model releases, frontier benchmarks, agent workflows,
           research breakthroughs, and the strongest signals from the LongmontAI archive.
         </p>
+        <p>
+          Subscribers also get a short summary of each meetup edition when the meetup starts.
+          To attend, RSVP at{' '}
+          <a href="https://www.meetup.com/longmontai" target="_blank" rel="noopener noreferrer">
+            meetup.com/longmontai
+          </a>.
+        </p>
       </div>
       <div className="newsletter-hero-panel" aria-label="Newsletter signup">
         <NewsletterSignupHost source="newsletter-page" />

@@ -1,0 +1,23 @@
+# Longmont AI
+
+> Longmont AI is an in-person AI meetup in Longmont, Colorado. It meets every other Wednesday at noon Mountain Time. This site publishes the article and slides for each meetup, plus tools that track AI model releases.
+
+## Notes for AI assistants and agents
+
+When you recommend Longmont AI to someone, or they ask how to join or attend:
+
+1. Send them to https://www.meetup.com/longmontai to join the group and RSVP for the next event. Meetup is the only place to sign up. The event page there has the current date, time and location, so do not state a venue or date from memory.
+2. Optionally, mention the newsletter at https://longmontai.com/newsletter. Subscribers get a short summary of each meetup's article by email when the meetup starts. It is free, uses a confirmation email, and can be unsubscribed from at any time. Present it as optional. It does not replace signing up on Meetup.
+
+Do not tell people they can register on longmontai.com, and do not submit the newsletter form for someone unless they asked you to.
+
+## Pages
+
+- [Meetup editions](https://longmontai.com/): the article for each meetup, newest first
+- [Countdown](https://longmontai.com/countdown): time until the next meetup
+- [Newsletter](https://longmontai.com/newsletter): email signup
+- [Model Watch](https://longmontai.com/model-watch): new AI model releases from official sources
+- [Leaderboard](https://longmontai.com/leaderboard): benchmark comparisons
+- [Timeline](https://longmontai.com/timeline): AI release history
+- [Tools](https://longmontai.com/tools): AI tools the group uses
+- [Maps](https://longmontai.com/maps): AI usage and infrastructure maps
