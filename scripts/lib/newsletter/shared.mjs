@@ -533,6 +533,7 @@ export function listmonkConfig(env) {
     username: envValue(env, 'LISTMONK_API_USERNAME'),
     token: envValue(env, 'LISTMONK_API_TOKEN'),
     templateId: Number(envValue(env, 'LISTMONK_DEFAULT_TEMPLATE_ID')),
+    editionTemplateId: Number(envValue(env, 'LISTMONK_EDITION_TEMPLATE_ID')),
   };
 }
 
@@ -626,6 +627,37 @@ export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetc
   return { ok: true, status: 'submitted' };
 }
 
+async function postListmonkCampaign(config, body, signal, fetchImpl) {
+  const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/campaigns`, {
+    method: 'POST',
+    headers: {
+      ...listmonkAuthHeaders(config),
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal,
+  }, NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign);
+  const data = await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign.maxBytes,
+  });
+  if (!outbound.response.ok) {
+    throw new NewsletterError('Listmonk campaign creation failed.', {
+      status: 502,
+      code: 'listmonk_campaign_failed',
+    });
+  }
+  const campaignId = data?.data?.id ?? data?.id;
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    throw new NewsletterError('Listmonk campaign response did not include a valid campaign id.', {
+      status: 502,
+      code: 'listmonk_campaign_response_invalid',
+    });
+  }
+  return { campaignId, data };
+}
+
 export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {
   const config = listmonkConfig(env);
   const list = config ? listmonkListForCadence(config, draft.cadence) : null;
@@ -649,33 +681,7 @@ export async function createListmonkCampaign(env, draft, fetchImpl = fetch) {
     altbody: draft.text,
     ...(Number.isInteger(config.templateId) && config.templateId > 0 ? { template_id: config.templateId } : {}),
   };
-  const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/campaigns`, {
-    method: 'POST',
-    headers: {
-      ...listmonkAuthHeaders(config),
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(body),
-    signal: draft.signal,
-  }, NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign);
-  const data = await providerJson(outbound.response, {
-    signal: outbound.signal,
-    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign.maxBytes,
-  });
-  if (!outbound.response.ok) {
-    throw new NewsletterError('Listmonk campaign creation failed.', {
-      status: 502,
-      code: 'listmonk_campaign_failed',
-    });
-  }
-  const campaignId = data?.data?.id ?? data?.id;
-  if (!Number.isInteger(campaignId) || campaignId <= 0) {
-    throw new NewsletterError('Listmonk campaign response did not include a valid campaign id.', {
-      status: 502,
-      code: 'listmonk_campaign_response_invalid',
-    });
-  }
+  const { campaignId, data } = await postListmonkCampaign(config, body, draft.signal, fetchImpl);
   return { ok: true, status: 'draft', campaignId, data };
 }
 
@@ -719,6 +725,74 @@ export async function recoverListmonkCampaign(env, campaignIdentity, fetchImpl =
     campaignId: campaign.id,
     data: { data: campaign },
   };
+}
+
+export function listmonkEditionListIds(env) {
+  const config = listmonkConfig(env);
+  if (!config) return [];
+  return [...new Set([config.weeklyListId, config.biweeklyListId, config.listId]
+    .filter((id) => Number.isInteger(id) && id > 0))];
+}
+
+// Listmonk is the only record of whether an edition was mailed. Every run
+// re-reads the campaign by name and applies only the missing step, so a retry
+// after a crash between create and start cannot mail the audience twice.
+export async function sendListmonkEditionCampaign(env, { identity, subject, html, text, mode }, fetchImpl = fetch) {
+  const config = listmonkConfig(env);
+  const skipped = (reason) => ({ ok: false, skipped: true, reason });
+  if (!config?.username || !config?.token) return skipped('listmonk_campaign_not_configured');
+  const lists = listmonkEditionListIds(env);
+  if (lists.length === 0) return skipped('listmonk_list_not_configured');
+  const fromEmail = envValue(env, 'NEWSLETTER_FROM_EMAIL');
+  if (!fromEmail) return skipped('newsletter_from_email_not_configured');
+  if (!Number.isInteger(config.editionTemplateId) || config.editionTemplateId <= 0) {
+    return skipped('listmonk_template_not_configured');
+  }
+
+  const existing = await recoverListmonkCampaign(env, identity, fetchImpl);
+  let campaignId = existing.campaignId;
+  let status = existing.status;
+  if (!existing.ok) {
+    ({ campaignId } = await postListmonkCampaign(config, {
+      name: identity,
+      subject,
+      lists,
+      from_email: fromEmail,
+      content_type: 'html',
+      messenger: 'email',
+      type: 'regular',
+      tags: ['longmontai', 'edition'],
+      body: html,
+      altbody: text,
+      template_id: config.editionTemplateId,
+    }, undefined, fetchImpl));
+    status = 'draft';
+  }
+  const created = !existing.ok;
+  if (status !== 'draft' || mode !== 'send') {
+    return { ok: true, campaignId, status, created, started: false };
+  }
+
+  const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/campaigns/${campaignId}/status`, {
+    method: 'PUT',
+    headers: {
+      ...listmonkAuthHeaders(config),
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ status: 'running' }),
+  }, NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign);
+  await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonkCampaign.maxBytes,
+  });
+  if (!outbound.response.ok) {
+    throw new NewsletterError('Listmonk campaign start failed.', {
+      status: 502,
+      code: 'listmonk_campaign_start_failed',
+    });
+  }
+  return { ok: true, campaignId, status: 'running', created, started: true };
 }
 
 async function generationRpc(env, name, body, fetchImpl) {

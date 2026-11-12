@@ -87,6 +87,11 @@ Use this guide for every Longmont AI meetup edition.
 2. Start from `src/articles/drafts/edition-template.md` and create the edition in `src/articles/drafts/`.
 3. Record `publishAt` at exactly ten minutes before the meetup, in
    `America/Denver`. For the standing noon schedule, this is 11:50 AM.
+   Write the manifest's `emailDigest` (intro, model releases, key news) from
+   the finished article. Subscribers receive it at `meetupStartsAt`, so it
+   needs the same review as the article. Check it with
+   `just newsletter-preview <manifest>`. See
+   `docs/newsletter-infrastructure.md`.
 4. Keep a draft out of `src/articles/index.ts`, out of the live slideshow
    registry, and out of public asset directories until the scheduled release.
 5. At or after `publishAt`, promote the draft, copy its approved assets into the

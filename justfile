@@ -25,6 +25,10 @@ blog-new date topic mode="--dry-run":
 blog-update manifest mode="--dry-run":
     @node scripts/blog-edition.mjs update {{quote(manifest)}} {{quote(mode)}}
 
+# Render a release manifest's meetup email to an HTML file (default under output/) and print the text version. Sends nothing.
+newsletter-preview manifest out="":
+    @node scripts/preview-edition-email.mjs {{quote(manifest)}} {{ if out == "" { "" } else { quote(out) } }}
+
 verify:
     @bash scripts/local-ci.sh
 

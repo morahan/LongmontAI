@@ -50,10 +50,28 @@ async function ensureList(lists, name, cadence) {
   return { list, created: !match };
 }
 
+// The edition email is a complete HTML document, so its campaign template must
+// add nothing around the campaign body.
+const PASS_THROUGH_TEMPLATE = { name: 'LongmontAI pass-through', type: 'campaign', body: '{{ template "content" . }}' };
+
+async function ensurePassThroughTemplate() {
+  const templates = (await listmonk('/api/templates'))?.data ?? [];
+  const match = templates.find((template) => template.name === PASS_THROUGH_TEMPLATE.name);
+  if (match && typeof match.body === 'string' && match.body.trim() !== PASS_THROUGH_TEMPLATE.body) {
+    throw new Error(`Listmonk template "${PASS_THROUGH_TEMPLATE.name}" exists with a different body. Restore it or delete it, then rerun.`);
+  }
+  const template = match ?? (await listmonk('/api/templates', {
+    method: 'POST',
+    body: JSON.stringify(PASS_THROUGH_TEMPLATE),
+  })).data;
+  return { template, created: !match };
+}
+
 const existing = await listmonk('/api/lists?page=1&per_page=all');
 const lists = existing?.data?.results ?? existing?.data ?? [];
 const weekly = await ensureList(lists, `${listName} Weekly`, 'weekly');
 const biweekly = await ensureList(lists, `${listName} Bi-weekly`, 'biweekly');
+const passThrough = await ensurePassThroughTemplate();
 
 console.log(JSON.stringify({
   ok: true,
@@ -73,10 +91,16 @@ console.log(JSON.stringify({
       optin: biweekly.list.optin,
     },
   },
+  template: {
+    created: passThrough.created,
+    id: passThrough.template.id,
+    name: passThrough.template.name,
+  },
   nextEnv: {
     LISTMONK_WEEKLY_LIST_ID: String(weekly.list.id),
     LISTMONK_WEEKLY_LIST_UUID: weekly.list.uuid,
     LISTMONK_BIWEEKLY_LIST_ID: String(biweekly.list.id),
     LISTMONK_BIWEEKLY_LIST_UUID: biweekly.list.uuid,
+    LISTMONK_EDITION_TEMPLATE_ID: String(passThrough.template.id),
   },
 }, null, 2));

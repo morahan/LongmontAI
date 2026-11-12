@@ -14,6 +14,9 @@
     },
     "api/newsletter/subscribe.mjs": {
       "includeFiles": "{scripts/lib/newsletter/**}"
+    },
+    "api/newsletter/edition-email.mjs": {
+      "includeFiles": "{scripts/lib/newsletter/**,scripts/model-watch-sources.mjs,src/generated/scheduled-release/server.mjs,src/generated/scheduled-release/article.md,src/articles/drafts/*.release.json}"
     }
   },
   "headers": [
@@ -63,6 +66,10 @@
     {
       "path": "/api/newsletter/generate",
       "schedule": "7 15 * * 1"
+    },
+    {
+      "path": "/api/newsletter/edition-email",
+      "schedule": "0 18,19,20 * * *"
     }
   ],
   "redirects": [

@@ -1,5 +1,20 @@
 {
   "editionId": "edition-yyyy-mm-dd-topic",
+  "emailDigest": {
+    "intro": "",
+    "modelReleases": [
+      {
+        "name": "",
+        "detail": ""
+      }
+    ],
+    "keyNews": [
+      {
+        "headline": "",
+        "detail": ""
+      }
+    ]
+  },
   "releaseChecklist": [
     "Markdown promoted and article registered.",
     "Assets copied into the matching public date folder.",

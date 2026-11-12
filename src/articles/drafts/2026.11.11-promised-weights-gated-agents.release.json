@@ -5,6 +5,65 @@
   "meetupStartsAt": "2026-11-11T12:00:00-07:00",
   "publishAt": "2026-11-11T11:30:00-07:00",
   "status": "scheduled",
+  "emailDigest": {
+    "intro": "This fortnight's thread: promises kept versus promises still pending, and gates and leashes as product features. Moonshot shipped the Kimi K3.1 Pro weights it promised, the biggest new models arrived with gates attached, and agents gained checkpoints.",
+    "modelReleases": [
+      {
+        "name": "Claude Fable 5.2 and Mythos 5.2 (Anthropic, Nov 9)",
+        "detail": "The same underlying model with different safeguards. Fable is open to paid Claude plans and the API at $8 / $40 per million tokens; Mythos is for approved organizations only. Anthropic-reported: 49.1% on FrontierCode 2.0."
+      },
+      {
+        "name": "Gemini 4 Carbon, wide release (Google, Nov 10)",
+        "detail": "Now open to paying developers, businesses, and Google AI Ultra subscribers after two weeks limited to security teams. Introductory price of $2 / $10 per million tokens through November 30, then $4 / $20."
+      },
+      {
+        "name": "Muse Ember (Meta, Nov 9)",
+        "detail": "Meta's smallest and cheapest Muse model, built for repeated agent steps, at $0.10 / $0.50 per million tokens. Hosted, not open weights. Artificial Analysis's launch testing put it at about 14 cents per task, per VentureBeat."
+      },
+      {
+        "name": "Mistral Large 4 open weights (Mistral, Oct 29)",
+        "detail": "Weights for the 1-trillion-parameter model are out under a modified MIT license. Businesses offering it as a hosted service need a separate commercial license. API price: $0.70 / $2.10 per million tokens."
+      },
+      {
+        "name": "Kimi K3.1 Pro open weights (Moonshot, Nov 4)",
+        "detail": "Published on the promised date under a custom license: 2.8 trillion parameters in about 1.56 TB of files. Free to download is not the same as easy to run."
+      },
+      {
+        "name": "ChatGPT Images 2.6 (OpenAI, Nov 4)",
+        "detail": "Available to all ChatGPT users, including the free tier, with animated GIFs, SVG drawings, and saved reference images. OpenAI says images generate about 50% faster."
+      }
+    ],
+    "keyNews": [
+      {
+        "headline": "Two weights promises were still pending",
+        "detail": "Tencent said Hy4's weights would come \"in the coming days\" and Thinking Machines said Inkling 2 Small's would come \"next week.\" As of November 10, neither file had shipped."
+      },
+      {
+        "headline": "Vendors now sell on cost per task, and effort settings multiply the bill",
+        "detail": "Anthropic, Google, and Meta all advertised cost per task, mostly as vendor claims. One person's single run of the same prompt on Claude Opus 5.5 cost $26.01 at High effort and $681.91 at Ultra."
+      },
+      {
+        "headline": "Agents get checkpoints",
+        "detail": "Anthropic made pre-tool-call hooks generally available for Claude Enterprise, and AWS added isolated Linux and Windows 11 desktops for agents. OpenAI reports its restricted GPT-6 Cyber stayed in scope in 99.93% of its own tests."
+      },
+      {
+        "headline": "Analysts followed their agent's lean 86% of the time",
+        "detail": "In an Anthropic study of 50 data analysts, 77% explained their choices with the agent's own arguments, but only 15% credited the agent. The limits: one task, one field, one model."
+      },
+      {
+        "headline": "Agents that remember, and \"dream\"",
+        "detail": "Anthropic research describes agents rereading their logs between tasks to correct and merge their notes. In Anthropic's own tests, a wiki built this way raised scores on 25 questions from 13% to 48%."
+      },
+      {
+        "headline": "Robotaxis reach more cities while paperwork stays sealed",
+        "detail": "Tesla began robotaxi service in San Antonio, and Waymo added parts of Los Angeles County and extended San Diego. Electrek reports Tesla asked NHTSA to keep its entire Cybercab response confidential."
+      },
+      {
+        "headline": "Colorado's AI rules are still not final",
+        "detail": "The Attorney General's page showed no final adopted rules as of November 10. The ADMT Act and the Chatbot Safety Act take effect January 1, 2027. Boulder County held a hearing on a 75-kilowatt limit for new data centers."
+      }
+    ]
+  },
   "articlePath": "src/articles/drafts/2026.11.11-promised-weights-gated-agents.md",
   "article": "src/articles/drafts/2026.11.11-promised-weights-gated-agents.md",
   "slideshowId": "promised-weights-gated-agents",

@@ -9,6 +9,9 @@ description: Draft and release Longmont AI meetup editions with dated asset orga
    `docs/blog-editor.md` before writing.
 2. Draft in `src/articles/drafts/` with the meeting date and a `publishAt` ten
    minutes before the meetup in `America/Denver`.
+   Write the release manifest's `emailDigest` from the finished article and
+   preview it with `just newsletter-preview <manifest>`. It is mailed to
+   subscribers when the meetup starts.
 3. Keep draft assets beside the draft, named in lowercase kebab case by editorial
    subject. Do not publish assets or register the edition early.
 4. Crop phone screenshots to remove personal device chrome, notifications,

@@ -98,6 +98,24 @@ The weekly cron runs Mondays at 15:07 UTC. It collects LongmontAI website/articl
 
 By default the system creates a Listmonk draft campaign, not a live send. Keep review-on-draft as the default until source quality and deliverability are proven.
 
+## Meetup edition email
+
+Subscribers on every configured list get one email at the start of each meetup. It summarizes the edition published that day: an intro, a bullet list of model releases, a bullet list of key news, and a link to the full article.
+
+- **Content.** Each release manifest (`src/articles/drafts/*.release.json`) carries an authored `emailDigest` block with `intro`, `modelReleases` (`name`, `detail`) and `keyNews` (`headline`, `detail`), one to eight entries per list. No model writes the email at send time. `scripts/tests/newsletter-edition-email.test.mjs` fails when the staged edition has no valid digest.
+- **Preview.** `just newsletter-preview src/articles/drafts/<edition>.release.json` writes the HTML to `output/edition-email/` and prints the text version. It sends nothing.
+- **Trigger.** Vercel cron calls `/api/newsletter/edition-email` at 18:00, 19:00 and 20:00 UTC every day. Noon in Denver is 18:00 UTC in summer and 19:00 UTC in winter. The handler sends only between the manifest's `meetupStartsAt` and 24 hours after it, so the other runs are no-ops or retries.
+- **Idempotency.** The campaign is named `longmontai-edition-<editionId>`. Each run looks that name up in Listmonk, creates the campaign if it is absent, and starts it only while it is a draft. A second run cannot mail the list twice.
+- **Rehearsal.** `NEWSLETTER_EDITION_EMAIL_MODE=draft` creates the campaign without starting it. Use it for the first meetup, send yourself a test from the Listmonk UI, and trigger the endpoint twice to confirm the second response says `created: false`. Then set the mode to `send`.
+- **Dry run.** `curl -H "Authorization: Bearer $CRON_SECRET" "https://longmontai.com/api/newsletter/edition-email?dryRun=1"` returns the phase, subject and list IDs without calling Listmonk.
+- **Template.** The email is a complete HTML document. `npm run newsletter:setup-listmonk` creates the `LongmontAI pass-through` template and prints `LISTMONK_EDITION_TEMPLATE_ID`. The weekly drafts keep `LISTMONK_DEFAULT_TEMPLATE_ID`, because they rely on Listmonk's wrapper for their unsubscribe footer.
+- **Required env.** `CRON_SECRET`, `LISTMONK_BASE_URL`, `LISTMONK_API_USERNAME`, `LISTMONK_API_TOKEN`, at least one list ID, `LISTMONK_EDITION_TEMPLATE_ID` and `NEWSLETTER_FROM_EMAIL`. A due edition with any of these missing answers 503 with the reason. This path does not use Supabase or OpenAI.
+- **Footer.** Set `NEWSLETTER_POSTAL_ADDRESS` to show a mailing address. US bulk-mail rules expect one.
+
+### DNS for Resend
+
+`longmontai.com` DNS is hosted at Squarespace. The root domain already has Mailgun MX and SPF records and a DMARC policy of `p=reject` with strict alignment. Add the records Resend shows for the domain (a DKIM TXT at `resend._domainkey` and MX plus SPF TXT at `send`) and leave the Mailgun records alone. Verify `longmontai.com` itself in Resend, not a subdomain, so the DKIM signature matches the `news@longmontai.com` sender exactly. A mismatch is rejected under the current DMARC policy.
+
 ## Provider data disclosures
 
 Outbound payloads are purpose-limited. API keys, service-role keys, Listmonk tokens, cron credentials, request headers, client IPs, and browser metadata are never placed in provider request bodies or newsletter event payloads.

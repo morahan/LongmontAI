@@ -26,7 +26,7 @@ function periodForCadence(cadence, now) {
   return { start: isoDate(start), end: isoDate(end) };
 }
 
-function parseFrontmatter(raw) {
+export function parseFrontmatter(raw) {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) return { data: {}, body: raw };
   const data = {};
