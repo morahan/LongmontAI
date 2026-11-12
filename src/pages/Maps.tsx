@@ -163,38 +163,58 @@ const RegionLayer = memo(function RegionLayer({ overlay, regions, metric, change
   );
 });
 
+interface PlacedMarker {
+  point: MapPoint;
+  at: [number, number];
+  radius: number;
+  style: MarkerStyle;
+  fan: string;
+}
+
+function placeMarkers(overlay: OverlayDefinition, points: MapPoint[]): PlacedMarker[] {
+  const stacked = new Map<string, number>();
+  return points
+    .map((point) => ({
+      point,
+      at: project(world.projection, point.lon, point.lat),
+      radius: markerRadius(overlay, point),
+      style: markerStyle(overlay, point),
+    }))
+    .sort((a, b) => b.radius - a.radius)
+    .map((marker) => {
+      // Town-level records share a coordinate. Later ones fan out on a spiral that opens as the view zooms.
+      const key = marker.at.map((value) => value.toFixed(1)).join();
+      const nth = stacked.get(key) ?? 0;
+      stacked.set(key, nth + 1);
+      const reach = nth && (marker.radius + 3) * Math.sqrt(nth);
+      return { ...marker, fan: `${(reach * Math.cos(nth * 2.4)).toFixed(1)} ${(reach * Math.sin(nth * 2.4)).toFixed(1)}` };
+    });
+}
+
+// Markers shrink in map units as the view zooms, yet still grow on screen so dense clusters open up.
+function markerTransform({ at, fan }: PlacedMarker, zoom: number): string {
+  return `translate(${at[0].toFixed(1)} ${at[1].toFixed(1)}) scale(${(1 / zoom ** 0.6).toFixed(4)}) translate(${fan})`;
+}
+
 interface PointLayerProps {
-  overlay: OverlayDefinition;
-  points: MapPoint[];
+  sized: boolean;
+  markers: PlacedMarker[];
   zoom: number;
   fresh: Set<string>;
 }
 
-const PointLayer = memo(function PointLayer({ overlay, points, zoom, fresh }: PointLayerProps) {
-  // Markers shrink in map units as the view zooms, yet still grow a little on screen.
-  const shrink = 1 / zoom ** 0.72;
-  const placed = useMemo(
-    () => points
-      .map((point) => ({
-        point,
-        at: project(world.projection, point.lon, point.lat),
-        radius: markerRadius(overlay, point),
-        style: markerStyle(overlay, point),
-      }))
-      .sort((a, b) => b.radius - a.radius),
-    [overlay, points],
-  );
+const PointLayer = memo(function PointLayer({ sized, markers, zoom, fresh }: PointLayerProps) {
   return (
-    <g className={`maps-points${overlay.sizedByPower ? ' is-sized' : ''}`}>
-      {placed.map(({ point, at, radius, style }) => (
+    <g className={`maps-points${sized ? ' is-sized' : ''}`}>
+      {markers.map((marker) => (
         <g
-          key={point.id}
-          data-point={point.id}
-          className={`maps-point${style.hollow ? ' is-hollow' : ''}`}
-          transform={`translate(${at[0].toFixed(1)} ${at[1].toFixed(1)}) scale(${shrink.toFixed(4)})`}
+          key={marker.point.id}
+          data-point={marker.point.id}
+          className={`maps-point${marker.style.hollow ? ' is-hollow' : ''}`}
+          transform={markerTransform(marker, zoom)}
         >
-          {fresh.has(point.id) && <circle className="maps-point-pulse" r={radius + 5} stroke={style.color} />}
-          <Marker style={style} radius={radius} />
+          {fresh.has(marker.point.id) && <circle className="maps-point-pulse" r={marker.radius + 5} stroke={marker.style.color} />}
+          <Marker style={marker.style} radius={marker.radius} />
         </g>
       ))}
     </g>
@@ -488,7 +508,8 @@ export default function Maps() {
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragged = useRef(false);
 
-  const pointsById = useMemo(() => new Map((data?.points ?? []).map((point) => [point.id, point])), [data]);
+  const markers = useMemo(() => placeMarkers(overlay, data?.points ?? NO_POINTS), [overlay, data]);
+  const pointsById = useMemo(() => new Map(markers.map((marker) => [marker.point.id, marker.point])), [markers]);
   const stats = useMemo(() => (data ? statsFor(overlay, data, metric) : []), [overlay, data, metric]);
 
   const update = (changesToApply: Record<string, string | null>) => {
@@ -612,7 +633,7 @@ export default function Maps() {
     : selection && data?.regions?.[selection.id]?.source;
 
   const highlight = hover?.target ?? selection;
-  const highlightPoint = highlight?.type === 'point' ? pointsById.get(highlight.id) : undefined;
+  const highlightMarker = highlight?.type === 'point' ? markers.find((marker) => marker.point.id === highlight.id) : undefined;
   const highlightShape = highlight?.type === 'region'
     ? [...world.states, ...world.countries].find((shape) => shape.id === highlight.id)
     : undefined;
@@ -635,7 +656,6 @@ export default function Maps() {
   }, [data, overlay, metric, needle]);
 
   const changeCount = (changes?.newPoints.size ?? 0) + (changes?.changedRegions.size ?? 0);
-  const shrink = 1 / view.k ** 0.72;
 
   return (
     <div className="maps-page">
@@ -708,12 +728,12 @@ export default function Maps() {
               <path d={world.graticule} className="maps-graticule" />
               <RegionLayer overlay={overlay} regions={data?.regions} metric={metric} changed={changes?.changedRegions ?? EMPTY} />
               {highlightShape && <path d={highlightShape.d} className="maps-region-highlight" />}
-              <PointLayer overlay={overlay} points={data?.points ?? NO_POINTS} zoom={view.k} fresh={changes?.newPoints ?? EMPTY} />
-              {highlightPoint && (
+              <PointLayer sized={Boolean(overlay.sizedByPower)} markers={markers} zoom={view.k} fresh={changes?.newPoints ?? EMPTY} />
+              {highlightMarker && (
                 <circle
                   className="maps-point-highlight"
-                  r={markerRadius(overlay, highlightPoint) + 4}
-                  transform={`translate(${project(world.projection, highlightPoint.lon, highlightPoint.lat).join(' ')}) scale(${shrink.toFixed(4)})`}
+                  r={highlightMarker.radius + 4}
+                  transform={markerTransform(highlightMarker, view.k)}
                 />
               )}
             </g>

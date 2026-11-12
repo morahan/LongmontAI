@@ -5488,6 +5488,7 @@ iframe {
 
 .maps-frame {
   position: relative;
+  scroll-margin-top: 6rem;
   overflow: hidden;
   border: 1px solid var(--glass-border);
   border-radius: 14px;
@@ -5572,8 +5573,8 @@ iframe {
 }
 
 .maps-points.is-sized .maps-point.is-hollow > :not(.maps-point-pulse) {
-  fill-opacity: 0.25;
-  stroke-width: 1.8;
+  fill-opacity: 0.08;
+  stroke-opacity: 0.75;
 }
 
 .maps-point-pulse {
@@ -6077,6 +6078,17 @@ iframe {
 @media (max-width: 520px) {
   .maps-canvas {
     padding: 0.25rem;
+  }
+
+  .maps-zoom {
+    top: 0.4rem;
+    right: 0.4rem;
+    grid-auto-flow: column;
+  }
+
+  .maps-zoom button {
+    width: 2rem;
+    height: 2rem;
   }
 
   .maps-list button {

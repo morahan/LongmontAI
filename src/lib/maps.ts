@@ -205,7 +205,7 @@ export function markerStyle(overlay: OverlayDefinition, point: MapPoint): Marker
 // Radius in base-map units. Area grows with power so a 1 GW campus reads as 10 times a 100 MW one.
 export function markerRadius(overlay: OverlayDefinition, point: MapPoint): number {
   if (!overlay.sizedByPower) return point.kind === 'factory' ? 11 : 6.5;
-  return 3.5 + Math.sqrt(point.mw ?? 25) * 0.46;
+  return 2 + Math.sqrt(point.mw ?? 25) * 0.3;
 }
 
 export function rampColor(metric: Metric, value: number): string {
