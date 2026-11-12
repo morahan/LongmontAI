@@ -3,7 +3,8 @@ import {
   type ChineseModelProvider,
   type ChineseModelRelease,
 } from '../articles/chinese-model-releases';
-import { modelWatchModels } from './modelWatch';
+import { modelCatalog } from './modelCatalog.generated';
+import { modelWatchArchive } from './modelWatch';
 
 export const timelineCategories = [
   'Research breakthrough',
@@ -228,11 +229,36 @@ const westernModelWatchProviders = new Set([
   'xAI',
 ]);
 
-const westernModelWatch2026Events: TimelineEvent[] = modelWatchModels
+function endWithPeriod(text: string): string {
+  return `${text.trim().replace(/\.+$/, '')}.`;
+}
+
+// Weight is ignored on purpose: a release stays on the timeline after it leaves the roster.
+const catalogReleaseEvents = modelCatalog.entries.flatMap((entry): TimelineEvent[] => {
+  if (entry.disposition !== 'include' || entry.releaseDate === null || entry.releaseDate > modelCatalog.asOf) return [];
+  const openWeight = /\bopen weights\b/i.test(entry.availability);
+  return [{
+    id: `model-watch-${entry.id}`,
+    date: entry.releaseDate,
+    title: entry.phrase,
+    organization: entry.provider,
+    category: openWeight ? 'Open weight' : 'Model release',
+    summary: [`${entry.provider} released ${entry.phrase}`, `Access: ${entry.availability}`, entry.reason].map(endWithPeriod).join(' '),
+    source: entry.provider,
+    sourceUrl: entry.sourceUrl,
+    openWeight,
+    notable: true,
+  }];
+});
+
+const catalogReleaseEventIds = new Set(catalogReleaseEvents.map((event) => event.id));
+
+const archiveReleaseEvents: TimelineEvent[] = modelWatchArchive
   .filter((model) => (
     model.releaseDateSort?.startsWith('2026-')
     && westernModelWatchProviders.has(model.provider)
     && model.id !== 'grok-4-5'
+    && !catalogReleaseEventIds.has(`model-watch-${model.id}`)
   ))
   .map((model) => ({
     id: `model-watch-${model.id}`,
@@ -327,7 +353,8 @@ function chineseReleaseToTimelineEvent(release: ChineseModelRelease): TimelineEv
 
 export const timelineEvents = [
   ...historicTimelineEvents,
-  ...westernModelWatch2026Events,
+  ...catalogReleaseEvents,
+  ...archiveReleaseEvents,
   ...additional2026ReleaseEvents,
   ...chineseModelReleases.map(chineseReleaseToTimelineEvent),
 ]

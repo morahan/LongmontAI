@@ -1,6 +1,6 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 
-# Regenerate both reviewed model surfaces; discovery produces unreviewed leads.
+# Regenerate the reviewed roster that feeds Model Watch, Star Text, and the Timeline's model releases. Discovery produces unreviewed leads.
 [positional-arguments]
 update-models *args:
     @node scripts/update-models.mjs "$@"

@@ -6,10 +6,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
+import { modelCatalog } from '../../src/data/modelCatalog.generated.ts';
 import {
   latestBriefingModelIds,
   historicalBriefingModelIds,
   modelBenchmarkDefinitions,
+  modelWatchArchive,
   modelWatchModels,
   modelWatchSnapshots,
 } from '../../src/data/modelWatch.ts';
@@ -136,4 +138,42 @@ test('existing timeline generation produces one sourced Astra release without a 
   assert.equal(matches[0].category, 'Model release');
   assert.equal(matches[0].organization, 'OpenAI');
   assert.equal(matches[0].sourceUrl, releaseUrl);
+});
+
+test('every reviewed catalog release keeps one timeline event after it leaves the roster', async () => {
+  const { timelineEvents } = await server.ssrLoadModule('/src/data/timeline.ts');
+  const eventsFor = (entry) => timelineEvents.filter((event) => event.id === `model-watch-${entry.id}`);
+  const isReleased = (entry) => (
+    entry.disposition === 'include' && entry.releaseDate !== null && entry.releaseDate <= modelCatalog.asOf
+  );
+
+  const released = modelCatalog.entries.filter(isReleased);
+  for (const entry of released) {
+    const events = eventsFor(entry);
+    assert.equal(events.length, 1, `${entry.id} has one timeline event`);
+    assert.deepEqual(
+      { date: events[0].date, title: events[0].title, organization: events[0].organization, sourceUrl: events[0].sourceUrl },
+      { date: entry.releaseDate, title: entry.phrase, organization: entry.provider, sourceUrl: entry.sourceUrl },
+      `${entry.id} carries the catalog release identity`,
+    );
+  }
+  assert.ok(
+    released.some((entry) => entry.weightUnits === 0),
+    'the catalog holds at least one reviewed release that has left the roster',
+  );
+
+  const archiveIds = new Set(modelWatchArchive.map((model) => model.id));
+  const unreleased = modelCatalog.entries.filter((entry) => !isReleased(entry) && !archiveIds.has(entry.id));
+  assert.ok(unreleased.some((entry) => entry.disposition === 'remove'), 'the catalog holds at least one removed entry');
+  for (const entry of unreleased) {
+    assert.deepEqual(eventsFor(entry), [], `${entry.id} is ${entry.disposition} and has no timeline event`);
+  }
+
+  const duplicates = (keys) => keys.filter((key, index) => keys.indexOf(key) !== index);
+  assert.deepEqual(duplicates(timelineEvents.map((event) => event.id)), [], 'timeline event ids are unique');
+  assert.deepEqual(
+    duplicates(timelineEvents.map((event) => `${event.date} ${event.title.toLowerCase().replace(/[^a-z0-9]/g, '')}`)),
+    [],
+    'no two timeline events share a date and a title',
+  );
 });
