@@ -132,6 +132,9 @@ const PENDING = '#b6bcc8';
 export const NO_DATA_FILL = '#1c1c22';
 export const RAMP = ['#27215e', '#3d35a8', '#4f5bea', '#3b8ff6', '#12b8d6', '#5eead4', '#e4fffa'];
 
+// One 0 to 100 scale for every survey share, so a colour means the same thing on each measure.
+const PERCENT_STOPS = [15, 30, 45, 60, 75, 90];
+
 export const OVERLAYS: OverlayDefinition[] = [
   {
     id: 'data-centers',
@@ -224,10 +227,10 @@ export const OVERLAYS: OverlayDefinition[] = [
     label: 'AI usage and sentiment',
     blurb: 'How many adults have used AI, how often, and whether they expect it to help their country.',
     metrics: [
-      { id: 'usedPct', label: 'Ever used AI', unit: '%', asOf: 'surveyAsOf', stops: [10, 20, 30, 40, 50, 60] },
-      { id: 'dailyPct', label: 'Use AI daily', unit: '%', asOf: 'surveyAsOf', stops: [5, 10, 15, 20, 25, 35] },
-      { id: 'awarePct', label: 'Aware of AI', unit: '%', asOf: 'surveyAsOf', stops: [30, 50, 65, 80, 90, 95] },
-      { id: 'helpPct', label: 'Expect AI to help their country', unit: '%', asOf: 'surveyAsOf', stops: [35, 40, 50, 60, 70, 85] },
+      { id: 'usedPct', label: 'Ever used AI', unit: '%', asOf: 'surveyAsOf', stops: PERCENT_STOPS },
+      { id: 'dailyPct', label: 'Use AI daily', unit: '%', asOf: 'surveyAsOf', stops: PERCENT_STOPS },
+      { id: 'awarePct', label: 'Aware of AI', unit: '%', asOf: 'surveyAsOf', stops: PERCENT_STOPS },
+      { id: 'helpPct', label: 'Expect AI to help their country', unit: '%', asOf: 'surveyAsOf', stops: PERCENT_STOPS },
     ],
   },
   {
