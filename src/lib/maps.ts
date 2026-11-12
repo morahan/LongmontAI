@@ -3,7 +3,8 @@ export type OverlayId =
   | 'autonomous-driving'
   | 'autonomous-delivery'
   | 'drone-delivery'
-  | 'internet';
+  | 'internet'
+  | 'starlink';
 
 export interface MapSource {
   name: string;
@@ -38,6 +39,32 @@ export interface MapRegion {
   usersPct?: number;
   speedAsOf?: string;
   usersAsOf?: string;
+  downMbps?: number;
+  upMbps?: number;
+  latencyMs?: number;
+}
+
+// One satellite on a circular orbit: inclination, ascending node and argument of latitude in degrees,
+// mean motion in revolutions per day, half its daily change (the drag term CelesTrak publishes), and the
+// seconds its own element epoch trails the shared one.
+export type SatelliteElements = [
+  inclination: number,
+  node: number,
+  argLatitude: number,
+  meanMotion: number,
+  meanMotionDot: number,
+  lagSeconds: number,
+];
+
+export interface SatelliteSet {
+  epoch: string;
+  elements: SatelliteElements[];
+}
+
+export interface GrowthPoint {
+  date: string;
+  launched: number;
+  inOrbit: number;
 }
 
 export interface OverlayData {
@@ -45,6 +72,8 @@ export interface OverlayData {
   notes?: string;
   regions?: Record<string, MapRegion>;
   points?: MapPoint[];
+  satellites?: SatelliteSet;
+  growth?: GrowthPoint[];
 }
 
 export type MarkerShape = 'circle' | 'square' | 'diamond' | 'triangle' | 'factory';
@@ -73,6 +102,8 @@ export interface Metric {
 
 export interface OverlayDefinition {
   id: OverlayId;
+  // Set on a layer that is offered beside its parent's metrics instead of in the overlay dropdown.
+  parent?: OverlayId;
   label: string;
   blurb: string;
   levelTitle?: string;
@@ -180,6 +211,19 @@ export const OVERLAYS: OverlayDefinition[] = [
       { id: 'usersPct', label: 'Population online', unit: '%', asOf: 'usersAsOf', stops: [20, 40, 60, 75, 85, 95] },
     ],
   },
+  {
+    id: 'starlink',
+    parent: 'internet',
+    label: 'Starlink',
+    blurb: 'Where Starlink sells service, with every satellite in the constellation moving overhead.',
+    levelTitle: 'Starlink service',
+    levels: {
+      available: { label: 'Available', color: LIVE, hint: 'Starlink sells service here.' },
+      coming: { label: 'Coming soon', color: PERMITTED, hint: 'Starlink has announced service.' },
+      pending: { label: 'Awaiting approval', color: TRIAL, hint: 'Waiting on the regulator.' },
+      unavailable: { label: 'Not offered', color: RESTRICTED, hint: 'Starlink does not serve this market.' },
+    },
+  },
 ];
 
 export function overlayById(id: string | null | undefined): OverlayDefinition {
@@ -247,6 +291,31 @@ export function project(projection: Projection, lon: number, lat: number): [numb
   const x = ((lambda * Math.PI) / 180) * Math.cos(l) / (M * (A1 + 3 * A2 * l2 + l6 * (7 * A3 + 9 * A4 * l2)));
   const y = l * (A1 + A2 * l2 + l6 * (A3 + A4 * l2));
   return [projection.tx + projection.scale * x, projection.ty - projection.scale * y];
+}
+
+const EARTH_RADIUS_KM = 6378.137;
+const EARTH_MU = 398600.4418;
+const J2 = 1.08262668e-3;
+const J2000_MS = Date.UTC(2000, 0, 1, 12);
+const RAD = Math.PI / 180;
+
+// Ground position of each satellite at `atMs`, as [lon, lat] in degrees. Circular orbits with the J2 drift
+// of the node and perigee and a constant drag term. Within about 30 km of SGP4 for most satellites a fortnight
+// out. Manoeuvres are not modelled, so a satellite that raises or lowers its orbit strays along its track.
+export function satellitePositions(satellites: SatelliteSet, atMs: number): Array<[number, number]> {
+  const sinceEpoch = (atMs - Date.parse(satellites.epoch)) / 1000;
+  const days = (atMs - J2000_MS) / 86400000;
+  const siderealAngle = ((280.46061837 + 360.98564736629 * days) % 360) * RAD;
+  return satellites.elements.map(([inclination, node, argLatitude, meanMotion, meanMotionDot, lagSeconds]) => {
+    const dt = sinceEpoch + lagSeconds;
+    const n = (meanMotion * 2 * Math.PI) / 86400;
+    const drift = 1.5 * J2 * (EARTH_RADIUS_KM / Math.cbrt(EARTH_MU / (n * n))) ** 2 * n;
+    const cosI = Math.cos(inclination * RAD);
+    const sinI = Math.sin(inclination * RAD);
+    const u = argLatitude * RAD + (n + drift * (2 - 2.5 * sinI * sinI)) * dt + meanMotionDot * 2 * Math.PI * (dt / 86400) ** 2;
+    const lon = Math.atan2(cosI * Math.sin(u), Math.cos(u)) + node * RAD - drift * cosI * dt - siderealAngle;
+    return [((((lon / RAD) % 360) + 540) % 360) - 180, Math.asin(sinI * Math.sin(u)) / RAD];
+  });
 }
 
 // A fortnight may refresh only some overlays. Each overlay shows its newest file at or before the chosen date.

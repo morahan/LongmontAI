@@ -9,6 +9,7 @@ import {
   project,
   regionFill,
   resolveSnapshotDate,
+  satellitePositions,
   NO_DATA_FILL,
 } from '../../src/lib/maps.ts';
 
@@ -107,9 +108,30 @@ for (const date of snapshotDates) {
           assert.notEqual(regionFill(overlay, region, metric), NO_DATA_FILL);
         }
       }
+
+      for (const [inclination, node, argLatitude, meanMotion, , lagSeconds] of data.satellites?.elements ?? []) {
+        assert.ok(inclination > 0 && inclination < 180 && node >= 0 && node <= 360 && argLatitude >= 0 && argLatitude <= 360);
+        // Anything in low orbit circles 11 to 17 times a day.
+        assert.ok(meanMotion > 11 && meanMotion < 17 && lagSeconds >= 0, `satellite mean motion ${meanMotion}, lag ${lagSeconds}`);
+      }
+      for (const [index, month] of (data.growth ?? []).entries()) {
+        const before = data.growth[index - 1];
+        assert.ok(month.inOrbit >= 0 && month.inOrbit <= month.launched, `${month.date} has more in orbit than launched`);
+        if (before) assert.ok(month.date > before.date && month.launched >= before.launched, `${month.date} runs backwards`);
+      }
     });
   }
 }
+
+test('satellite positions follow SGP4', () => {
+  // STARLINK-1008 from CelesTrak, and where satellite.js SGP4 put it at the epoch and a day later.
+  const satellites = { epoch: '2026-11-12T10:38:47.173Z', elements: [[53.1439, 66.8936, 0.0915, 15.69861898, 0.00163996, 0]] };
+  const epoch = Date.parse(satellites.epoch);
+  for (const [hours, lon, lat] of [[0, -144.38, 0], [24, 96.33, -50.92]]) {
+    const [[mine, mineLat]] = satellitePositions(satellites, epoch + hours * 3600000);
+    assert.ok(Math.abs(mineLat - lat) < 0.5 && Math.abs(((mine - lon + 540) % 360) - 180) < 0.5, `+${hours}h at ${mine},${mineLat}, SGP4 says ${lon},${lat}`);
+  }
+});
 
 test('an overlay shows its newest file at or before the chosen fortnight', () => {
   const dates = ['2026-11-11', '2026-12-09'];

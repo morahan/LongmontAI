@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Globe2, Minus, Plus, RotateCcw, Search } from 'lucide-react';
 import world from '../data/maps/world.json';
@@ -17,8 +17,10 @@ import {
   project,
   regionFill,
   resolveSnapshotDate,
+  satellitePositions,
 } from '../lib/maps';
 import type {
+  GrowthPoint,
   MapPoint,
   MapRegion,
   MarkerStyle,
@@ -26,6 +28,7 @@ import type {
   OverlayData,
   OverlayDefinition,
   OverlayId,
+  SatelliteSet,
   SnapshotChanges,
 } from '../lib/maps';
 
@@ -54,6 +57,7 @@ const HEIGHT = world.height;
 const MAX_ZOOM = 16;
 const FORTNIGHT_MS = 14 * 24 * 60 * 60 * 1000;
 const LIST_LIMIT = 150;
+const SATELLITE_TICK_MS = 1000;
 const FACTORY_GLYPH = 'M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z';
 
 const regionNames = new Map<string, string>(
@@ -221,6 +225,28 @@ const PointLayer = memo(function PointLayer({ sized, markers, zoom, fresh }: Poi
   );
 });
 
+// Thousands of dots redrawn every second, so they share one path and skip React.
+function SatelliteLayer({ satellites, zoom }: { satellites: SatelliteSet; zoom: number }) {
+  const pathRef = useRef<SVGPathElement | null>(null);
+
+  useEffect(() => {
+    const draw = () => {
+      let d = '';
+      for (const [lon, lat] of satellitePositions(satellites, Date.now())) {
+        const [x, y] = project(world.projection, lon, lat);
+        d += `M${x.toFixed(1)} ${y.toFixed(1)}h0`;
+      }
+      pathRef.current?.setAttribute('d', d);
+    };
+    draw();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = window.setInterval(draw, SATELLITE_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [satellites]);
+
+  return <path ref={pathRef} className="maps-satellites" style={{ '--maps-satellite-zoom': Math.sqrt(zoom) } as CSSProperties} />;
+}
+
 function useOverlayData(overlay: OverlayId, selectedDate: string) {
   const dates = datesByOverlay.get(overlay) ?? [];
   const date = resolveSnapshotDate(dates, selectedDate);
@@ -289,6 +315,13 @@ function statsFor(overlay: OverlayDefinition, data: OverlayData, metric: Metric 
     value: `${regions.filter(([, region]) => region.level === level).length}`,
     label: style.label,
   }));
+  const downloads = regions.map(([, region]) => region.downMbps).filter((value): value is number => typeof value === 'number');
+  const starlinkStats: Stat[] = data.satellites
+    ? [
+      { value: data.satellites.elements.length.toLocaleString('en-US'), label: 'Satellites in orbit' },
+      { value: `${Math.round(median(downloads))} Mbps`, label: 'Median country download' },
+    ]
+    : [];
   const kinds = [...new Set(points.map((point) => point.kind))];
   const kindLabel: Record<string, string> = {
     robotaxi: 'Robotaxi cities',
@@ -299,6 +332,7 @@ function statsFor(overlay: OverlayDefinition, data: OverlayData, metric: Metric 
   };
   return [
     ...levelStats,
+    ...starlinkStats,
     ...kinds.slice(0, 2).map((kind) => ({
       value: `${points.filter((point) => point.kind === kind).length}`,
       label: kindLabel[kind] ?? kind,
@@ -358,6 +392,9 @@ function RegionSummary({ overlay, id, region, full }: { overlay: OverlayDefiniti
         <Facts
           rows={[
             region.fsd && ['Tesla FSD', FSD_LABEL[region.fsd]],
+            typeof region.downMbps === 'number' && ['Median download', `${region.downMbps} Mbps`],
+            typeof region.upMbps === 'number' && ['Median upload', `${region.upMbps} Mbps`],
+            typeof region.latencyMs === 'number' && ['Median latency', `${region.latencyMs} ms`],
             ...(overlay.metrics ?? []).map((metric): [string, ReactNode] => [
               metric.label,
               `${metricText(region, metric)}${full && region[metric.asOf] ? ` (${region[metric.asOf]})` : ''}`,
@@ -414,6 +451,17 @@ function Legend({ overlay, metric, data }: { overlay: OverlayDefinition; metric:
               </span>
             ))}
           </div>
+        </div>
+      )}
+      {data?.satellites && (
+        <div className="maps-legend-group">
+          <h3>In orbit now</h3>
+          <ul>
+            <li>
+              <span className="maps-swatch maps-swatch-satellite" />
+              Satellite, from {formatSnapshotDate(data.satellites.epoch.slice(0, 10))} orbits
+            </li>
+          </ul>
         </div>
       )}
       {markers.length > 0 && (
@@ -488,14 +536,183 @@ function SnapshotTimeline({ dates, selected, onSelect }: TimelineProps) {
   );
 }
 
+const GROWTH_SERIES = [
+  { key: 'launched', label: 'Launched', color: '#e0703a' },
+  { key: 'inOrbit', label: 'In orbit', color: '#4d8dff' },
+] as const;
+const CHART_HEIGHT = 320;
+const CHART_MARGIN = { top: 16, right: 20, bottom: 30, left: 46 };
+
+function niceStep(max: number, ticks: number): number {
+  const raw = max / ticks;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  return magnitude * ([1, 2, 5, 10].find((multiple) => multiple * magnitude >= raw) ?? 10);
+}
+
+function GrowthChart({ growth }: { growth: GrowthPoint[] }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(720);
+  const [active, setActive] = useState<number | null>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return undefined;
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(280, entry.contentRect.width)));
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, []);
+
+  const times = useMemo(() => growth.map((point) => Date.parse(`${point.date}T00:00:00Z`)), [growth]);
+  const latest = growth[growth.length - 1];
+  const step = niceStep(latest.launched, 3);
+  const top = Math.ceil(latest.launched / step) * step;
+  const plotWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
+  const plotHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
+  const baseline = CHART_MARGIN.top + plotHeight;
+  const x = (time: number) => CHART_MARGIN.left + ((time - times[0]) / (times[times.length - 1] - times[0])) * plotWidth;
+  const y = (value: number) => baseline - (value / top) * plotHeight;
+  const line = (key: 'launched' | 'inOrbit') => growth.map((point, index) => `${index ? 'L' : 'M'}${x(times[index]).toFixed(1)} ${y(point[key]).toFixed(1)}`).join('');
+
+  const firstYear = new Date(times[0]).getUTCFullYear() + 1;
+  const lastYear = new Date(times[times.length - 1]).getUTCFullYear();
+  const yearEvery = plotWidth / (lastYear - firstYear + 1) < 44 ? 2 : 1;
+  const years = Array.from({ length: lastYear - firstYear + 1 }, (_, index) => firstYear + index)
+    .filter((year) => (lastYear - year) % yearEvery === 0);
+
+  const nearest = (clientX: number) => {
+    const box = wrapRef.current?.getBoundingClientRect();
+    if (!box) return null;
+    const time = times[0] + ((clientX - box.left - CHART_MARGIN.left) / plotWidth) * (times[times.length - 1] - times[0]);
+    let best = 0;
+    for (let index = 1; index < times.length; index += 1) {
+      if (Math.abs(times[index] - time) < Math.abs(times[best] - time)) best = index;
+    }
+    return best;
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<SVGSVGElement>) => {
+    const move = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    if (!move) return;
+    event.preventDefault();
+    setActive((current) => Math.min(growth.length - 1, Math.max(0, (current ?? growth.length - 1) + move)));
+  };
+
+  const shown = active === null ? undefined : growth[active];
+  const shownX = active === null ? 0 : x(times[active]);
+  const yearEnds = growth.filter((point, index) => point.date.endsWith('-12-31') || index === growth.length - 1);
+
+  return (
+    <section className="maps-growth" aria-label="Starlink constellation growth">
+      <h2>Constellation growth</h2>
+      <p className="maps-growth-sub">
+        Starlink satellites launched, and how many are still in orbit, month by month. The gap is satellites that have
+        come back down.
+      </p>
+      <ul className="maps-growth-legend">
+        {GROWTH_SERIES.map((series) => (
+          <li key={series.key}>
+            <i style={{ background: series.color }} />
+            {series.label}
+            <strong>{latest[series.key].toLocaleString('en-US')}</strong>
+          </li>
+        ))}
+      </ul>
+      <div className="maps-growth-plot" ref={wrapRef}>
+        <svg
+          width={width}
+          height={CHART_HEIGHT}
+          role="img"
+          tabIndex={0}
+          aria-label={`Line chart. ${latest.launched.toLocaleString('en-US')} Starlink satellites launched and ${latest.inOrbit.toLocaleString('en-US')} in orbit as of ${formatSnapshotDate(latest.date)}. Use the arrow keys to step through months.`}
+          onPointerMove={(event) => setActive(nearest(event.clientX))}
+          onPointerLeave={() => setActive(null)}
+          onBlur={() => setActive(null)}
+          onKeyDown={onKeyDown}
+        >
+          {Array.from({ length: top / step + 1 }, (_, index) => index * step).map((tick) => (
+            <g key={tick}>
+              <line className={tick ? 'maps-growth-grid' : 'maps-growth-axis'} x1={CHART_MARGIN.left} x2={width - CHART_MARGIN.right} y1={y(tick)} y2={y(tick)} />
+              <text className="maps-growth-tick" x={CHART_MARGIN.left - 8} y={y(tick)} dy="0.32em" textAnchor="end">
+                {tick >= 1000 ? `${tick / 1000}k` : tick}
+              </text>
+            </g>
+          ))}
+          {years.map((year) => (
+            <text key={year} className="maps-growth-tick" x={x(Date.UTC(year, 0, 1))} y={baseline + 20} textAnchor="middle">{year}</text>
+          ))}
+          <path d={`${line('inOrbit')}L${x(times[times.length - 1]).toFixed(1)} ${baseline}L${x(times[0]).toFixed(1)} ${baseline}Z`} fill={GROWTH_SERIES[1].color} opacity="0.12" />
+          {GROWTH_SERIES.map((series) => (
+            <path key={series.key} d={line(series.key)} className="maps-growth-line" stroke={series.color} />
+          ))}
+          {shown && <line className="maps-growth-crosshair" x1={shownX} x2={shownX} y1={CHART_MARGIN.top} y2={baseline} />}
+          {GROWTH_SERIES.map((series) => (
+            <circle
+              key={series.key}
+              className="maps-growth-dot"
+              cx={shown ? shownX : x(times[times.length - 1])}
+              cy={y((shown ?? latest)[series.key])}
+              r="4"
+              fill={series.color}
+            />
+          ))}
+        </svg>
+        {shown && (
+          <div className={`maps-tooltip${shownX > width * 0.45 ? ' is-left' : ''}`} style={{ left: shownX, top: CHART_MARGIN.top }} role="presentation">
+            <p className="maps-card-place">{formatSnapshotDate(shown.date)}</p>
+            <dl className="maps-growth-readout">
+              {GROWTH_SERIES.map((series) => (
+                <div key={series.key}>
+                  <dt><i style={{ background: series.color }} />{series.label}</dt>
+                  <dd>{shown[series.key].toLocaleString('en-US')}</dd>
+                </div>
+              ))}
+              <div>
+                <dt>Deorbited</dt>
+                <dd>{(shown.launched - shown.inOrbit).toLocaleString('en-US')}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+      </div>
+      <details className="maps-growth-table">
+        <summary>Show as a table</summary>
+        <table>
+          <thead>
+            <tr><th scope="col">As of</th><th scope="col">Launched</th><th scope="col">In orbit</th><th scope="col">Deorbited</th></tr>
+          </thead>
+          <tbody>
+            {yearEnds.map((point) => (
+              <tr key={point.date}>
+                <th scope="row">{formatSnapshotDate(point.date)}</th>
+                <td>{point.launched.toLocaleString('en-US')}</td>
+                <td>{point.inOrbit.toLocaleString('en-US')}</td>
+                <td>{(point.launched - point.inOrbit).toLocaleString('en-US')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+      <p className="maps-growth-credit">
+        Counted from the CelesTrak satellite catalog. For a live 3D view of every satellite, see{' '}
+        <a href="https://satellitemap.space/" target="_blank" rel="noopener noreferrer">satellitemap.space</a>. For launch-by-launch
+        tracking, see <a href="https://orbitalradar.com/starlink-tracker" target="_blank" rel="noopener noreferrer">orbitalradar.com</a>.
+      </p>
+    </section>
+  );
+}
+
 export default function Maps() {
   const [params, setParams] = useSearchParams();
-  const overlay = overlayById(params.get('map'));
+  const requested = overlayById(params.get('map'));
+  const base = requested.parent ? overlayById(requested.parent) : requested;
+  const layers = OVERLAYS.filter((candidate) => candidate.parent === base.id);
+  const layer = requested.parent ? requested : layers.find((candidate) => candidate.id === params.get('metric'));
+  const overlay = layer ?? base;
   const requestedDate = params.get('date');
   const selectedDate = requestedDate && snapshotDates.includes(requestedDate)
     ? requestedDate
     : snapshotDates[snapshotDates.length - 1];
-  const metric = overlay.metrics?.find((candidate) => candidate.id === params.get('metric')) ?? overlay.metrics?.[0];
+  const metric = layer ? undefined : base.metrics?.find((candidate) => candidate.id === params.get('metric')) ?? base.metrics?.[0];
 
   const { data, date, previousDate, changes } = useOverlayData(overlay.id, selectedDate);
   const [view, setView] = useState<View>(HOME);
@@ -671,8 +888,8 @@ export default function Maps() {
       <section className="maps-controls" aria-label="Map controls">
         <label className="maps-select">
           <span>Map overlay</span>
-          <select value={overlay.id} onChange={(event) => chooseOverlay(event.target.value)}>
-            {OVERLAYS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+          <select value={base.id} onChange={(event) => chooseOverlay(event.target.value)}>
+            {OVERLAYS.filter((option) => !option.parent).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </label>
         <p className="maps-blurb">{overlay.blurb}</p>
@@ -682,15 +899,15 @@ export default function Maps() {
         </p>
       </section>
 
-      {overlay.metrics && (
+      {base.metrics && (
         <div className="maps-metrics" role="group" aria-label="Measure">
-          {overlay.metrics.map((option) => (
+          {[...base.metrics, ...layers].map((option) => (
             <button
               key={option.id}
               type="button"
-              aria-pressed={option.id === metric?.id}
-              className={option.id === metric?.id ? 'is-active' : ''}
-              onClick={() => update({ metric: option.id })}
+              aria-pressed={option.id === (layer ?? metric)?.id}
+              className={option.id === (layer ?? metric)?.id ? 'is-active' : ''}
+              onClick={() => update({ map: base.id, metric: option.id })}
             >
               {option.label}
             </button>
@@ -729,6 +946,7 @@ export default function Maps() {
               <RegionLayer overlay={overlay} regions={data?.regions} metric={metric} changed={changes?.changedRegions ?? EMPTY} />
               {highlightShape && <path d={highlightShape.d} className="maps-region-highlight" />}
               <PointLayer sized={Boolean(overlay.sizedByPower)} markers={markers} zoom={view.k} fresh={changes?.newPoints ?? EMPTY} />
+              {data?.satellites && <SatelliteLayer satellites={data.satellites} zoom={view.k} />}
               {highlightMarker && (
                 <circle
                   className="maps-point-highlight"
@@ -778,6 +996,8 @@ export default function Maps() {
           ))}
         </div>
       )}
+
+      {data?.growth && <GrowthChart growth={data.growth} />}
 
       <div className="maps-explore">
         <section className="maps-detail" aria-live="polite" aria-label="Selected place">
