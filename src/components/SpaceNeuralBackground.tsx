@@ -6,6 +6,7 @@ import {
     stepBlackHole,
     type BlackHoleState,
 } from './blackHoleModel';
+import { drawBlackHole } from './blackHoleRenderer';
 import {
     advanceEasterEggClickSequence,
     EASTER_EGG_CLICK_INTERVAL_MS,
@@ -976,6 +977,8 @@ const SpaceNeuralBackground: React.FC = () => {
         let blackHole: BlackHoleState | null = null;
         let holeCenter = { x: 0, y: 0 };
         let holeLastElapsed: number | null = null;
+        let holeOpenedAt: number | null = null;
+        let holeCaptureAt: number | null = null;
         let lastPointerType = 'mouse';
         let cursorOwner: HTMLElement | null = null;
         let previousCursor = '';
@@ -1000,6 +1003,8 @@ const SpaceNeuralBackground: React.FC = () => {
             restoreCursor();
             blackHole = null;
             holeLastElapsed = null;
+            holeOpenedAt = null;
+            holeCaptureAt = null;
             delete canvas.dataset.blackHole;
             delete canvas.dataset.blackHoleCaptures;
         };
@@ -1129,6 +1134,8 @@ const SpaceNeuralBackground: React.FC = () => {
             );
             let positions = frame.positions;
             if (blackHole) {
+                const previousCaptures = blackHole.captures;
+                holeOpenedAt ??= elapsed;
                 blackHole = stepBlackHole(blackHole, [
                     ...positions.map((point, index) => ({
                         ...point, visible: Boolean(styles[index] && isStarRenderable(styles[index])),
@@ -1151,6 +1158,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     if (star.consumed) projection.opacity = 0;
                 });
                 holeLastElapsed = elapsed;
+                if (blackHole.captures > previousCaptures) holeCaptureAt = elapsed;
                 positions = positions.map((point, index) => blackHole?.stars.get(index) ?? point);
                 canvas.dataset.blackHoleCaptures = String(blackHole.captures);
             }
@@ -1300,26 +1308,11 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
             }
             if (blackHole) {
-                // Tiny paired flecks, not a broad particle fountain or continuous emitter.
-                blackHole.sparks.forEach((spark, index) => {
-                    ctx.globalAlpha = (1 - spark.age / spark.lifetime) * 0.8;
-                    ctx.fillStyle = ['#bde9ff', '#f9d9b7', '#d7cbff'][index % 3];
-                    ctx.fillRect(spark.x - 0.5, spark.y - 1, 1, spark.returning ? 1 : 2);
+                drawBlackHole(ctx, blackHole, holeCenter, {
+                    age: elapsed - (holeOpenedAt ?? elapsed),
+                    time: elapsed,
+                    flashAge: holeCaptureAt === null ? Infinity : elapsed - holeCaptureAt,
                 });
-                ctx.globalAlpha = 1;
-                const rim = ctx.createRadialGradient(holeCenter.x, holeCenter.y, 3,
-                    holeCenter.x, holeCenter.y, 10);
-                rim.addColorStop(0, 'rgba(181, 220, 255, 0)');
-                rim.addColorStop(0.45, 'rgba(181, 220, 255, 0.48)');
-                rim.addColorStop(1, 'rgba(181, 220, 255, 0)');
-                ctx.fillStyle = rim;
-                ctx.beginPath();
-                ctx.arc(holeCenter.x, holeCenter.y, 10, 0, TAU);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(holeCenter.x, holeCenter.y, 4, 0, TAU);
-                ctx.fill();
             }
             ctx.globalAlpha = 1;
             if (canvas.dataset.spaceDetailReady !== 'true') {
@@ -1436,6 +1429,8 @@ const SpaceNeuralBackground: React.FC = () => {
             holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
             blackHole = createBlackHole();
             holeLastElapsed = null;
+            holeOpenedAt = null;
+            holeCaptureAt = null;
             canvas.dataset.blackHole = 'active';
             if (lastPointerType === 'mouse') hideSurfaceCursor(event.target);
         };

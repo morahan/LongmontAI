@@ -5,6 +5,9 @@ import {
   BLACK_HOLE_MAX_DELTA, advanceHoleBody, boundedHoleDelta, createBlackHole,
   createHawkingJets, holeAcceleration, stepBlackHole,
 } from '../../src/components/blackHoleModel.ts';
+import {
+  BLACK_HOLE_OPEN_SECONDS, BLACK_HOLE_SHADOW_RADIUS, drawBlackHole,
+} from '../../src/components/blackHoleRenderer.ts';
 
 const center = { x: 300, y: 300 };
 const source = (x, y, visible = true) => ({ x, y, visible });
@@ -136,4 +139,43 @@ test('pure deterministic step does not mutate prior state and follows a moved at
   assert.deepEqual(state, stepBlackHole(initial, sources, center, 1 / 60));
   const moved = stepBlackHole(state, sources, { x: 430, y: 300 }, 1 / 30);
   assert.ok(moved.stars.get(0).vx > state.stars.get(0).vx);
+});
+
+test('renderer paints an opaque shadow at the pointer and leaves the canvas state balanced', () => {
+  const calls = [];
+  let depth = 0;
+  let fillStyle = '';
+  let composite = 'source-over';
+  const gradient = { addColorStop() {} };
+  const ctx = new Proxy({}, {
+    get: (_, key) => {
+      if (key === 'fillStyle') return fillStyle;
+      if (key === 'globalCompositeOperation') return composite;
+      if (key === 'createLinearGradient' || key === 'createRadialGradient') return () => gradient;
+      return (...args) => {
+        if (key === 'save') depth += 1;
+        if (key === 'restore') depth -= 1;
+        calls.push({ key, args, fillStyle, composite });
+      };
+    },
+    set: (_, key, value) => {
+      if (key === 'fillStyle') fillStyle = value;
+      if (key === 'globalCompositeOperation') composite = value;
+      return true;
+    },
+  });
+  let state = createBlackHole();
+  for (let i = 0; i < 240; i++) state = stepBlackHole(state,
+    [source(380 + i * 0.03, 310), source(360, 250), source(340, 330)], center, 1 / 60);
+  assert.ok(state.sparks.length + state.captures > 0);
+  for (const age of [0, BLACK_HOLE_OPEN_SECONDS / 2, 4]) {
+    calls.length = 0;
+    drawBlackHole(ctx, state, center, { age, time: 12.5, flashAge: age === 4 ? 0.2 : Infinity });
+    assert.equal(depth, 0);
+    assert.deepEqual(calls.find(({ key }) => key === 'translate').args, [center.x, center.y]);
+    const fills = calls.map((call, index) => ({ ...call, index })).filter(({ key }) => key === 'fill');
+    const shadow = fills.find((call) => call.fillStyle === '#000' && call.composite === 'source-over');
+    assert.ok(shadow, 'shadow occludes whatever is behind it');
+    assert.deepEqual(calls[shadow.index - 1].args.slice(0, 3), [0, 0, BLACK_HOLE_SHADOW_RADIUS]);
+  }
 });
