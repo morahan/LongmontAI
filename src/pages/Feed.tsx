@@ -9,6 +9,7 @@ import { ArrowRight, Calendar, Mail, Search, Sparkles, Users, X } from 'lucide-r
 import { Link } from 'react-router-dom';
 import SponsorAcknowledgement from '../components/SponsorAcknowledgement';
 import HeroTitle from '../components/HeroTitle';
+import { useGlideLink } from '../lib/glideScroll';
 
 function formatDate(dateStr: string): string {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -42,7 +43,26 @@ const staggerVariants: Variants = {
     visible: { transition: { staggerChildren: 0.11, delayChildren: 0.08 } },
 };
 
+// The rings hinge on one shared axis and every body starts on it, so equal
+// orbit angles put the bodies in a line through the core. The periods all
+// divide 36 s, the beat the core flare in index.css is timed to. `rest` is the
+// orbit angle shown when motion is reduced.
+const ORRERY_RINGS = [
+    { size: 1, tilt: 74, period: 36, spin: 1, rest: 205, hue: 'sky' },
+    { size: 0.72, tilt: -46, period: 18, spin: -1, rest: 70, hue: 'violet' },
+    { size: 0.46, tilt: 18, period: 12, spin: 1, rest: 320, hue: 'blue' },
+] as const;
+
+const ORRERY_SPARKS = [
+    { x: 9, y: 24, period: 5.5, delay: -0.4 },
+    { x: 88, y: 17, period: 7, delay: -3.1 },
+    { x: 79, y: 80, period: 4.5, delay: -1.7 },
+    { x: 17, y: 77, period: 6.5, delay: -5.2 },
+    { x: 64, y: 8, period: 8, delay: -2.6 },
+] as const;
+
 const Feed: React.FC = () => {
+    const glideToHash = useGlideLink();
     const prefersReducedMotion = useReducedMotion();
     const revealInitial = prefersReducedMotion ? false : 'hidden';
     const [archiveQuery, setArchiveQuery] = useState('');
@@ -148,14 +168,54 @@ const Feed: React.FC = () => {
                 viewport={{ once: true, amount: 0.2 }}
                 variants={revealVariants}
             >
-                <div className="home-orbit-track" aria-hidden="true">
-                    <span className="home-orbit-ring home-orbit-ring-outer" />
-                    <span className="home-orbit-ring home-orbit-ring-inner" />
-                    <span className="home-orbit-probe" />
-                </div>
-                <a className="home-scroll-cue" href="#latest">
-                    <span>Enter the briefing</span>
-                    <span className="home-scroll-cue-line" aria-hidden="true" />
+                <a className="home-orbit-link" href="#latest" onClick={glideToHash}>
+                    <span className="home-orbit-track" aria-hidden="true">
+                        <span className="home-orbit-probe" />
+                    </span>
+                    <span className="home-orbit-stage" aria-hidden="true">
+                        {ORRERY_SPARKS.map((spark) => (
+                            <span
+                                key={`${spark.x}-${spark.y}`}
+                                className="home-orbit-spark"
+                                style={{
+                                    '--spark-x': `${spark.x}%`,
+                                    '--spark-y': `${spark.y}%`,
+                                    '--spark-period': `${spark.period}s`,
+                                    '--spark-delay': `${spark.delay}s`,
+                                } as React.CSSProperties}
+                            />
+                        ))}
+                        <span className="home-orbit-core">
+                            <span className="home-orbit-core-ripple" />
+                            <span className="home-orbit-core-flare" />
+                            <span className="home-orbit-core-orb" />
+                        </span>
+                        <span className="home-orbit-sphere">
+                            {ORRERY_RINGS.map((ring) => (
+                                <span
+                                    key={ring.hue}
+                                    className="home-orbit-ring"
+                                    style={{
+                                        '--ring-size': ring.size,
+                                        '--ring-tilt': `${ring.tilt}deg`,
+                                        '--ring-period': `${ring.period}s`,
+                                        '--ring-spin': ring.spin,
+                                        '--ring-rest': `${ring.rest}deg`,
+                                        '--ring-rgb': `var(--orbit-${ring.hue})`,
+                                    } as React.CSSProperties}
+                                >
+                                    <span className="home-orbit-trail" />
+                                    <span className="home-orbit-pivot">
+                                        <span className="home-orbit-body" />
+                                    </span>
+                                </span>
+                            ))}
+                        </span>
+                    </span>
+                    <span className="home-scroll-cue">
+                        <span>Enter the briefing</span>
+                        <span className="home-scroll-cue-line" aria-hidden="true" />
+                    </span>
                 </a>
             </motion.section>
 
@@ -194,6 +254,7 @@ const Feed: React.FC = () => {
             {/* Featured Blog Posts Section */}
             <motion.section
                 id="latest"
+                tabIndex={-1}
                 className="home-latest home-reveal mb-16"
                 initial={revealInitial}
                 whileInView="visible"
@@ -204,6 +265,7 @@ const Feed: React.FC = () => {
                     <h2 className="text-2xl font-bold">Latest Editions</h2>
                     <a
                         href="#archive"
+                        onClick={glideToHash}
                         className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                     >
                         View all <ArrowRight size={14} />
@@ -243,6 +305,7 @@ const Feed: React.FC = () => {
             {/* All Editions */}
             <motion.section
                 id="archive"
+                tabIndex={-1}
                 className="home-archive home-reveal relative pb-20"
                 aria-labelledby="archive-heading"
                 initial={revealInitial}

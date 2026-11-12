@@ -448,14 +448,21 @@ body:has(.home-feed),
 
 .home-orbit-passage {
   --orbit-travel: 10.5rem;
+  --orbit-size: clamp(10rem, 32vw, 17rem);
+  --orbit-node: -12deg;
+  --orbit-precession: 90s;
+  --orbit-rest-yaw: 28deg;
+  --orbit-sky: 125, 211, 252;
+  --orbit-blue: 96, 165, 250;
+  --orbit-violet: 167, 139, 250;
   position: relative;
   z-index: 1;
   display: grid;
   width: min(100%, 44rem);
-  min-height: clamp(18rem, 40vh, 23rem);
-  place-items: center;
+  min-height: clamp(20rem, 46vh, 25rem);
+  justify-items: center;
   margin: 0 auto;
-  padding: 2.5rem 1rem 3rem;
+  padding: 0 1rem;
 }
 
 .home-orbit-passage::before {
@@ -463,7 +470,26 @@ body:has(.home-feed),
   inset: 0;
   content: "";
   pointer-events: none;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1), transparent 58%);
+  background: radial-gradient(circle closest-side at 50% 46%, rgba(59, 130, 246, 0.12), transparent);
+}
+
+.home-orbit-link {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, calc(var(--orbit-size) + 3rem));
+  color: rgba(219, 234, 254, 0.84);
+  transition: color 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-orbit-link:hover,
+.home-orbit-link:focus-visible {
+  color: #ffffff;
+}
+
+.home-orbit-link:focus-visible {
+  border-radius: 1.25rem;
+  outline-offset: -0.35rem;
 }
 
 .home-orbit-track {
@@ -475,29 +501,9 @@ body:has(.home-feed),
   background: linear-gradient(to bottom, transparent, rgba(125, 211, 252, 0.68) 26%, rgba(96, 165, 250, 0.28) 76%, transparent);
 }
 
-.home-orbit-ring {
-  position: absolute;
-  top: 46%;
-  left: 50%;
-  border: 1px solid rgba(125, 211, 252, 0.28);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) rotate(-12deg);
-}
-
-.home-orbit-ring-outer {
-  width: clamp(10rem, 32vw, 17rem);
-  height: clamp(3.25rem, 10vw, 5.5rem);
-}
-
-.home-orbit-ring-inner {
-  width: clamp(5rem, 16vw, 8.5rem);
-  height: clamp(1.75rem, 5vw, 3rem);
-  border-color: rgba(167, 139, 250, 0.32);
-  transform: translate(-50%, -50%) rotate(15deg);
-}
-
 .home-orbit-probe {
   position: absolute;
+  z-index: 2;
   top: 14%;
   left: 50%;
   width: 0.65rem;
@@ -505,8 +511,161 @@ body:has(.home-feed),
   border: 2px solid #dbeafe;
   border-radius: 50%;
   background: #60a5fa;
-  box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.12), 0 0 24px rgba(125, 211, 252, 0.9);
+  /* The dark ring keeps the probe a separate body while it crosses the core. */
+  box-shadow: 0 0 0 3px rgba(5, 8, 20, 0.72), 0 0 0 6px rgba(96, 165, 250, 0.14), 0 0 24px rgba(125, 211, 252, 0.9);
   transform: translateX(-50%);
+}
+
+.home-orbit-stage {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: var(--orbit-size);
+  height: var(--orbit-size);
+  margin: calc(var(--orbit-size) / -2) 0 0 calc(var(--orbit-size) / -2);
+  perspective: calc(var(--orbit-size) * 2.4);
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-orbit-link:hover .home-orbit-stage,
+.home-orbit-link:focus-visible .home-orbit-stage,
+.home-orbit-link[data-gliding] .home-orbit-stage {
+  transform: scale(1.06);
+}
+
+.home-orbit-spark {
+  position: absolute;
+  top: var(--spark-y);
+  left: var(--spark-x);
+  width: 0.16rem;
+  height: 0.16rem;
+  border-radius: 50%;
+  background: #dbeafe;
+  box-shadow: 0 0 0.45rem 0.08rem rgba(125, 211, 252, 0.8);
+  opacity: 0.5;
+  animation: home-orbit-twinkle var(--spark-period) ease-in-out var(--spark-delay) infinite;
+}
+
+.home-orbit-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.home-orbit-core > span,
+.home-orbit-core::before,
+.home-orbit-core::after {
+  position: absolute;
+  top: calc(var(--core-layer) / -2);
+  left: calc(var(--core-layer) / -2);
+  width: var(--core-layer);
+  height: var(--core-layer);
+  border-radius: 50%;
+}
+
+.home-orbit-core-orb {
+  --core-layer: 1.2rem;
+  background: radial-gradient(circle, #ffffff 18%, #bfdbfe 42%, rgba(96, 165, 250, 0.9) 68%, rgba(96, 165, 250, 0) 100%);
+  box-shadow: 0 0 1.1rem 0.2rem rgba(125, 211, 252, 0.5), 0 0 2.8rem 0.7rem rgba(96, 165, 250, 0.2);
+  animation: home-orbit-breathe 3.6s ease-in-out infinite alternate;
+}
+
+.home-orbit-core-flare {
+  --core-layer: calc(var(--orbit-size) * 0.56);
+  background: radial-gradient(circle, rgba(219, 234, 254, 0.85), rgba(125, 211, 252, 0.4) 24%, rgba(167, 139, 250, 0.14) 48%, transparent 70%);
+  opacity: 0.35;
+  animation: home-orbit-flare 36s ease-in-out infinite;
+}
+
+.home-orbit-core-ripple,
+.home-orbit-core::before {
+  --core-layer: var(--orbit-size);
+  border: 1px solid rgba(191, 219, 254, 0.8);
+  opacity: 0;
+}
+
+.home-orbit-core-ripple {
+  animation: home-orbit-ripple 36s ease-out infinite;
+}
+
+.home-orbit-core::before {
+  content: "";
+}
+
+.home-orbit-link[data-gliding] .home-orbit-core::before {
+  animation: home-orbit-glide-ripple 900ms ease-out both;
+}
+
+.home-orbit-core::after {
+  --core-layer: calc(var(--orbit-size) * 0.44);
+  content: "";
+  background: radial-gradient(circle, rgba(219, 234, 254, 0.7), rgba(125, 211, 252, 0.3) 30%, transparent 70%);
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
+.home-orbit-link:hover .home-orbit-core::after,
+.home-orbit-link:focus-visible .home-orbit-core::after {
+  opacity: 0.7;
+}
+
+.home-orbit-link[data-gliding] .home-orbit-core::after {
+  opacity: 1;
+}
+
+.home-orbit-sphere,
+.home-orbit-ring,
+.home-orbit-pivot {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+.home-orbit-sphere {
+  inset: 0;
+  transform: rotateY(var(--orbit-rest-yaw)) rotateZ(var(--orbit-node));
+  animation: home-orbit-precess var(--orbit-precession) linear infinite;
+}
+
+.home-orbit-ring {
+  inset: calc((1 - var(--ring-size)) * 50%);
+  border: 1.5px solid rgba(var(--ring-rgb), 0.36);
+  border-radius: 50%;
+  transform: rotateX(var(--ring-tilt)) rotateZ(var(--ring-rest));
+  animation: home-orbit-spin var(--ring-period) linear infinite;
+}
+
+.home-orbit-trail {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 50%;
+  /* The ring plane cuts through the body, so a trail that ran past the body's rim would draw over half of it. */
+  background: conic-gradient(from -40deg, rgba(var(--ring-rgb), 0), rgba(var(--ring-rgb), 0.95) calc(130deg - 1.8deg / var(--ring-size)), transparent 0);
+  -webkit-mask-image: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  mask-image: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  /* The gradient trails a clockwise body, so a counter-clockwise ring mirrors it. */
+  transform: scaleY(var(--ring-spin));
+}
+
+.home-orbit-pivot {
+  top: 50%;
+  left: 100%;
+  transform: rotateZ(calc(var(--ring-rest) * -1)) rotateX(calc(var(--ring-tilt) * -1));
+  animation: home-orbit-unspin var(--ring-period) linear infinite;
+}
+
+/* The pivot undoes its ring's rotation and the body undoes the sphere's, so
+   the body always faces the viewer and stays round. */
+.home-orbit-body {
+  position: absolute;
+  top: calc(var(--orbit-size) * -0.015);
+  left: calc(var(--orbit-size) * -0.015);
+  width: calc(var(--orbit-size) * 0.03);
+  height: calc(var(--orbit-size) * 0.03);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 22%, rgb(var(--ring-rgb)) 72%);
+  box-shadow: 0 0 0.6rem 0.12rem rgba(var(--ring-rgb), 0.85);
+  transform: rotateZ(calc(var(--orbit-node) * -1)) rotateY(calc(var(--orbit-rest-yaw) * -1));
+  animation: home-orbit-unprecess var(--orbit-precession) linear infinite;
 }
 
 .home-scroll-cue {
@@ -518,24 +677,33 @@ body:has(.home-feed),
   align-items: center;
   gap: 0.65rem;
   padding: 0.5rem 0.8rem;
-  color: rgba(219, 234, 254, 0.84);
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  white-space: nowrap;
   transform: translateX(-50%);
-  transition: color 180ms ease;
-}
-
-.home-scroll-cue:hover,
-.home-scroll-cue:focus-visible {
-  color: #ffffff;
 }
 
 .home-scroll-cue-line {
+  position: relative;
   width: 1px;
   height: 1.9rem;
   background: linear-gradient(to bottom, currentColor, transparent);
+}
+
+.home-scroll-cue-line::after {
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 3px;
+  height: 0.5rem;
+  border-radius: 999px;
+  content: "";
+  background: #ffffff;
+  box-shadow: 0 0 0.5rem 0.1rem rgba(125, 211, 252, 0.9);
+  opacity: 0;
+  animation: home-scroll-cue-pulse 3.2s ease-in-out infinite;
 }
 
 @supports (animation-timeline: view()) {
@@ -549,6 +717,59 @@ body:has(.home-feed),
 @keyframes home-orbit-descent {
   from { transform: translate(-50%, 0); }
   to { transform: translate(-50%, var(--orbit-travel)); }
+}
+
+@keyframes home-orbit-precess {
+  from { transform: rotateY(0turn) rotateZ(var(--orbit-node)); }
+  to { transform: rotateY(1turn) rotateZ(var(--orbit-node)); }
+}
+
+@keyframes home-orbit-unprecess {
+  from { transform: rotateZ(calc(var(--orbit-node) * -1)) rotateY(0turn); }
+  to { transform: rotateZ(calc(var(--orbit-node) * -1)) rotateY(-1turn); }
+}
+
+@keyframes home-orbit-spin {
+  from { transform: rotateX(var(--ring-tilt)) rotateZ(0turn); }
+  to { transform: rotateX(var(--ring-tilt)) rotateZ(calc(var(--ring-spin) * 1turn)); }
+}
+
+@keyframes home-orbit-unspin {
+  from { transform: rotateZ(0turn) rotateX(calc(var(--ring-tilt) * -1)); }
+  to { transform: rotateZ(calc(var(--ring-spin) * -1turn)) rotateX(calc(var(--ring-tilt) * -1)); }
+}
+
+@keyframes home-orbit-breathe {
+  from { opacity: 0.82; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+
+/* Every ring period divides 36 s, so these two loop exactly on the conjunction. */
+@keyframes home-orbit-flare {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  7% { opacity: 0; transform: scale(1.3); }
+  93% { opacity: 0; transform: scale(0.5); }
+}
+
+@keyframes home-orbit-ripple {
+  0% { opacity: 0.85; transform: scale(0.06); }
+  10%, 100% { opacity: 0; transform: scale(1.12); }
+}
+
+@keyframes home-orbit-glide-ripple {
+  from { opacity: 0.9; transform: scale(0.06); }
+  to { opacity: 0; transform: scale(1.12); }
+}
+
+@keyframes home-orbit-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 0.95; transform: scale(1); }
+}
+
+@keyframes home-scroll-cue-pulse {
+  0% { opacity: 0; transform: translateY(-0.4rem); }
+  30%, 60% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(1.9rem); }
 }
 
 .home-feed-content {
@@ -2280,8 +2501,16 @@ iframe {
   transform: translateX(0.25rem);
 }
 
+.home-latest,
 .home-archive {
   scroll-margin-top: 6.5rem;
+}
+
+/* These receive focus only as glide destinations, where a ring around the whole section is noise. */
+.home-latest:focus-visible,
+.home-archive:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .home-archive-header {
@@ -2553,8 +2782,7 @@ iframe {
 
   .home-orbit-passage {
     --orbit-travel: 7.5rem;
-    min-height: 16rem;
-    padding-bottom: 2.5rem;
+    min-height: 18.5rem;
   }
 
   .home-feed-content {
@@ -2674,6 +2902,22 @@ iframe {
 
   .home-orbit-probe {
     transform: translateX(-50%) !important;
+  }
+
+  .home-orbit-spark,
+  .home-orbit-core > span,
+  .home-orbit-core::before,
+  .home-orbit-sphere,
+  .home-orbit-ring,
+  .home-orbit-pivot,
+  .home-orbit-body,
+  .home-scroll-cue-line::after {
+    animation: none !important;
+  }
+
+  .home-orbit-stage,
+  .home-orbit-core::after {
+    transition: none;
   }
 }
 
