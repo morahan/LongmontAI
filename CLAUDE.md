@@ -17,3 +17,7 @@ When making visual/UI improvements to this site:
    - Re-check with Puppeteer
    - Repeat up to **3 times maximum**
 6. **After 3 failed attempts** - notify the user before proceeding further
+
+## Finishing Work
+
+Follow the Publication rules in `AGENTS.md`. When you finish, always commit and push your work to `main`. Then prune any worktrees, branches, and stashes you created for it, after confirming `main` contains the work. Never prune ones you did not create.

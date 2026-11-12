@@ -32,12 +32,17 @@
   required checks pass, without another user prompt, unless an explicit
   instruction or fail-closed condition prevents publication. Run the configured
   pre-commit and pre-push hooks (the fast gate). Never use `--no-verify`.
-- Small content and style changes go straight to main with `git push` (or
-  `just push`).
-- Prefer committing directly onto main instead of opening a PR for small,
-  low-risk changes only where repository branch rules permit; use the required
-  PR path when direct main publication is forbidden. Required security checks,
-  reviews, hooks, and branch protection remain mandatory.
+- When you finish, always commit and push your work to `main` (`git push` or
+  `just push`). Work left on a side branch, in a worktree, or in a stash is not
+  finished. Use the PR path only when branch rules forbid direct pushes to
+  `main`. Required security checks, reviews, hooks, and branch protection
+  remain mandatory.
+- After your work is committed and pushed to `main`, prune everything you
+  created for it: remove your worktrees (`git worktree remove <path>`, then
+  `git worktree prune`), delete your local and remote branches
+  (`git branch -d <branch>`, `git push origin --delete <branch>`), and drop your
+  stashes (`git stash drop stash@{n}`). Confirm `main` contains the work before
+  pruning, and never prune worktrees, branches, or stashes you did not create.
 - Fail closed on unmet or unavailable gates and explicitly report blocked or
   unpublished work. Distinguish pushed work from verified live deployment;
   never imply blocked or unpublished work is live.
