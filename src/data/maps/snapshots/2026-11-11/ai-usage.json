@@ -1,0 +1,331 @@
+{
+ "sources": [
+  {
+   "name": "Gallup: AI Optimism Globally Widespread Despite Uneven Use",
+   "url": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  {
+   "name": "Gallup World Poll methodology",
+   "url": "https://www.gallup.com/178667/gallup-world-poll-work.aspx"
+  }
+ ],
+ "notes": "Gallup and Microsoft survey about 1,000 adults aged 15 and older in each country, with a margin of error of 2.2 to 4.9 points. Only the countries Gallup has published so far are coloured, and the study is due to reach 140. Usage shares are of all adults. Ever used adds daily, weekly and less frequent users. The outlook questions were asked of adults who are aware of AI, and Gallup has published only the five highest and five lowest countries for each, so most countries show no outlook figure yet.",
+ "regions": {
+  "AFG": {
+   "usedPct": 8,
+   "dailyPct": 2,
+   "weeklyPct": 5.6,
+   "awarePct": 22.3,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 37,
+   "betterLifePct": 36.3
+  },
+  "BGD": {
+   "usedPct": 10.1,
+   "dailyPct": 1.8,
+   "weeklyPct": 5.2,
+   "awarePct": 35.8,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 34,
+   "betterLifePct": 32.5
+  },
+  "BGR": {
+   "usedPct": 47.9,
+   "dailyPct": 17.9,
+   "weeklyPct": 37,
+   "awarePct": 84.7,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "BHR": {
+   "usedPct": 47.4,
+   "dailyPct": 30.4,
+   "weeklyPct": 41.9,
+   "awarePct": 82.8,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "BIH": {
+   "usedPct": 43.1,
+   "dailyPct": 17.4,
+   "weeklyPct": 35.5,
+   "awarePct": 70,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "BRA": {
+   "usedPct": 39.9,
+   "dailyPct": 18.6,
+   "weeklyPct": 30.3,
+   "awarePct": 80.8,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "CAN": {
+   "usedPct": 63.3,
+   "dailyPct": 29.3,
+   "weeklyPct": 47.1,
+   "awarePct": 93.6,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "CHN": {
+   "usedPct": 70.1,
+   "dailyPct": 35.5,
+   "weeklyPct": 61.6,
+   "awarePct": 83.2,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 93,
+   "betterLifePct": 92.7
+  },
+  "COL": {
+   "usedPct": 34.8,
+   "dailyPct": 16.5,
+   "weeklyPct": 26.7,
+   "awarePct": 57.1,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "COM": {
+   "usedPct": 8.7,
+   "dailyPct": 4,
+   "weeklyPct": 6.6,
+   "awarePct": 22.9,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "CZE": {
+   "usedPct": 63.4,
+   "dailyPct": 29.7,
+   "weeklyPct": 51.8,
+   "awarePct": 95.3,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "ECU": {
+   "usedPct": 36,
+   "dailyPct": 20.7,
+   "weeklyPct": 30.8,
+   "awarePct": 57.3,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "EGY": {
+   "usedPct": 21.6,
+   "dailyPct": 8.6,
+   "weeklyPct": 14.5,
+   "awarePct": 66.7,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 35,
+   "betterLifePct": 34.8
+  },
+  "GAB": {
+   "usedPct": 33.4,
+   "dailyPct": 17.1,
+   "weeklyPct": 26.3,
+   "awarePct": 61.2,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "GBR": {
+   "usedPct": 64.3,
+   "dailyPct": 28.5,
+   "weeklyPct": 45.5,
+   "awarePct": 96.5,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "GHA": {
+   "usedPct": 25.9,
+   "dailyPct": 12.1,
+   "weeklyPct": 20.5,
+   "awarePct": 57.2,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "IDN": {
+   "usedPct": 29,
+   "dailyPct": 10.4,
+   "weeklyPct": 20.8,
+   "awarePct": 57,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "IRL": {
+   "usedPct": 55.3,
+   "dailyPct": 24.9,
+   "weeklyPct": 42.6,
+   "awarePct": 95.1,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "ISR": {
+   "usedPct": 63.4,
+   "dailyPct": 37.3,
+   "weeklyPct": 56.1,
+   "awarePct": 90.9,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 69,
+   "betterLifePct": 69.2
+  },
+  "KAZ": {
+   "usedPct": 53.9,
+   "dailyPct": 24.1,
+   "weeklyPct": 44.9,
+   "awarePct": 82.4,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "KEN": {
+   "usedPct": 22.6,
+   "dailyPct": 11.3,
+   "weeklyPct": 18.7,
+   "awarePct": 49.6,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "KGZ": {
+   "usedPct": 31.5,
+   "dailyPct": 14.4,
+   "weeklyPct": 24.3,
+   "awarePct": 63.1,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "MAR": {
+   "usedPct": 30.8,
+   "dailyPct": 18,
+   "weeklyPct": 23.4,
+   "awarePct": 64.7,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "MEX": {
+   "usedPct": 24.3,
+   "dailyPct": 9.9,
+   "weeklyPct": 17.8,
+   "awarePct": 58.4,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "MLT": {
+   "usedPct": 59.2,
+   "dailyPct": 30.6,
+   "weeklyPct": 46.8,
+   "awarePct": 87.2,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "betterLifePct": 70.7
+  },
+  "MWI": {
+   "usedPct": 2.8,
+   "dailyPct": 1,
+   "weeklyPct": 2.2,
+   "awarePct": 12.5,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "betterLifePct": 38,
+   "helpPct": 35
+  },
+  "NGA": {
+   "usedPct": 19.6,
+   "dailyPct": 8.5,
+   "weeklyPct": 15,
+   "awarePct": 47.4,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 68
+  },
+  "NLD": {
+   "usedPct": 63,
+   "dailyPct": 29.5,
+   "weeklyPct": 49.8,
+   "awarePct": 93.8,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "NZL": {
+   "usedPct": 68.2,
+   "dailyPct": 29.1,
+   "weeklyPct": 50.9,
+   "awarePct": 98.4,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "PSE": {
+   "usedPct": 48,
+   "dailyPct": 17.7,
+   "weeklyPct": 34.7,
+   "awarePct": 90.3,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "betterLifePct": 40.6
+  },
+  "RUS": {
+   "usedPct": 51.8,
+   "dailyPct": 20.8,
+   "weeklyPct": 37.4,
+   "awarePct": 88,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "SGP": {
+   "usedPct": 79,
+   "dailyPct": 45.9,
+   "weeklyPct": 62.2,
+   "awarePct": 96.4,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 77,
+   "betterLifePct": 83.3
+  },
+  "SVK": {
+   "usedPct": 59.3,
+   "dailyPct": 28.5,
+   "weeklyPct": 50,
+   "awarePct": 92.7,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "UKR": {
+   "usedPct": 48.9,
+   "dailyPct": 20.4,
+   "weeklyPct": 39.6,
+   "awarePct": 91,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  },
+  "USA": {
+   "usedPct": 68.3,
+   "dailyPct": 22.8,
+   "weeklyPct": 44.8,
+   "awarePct": 98.3,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 36
+  },
+  "VNM": {
+   "usedPct": 43.2,
+   "dailyPct": 11.9,
+   "weeklyPct": 32.8,
+   "awarePct": 78.7,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx",
+   "helpPct": 91,
+   "betterLifePct": 91.4
+  },
+  "ZAF": {
+   "usedPct": 26.2,
+   "dailyPct": 12.4,
+   "weeklyPct": 20.9,
+   "awarePct": 51.4,
+   "surveyAsOf": "Apr to Jul 2026",
+   "source": "https://news.gallup.com/poll/714593/optimism-globally-widespread-despite-uneven.aspx"
+  }
+ }
+}

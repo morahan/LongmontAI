@@ -4,6 +4,7 @@ export type OverlayId =
   | 'autonomous-delivery'
   | 'drone-delivery'
   | 'internet'
+  | 'ai-usage'
   | 'starlink';
 
 export interface MapSource {
@@ -39,6 +40,13 @@ export interface MapRegion {
   usersPct?: number;
   speedAsOf?: string;
   usersAsOf?: string;
+  usedPct?: number;
+  dailyPct?: number;
+  weeklyPct?: number;
+  awarePct?: number;
+  helpPct?: number;
+  betterLifePct?: number;
+  surveyAsOf?: string;
   downMbps?: number;
   upMbps?: number;
   latencyMs?: number;
@@ -92,10 +100,10 @@ export interface LevelStyle {
 }
 
 export interface Metric {
-  id: 'fixedMbps' | 'mobileMbps' | 'usersPct';
+  id: 'fixedMbps' | 'mobileMbps' | 'usersPct' | 'usedPct' | 'dailyPct' | 'awarePct' | 'helpPct';
   label: string;
   unit: string;
-  asOf: 'speedAsOf' | 'usersAsOf';
+  asOf: 'speedAsOf' | 'usersAsOf' | 'surveyAsOf';
   // Lower bounds of each colour step after the first.
   stops: number[];
 }
@@ -209,6 +217,17 @@ export const OVERLAYS: OverlayDefinition[] = [
       { id: 'fixedMbps', label: 'Fixed broadband', unit: 'Mbps', asOf: 'speedAsOf', stops: [25, 50, 100, 150, 200, 300] },
       { id: 'mobileMbps', label: 'Mobile', unit: 'Mbps', asOf: 'speedAsOf', stops: [25, 50, 75, 100, 150, 250] },
       { id: 'usersPct', label: 'Population online', unit: '%', asOf: 'usersAsOf', stops: [20, 40, 60, 75, 85, 95] },
+    ],
+  },
+  {
+    id: 'ai-usage',
+    label: 'AI usage and sentiment',
+    blurb: 'How many adults have used AI, how often, and whether they expect it to help their country.',
+    metrics: [
+      { id: 'usedPct', label: 'Ever used AI', unit: '%', asOf: 'surveyAsOf', stops: [10, 20, 30, 40, 50, 60] },
+      { id: 'dailyPct', label: 'Use AI daily', unit: '%', asOf: 'surveyAsOf', stops: [5, 10, 15, 20, 25, 35] },
+      { id: 'awarePct', label: 'Aware of AI', unit: '%', asOf: 'surveyAsOf', stops: [30, 50, 65, 80, 90, 95] },
+      { id: 'helpPct', label: 'Expect AI to help their country', unit: '%', asOf: 'surveyAsOf', stops: [35, 40, 50, 60, 70, 85] },
     ],
   },
   {

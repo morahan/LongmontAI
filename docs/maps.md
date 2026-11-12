@@ -13,7 +13,8 @@ fortnight. The page lists every dated folder on the timeline, so adding a folder
 | `src/pages/Maps.tsx` | The page. |
 | `scripts/tests/maps-data.test.mjs` | Validates every snapshot. Run with `npm run test:maps`. |
 
-Overlay ids: `data-centers`, `autonomous-driving`, `autonomous-delivery`, `drone-delivery`, `internet`.
+Overlay ids: `data-centers`, `autonomous-driving`, `autonomous-delivery`, `drone-delivery`, `internet`,
+`ai-usage`. `starlink` is a layer of `internet`. It has its own file and shows as a button beside the internet measures.
 
 ## Fortnightly update
 
@@ -59,8 +60,35 @@ The test rejects a point whose coordinate falls outside its stated country.
 | `autonomous-delivery` | `sidewalk-robot` or `road-robot` with `commercial`, `pilot`, `announced` | `level`: `commercial`, `permitted`, `pilot`, `restricted` |
 | `drone-delivery` | `drone-hub` with `commercial`, `pilot`, `announced` | same levels as delivery |
 | `internet` | none | `fixedMbps`, `mobileMbps`, `usersPct`, `speedAsOf`, `usersAsOf` |
+| `ai-usage` | none | `usedPct`, `dailyPct`, `weeklyPct`, `awarePct`, `helpPct`, `betterLifePct`, `surveyAsOf`, `source` |
+| `starlink` | none | `level`: `available`, `coming`, `pending`, `unavailable`. `downMbps`, `upMbps`, `latencyMs` |
 
 Legal overlays also need `summary` and `source` on every region.
+
+## AI usage and sentiment
+
+`just update` reruns `scripts/maps/fetch-ai-usage.mjs` with the other fetchers. It reads the Datawrapper
+charts embedded in each Gallup article listed in `ARTICLES` at the top of the script, so a chart Gallup
+edits is picked up on the next run. It then prints any Gallup AI article newer than the last one in
+`ARTICLES`. Those are leads, not data. The Gallup and Microsoft study is due to grow from 37 countries
+to 140, so expect new releases.
+
+When a lead carries country figures, add it to the end of `ARTICLES` with its chart ids. Later articles
+override earlier ones country by country. If Gallup goes quiet, the nearest equivalents are the Pew
+Research Center global AI surveys, the Ipsos AI Monitor and the Stanford AI Index public opinion chapter.
+Their questions differ from Gallup's, so give another survey its own region fields and metric in
+`src/lib/maps.ts` instead of mixing it into a Gallup measure.
+
+## Starlink
+
+`starlink.json` also carries `satellites` (orbital elements for every Starlink payload, with one shared
+`epoch`) and `growth` (launched and in-orbit counts per month). The page moves each satellite along a
+circular orbit from those elements, so positions are near live on a fresh snapshot and drift as it ages.
+Refresh it every fortnight. satellitemap.space and orbitalradar.com both refuse to be embedded in another
+site, so the map and chart are drawn here from the same public data and link out to them.
+
+CelesTrak refuses a second download of the Starlink group until its data updates, about every two hours.
+Pass a directory as a second argument to `fetch-starlink.mjs` to cache the downloads between reruns.
 
 ## Adding an overlay
 

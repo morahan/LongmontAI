@@ -399,6 +399,8 @@ function RegionSummary({ overlay, id, region, full }: { overlay: OverlayDefiniti
               metric.label,
               `${metricText(region, metric)}${full && region[metric.asOf] ? ` (${region[metric.asOf]})` : ''}`,
             ]),
+            typeof region.weeklyPct === 'number' && ['Use AI at least weekly', `${region.weeklyPct} %`],
+            typeof region.betterLifePct === 'number' && ['Expect a better daily life', `${region.betterLifePct} %`],
           ]}
         />
       )}
