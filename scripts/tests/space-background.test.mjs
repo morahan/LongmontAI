@@ -612,10 +612,10 @@ test('mobile ambient prefixes feed every glyph without rerouting shared sources 
   for (const seed of [0, 17, 777, 795936]) {
     for (const phrase of CONSTELLATION_PHRASES) {
       const geometry = createConstellationGeometryForPhrase(390, 800, phrase, seed, 1);
-      const positions = getStarFieldPositions(seed, 47, 390, 800);
-      const styles = getStarFieldStyles(seed, 47, false, 390);
+      const positions = getStarFieldPositions(seed, 100, 390, 800);
+      const styles = getStarFieldStyles(seed, 100, false, 390);
       const small = remapAmbientStarsToTextSlots(positions, styles, geometry.points.length);
-      const large = remapAmbientStarsToTextSlots(positions, getStarFieldStyles(seed, 47), geometry.points.length);
+      const large = remapAmbientStarsToTextSlots(positions, getStarFieldStyles(seed, 100), geometry.points.length);
       geometry.glyphs.forEach((glyph) => assert.ok(glyph.indices.some((index) => isStarRenderable(small.styles[index])),
         `${seed}/${phrase}/${glyph.character} has no mobile ambient source`));
       assert.deepEqual(small.positions, large.positions);
@@ -952,16 +952,16 @@ test('seeded waits cover inclusive endpoints with broad uniform distribution and
   assert.ok(counts.every((count) => count > 850 && count < 1150), counts.join(','));
 });
 
-test('the first star text after a page load appears between 3 and 30 seconds', () => {
+test('the first star text after a page load appears between 3 and 45 seconds', () => {
   const counts = new Map();
-  for (let seed = 0; seed < 28000; seed += 1) {
+  for (let seed = 0; seed < 43000; seed += 1) {
     const wait = getInitialConstellationDelay(seed);
-    assert.ok(Number.isInteger(wait) && wait >= 3 && wait <= 30, `${wait}`);
+    assert.ok(Number.isInteger(wait) && wait >= 3 && wait <= 45, `${wait}`);
     assert.equal(wait, getConstellationIdleDelay(seed, 1));
     assert.equal(getConstellationEventStart(seed, 1), wait);
     counts.set(wait, (counts.get(wait) ?? 0) + 1);
   }
-  assert.equal(counts.size, 28);
+  assert.equal(counts.size, 43);
   assert.ok([...counts.values()].every((count) => count > 850 && count < 1150), [...counts].join(','));
 });
 
@@ -1525,7 +1525,7 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
 test('screen-wrapped endpoint sampling rejects a full-screen wrap as physical velocity', () => {
   const width = 1200;
   const height = 600;
-  const elapsed = 602.27892;
+  const elapsed = 585.27892;
   const delta = 0.001;
   const ambientIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 1;
   const before = getStarFieldPositions(0, elapsed, width, height)[ambientIndex];
@@ -1542,7 +1542,7 @@ test('Easter returns stay finite and in bounds across wrapped endpoint samples',
   const height = 600;
   const sampleDelta = 0.001;
   const derivativeDelta = 0.00001;
-  const endpoints = [602.27892, ...Array.from({ length: 20 }, (_, index) => 40 + index * 26.7)];
+  const endpoints = [585.27892, ...Array.from({ length: 20 }, (_, index) => 40 + index * 26.7)];
   let parityChecks = 0;
   endpoints.forEach((endpoint, fixtureIndex) => {
     const seed = fixtureIndex === 0 ? 0 : fixtureIndex;
@@ -1584,7 +1584,7 @@ test('Easter returns stay finite and in bounds across wrapped endpoint samples',
 test('seam-aware Easter return attenuates the seed 149 edge derivative without leaving canvas', () => {
   const width = 1200;
   const height = 600;
-  const endpoint = 93.9;
+  const endpoint = 113.9;
   const sampleDelta = 0.001;
   const seed = 149;
   const starIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 155;

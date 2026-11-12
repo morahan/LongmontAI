@@ -75,7 +75,7 @@ export const NEURAL_CONTAGION_MAX_ENTRIES = 8;
 /** Maximum idle wait; each event samples its own delay after the previous fade ends. */
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
 /** The first event after a page load or refresh shows soon, inclusive of both ends. */
-export const INITIAL_CONSTELLATION_DELAY_RANGE = [3, 30] as const;
+export const INITIAL_CONSTELLATION_DELAY_RANGE = [3, 45] as const;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
