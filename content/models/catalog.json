@@ -13,8 +13,24 @@
       ],
       "availability": "Paid Claude plans and API",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed."
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed.",
+      "supersedes": "claude-fable-5-1"
+    },
+    {
+      "id": "claude-mythos-5-2",
+      "phrase": "Claude Mythos 5.2",
+      "provider": "Anthropic",
+      "releaseDate": "2026-11-09",
+      "sourceUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2",
+      "category": "base",
+      "priorities": [
+        "frontier"
+      ],
+      "availability": "Approved organizations only",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Less-restricted twin of Claude Fable 5.2 for approved security and biomedical research organizations."
     },
     {
       "id": "gpt-6-astra",
@@ -28,13 +44,8 @@
       ],
       "availability": "API",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-6-astra",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "claude-opus-5-5",
@@ -48,13 +59,8 @@
       ],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://www.anthropic.com/claude-opus-5-5",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "grok-4-7",
@@ -68,13 +74,8 @@
       ],
       "availability": "API",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://x.ai/news/grok-4-7",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "gemini-4-argon",
@@ -86,15 +87,10 @@
       "priorities": [
         "frontier"
       ],
-      "availability": "Restricted Fairwind access",
+      "availability": "Generally available",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "gemini-4-carbon",
@@ -108,8 +104,23 @@
       ],
       "availability": "Gemini API, Gemini for business, and Google AI Ultra",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
+      "reviewedAt": "2026-11-12",
       "reason": "Primary release identity reviewed."
+    },
+    {
+      "id": "muse-wonder",
+      "phrase": "Muse Wonder",
+      "provider": "Meta",
+      "releaseDate": "2026-10-12",
+      "sourceUrl": "https://about.fb.com/news/2026/10/introducing-muse-wonder-models/",
+      "category": "base",
+      "priorities": [
+        "frontier"
+      ],
+      "availability": "Meta developer API and Muse Code",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Meta Superintelligence Labs frontier model; the larger Wonder Full is limited to Muse Code subscribers."
     },
     {
       "id": "deepseek-v4-1-flash",
@@ -123,13 +134,24 @@
       ],
       "availability": "API and open weights",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://www.deepseek.com/en/news/deepseek-v4-1-flash/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+    },
+    {
+      "id": "deepseek-v4-1-flash-1017",
+      "phrase": "DeepSeek V4.1 Flash 1017",
+      "provider": "DeepSeek",
+      "releaseDate": "2026-10-17",
+      "sourceUrl": "https://api-docs.deepseek.com/updates/",
+      "category": "base",
+      "priorities": [
+        "pareto"
+      ],
+      "availability": "API and open weights",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Dated refresh of DeepSeek V4.1 Flash. Editorial quality/cost candidate; benchmark gains are DeepSeek-reported.",
+      "supersedes": "deepseek-v4-1-flash"
     },
     {
       "id": "claude-fable-5-1",
@@ -142,9 +164,9 @@
         "frontier"
       ],
       "availability": "API",
-      "disposition": "hold",
-      "reviewedAt": "2026-11-11",
-      "reason": "Superseded by Claude Fable 5.2."
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "deepseek-v4-pro",
@@ -171,13 +193,8 @@
       ],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://openai.com/index/introducing-gpt-6-1-sol/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
     },
     {
       "id": "gpt-6-1-terra",
@@ -191,7 +208,7 @@
       ],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
+      "reviewedAt": "2026-11-12",
       "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
     },
     {
@@ -206,13 +223,8 @@
       ],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://www.anthropic.com/claude-sonnet-5-5",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
     },
     {
       "id": "claude-haiku-5-5",
@@ -226,13 +238,102 @@
       ],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://www.anthropic.com/claude-haiku-5-5",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+    },
+    {
+      "id": "muse-ember",
+      "phrase": "Muse Ember",
+      "provider": "Meta",
+      "releaseDate": "2026-11-09",
+      "sourceUrl": "https://research.meta.ai/blog/muse-ember",
+      "category": "base",
+      "priorities": [
+        "pareto"
+      ],
+      "availability": "Meta developer API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Meta's smallest and cheapest Muse model, built for repeated agent steps. Editorial quality/cost candidate."
+    },
+    {
+      "id": "mistral-large-4",
+      "phrase": "Mistral Large 4",
+      "provider": "Mistral",
+      "releaseDate": "2026-10-06",
+      "sourceUrl": "https://mistral.ai/news/mistral-large-4-oss/",
+      "category": "base",
+      "priorities": [],
+      "availability": "API and open weights",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Preview opened October 6; open weights followed October 29 under a modified MIT license."
+    },
+    {
+      "id": "muse-spark-open",
+      "phrase": "Muse Spark Open",
+      "provider": "Meta",
+      "releaseDate": "2026-10-15",
+      "sourceUrl": "https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B",
+      "category": "base",
+      "priorities": [],
+      "availability": "Open weights",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Open-weight 816B mixture-of-experts model under the Muse Model License."
+    },
+    {
+      "id": "kimi-k3-1-pro",
+      "phrase": "Kimi K3.1 Pro",
+      "provider": "Moonshot AI",
+      "releaseDate": "2026-10-23",
+      "sourceUrl": "https://huggingface.co/moonshotai/Kimi-K3.1-Pro",
+      "category": "base",
+      "priorities": [],
+      "availability": "API and open weights",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "API release October 23; weights published November 4 under a custom license."
+    },
+    {
+      "id": "hy4",
+      "phrase": "Hy4",
+      "provider": "Tencent",
+      "releaseDate": "2026-11-04",
+      "sourceUrl": "https://www.tencent.com/tencent-launches-hy4-joining-the-ranks-of-the-worlds-leading-open-source-ai-models/",
+      "category": "base",
+      "priorities": [],
+      "availability": "Tencent products and API; weights promised",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Full Hy4 release. Weights were promised but not yet published when reviewed.",
+      "supersedes": "hy4-preview"
+    },
+    {
+      "id": "inkling-2-small",
+      "phrase": "Inkling 2 Small",
+      "provider": "Thinking Machines",
+      "releaseDate": "2026-11-05",
+      "sourceUrl": "https://thinkingmachines.ai/news/inkling-2-small/",
+      "category": "base",
+      "priorities": [],
+      "availability": "Tinker platform; weights promised",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Hosted 594B model that accepts images; Apache 2.0 weights promised after external safety testing."
+    },
+    {
+      "id": "gpt-6-cyber",
+      "phrase": "GPT-6 Cyber",
+      "provider": "OpenAI",
+      "releaseDate": "2026-11-05",
+      "sourceUrl": "https://openai.com/index/introducing-gpt-6-cyber",
+      "category": "base",
+      "priorities": [],
+      "availability": "Approved customers only",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Security-research model restricted to approved customers."
     },
     {
       "id": "jev",
@@ -244,13 +345,8 @@
       "priorities": [],
       "availability": "Early access",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "clef",
@@ -262,13 +358,8 @@
       "priorities": [],
       "availability": "Workers AI",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://developers.cloudflare.com/changelog/post/2026-10-01-clef-workers-ai/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "clef-flash",
@@ -280,13 +371,8 @@
       "priorities": [],
       "availability": "Workers AI",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://developers.cloudflare.com/changelog/post/2026-10-01-clef-workers-ai/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "clef-omni",
@@ -298,13 +384,21 @@
       "priorities": [],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://blog.cloudflare.com/clef-faster-cheaper-multimodal/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
+    },
+    {
+      "id": "gemini-decision-1",
+      "phrase": "Gemini Decision 1",
+      "provider": "Google",
+      "releaseDate": "2026-11-11",
+      "sourceUrl": "https://blog.google/innovation-and-ai/technology/developers-tools/gemini-decisions-api/",
+      "category": "decision",
+      "priorities": [],
+      "availability": "Gemini API and Google AI Studio",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Closed-set decision model behind the Gemini Decisions API; benchmark claims are Google-reported."
     },
     {
       "id": "dots",
@@ -316,13 +410,8 @@
       "priorities": [],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://openai.com/index/introducing-dots/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
     },
     {
       "id": "pi-1-1-0",
@@ -334,13 +423,22 @@
       "priorities": [],
       "availability": "Versioned coding harness release",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://pi.dev/changelog",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
+    },
+    {
+      "id": "pi-1-5-2",
+      "phrase": "Pi 1.5.2",
+      "provider": "Pi",
+      "releaseDate": "2026-11-10",
+      "sourceUrl": "https://pi.dev/changelog",
+      "category": "tools",
+      "priorities": [],
+      "availability": "Versioned coding harness release",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Current versioned release in the Pi changelog.",
+      "supersedes": "pi-1-1-0"
     },
     {
       "id": "hermes-agent-0-21-6",
@@ -352,13 +450,22 @@
       "priorities": [],
       "availability": "Versioned agent patch; CLI and Cloud, not Desktop",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://github.com/NousResearch/hermes-agent/releases/tag/v0.21.6",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
+    },
+    {
+      "id": "hermes-agent-0-23-1",
+      "phrase": "Hermes Agent 0.23.1",
+      "provider": "Nous Research",
+      "releaseDate": "2026-11-10",
+      "sourceUrl": "https://github.com/NousResearch/hermes-agent/releases/tag/v0.23.1",
+      "category": "tools",
+      "priorities": [],
+      "availability": "Versioned agent release",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Current versioned release on GitHub.",
+      "supersedes": "hermes-agent-0-21-6"
     },
     {
       "id": "genie-3",
@@ -370,13 +477,101 @@
       "priorities": [],
       "availability": "Limited access",
       "disposition": "include",
-      "reviewedAt": "2026-11-11",
-      "reason": "Primary release identity reviewed.",
-      "frontierException": {
-        "reviewedAt": "2026-11-11",
-        "sourceUrl": "https://deepmind.google/models/genie/",
-        "reason": "Kept in the star-text rotation at its prior weight in the 2026-11-11 refresh; editorial exception."
-      }
+      "reviewedAt": "2026-11-12",
+      "reason": "Primary release identity reviewed."
+    },
+    {
+      "id": "genie-4",
+      "phrase": "Genie 4",
+      "provider": "Google DeepMind",
+      "releaseDate": "2026-10-27",
+      "sourceUrl": "https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/",
+      "category": "world",
+      "priorities": [],
+      "availability": "Trusted testers only",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Interactive world model that adds generated sound and live text steering.",
+      "supersedes": "genie-3"
+    },
+    {
+      "id": "alphagenome-2",
+      "phrase": "AlphaGenome 2",
+      "provider": "Google DeepMind",
+      "releaseDate": "2026-11-11",
+      "sourceUrl": "https://deepmind.google/blog/alphagenome-2-deciphering-how-cells-read-dna-to-better-understand-disease/",
+      "category": "science",
+      "priorities": [],
+      "availability": "AlphaGenome API for non-commercial research",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Genomics model that predicts how DNA variants act in specific cell types; results are DeepMind-reported and not validated for clinical use."
+    },
+    {
+      "id": "suno-v6",
+      "phrase": "Suno v6",
+      "provider": "Suno",
+      "releaseDate": "2026-09-09",
+      "sourceUrl": "https://www.suno.com/blog/introducing-v6",
+      "category": "audio",
+      "priorities": [],
+      "availability": "Pro and Premier plans; v6-mini for all users",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Suno's flagship music model family."
+    },
+    {
+      "id": "fish-audio-drama-3",
+      "phrase": "Fish Audio Drama 3",
+      "provider": "Fish Audio",
+      "releaseDate": "2026-10-13",
+      "sourceUrl": "https://fish.audio/blog/fish-audio-drama-3/",
+      "category": "audio",
+      "priorities": [],
+      "availability": "Fish Audio app and API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Text-to-speech model directed with plain-language performance instructions."
+    },
+    {
+      "id": "ace-music-v1",
+      "phrase": "ACE Music v1",
+      "provider": "ACE Studio",
+      "releaseDate": "2026-11-10",
+      "sourceUrl": "https://acemusic.ai/acemusic-v1/",
+      "category": "audio",
+      "priorities": [],
+      "availability": "ACE Music app only; no API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Closed music model. ACE Studio published no launch date, so this uses the date of its Artificial Analysis vocal-leaderboard debut."
+    },
+    {
+      "id": "gpt-image-2-6-sunburst",
+      "phrase": "GPT-Image-2.6 Sunburst",
+      "provider": "OpenAI",
+      "releaseDate": "2026-11-04",
+      "sourceUrl": "https://openai.com/index/introducing-images-2-6/",
+      "category": "image",
+      "priorities": [],
+      "availability": "ChatGPT, Codex, and Image API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Higher-quality model of ChatGPT Images 2.6, released alongside the faster GPT-Image-2.6 Flare."
+    },
+    {
+      "id": "gemini-omni-1-2-flash",
+      "phrase": "Gemini Omni 1.2 Flash",
+      "provider": "Google",
+      "releaseDate": "2026-11-05",
+      "sourceUrl": "https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/",
+      "category": "video",
+      "priorities": [],
+      "availability": "Gemini API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-12",
+      "reason": "Short-clip video model with 15-second generation and lower pricing.",
+      "supersedes": "gemini-omni-1-1-flash"
     },
     {
       "id": "muse",

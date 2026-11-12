@@ -2,7 +2,7 @@ import { modelCatalog } from './modelCatalog.generated.ts';
 export const STAR_TEXT_EDITION = {
     id: `models-${modelCatalog.asOf}`,
     generatedAsOf: modelCatalog.asOf,
-    window: { startsOn: new Date(Date.parse(`${modelCatalog.asOf}T00:00:00Z`) - 30 * 86400000).toISOString().slice(0, 10), endsOn: modelCatalog.asOf },
+    window: { startsOn: modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => entry.releaseDate).sort()[0], endsOn: modelCatalog.asOf },
     reviewedOn: modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => entry.reviewedAt).sort()[0],
 } as const;
 export const STAR_TEXT_BRAND_PHRASE = 'Longmont.AI' as const;

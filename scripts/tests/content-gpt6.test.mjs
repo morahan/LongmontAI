@@ -56,7 +56,6 @@ test('GPT-6 Astra carries the primary-verified September 3 release identity', ()
   assert.equal(signals.length, 1);
   assert.equal(signals[0].model, model.name);
   assert.equal(signals[0].date, model.releaseDate);
-  assert.ok(modelWatchSnapshots.slice(0, 6).includes(signals[0]), 'visible Latest Signals window');
 });
 
 test('standard token prices retain source, units and full-request >272K qualification', () => {
@@ -88,24 +87,21 @@ test('unknown performance metrics remain absent, never fabricated as zero', () =
   }
 });
 
-test('real Model Watch includes Astra in the active catalog and preserves historical membership', async () => {
+test('real Model Watch lists Astra as an earlier release after its window and preserves historical membership', async () => {
   assert.deepEqual([...historicalBriefingModelIds], [
     'glm-5-3', 'nemotron-3-5-lightning', 'gemini-3-7-flash', 'muse-spark-1-2',
     'grok-4-6', 'qwen-3-8-27b', 'muse-glimmer', 'gpt-5-6-sol', 'gpt-5-6-luna',
     'qwen-image-3-0', 'weather-next-cyclones',
   ], 'this release must not rewrite the existing edition membership');
   const html = await renderPage('ModelWatch');
-  assert.ok(latestBriefingModelIds.includes('gpt-6-astra'));
-  for (const heading of ['snapshot-heading', 'briefing-models-heading']) {
-    const section = html.match(new RegExp(`<section[^>]*aria-labelledby="${heading}"[\\s\\S]*?</section>`));
-    assert.ok(section, heading);
-    assert.match(section[0], /GPT-6 Astra/);
-    if (heading === 'snapshot-heading') assert.ok(section[0].includes(releaseUrl));
-    else assert.match(section[0], /dateTime="2026-09-03"/);
-  }
+  assert.ok(!latestBriefingModelIds.includes('gpt-6-astra'));
+  const archive = html.match(/<section[^>]*aria-labelledby="models-heading"[\s\S]*?<\/section>/);
+  assert.ok(archive);
+  assert.match(archive[0], /GPT-6 Astra/);
+  assert.match(archive[0], /dateTime="2026-09-03"/);
   const briefing = html.match(/<section[^>]*aria-labelledby="briefing-models-heading"[\s\S]*?<\/section>/);
   assert.ok(briefing);
-  assert.match(briefing[0], /GPT-6 Astra/);
+  assert.doesNotMatch(briefing[0], /GPT-6 Astra/);
 });
 
 test('Model Watch labels the detector timestamp as a source snapshot, not editorial review', async () => {

@@ -11,7 +11,7 @@ import { STAR_TEXT_ALTERNATIVES, STAR_TEXT_EDITION } from '../../src/data/starTe
 import { CONSTELLATION_BUCKET_COUNT, getConstellationPhraseForBucket, selectConstellationPhrase, EASTER_EGG_PHRASES, selectEasterEggPhrase } from '../../src/components/spaceBackgroundModel.ts';
 
 const ledger = JSON.parse(await readFile(new URL('../../content/models/catalog.json', import.meta.url), 'utf8'));
-const fixture = (change = {}) => ({ version: 1, entries: [{ ...ledger.entries.find((e) => e.id === 'claude-opus-5-5'), reviewedAt: '2026-10-10', frontierException: undefined, ...change }] });
+const fixture = (change = {}) => ({ version: 1, entries: [{ ...ledger.entries.find((e) => e.id === 'claude-opus-5-5'), reviewedAt: '2026-10-10', ...change }] });
 
 test('shared consumers match generated eligible identities and preserve all archived benchmark evidence', () => {
   const entries = modelCatalog.entries.filter((e) => e.weightUnits > 0);
@@ -23,12 +23,20 @@ test('shared consumers match generated eligible identities and preserve all arch
   assert.ok(STAR_TEXT_EDITION.reviewedOn <= modelCatalog.asOf);
 });
 
-test('inclusive 30 day UTC eligibility, future dates, stale reviews and sourced exceptions', () => {
-  assert.equal(compileCatalog(fixture({ releaseDate: '2026-09-10' }), '2026-10-10').entries[0].ageDays, 30);
-  assert.throws(() => compileCatalog(fixture({ releaseDate: '2026-09-09' }), '2026-10-10'), /No eligible/);
-  const exception = { reason: 'Current category frontier', sourceUrl: 'https://www.anthropic.com/claude/fable', reviewedAt: '2026-10-10' };
-  assert.equal(compileCatalog(fixture({ releaseDate: '2025-01-01', frontierException: exception }), '2026-10-10').entries[0].weight, 7);
-  assert.throws(() => compileCatalog(fixture({ releaseDate: '2025-01-01', frontierException: { ...exception, reviewedAt: '2026-09-09' } }), '2026-10-10'), /No eligible/);
+test('inclusive 45 and 60 day UTC windows, supersession, future dates and stale reviews', () => {
+  assert.equal(compileCatalog(fixture({ releaseDate: '2026-08-11' }), '2026-10-10').entries[0].ageDays, 60);
+  assert.throws(() => compileCatalog(fixture({ releaseDate: '2026-08-10' }), '2026-10-10'), /No eligible/);
+  assert.equal(compileCatalog(fixture({ releaseDate: '2026-08-26', priorities: ['pareto'] }), '2026-10-10').entries[0].ageDays, 45);
+  assert.throws(() => compileCatalog(fixture({ releaseDate: '2026-08-25', priorities: ['pareto'] }), '2026-10-10'), /No eligible/);
+  const pair = (successor) => ({ version: 1, entries: [...fixture().entries, ...fixture({ id: 'next', phrase: 'Next', supersedes: 'claude-opus-5-5', ...successor }).entries] });
+  const [replaced, next] = compileCatalog(pair({ releaseDate: '2026-10-10' }), '2026-10-10').entries;
+  assert.equal(replaced.eligibility, 'hold: superseded by Next');
+  assert.equal(replaced.weight, 0);
+  assert.equal(next.weight, 7);
+  assert.equal(compileCatalog(pair({ releaseDate: '2026-10-11' }), '2026-10-10').entries[0].weight, 7);
+  assert.equal(compileCatalog(pair({ disposition: 'hold' }), '2026-10-10').entries[0].weight, 7);
+  assert.throws(() => compileCatalog(pair({ supersedes: 'missing' }), '2026-10-10'), /Unknown superseded/);
+  assert.throws(() => compileCatalog(pair({ supersedes: 'next' }), '2026-10-10'), /Unknown superseded/);
   assert.throws(() => compileCatalog(fixture({ releaseDate: '2026-10-11' }), '2026-10-10'), /No eligible/);
   assert.throws(() => compileCatalog(fixture({ reviewedAt: '2026-09-09' }), '2026-10-10'), /No eligible/);
   assert.throws(() => dateValue('2026-02-29'), /Invalid date/);
