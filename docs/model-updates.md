@@ -12,6 +12,8 @@ Use `just update-models --as-of 2026-10-10` for an explicit historical snapshot;
 
 `just update-models --discover` runs the existing source detector separately. Its output consists of unreviewed leads; it does not update the reviewed ledger or claim release verification. Review those leads before modifying `catalog.json`. Discovery and check mode cannot be combined.
 
+`just update` runs `just update-models`, `just update-models --discover`, and `just update-maps` in that order. It does no release research. See [Maps](maps.md) for the map step.
+
 Longmont.AI and 1023.Digital are permanent constants with exact 35% and 15% automatic probabilities. They cannot be removed or reweighted through the ledger. The remaining 50% uses the highest applicable weight: frontier 7, Pareto 5, decision/world/science/audio/image/video 3, harness/tool 2, new (30 days) 1.5, base 1. Weights never stack. Integer units and rejection sampling avoid modulo bias. Triple-click cycles only the model/tool alternatives.
 
 After editing the ledger, run:

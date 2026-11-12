@@ -19,9 +19,13 @@ Overlay ids: `data-centers`, `autonomous-driving`, `autonomous-delivery`, `drone
 
 1. `npm run maps:new-snapshot` copies the newest folder to a new one dated 14 days later.
    Pass a date to override: `npm run maps:new-snapshot -- 2026-12-09`.
-2. Edit the copied files. Refresh the internet overlay with
-   `node scripts/maps/fetch-internet.mjs src/data/maps/snapshots/<date>/internet.json`.
-3. `npm run test:maps`, then commit and push.
+2. Edit the copied files that have no fetcher. Then run `just update-maps`. It reruns every
+   `scripts/maps/fetch-<name>.mjs` into the newest folder, then runs `npm run test:maps`.
+3. Commit and push. If you edit a file after `just update-maps`, run `npm run test:maps` first.
+
+`just update-maps` passes each fetcher the output path `src/data/maps/snapshots/<date>/<name>.json`, where
+`<name>` comes from the fetcher's filename, so a new fetcher needs no registration. It also passes a
+cache directory for the current UTC day, which a fetcher may ignore.
 
 The folder date is the "Last updated" stamp. A fortnight may carry only the overlays that changed. An
 overlay missing from a folder shows its newest earlier file, with that file's date.

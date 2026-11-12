@@ -5,6 +5,14 @@ set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 update-models *args:
     @node scripts/update-models.mjs "$@"
 
+# Rerun every scripts/maps/fetch-<name>.mjs into the newest snapshot folder, then validate the snapshots.
+update-maps:
+    @node scripts/maps/update.mjs
+    @npm run --silent test:maps
+
+# Run every scripted refresh: the model roster, discovery leads, then maps. Adding a model still needs a reviewed entry in content/models/catalog.json.
+update: update-models (update-models "--discover") update-maps
+
 # Prepare a new draft without overwriting existing work. Pass --write explicitly to create it.
 blog-new date topic mode="--dry-run":
     @node scripts/blog-edition.mjs new {{quote(date)}} {{quote(topic)}} {{quote(mode)}}
