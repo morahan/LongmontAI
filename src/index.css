@@ -5221,20 +5221,36 @@ iframe {
   width: min(28vw, 17rem);
 }
 
-/* The orbit logo takes over from the first logo 5 seconds after the stage appears. */
-.countdown-logo-orbit {
+/* Logo stages: the first logo, then the glass logo on a clear background, then
+   the orbit clip fading in behind it, then the glass logo alone again. */
+.countdown-logo__intro,
+.countdown-logo__layer {
+  transition: opacity 0.9s ease-in-out;
+}
+
+.countdown-logo:not([data-stage="intro"]) .countdown-logo__intro {
+  opacity: 0;
+}
+
+.countdown-logo__layer {
   position: absolute;
   inset: 0;
   width: 100% !important;
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  animation: logo-orbit-in 1.2s 5s ease-in-out forwards;
 }
 
-@keyframes logo-orbit-in {
-  from { opacity: 0; transform: scale(1.06); filter: blur(8px); }
-  to   { opacity: 1; transform: scale(1); filter: blur(0); }
+.countdown-logo:not([data-stage="intro"]) .countdown-logo__still {
+  opacity: 1;
+}
+
+.countdown-logo__orbit {
+  transition-duration: 1.4s;
+}
+
+.countdown-logo[data-stage="orbit"] .countdown-logo__orbit {
+  opacity: 1;
 }
 
 .countdown-discord-invite {

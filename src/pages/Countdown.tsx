@@ -479,44 +479,97 @@ const FinalCountdownDisplay: React.FC<{ seconds: number; progress: number }> = (
   );
 };
 
-const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => (
-  <div className={`relative flex items-center justify-center my-6 ${compact ? 'countdown-logo-compact' : ''}`}>
+type LogoStage = 'intro' | 'still' | 'orbit' | 'settled';
+
+const LOGO_INTRO_MS = 5000;
+const LOGO_STILL_MS = 1800;
+const LOGO_ORBIT_LOOPS = 2;
+
+// The orbit clip opens and closes on the frame that matches the still logo, so
+// its dark backdrop can fade in and out around a logo that never jumps.
+const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
+  const [stage, setStage] = useState<LogoStage>('intro');
+  const introRef = useRef<HTMLVideoElement>(null);
+  const orbitRef = useRef<HTMLVideoElement>(null);
+  const orbitPlays = useRef(0);
+
+  useEffect(() => {
+    const toStill = window.setTimeout(() => setStage('still'), LOGO_INTRO_MS);
+    const toOrbit = window.setTimeout(() => setStage('orbit'), LOGO_INTRO_MS + LOGO_STILL_MS);
+    return () => {
+      window.clearTimeout(toStill);
+      window.clearTimeout(toOrbit);
+    };
+  }, []);
+
+  const playOrbit = useCallback(() => {
+    const orbit = orbitRef.current;
+    if (!orbit) return;
+    orbit.currentTime = 0;
+    orbit.play().catch(() => setStage('settled'));
+  }, []);
+
+  useEffect(() => {
+    if (stage !== 'orbit') return;
+    introRef.current?.pause();
+    playOrbit();
+  }, [stage, playOrbit]);
+
+  const handleOrbitEnded = () => {
+    orbitPlays.current += 1;
+    if (orbitPlays.current < LOGO_ORBIT_LOOPS) playOrbit();
+    else setStage('settled');
+  };
+
+  return (
     <div
-      className="absolute inset-0 blur-3xl opacity-60 animate-logo-glow pointer-events-none"
-      style={{
-        background:
-          'radial-gradient(circle, var(--color-purple) 0%, var(--color-cyan) 50%, transparent 70%)',
-      }}
-      aria-hidden="true"
-    />
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="auto"
-      poster="/brand/logo/logo-animated-poster.png"
-      className="relative w-[min(60vw,480px)] h-auto drop-shadow-[0_0_60px_rgba(121,40,202,0.5)] rounded-2xl"
-      aria-label="Longmont AI animated logo"
+      className={`countdown-logo relative flex items-center justify-center my-6 ${compact ? 'countdown-logo-compact' : ''}`}
+      data-stage={stage}
     >
-      <source src="/brand/logo/logo-animated.webm" type="video/webm" />
-      <source src="/brand/logo/logo-animated-512.mp4" type="video/mp4" />
-      <img src="/brand/logo/logo-animated-poster.png" alt="Longmont AI" />
-    </video>
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="auto"
-      poster="/brand/logo/logo-orbit-poster.jpg"
-      className="countdown-logo-orbit rounded-2xl"
-      aria-hidden="true"
-    >
-      <source src="/brand/logo/logo-orbit.mp4" type="video/mp4" />
-    </video>
-  </div>
-);
+      <div
+        className="absolute inset-0 blur-3xl opacity-60 animate-logo-glow pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle, var(--color-purple) 0%, var(--color-cyan) 50%, transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
+      <video
+        ref={introRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="/brand/logo/logo-animated-poster.png"
+        className="countdown-logo__intro relative w-[min(60vw,480px)] h-auto drop-shadow-[0_0_60px_rgba(121,40,202,0.5)] rounded-2xl"
+        aria-label="Longmont AI animated logo"
+      >
+        <source src="/brand/logo/logo-animated.webm" type="video/webm" />
+        <source src="/brand/logo/logo-animated-512.mp4" type="video/mp4" />
+        <img src="/brand/logo/logo-animated-poster.png" alt="Longmont AI" />
+      </video>
+      <img
+        src="/brand/logo/logo-orbit-still.webp"
+        alt=""
+        className="countdown-logo__layer countdown-logo__still"
+        aria-hidden="true"
+      />
+      <video
+        ref={orbitRef}
+        muted
+        playsInline
+        preload="auto"
+        className="countdown-logo__layer countdown-logo__orbit rounded-2xl"
+        aria-hidden="true"
+        onEnded={handleOrbitEnded}
+        onError={() => setStage('settled')}
+      >
+        <source src="/brand/logo/logo-orbit.mp4" type="video/mp4" />
+      </video>
+    </div>
+  );
+};
 
 const DiscordInvite: React.FC<{ needsUpdate?: boolean }> = ({ needsUpdate = false }) => {
   const qrCodeUrl = `https://quickchart.io/qr?text=${encodeURIComponent(DISCORD_INVITE_URL)}&size=900&margin=2`;
