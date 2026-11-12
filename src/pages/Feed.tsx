@@ -169,9 +169,7 @@ const Feed: React.FC = () => {
                 variants={revealVariants}
             >
                 <a className="home-orbit-link" href="#latest" onClick={glideToHash}>
-                    <span className="home-orbit-track" aria-hidden="true">
-                        <span className="home-orbit-probe" />
-                    </span>
+                    <span className="home-orbit-track" aria-hidden="true" />
                     <span className="home-orbit-stage" aria-hidden="true">
                         {ORRERY_SPARKS.map((spark) => (
                             <span

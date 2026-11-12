@@ -23,7 +23,7 @@ const SponsorAcknowledgement = ({ placement }: SponsorAcknowledgementProps) => {
                 rel="noopener noreferrer"
                 className="sponsor-acknowledgement-link"
             >
-                <span>{sponsor.name}</span>
+                <span className="sponsor-acknowledgement-name">{sponsor.name}</span>
                 <ExternalLink size={13} aria-hidden="true" />
             </a>
             {isEdition && (

@@ -447,7 +447,6 @@ body:has(.home-feed),
 }
 
 .home-orbit-passage {
-  --orbit-travel: 10.5rem;
   --orbit-size: clamp(10rem, 32vw, 17rem);
   --orbit-node: -12deg;
   --orbit-precession: 90s;
@@ -478,13 +477,13 @@ body:has(.home-feed),
   isolation: isolate;
   width: min(100%, calc(var(--orbit-size) + 3rem));
   color: rgba(219, 234, 254, 0.84);
-  transition: color 180ms ease;
+  transition: color 500ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .home-orbit-link:hover,
 .home-orbit-link:focus-visible {
-  color: #ffffff;
+  color: #eff6ff;
 }
 
 .home-orbit-link:focus-visible {
@@ -501,21 +500,6 @@ body:has(.home-feed),
   background: linear-gradient(to bottom, transparent, rgba(125, 211, 252, 0.68) 26%, rgba(96, 165, 250, 0.28) 76%, transparent);
 }
 
-.home-orbit-probe {
-  position: absolute;
-  z-index: 2;
-  top: 14%;
-  left: 50%;
-  width: 0.65rem;
-  height: 0.65rem;
-  border: 2px solid #dbeafe;
-  border-radius: 50%;
-  background: #60a5fa;
-  /* The dark ring keeps the probe a separate body while it crosses the core. */
-  box-shadow: 0 0 0 3px rgba(5, 8, 20, 0.72), 0 0 0 6px rgba(96, 165, 250, 0.14), 0 0 24px rgba(125, 211, 252, 0.9);
-  transform: translateX(-50%);
-}
-
 .home-orbit-stage {
   position: absolute;
   top: 46%;
@@ -524,13 +508,17 @@ body:has(.home-feed),
   height: var(--orbit-size);
   margin: calc(var(--orbit-size) / -2) 0 0 calc(var(--orbit-size) / -2);
   perspective: calc(var(--orbit-size) * 2.4);
-  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .home-orbit-link:hover .home-orbit-stage,
-.home-orbit-link:focus-visible .home-orbit-stage,
+.home-orbit-link:focus-visible .home-orbit-stage {
+  transform: scale(1.025);
+}
+
 .home-orbit-link[data-gliding] .home-orbit-stage {
   transform: scale(1.06);
+  transition-duration: 520ms;
 }
 
 .home-orbit-spark {
@@ -601,16 +589,17 @@ body:has(.home-feed),
   content: "";
   background: radial-gradient(circle, rgba(219, 234, 254, 0.7), rgba(125, 211, 252, 0.3) 30%, transparent 70%);
   opacity: 0;
-  transition: opacity 420ms ease;
+  transition: opacity 900ms ease;
 }
 
 .home-orbit-link:hover .home-orbit-core::after,
 .home-orbit-link:focus-visible .home-orbit-core::after {
-  opacity: 0.7;
+  opacity: 0.28;
 }
 
 .home-orbit-link[data-gliding] .home-orbit-core::after {
   opacity: 1;
+  transition-duration: 420ms;
 }
 
 .home-orbit-sphere,
@@ -631,7 +620,13 @@ body:has(.home-feed),
   border: 1.5px solid rgba(var(--ring-rgb), 0.36);
   border-radius: 50%;
   transform: rotateX(var(--ring-tilt)) rotateZ(var(--ring-rest));
+  transition: border-color 900ms ease;
   animation: home-orbit-spin var(--ring-period) linear infinite;
+}
+
+.home-orbit-link:hover .home-orbit-ring,
+.home-orbit-link:focus-visible .home-orbit-ring {
+  border-color: rgba(var(--ring-rgb), 0.55);
 }
 
 .home-orbit-trail {
@@ -683,6 +678,13 @@ body:has(.home-feed),
   text-transform: uppercase;
   white-space: nowrap;
   transform: translateX(-50%);
+  transition: letter-spacing 700ms cubic-bezier(0.22, 1, 0.36, 1), text-shadow 500ms ease;
+}
+
+.home-orbit-link:hover .home-scroll-cue,
+.home-orbit-link:focus-visible .home-scroll-cue {
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 1.1rem rgba(125, 211, 252, 0.55);
 }
 
 .home-scroll-cue-line {
@@ -704,19 +706,6 @@ body:has(.home-feed),
   box-shadow: 0 0 0.5rem 0.1rem rgba(125, 211, 252, 0.9);
   opacity: 0;
   animation: home-scroll-cue-pulse 3.2s ease-in-out infinite;
-}
-
-@supports (animation-timeline: view()) {
-  .home-orbit-probe {
-    animation: home-orbit-descent linear both;
-    animation-range: entry 10% exit 80%;
-    animation-timeline: view(block);
-  }
-}
-
-@keyframes home-orbit-descent {
-  from { transform: translate(-50%, 0); }
-  to { transform: translate(-50%, var(--orbit-travel)); }
 }
 
 @keyframes home-orbit-precess {
@@ -1673,6 +1662,7 @@ table,
 }
 
 .sponsor-acknowledgement-link {
+  --sponsor-aurora: #7dd3fc, #a78bfa, #f472b6, #fbbf24;
   display: inline-flex;
   align-items: center;
   gap: 0.28rem;
@@ -1681,14 +1671,82 @@ table,
   font-weight: 700;
   line-height: 1.35;
   text-decoration: none;
-  transition: color 180ms ease;
 }
 
-.sponsor-acknowledgement-link:hover,
-.sponsor-acknowledgement-link:focus-visible {
-  color: #fff;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+/* On hover the name is painted by two backgrounds clipped to its glyphs: a
+   solid layer that shrinks toward the right, and the aurora it uncovers. At rest
+   both are parked below the box so the name stays ordinary text, which clipped
+   text does not match pixel for pixel. Colour and parking switch back only
+   after the solid layer has wiped back. The aurora runs back through its own
+   colours because amber blended straight into sky turns khaki, and its drift is
+   paused rather than removed so it holds its place during the wipe back. */
+.sponsor-acknowledgement-name {
+  position: relative;
+  background-image: linear-gradient(#bfdbfe, #bfdbfe), linear-gradient(90deg, var(--sponsor-aurora), #f472b6, #a78bfa, #7dd3fc);
+  background-repeat: no-repeat, repeat-x;
+  background-position: 100% 2em, 0 2em;
+  background-size: 100% 100%, 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: background-size 620ms cubic-bezier(0.65, 0, 0.35, 1), filter 620ms ease, color 0s 620ms, background-position-y 0s 620ms;
+  animation: sponsor-acknowledgement-drift 6s linear infinite paused;
+}
+
+.sponsor-acknowledgement-name::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, var(--sponsor-aurora));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 620ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.sponsor-acknowledgement-link svg {
+  transition: color 320ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sponsor-acknowledgement-link:hover .sponsor-acknowledgement-name,
+.sponsor-acknowledgement-link:focus-visible .sponsor-acknowledgement-name {
+  color: transparent;
+  background-position-y: 0;
+  background-size: 0% 100%, 300% 100%;
+  filter: drop-shadow(0 0 0.5rem rgba(167, 139, 250, 0.45));
+  transition-delay: 0s;
+  animation-play-state: running;
+}
+
+.sponsor-acknowledgement-link:hover .sponsor-acknowledgement-name::after,
+.sponsor-acknowledgement-link:focus-visible .sponsor-acknowledgement-name::after {
+  transform: scaleX(1);
+}
+
+.sponsor-acknowledgement-link:hover svg,
+.sponsor-acknowledgement-link:focus-visible svg {
+  color: #fbbf24;
+  transform: translate(2px, -2px);
+}
+
+/* 150% moves the 300%-wide aurora by exactly one tile, so the loop has no seam. */
+@keyframes sponsor-acknowledgement-drift {
+  to { background-position-x: 100%, 150%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-acknowledgement-name,
+  .sponsor-acknowledgement-name::after,
+  .sponsor-acknowledgement-link svg {
+    transition: none;
+    animation: none;
+  }
+
+  .sponsor-acknowledgement-link:hover svg,
+  .sponsor-acknowledgement-link:focus-visible svg {
+    transform: none;
+  }
 }
 
 .sponsor-acknowledgement-edition {
@@ -2781,7 +2839,6 @@ iframe {
   }
 
   .home-orbit-passage {
-    --orbit-travel: 7.5rem;
     min-height: 18.5rem;
   }
 
@@ -2892,16 +2949,11 @@ iframe {
 @media (prefers-reduced-motion: reduce) {
   .home-reveal,
   .home-orbit-passage,
-  .home-latest-card-wrap,
-  .home-orbit-probe {
+  .home-latest-card-wrap {
     opacity: 1 !important;
     animation: none !important;
     transform: none !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .home-orbit-probe {
-    transform: translateX(-50%) !important;
   }
 
   .home-orbit-spark,
@@ -2915,8 +2967,11 @@ iframe {
     animation: none !important;
   }
 
+  .home-orbit-link,
   .home-orbit-stage,
-  .home-orbit-core::after {
+  .home-orbit-core::after,
+  .home-orbit-ring,
+  .home-scroll-cue {
     transition: none;
   }
 }
