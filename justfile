@@ -5,10 +5,14 @@ set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 update-models *args:
     @node scripts/update-models.mjs "$@"
 
-# Rerun every scripts/maps/fetch-<name>.mjs into the newest snapshot folder, then validate the snapshots.
+# Start the new fortnight's snapshot folder when one is due, rerun every scripts/maps/fetch-<name>.mjs into the newest folder, then validate the snapshots.
 update-maps:
     @node scripts/maps/update.mjs
     @npm run --silent test:maps
+
+# Report whether a new maps fortnight is due. Changes nothing and uses no network.
+update-due:
+    @node scripts/maps/update.mjs --due
 
 # Run every scripted refresh: the model roster, discovery leads, then maps. Adding a model still needs a reviewed entry in content/models/catalog.json.
 update: update-models (update-models "--discover") update-maps

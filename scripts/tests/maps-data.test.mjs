@@ -153,3 +153,12 @@ test('stepping forward flags new sites, status changes and changed jurisdictions
   assert.deepEqual([...changes.changedRegions], ['USA', 'DEU']);
   assert.equal(diffSnapshots(undefined, after).newPoints.size, 0);
 });
+
+test('a new fortnight is due 14 days after the newest snapshot and is dated a whole number of fortnights later', async () => {
+  const { dueFortnight } = await import('../maps/update.mjs');
+  assert.equal(dueFortnight('2026-11-11', '2026-11-24'), null);
+  assert.equal(dueFortnight('2026-11-11', '2026-11-25'), '2026-11-25');
+  assert.equal(dueFortnight('2026-11-11', '2026-11-27'), '2026-11-25');
+  assert.equal(dueFortnight('2026-11-11', '2026-12-10'), '2026-12-09');
+  assert.equal(dueFortnight('2026-12-23', '2027-01-07'), '2027-01-06');
+});

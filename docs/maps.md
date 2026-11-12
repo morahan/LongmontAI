@@ -18,11 +18,25 @@ Overlay ids: `data-centers`, `autonomous-driving`, `autonomous-delivery`, `drone
 
 ## Fortnightly update
 
-1. `npm run maps:new-snapshot` copies the newest folder to a new one dated 14 days later.
-   Pass a date to override: `npm run maps:new-snapshot -- 2026-12-09`.
-2. Edit the copied files that have no fetcher. Then run `just update-maps`. It reruns every
-   `scripts/maps/fetch-<name>.mjs` into the newest folder, then runs `npm run test:maps`.
+A new fortnight is due when the calendar date in Denver is 14 or more days after the newest folder.
+`just update-due` reports whether one is due. It prints `due <date>` or `not due until <date>` and
+changes nothing.
+
+1. Run `just update-maps`. `just update` runs it as its last step. When a fortnight is due, the run first
+   copies the newest folder to a new folder dated on the meetup Wednesday. It then reruns every
+   `scripts/maps/fetch-<name>.mjs` into the newest folder and runs `npm run test:maps`.
+2. Review the files that have no fetcher. The new folder holds them as unchanged copies. Before the first
+   fetcher, the run prints `No fetcher, needs a hand review:` and the names of those files. Edit each
+   file that is out of date.
 3. Commit and push. If you edit a file after `just update-maps`, run `npm run test:maps` first.
+
+The date of the new folder is a whole number of fortnights after the newest folder. A late run still
+dates the folder on the meetup Wednesday, and a fortnight that passed with no run gets no folder.
+
+To start a folder early or on a chosen date, run `npm run maps:new-snapshot`. With no argument, it copies
+the newest folder to a new one dated 14 days later. Pass a date to override:
+`npm run maps:new-snapshot -- 2026-12-09`. The next due date counts from the newest folder, so a chosen
+date moves every later date with it.
 
 `just update-maps` passes each fetcher the output path `src/data/maps/snapshots/<date>/<name>.json`, where
 `<name>` comes from the fetcher's filename, so a new fetcher needs no registration. It also passes a
