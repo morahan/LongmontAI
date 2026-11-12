@@ -2385,7 +2385,7 @@ iframe {
 
 .site-header-logo {
   flex: 0 0 auto;
-  transition: width 240ms ease, height 240ms ease, border-color 180ms ease;
+  transition: width 240ms ease, height 240ms ease;
 }
 
 .site-header--compact .site-header-logo {

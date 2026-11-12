@@ -83,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <img
                             src="/brand/logo/logo-128.png"
                             alt=""
-                            className="site-header-logo w-9 h-9 rounded-lg border border-white/10 transition-colors"
+                            className="site-header-logo w-9 h-9"
                         />
                         <span className="site-header-name font-bold tracking-tight text-base sm:text-lg">LongmontAI</span>
                     </Link>
