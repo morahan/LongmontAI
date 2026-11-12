@@ -74,6 +74,8 @@ export const NEURAL_CONTAGION_AFFINITY_BOOST = 4;
 export const NEURAL_CONTAGION_MAX_ENTRIES = 8;
 /** Maximum idle wait; each event samples its own delay after the previous fade ends. */
 export const CONSTELLATION_INTERVAL_SECONDS = 600;
+/** The first event after a page load or refresh shows soon, inclusive of both ends. */
+export const INITIAL_CONSTELLATION_DELAY_RANGE = [3, 30] as const;
 export const MORPH_SECONDS = 10;
 export const HOLD_SECONDS = 10;
 export const CONSTELLATION_WINDOW_SECONDS = MORPH_SECONDS * 2 + HOLD_SECONDS;
@@ -584,11 +586,13 @@ const getLifecyclePhase = (eventElapsed: number, event: number): ConstellationPh
 
 /** Seed/event-local rejection sampling avoids uint32 modulo bias; events are one-indexed. */
 export const getConstellationIdleDelay = (sceneSeed: number, event = 1): number => {
-    const acceptedRange = UINT32_RANGE - UINT32_RANGE % CONSTELLATION_INTERVAL_SECONDS;
+    const [min, max] = event === 1 ? INITIAL_CONSTELLATION_DELAY_RANGE : [1, CONSTELLATION_INTERVAL_SECONDS];
+    const span = max - min + 1;
+    const acceptedRange = UINT32_RANGE - UINT32_RANGE % span;
     let channel = 503;
     let roll = hashUint(sceneSeed, event, channel);
     while (roll >= acceptedRange) roll = hashUint(sceneSeed, event, ++channel);
-    return 1 + roll % CONSTELLATION_INTERVAL_SECONDS;
+    return min + roll % span;
 };
 
 export const getInitialConstellationDelay = (sceneSeed: number): number =>

@@ -563,7 +563,7 @@ test('auras are varied and deterministic while cores are opaque outside lifecycl
   }
   assert.ok(new Set(auras.map(({ rgb }) => rgb.join(','))).size > 50);
   for (const width of [390, 1000, 1920]) {
-    for (const time of [0, 47, 610, 630]) {
+    for (const time of [0, 60, 300, 600]) {
       getStarFieldStyles(9876, time, false, width).filter(isStarRenderable).forEach((style) => {
         assert.equal(style.coreOpacity, 1);
         assert.ok(style.aura.radiusMultiplier >= 2.1 && style.aura.radiusMultiplier <= 3.6);
@@ -777,7 +777,7 @@ test('large ambient pool has 1120 stars while Star Text retains 560', () => {
   assert.equal(stars.length, AMBIENT_STAR_COUNT);
   assert.equal(starCountForWidth(320), 112);
   assert.equal(starCountForWidth(1920), 1120);
-  assert.equal(getStarFieldStyles(12345, 47).filter(isStarRenderable).length, 1120);
+  assert.equal(getStarFieldStyles(12345, 100).filter(isStarRenderable).length, 1120);
 
   const anchorCount = createConstellationGeometry(1200, 600, 12345, 1).points.length;
   const hold = getStarFieldStyles(12345, getInitialConstellationDelay(12345) + 10);
@@ -876,7 +876,7 @@ test('each star has stable independent speed, phase and subtle dim/bright bounds
     assert.ok(dim >= 0.82 && dim <= 0.92);
     assert.ok(bright >= 1.04 && bright <= 1.12);
     const samples = Array.from({ length: 1201 }, (_, step) => {
-      const time = step / 20;
+      const time = 60 + step / 20;
       const value = getTwinkleBrightness(star, time);
       assert.ok(value >= dim && value <= bright);
       closeTo(value, getTwinkleBrightness(star, time));
@@ -887,7 +887,7 @@ test('each star has stable independent speed, phase and subtle dim/bright bounds
     closeTo(Math.max(...samples), bright, 0.0001);
     closeTo(getTwinkleBrightness(star, -1), getTwinkleBrightness(star, 0));
   });
-  for (const time of [0, 1, 47, 120, 240]) {
+  for (const time of [0, 1, 60, 120, 240]) {
     const values = stars.map((star) => getTwinkleBrightness(star, time));
     assert.ok(new Set(values.map((value) => value.toFixed(5))).size > 60);
     const slopes = stars.map((star, index) => getTwinkleBrightness(star, time + 0.01) - values[index]);
@@ -941,16 +941,28 @@ test('seeded waits cover inclusive endpoints with broad uniform distribution and
   const counts = Array(600).fill(0);
   for (let seed = 0; seed < 1000; seed += 1) {
     const waits = Array.from({ length: 600 }, (_, index) => {
-      const wait = getConstellationIdleDelay(seed, index + 1);
+      const wait = getConstellationIdleDelay(seed, index + 2);
       assert.ok(Number.isInteger(wait) && wait >= 1 && wait <= 600);
-      assert.equal(wait, getConstellationIdleDelay(seed, index + 1));
+      assert.equal(wait, getConstellationIdleDelay(seed, index + 2));
       counts[wait - 1] += 1;
       return wait;
     });
-    assert.equal(waits[0], getInitialConstellationDelay(seed));
     assert.ok(new Set(waits).size > 300);
   }
   assert.ok(counts.every((count) => count > 850 && count < 1150), counts.join(','));
+});
+
+test('the first star text after a page load appears between 3 and 30 seconds', () => {
+  const counts = new Map();
+  for (let seed = 0; seed < 28000; seed += 1) {
+    const wait = getInitialConstellationDelay(seed);
+    assert.ok(Number.isInteger(wait) && wait >= 3 && wait <= 30, `${wait}`);
+    assert.equal(wait, getConstellationIdleDelay(seed, 1));
+    assert.equal(getConstellationEventStart(seed, 1), wait);
+    counts.set(wait, (counts.get(wait) ?? 0) + 1);
+  }
+  assert.equal(counts.size, 28);
+  assert.ok([...counts.values()].every((count) => count > 850 && count < 1150), [...counts].join(','));
 });
 
 test('every event waits until after full fade, with exact phases and frozen clocks', () => {
@@ -1513,15 +1525,15 @@ test('Easter outro converges to scheduled endpoint frames, including trigger wal
 test('screen-wrapped endpoint sampling rejects a full-screen wrap as physical velocity', () => {
   const width = 1200;
   const height = 600;
-  const elapsed = 581.601153;
+  const elapsed = 602.27892;
   const delta = 0.001;
   const ambientIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 1;
   const before = getStarFieldPositions(0, elapsed, width, height)[ambientIndex];
   const after = getStarFieldPositions(0, elapsed + delta, width, height)[ambientIndex];
   assert.ok(after.y - before.y > height * 0.99, 'fixture no longer crosses the y wrap seam');
   const velocity = getScreenWrappedVelocity(before, after, delta, width, height);
-  closeTo(velocity.x, 0.6250094093, 0.0001);
-  closeTo(velocity.y, -0.8335609414, 0.0001);
+  closeTo(velocity.x, 0.9063721834, 0.0001);
+  closeTo(velocity.y, -0.6478839365, 0.0001);
   assert.ok(Math.abs(velocity.x) < 3 && Math.abs(velocity.y) < 3);
 });
 
@@ -1530,7 +1542,7 @@ test('Easter returns stay finite and in bounds across wrapped endpoint samples',
   const height = 600;
   const sampleDelta = 0.001;
   const derivativeDelta = 0.00001;
-  const endpoints = [581.601153, ...Array.from({ length: 20 }, (_, index) => 40 + index * 26.7)];
+  const endpoints = [602.27892, ...Array.from({ length: 20 }, (_, index) => 40 + index * 26.7)];
   let parityChecks = 0;
   endpoints.forEach((endpoint, fixtureIndex) => {
     const seed = fixtureIndex === 0 ? 0 : fixtureIndex;
@@ -1572,10 +1584,10 @@ test('Easter returns stay finite and in bounds across wrapped endpoint samples',
 test('seam-aware Easter return attenuates the seed 149 edge derivative without leaving canvas', () => {
   const width = 1200;
   const height = 600;
-  const endpoint = 348.2;
+  const endpoint = 93.9;
   const sampleDelta = 0.001;
   const seed = 149;
-  const starIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 57;
+  const starIndex = MAX_STAR_TEXT_ANCHOR_COUNT + 155;
   const start = getStarFieldPositions(seed, endpoint - 30, width, height);
   const end = getStarFieldPositions(seed, endpoint, width, height);
   const after = getStarFieldPositions(seed, endpoint + sampleDelta, width, height);
@@ -1583,7 +1595,7 @@ test('seam-aware Easter return attenuates the seed 149 edge derivative without l
   const velocities = end.map((point, index) => getScreenWrappedVelocity(
     point, after[index] ?? point, sampleDelta, width, height,
   ));
-  closeTo(end[starIndex].x, 0.0046035425, 1e-8);
+  closeTo(end[starIndex].x, 0.0229589420, 1e-8);
   assert.ok(velocities[starIndex].x > 1.79);
   const attenuated = getSeamAwareReturnVelocity(
     end[starIndex], velocities[starIndex], width, height,
@@ -3266,7 +3278,7 @@ test('neural contagion resets recycled and stale travelers and locks one logical
   const afterStale = syncNeuralContagionState(afterCycle, stale, width, height);
   assert.equal(afterStale.entries.length, 0);
 
-  assert.equal(getNeuralSignalSlot(48.1), 2);
+  assert.equal(getNeuralSignalSlot(78.1), 2);
   const start = getInitialConstellationDelay(0);
   assert.equal(getNeuralSignalSlot(start + 5), Math.floor(start / 24),
     'frozen simulation advanced the signal slot');
