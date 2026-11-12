@@ -1410,12 +1410,14 @@ const SpaceNeuralBackground: React.FC = () => {
             longPress = null;
         };
         // Passive document listeners leave selection, links, forms, and click sequences intact.
-        const isHoleSurface = (event: MouseEvent) => {
+        const isOverCanvas = (event: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
-            const target = event.target instanceof Element ? event.target : null;
             return event.clientX >= rect.left && event.clientX <= rect.right
-                && event.clientY >= rect.top && event.clientY <= rect.bottom
-                && !target?.closest(`${INTERACTIVE_TARGET_SELECTOR},[contenteditable]:not([contenteditable="false"]),[role="textbox"],p,h1,h2,h3,h4,h5,h6,span,li,pre,code,blockquote`);
+                && event.clientY >= rect.top && event.clientY <= rect.bottom;
+        };
+        const isHoleSurface = (event: MouseEvent) => {
+            const target = event.target instanceof Element ? event.target : null;
+            return isOverCanvas(event) && !target?.closest(`${INTERACTIVE_TARGET_SELECTOR},[contenteditable]:not([contenteditable="false"]),[role="textbox"],p,h1,h2,h3,h4,h5,h6,span,li,pre,code,blockquote`);
         };
         const canOpenBlackHole = (event: MouseEvent) => event.button === 0
             && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
@@ -1591,8 +1593,10 @@ const SpaceNeuralBackground: React.FC = () => {
                 event.clientX - longPress.x, event.clientY - longPress.y,
             ) > BLACK_HOLE_LONG_PRESS_SLOP_PX) cancelLongPress();
             if (!blackHole) return;
-            if (!isHoleSurface(event)) { clearBlackHole(); return; }
-            if (event.pointerType === 'mouse') hideSurfaceCursor(event.target);
+            if (!isOverCanvas(event)) { clearBlackHole(); return; }
+            // The hole keeps travelling behind text and controls, which get their own cursor back.
+            if (event.pointerType === 'mouse' && isHoleSurface(event)) hideSurfaceCursor(event.target);
+            else restoreCursor();
             const rect = canvas.getBoundingClientRect();
             holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
         };
