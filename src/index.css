@@ -5221,6 +5221,22 @@ iframe {
   width: min(28vw, 17rem);
 }
 
+/* The orbit logo takes over from the first logo 5 seconds after the stage appears. */
+.countdown-logo-orbit {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  animation: logo-orbit-in 1.2s 5s ease-in-out forwards;
+}
+
+@keyframes logo-orbit-in {
+  from { opacity: 0; transform: scale(1.06); filter: blur(8px); }
+  to   { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
 .countdown-discord-invite {
   display: flex;
   flex: 0 0 auto;
@@ -5559,6 +5575,49 @@ iframe {
   100% { transform: scale(var(--digit-scale)); filter: blur(0); opacity: 1; }
 }
 
+/* Last 10 seconds: the numerals fill with plasma that runs hotter and faster each second.
+   --core is set inline per second, 0 at ten and 1 at one. */
+.countdown-final[data-tier="ten"] .countdown-final__number {
+  filter:
+    brightness(calc(1 + 0.3 * var(--core)))
+    drop-shadow(0 0 calc(0.15rem + 0.45rem * var(--core)) rgba(255, 255, 255, 0.85))
+    drop-shadow(0 0 calc(0.8rem + 2.4rem * var(--core)) color-mix(in srgb, var(--color-pink), var(--color-sunset) calc(100% * var(--core))));
+}
+
+.countdown-final[data-tier="ten"] .countdown-final__digit {
+  --hot: calc(35% + 65% * var(--core));
+  --core-flow: calc(1.7s - 1.2s * var(--core));
+  color: transparent;
+  text-shadow: none;
+  background-color: #fff;
+  background-image:
+    linear-gradient(115deg, transparent 40%, #fff 50%, transparent 60%),
+    radial-gradient(circle at 50% 50%, #fff 0%, #fff calc(6% + 12% * var(--core)), transparent calc(30% + 20% * var(--core))),
+    radial-gradient(circle at 25% 30%, color-mix(in srgb, var(--color-cyan) var(--hot), #fff) 0%, transparent 42%),
+    radial-gradient(circle at 75% 45%, color-mix(in srgb, var(--color-sunset) var(--hot), #fff) 0%, transparent 55%),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-pink) var(--hot), #fff), color-mix(in srgb, var(--color-sunset) var(--hot), #fff));
+  background-size: 300% 100%, 160% 160%, 180% 180%, 200% 200%, 100% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.countdown-final[data-tier="ten"] .countdown-final__digit--beat {
+  animation:
+    countdown-beat 0.9s cubic-bezier(0.16, 1, 0.3, 1) both,
+    countdown-core-flow var(--core-flow) linear infinite alternate;
+}
+
+.countdown-final[data-tier="ten"] .countdown-final__digit--slam {
+  animation:
+    countdown-slam 0.9s cubic-bezier(0.16, 1, 0.3, 1) both,
+    countdown-core-flow var(--core-flow) linear infinite alternate;
+}
+
+@keyframes countdown-core-flow {
+  from { background-position: 120% 0, 20% 90%, 0% 0%, 100% 20%, 0 0; }
+  to   { background-position: -20% 0, 80% 10%, 100% 80%, 0% 90%, 0 0; }
+}
+
 .countdown-sound-chip {
   position: fixed;
   bottom: 1.25rem;
@@ -5832,12 +5891,19 @@ iframe {
   box-shadow: 0 0 3.5rem color-mix(in srgb, var(--color-pink) 55%, transparent);
 }
 
-.countdown-demo__button--replay {
+.countdown-demo__controls {
   position: fixed;
   right: 1.25rem;
   bottom: 1.25rem;
   z-index: 30;
+  display: flex;
+  gap: 0.6rem;
+  width: auto;
+}
+
+.countdown-demo__button--control {
   padding: 0.5rem 1rem;
+  white-space: nowrap;
   font-size: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(9, 9, 11, 0.72);

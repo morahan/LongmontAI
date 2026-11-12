@@ -463,6 +463,7 @@ const FinalCountdownDisplay: React.FC<{ seconds: number; progress: number }> = (
         <div
           key={isSlam ? `shake-${seconds}` : 'steady'}
           className={`countdown-final__number${isSlam ? ' countdown-final__number--shake' : ''}`}
+          style={{ '--core': tier === 'ten' ? (10 - seconds) / 9 : 0 } as React.CSSProperties}
         >
           <span
             key={tier === 'calm' ? 'calm' : seconds}
@@ -501,6 +502,18 @@ const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => (
       <source src="/brand/logo/logo-animated.webm" type="video/webm" />
       <source src="/brand/logo/logo-animated-512.mp4" type="video/mp4" />
       <img src="/brand/logo/logo-animated-poster.png" alt="Longmont AI" />
+    </video>
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      poster="/brand/logo/logo-orbit-poster.jpg"
+      className="countdown-logo-orbit rounded-2xl"
+      aria-hidden="true"
+    >
+      <source src="/brand/logo/logo-orbit.mp4" type="video/mp4" />
     </video>
   </div>
 );
@@ -922,6 +935,7 @@ const Countdown: React.FC<{ now?: () => Date }> = ({ now = realNow }) => {
 
 // ─── Final countdown demo (/countdown/final) ────────────────────────────────
 const DEMO_LEAD_IN_SECONDS = 68;
+const DEMO_LAST_SECONDS = 10;
 const DEMO_REPLAY_AFTER_SECONDS = 15;
 
 interface DemoRun {
@@ -966,6 +980,25 @@ export const CountdownFinalDemo: React.FC = () => {
 
   const play = () => setRun(startDemoRun(-DEMO_LEAD_IN_SECONDS));
 
+  const controls = (
+    <div className="countdown-demo__controls">
+      {canReplay && (
+        <button type="button" className="countdown-demo__button countdown-demo__button--control" onClick={play}>
+          <RotateCcw size={14} aria-hidden="true" />
+          Replay
+        </button>
+      )}
+      <button
+        type="button"
+        className="countdown-demo__button countdown-demo__button--control"
+        onClick={() => setRun(startDemoRun(-DEMO_LAST_SECONDS))}
+      >
+        <Play size={14} aria-hidden="true" />
+        Last {DEMO_LAST_SECONDS} seconds
+      </button>
+    </div>
+  );
+
   if (!run) {
     return (
       <section className="countdown-demo" aria-labelledby="countdown-demo-title">
@@ -980,6 +1013,7 @@ export const CountdownFinalDemo: React.FC = () => {
           <Play size={18} aria-hidden="true" />
           Play the Final Countdown
         </button>
+        {controls}
       </section>
     );
   }
@@ -988,12 +1022,7 @@ export const CountdownFinalDemo: React.FC = () => {
   return (
     <div>
       <Countdown key={run.id} now={run.clock} />
-      {canReplay && (
-        <button type="button" className="countdown-demo__button countdown-demo__button--replay" onClick={play}>
-          <RotateCcw size={14} aria-hidden="true" />
-          Replay
-        </button>
-      )}
+      {controls}
     </div>
   );
 };
