@@ -1052,13 +1052,20 @@ export const advanceEasterEggClickSequence = (
     return { ...click, count: continuesSequence ? previous.count + 1 : 1 };
 };
 
-/** Native detail or the independently observed physical sequence may establish the third click. */
-export const shouldTriggerEasterEgg = (
+export type ClickGesture = 'constellation' | 'black-hole';
+
+/** Native detail or the independently observed physical sequence may establish the click count. */
+export const getClickGesture = (
     clickDetail: number,
     isInsideCanvas: boolean,
     isInteractiveTarget: boolean,
     prefersReducedMotion = false,
-) => clickDetail === 3 && isInsideCanvas && !isInteractiveTarget && !prefersReducedMotion;
+): ClickGesture | null => {
+    if (!isInsideCanvas || isInteractiveTarget || prefersReducedMotion) return null;
+    if (clickDetail === 2) return 'constellation';
+    if (clickDetail === 3) return 'black-hole';
+    return null;
+};
 
 /** Seed chooses the first hidden phrase; subsequent triggers cycle every alternative without repeats. */
 export const selectEasterEggPhrase = (sceneSeed: number, triggerIndex: number): ConstellationPhrase => {

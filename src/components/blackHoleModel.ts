@@ -15,6 +15,8 @@ export const BLACK_HOLE_CORE = 5;
 export const BLACK_HOLE_MAX_STARS = 192;
 export const BLACK_HOLE_MAX_SPARKS = 16;
 export const BLACK_HOLE_MAX_DELTA = 1 / 30;
+export const BLACK_HOLE_LONG_PRESS_MS = 500;
+export const BLACK_HOLE_LONG_PRESS_SLOP_PX = 10;
 export const createBlackHole = (): BlackHoleState => ({
     stars: new Map(), sparks: [], captures: 0, recaptures: 0,
 });

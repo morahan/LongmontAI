@@ -1,7 +1,15 @@
 import React, { useLayoutEffect, useRef } from 'react';
-import { createBlackHole, stepBlackHole, type BlackHoleState } from './blackHoleModel';
+import {
+    BLACK_HOLE_LONG_PRESS_MS,
+    BLACK_HOLE_LONG_PRESS_SLOP_PX,
+    createBlackHole,
+    stepBlackHole,
+    type BlackHoleState,
+} from './blackHoleModel';
 import {
     advanceEasterEggClickSequence,
+    EASTER_EGG_CLICK_INTERVAL_MS,
+    getClickGesture,
     CONSTELLATION_WINDOW_SECONDS,
     FAR_DEPTH,
     NEAR_DEPTH,
@@ -66,7 +74,6 @@ import {
     scaleConstellationGeometry,
     selectEasterEggPhrase,
     selectProminentSystemOwner,
-    shouldTriggerEasterEgg,
     syncNeuralContagionState,
     travelerCountForWidth,
     updateNeuralContagionForSignal,
@@ -949,7 +956,6 @@ const SpaceNeuralBackground: React.FC = () => {
             nebulaCtx.putImageData(image, 0, 0);
         }
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
         const mountedAt = performance.now();
         let width = 0;
         let height = 0;
@@ -964,6 +970,8 @@ const SpaceNeuralBackground: React.FC = () => {
         let easterEgg: EasterEggTransition | null = null;
         let easterEggClickSequence: EasterEggClickSequence | null = null;
         let easterEggTriggerCount = 0;
+        let pendingEasterEggTimer: number | null = null;
+        let longPress: { pointerId: number; x: number; y: number; timer: number } | null = null;
         let neuralContagion = createNeuralContagionState();
         let blackHole: BlackHoleState | null = null;
         let holeCenter = { x: 0, y: 0 };
@@ -1400,6 +1408,37 @@ const SpaceNeuralBackground: React.FC = () => {
             }
             syncAnimation();
         };
+        const cancelPendingEasterEgg = () => {
+            if (pendingEasterEggTimer !== null) window.clearTimeout(pendingEasterEggTimer);
+            pendingEasterEggTimer = null;
+        };
+        const cancelLongPress = () => {
+            if (longPress) window.clearTimeout(longPress.timer);
+            longPress = null;
+        };
+        // Passive document listeners leave selection, links, forms, and click sequences intact.
+        const isHoleSurface = (event: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const target = event.target instanceof Element ? event.target : null;
+            return event.clientX >= rect.left && event.clientX <= rect.right
+                && event.clientY >= rect.top && event.clientY <= rect.bottom
+                && !target?.closest(`${INTERACTIVE_TARGET_SELECTOR},[contenteditable]:not([contenteditable="false"]),[role="textbox"],p,h1,h2,h3,h4,h5,h6,span,li,pre,code,blockquote`);
+        };
+        const canOpenBlackHole = (event: MouseEvent) => event.button === 0
+            && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+            && !reducedMotion && shouldAnimate() && isHoleSurface(event);
+        const openBlackHole = (event: PointerEvent | MouseEvent) => {
+            // Browsers can select the nearest heading even on blank section space.
+            // Only this accepted blank-surface gesture clears that incidental selection.
+            window.getSelection()?.removeAllRanges();
+            cancelPendingEasterEgg();
+            const rect = canvas.getBoundingClientRect();
+            holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+            blackHole = createBlackHole();
+            holeLastElapsed = null;
+            canvas.dataset.blackHole = 'active';
+            if (lastPointerType === 'mouse') hideSurfaceCursor(event.target);
+        };
         const handleDocumentClick = (event: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
             const isInsideCanvas = rect.width > 0 && rect.height > 0
@@ -1414,13 +1453,26 @@ const SpaceNeuralBackground: React.FC = () => {
                 isInteractiveTarget,
                 reducedMotion,
             );
-            const observedClickDetail = Math.max(event.detail, easterEggClickSequence?.count ?? 0);
-            if (!shouldTriggerEasterEgg(
-                observedClickDetail,
+            const gesture = getClickGesture(
+                Math.max(event.detail, easterEggClickSequence?.count ?? 0),
                 isInsideCanvas,
                 isInteractiveTarget,
                 reducedMotion,
-            )) return;
+            );
+            if (gesture === 'constellation') {
+                // A third click within the interval claims the sequence for the black hole instead.
+                cancelPendingEasterEgg();
+                pendingEasterEggTimer = window.setTimeout(startEasterEgg, EASTER_EGG_CLICK_INTERVAL_MS);
+            } else if (gesture === 'black-hole') {
+                easterEggClickSequence = null;
+                cancelPendingEasterEgg();
+                if (blackHole) clearBlackHole();
+                else if (canOpenBlackHole(event)) openBlackHole(event);
+            }
+        };
+        const startEasterEgg = () => {
+            pendingEasterEggTimer = null;
+            if (reducedMotion) return;
             easterEggClickSequence = null;
             clearBlackHole();
 
@@ -1538,49 +1590,42 @@ const SpaceNeuralBackground: React.FC = () => {
             canvas.dataset.easterEggState = 'morph-in';
             drawScene(elapsed);
         };
-        // Passive document listeners leave selection, links, forms, and click sequences intact.
-        const isHoleSurface = (event: MouseEvent) => {
-            const rect = canvas.getBoundingClientRect();
-            const target = event.target instanceof Element ? event.target : null;
-            return event.clientX >= rect.left && event.clientX <= rect.right
-                && event.clientY >= rect.top && event.clientY <= rect.bottom
-                && !target?.closest(`${INTERACTIVE_TARGET_SELECTOR},[contenteditable]:not([contenteditable="false"]),[role="textbox"],p,h1,h2,h3,h4,h5,h6,span,li,pre,code,blockquote`);
-        };
-        const handleDoubleClick = (event: MouseEvent) => {
-            // The fourth click can emit another dblclick; don't undo the triple-click Easter egg.
-            if (event.detail > 2 || event.button !== 0 || event.ctrlKey || event.metaKey
-                || event.altKey || event.shiftKey || reducedMotion || !finePointerQuery.matches
-                || lastPointerType !== 'mouse' || !shouldAnimate() || !isHoleSurface(event)) return;
-            // Browsers can select the nearest heading even on blank section space.
-            // Only this accepted blank-surface gesture clears that incidental selection.
-            window.getSelection()?.removeAllRanges();
-            if (blackHole) { clearBlackHole(); return; }
-            const rect = canvas.getBoundingClientRect();
-            holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-            blackHole = createBlackHole();
-            holeLastElapsed = null;
-            canvas.dataset.blackHole = 'active';
-            hideSurfaceCursor(event.target);
-        };
         const handlePointerMove = (event: PointerEvent) => {
             lastPointerType = event.pointerType;
+            if (longPress?.pointerId === event.pointerId && Math.hypot(
+                event.clientX - longPress.x, event.clientY - longPress.y,
+            ) > BLACK_HOLE_LONG_PRESS_SLOP_PX) cancelLongPress();
             if (!blackHole) return;
-            if (event.pointerType !== 'mouse' || !isHoleSurface(event)) { clearBlackHole(); return; }
-            hideSurfaceCursor(event.target);
+            if (!isHoleSurface(event)) { clearBlackHole(); return; }
+            if (event.pointerType === 'mouse') hideSurfaceCursor(event.target);
             const rect = canvas.getBoundingClientRect();
             holeCenter = { x: event.clientX - rect.left, y: event.clientY - rect.top };
         };
         const handlePointerDown = (event: PointerEvent) => {
             lastPointerType = event.pointerType;
+            cancelLongPress();
             if (event.pointerType !== 'mouse') clearBlackHole();
+            if (!event.isPrimary || !canOpenBlackHole(event)) return;
+            longPress = {
+                pointerId: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+                timer: window.setTimeout(() => {
+                    longPress = null;
+                    if (canOpenBlackHole(event)) openBlackHole(event);
+                }, BLACK_HOLE_LONG_PRESS_MS),
+            };
         };
+        // Touch fires pointerout on every lift, so only a mouse leaving the window dismisses the hole.
         const handlePointerOut = (event: PointerEvent) => {
-            if (!event.relatedTarget) clearBlackHole();
+            if (!event.relatedTarget && event.pointerType === 'mouse') clearBlackHole();
+        };
+        const handleContextMenu = (event: MouseEvent) => {
+            if (blackHole && lastPointerType !== 'mouse') event.preventDefault();
         };
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') clearBlackHole();
         };
-        const handlePointerCapability = () => { if (!finePointerQuery.matches) clearBlackHole(); };
         const intersectionObserver = typeof IntersectionObserver === 'undefined' ? null
             : new IntersectionObserver(([entry]) => {
                 isOnscreen = entry?.isIntersecting ?? false;
@@ -1589,12 +1634,13 @@ const SpaceNeuralBackground: React.FC = () => {
 
         window.addEventListener('resize', handleResize);
         window.addEventListener('blur', clearBlackHole);
-        document.addEventListener('dblclick', handleDoubleClick, { passive: true });
         document.addEventListener('pointermove', handlePointerMove, { passive: true });
         document.addEventListener('pointerdown', handlePointerDown, { passive: true });
+        document.addEventListener('pointerup', cancelLongPress, { passive: true });
+        document.addEventListener('pointercancel', cancelLongPress, { passive: true });
         document.addEventListener('pointerout', handlePointerOut, { passive: true });
+        document.addEventListener('contextmenu', handleContextMenu);
         document.addEventListener('keydown', handleEscape);
-        finePointerQuery.addEventListener('change', handlePointerCapability);
         document.addEventListener('click', handleDocumentClick, { passive: true });
         document.addEventListener('visibilitychange', handleVisibilityChange);
         motionQuery.addEventListener('change', handleMotionChange);
@@ -1604,13 +1650,16 @@ const SpaceNeuralBackground: React.FC = () => {
 
         return () => {
             clearBlackHole();
+            cancelPendingEasterEgg();
+            cancelLongPress();
             window.removeEventListener('blur', clearBlackHole);
-            document.removeEventListener('dblclick', handleDoubleClick);
             document.removeEventListener('pointermove', handlePointerMove);
             document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('pointerup', cancelLongPress);
+            document.removeEventListener('pointercancel', cancelLongPress);
             document.removeEventListener('pointerout', handlePointerOut);
+            document.removeEventListener('contextmenu', handleContextMenu);
             document.removeEventListener('keydown', handleEscape);
-            finePointerQuery.removeEventListener('change', handlePointerCapability);
             if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
             intersectionObserver?.disconnect();
             motionQuery.removeEventListener('change', handleMotionChange);

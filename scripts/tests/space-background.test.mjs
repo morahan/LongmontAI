@@ -178,7 +178,7 @@ import {
   selectEasterEggPhrase,
   selectProminentSystem,
   selectProminentSystemOwner,
-  shouldTriggerEasterEgg,
+  getClickGesture,
   starCountForWidth,
   syncNeuralContagionState,
   updateNeuralContagionForSignal,
@@ -1057,14 +1057,14 @@ test('monotonic elapsed time includes long RAF gaps while reduced motion can ren
   closeTo(getElapsedSecondsSinceMount(2000, 1000), 0);
 });
 
-test('only a non-interactive in-bounds triple click triggers the Easter egg', () => {
-  assert.equal(shouldTriggerEasterEgg(1, true, false), false);
-  assert.equal(shouldTriggerEasterEgg(2, true, false), false);
-  assert.equal(shouldTriggerEasterEgg(3, true, false), true);
-  assert.equal(shouldTriggerEasterEgg(3, false, false), false);
-  assert.equal(shouldTriggerEasterEgg(3, true, true), false);
-  assert.equal(shouldTriggerEasterEgg(3, true, false, true), false);
-  assert.equal(shouldTriggerEasterEgg(4, true, false), false);
+test('in-bounds non-interactive double clicks spell text and triple clicks open the black hole', () => {
+  assert.equal(getClickGesture(1, true, false), null);
+  assert.equal(getClickGesture(2, true, false), 'constellation');
+  assert.equal(getClickGesture(3, true, false), 'black-hole');
+  assert.equal(getClickGesture(2, false, false), null);
+  assert.equal(getClickGesture(3, true, true), null);
+  assert.equal(getClickGesture(2, true, false, true), null);
+  assert.equal(getClickGesture(4, true, false), null);
 });
 
 test('three separately observed nearby clicks work when native detail remains one', () => {
@@ -1077,7 +1077,8 @@ test('three separately observed nearby clicks work when native detail remains on
   const second = click(first, 1160, 404, 223);
   const third = click(second, 1325, 400, 220);
   assert.deepEqual([first.count, second.count, third.count], [1, 2, 3]);
-  assert.equal(shouldTriggerEasterEgg(Math.max(1, third.count), true, false), true);
+  assert.equal(getClickGesture(second.count, true, false), 'constellation');
+  assert.equal(getClickGesture(third.count, true, false), 'black-hole');
 
   assert.equal(click(second, 1325, 400, 220, true, true), null);
   assert.equal(click(second, 1325, 400, 220, false), null);
