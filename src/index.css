@@ -5221,35 +5221,25 @@ iframe {
   width: min(28vw, 17rem);
 }
 
-/* Logo stages: the first logo, then the glass logo on a clear background, then
-   the orbit clip fading in behind it, then the glass logo alone again. */
+/* After the first logo, the orbit and AI to SI sequence fades in over it and holds on its last frame. */
 .countdown-logo__intro,
-.countdown-logo__layer {
+.countdown-logo__sequence {
   transition: opacity 0.9s ease-in-out;
 }
 
-.countdown-logo:not([data-stage="intro"]) .countdown-logo__intro {
+.countdown-logo[data-stage="sequence"] .countdown-logo__intro {
   opacity: 0;
 }
 
-.countdown-logo__layer {
+.countdown-logo__sequence {
   position: absolute;
   inset: 0;
-  width: 100% !important;
+  width: 100%;
   height: 100%;
-  object-fit: cover;
   opacity: 0;
 }
 
-.countdown-logo:not([data-stage="intro"]) .countdown-logo__still {
-  opacity: 1;
-}
-
-.countdown-logo__orbit {
-  transition-duration: 1.4s;
-}
-
-.countdown-logo[data-stage="orbit"] .countdown-logo__orbit {
+.countdown-logo[data-stage="sequence"] .countdown-logo__sequence {
   opacity: 1;
 }
 
@@ -5675,7 +5665,6 @@ iframe {
   pointer-events: none;
 }
 
-.countdown-celebration__rays,
 .countdown-celebration__shockwave,
 .countdown-burst {
   position: absolute;
@@ -5694,36 +5683,6 @@ iframe {
 @keyframes countdown-flash {
   from { opacity: 0.95; }
   to   { opacity: 0; }
-}
-
-.countdown-celebration__rays {
-  width: 170vmax;
-  height: 170vmax;
-  background: repeating-conic-gradient(
-    from 0deg,
-    color-mix(in srgb, var(--color-cyan) 26%, transparent) 0deg,
-    transparent 9deg,
-    color-mix(in srgb, var(--color-purple) 34%, transparent) 18deg,
-    transparent 27deg,
-    color-mix(in srgb, var(--color-pink) 26%, transparent) 36deg,
-    transparent 45deg
-  );
-  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 58%);
-  mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 58%);
-  animation:
-    countdown-rays-life var(--celebration-duration) ease-out calc(0s - var(--celebration-elapsed)) both,
-    countdown-rays-spin 48s linear calc(0s - var(--celebration-elapsed)) infinite;
-}
-
-@keyframes countdown-rays-life {
-  0%   { opacity: 0; }
-  12%  { opacity: 1; }
-  85%  { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-@keyframes countdown-rays-spin {
-  to { rotate: 360deg; }
 }
 
 .countdown-celebration__shockwave {
@@ -5944,7 +5903,6 @@ iframe {
   .countdown-final__pulse,
   .countdown-vignette,
   .countdown-celebration__flash,
-  .countdown-celebration__rays,
   .countdown-celebration__shockwave,
   .countdown-burst {
     display: none;

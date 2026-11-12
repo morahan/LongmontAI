@@ -479,52 +479,107 @@ const FinalCountdownDisplay: React.FC<{ seconds: number; progress: number }> = (
   );
 };
 
-type LogoStage = 'intro' | 'still' | 'orbit' | 'settled';
-
 const LOGO_INTRO_MS = 5000;
-const LOGO_STILL_MS = 1800;
-const LOGO_ORBIT_LOOPS = 2;
+const LOGO_SEQUENCE_URL = '/brand/logo/logo-sequence.mp4';
 
-// The orbit clip opens and closes on the frame that matches the still logo, so
-// its dark backdrop can fade in and out around a logo that never jumps.
-const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
-  const [stage, setStage] = useState<LogoStage>('intro');
-  const introRef = useRef<HTMLVideoElement>(null);
-  const orbitRef = useRef<HTMLVideoElement>(null);
-  const orbitPlays = useRef(0);
+// No single video format with alpha plays in every browser, so the logo sequence is an
+// H.264 video with premultiplied colour stacked over its alpha. WebGL recombines the halves.
+const QUAD_SHADER = `
+attribute vec2 position;
+varying vec2 uv;
+void main() {
+  uv = vec2(position.x * 0.5 + 0.5, 0.5 - position.y * 0.5);
+  gl_Position = vec4(position, 0.0, 1.0);
+}`;
+const STACKED_ALPHA_SHADER = `
+precision mediump float;
+uniform sampler2D frame;
+varying vec2 uv;
+void main() {
+  vec3 colour = texture2D(frame, vec2(uv.x, uv.y * 0.5)).rgb;
+  float alpha = texture2D(frame, vec2(uv.x, 0.5 + uv.y * 0.5)).r;
+  gl_FragColor = vec4(colour, alpha);
+}`;
 
-  useEffect(() => {
-    const toStill = window.setTimeout(() => setStage('still'), LOGO_INTRO_MS);
-    const toOrbit = window.setTimeout(() => setStage('orbit'), LOGO_INTRO_MS + LOGO_STILL_MS);
-    return () => {
-      window.clearTimeout(toStill);
-      window.clearTimeout(toOrbit);
-    };
-  }, []);
+// Plays the stacked video once onto the canvas, holding its last frame. Returns a stop function.
+function playStackedAlphaVideo(canvas: HTMLCanvasElement, src: string, delayMs: number, onFirstFrame: () => void) {
+  const gl = canvas.getContext('webgl', { premultipliedAlpha: true });
+  if (!gl) return () => {};
+  const program = gl.createProgram()!;
+  for (const [type, source] of [[gl.VERTEX_SHADER, QUAD_SHADER], [gl.FRAGMENT_SHADER, STACKED_ALPHA_SHADER]] as const) {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    gl.attachShader(program, shader);
+  }
+  gl.linkProgram(program);
+  gl.useProgram(program);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const position = gl.getAttribLocation(program, 'position');
+  gl.enableVertexAttribArray(position);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-  const playOrbit = useCallback(() => {
-    const orbit = orbitRef.current;
-    if (!orbit) return;
-    orbit.currentTime = 0;
-    orbit.play().catch(() => setStage('settled'));
-  }, []);
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  video.src = src;
 
-  useEffect(() => {
-    if (stage !== 'orbit') return;
-    introRef.current?.pause();
-    playOrbit();
-  }, [stage, playOrbit]);
-
-  const handleOrbitEnded = () => {
-    orbitPlays.current += 1;
-    if (orbitPlays.current < LOGO_ORBIT_LOOPS) playOrbit();
-    else setStage('settled');
+  let frame = 0;
+  let drawn = false;
+  const draw = () => {
+    if (canvas.width !== video.videoWidth) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight / 2;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (!drawn) {
+      drawn = true;
+      onFirstFrame();
+    }
   };
+  const loop = () => {
+    draw();
+    if (!video.ended) frame = requestAnimationFrame(loop);
+  };
+  video.addEventListener('ended', draw);
+  const timer = window.setTimeout(() => {
+    video.play().then(() => { frame = requestAnimationFrame(loop); }).catch(() => {});
+  }, delayMs);
+
+  return () => {
+    window.clearTimeout(timer);
+    cancelAnimationFrame(frame);
+    video.removeEventListener('ended', draw);
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  };
+}
+
+// The first logo plays for five seconds, then the orbit clip runs three times and
+// turns into the AI to SI morph, which holds on its last frame.
+const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [sequenceShown, setSequenceShown] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    return playStackedAlphaVideo(canvas, LOGO_SEQUENCE_URL, LOGO_INTRO_MS, () => setSequenceShown(true));
+  }, []);
 
   return (
     <div
       className={`countdown-logo relative flex items-center justify-center my-6 ${compact ? 'countdown-logo-compact' : ''}`}
-      data-stage={stage}
+      data-stage={sequenceShown ? 'sequence' : 'intro'}
     >
       <div
         className="absolute inset-0 blur-3xl opacity-60 animate-logo-glow pointer-events-none"
@@ -535,7 +590,6 @@ const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
         aria-hidden="true"
       />
       <video
-        ref={introRef}
         autoPlay
         loop
         muted
@@ -549,24 +603,7 @@ const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
         <source src="/brand/logo/logo-animated-512.mp4" type="video/mp4" />
         <img src="/brand/logo/logo-animated-poster.png" alt="Longmont AI" />
       </video>
-      <img
-        src="/brand/logo/logo-orbit-still.webp"
-        alt=""
-        className="countdown-logo__layer countdown-logo__still"
-        aria-hidden="true"
-      />
-      <video
-        ref={orbitRef}
-        muted
-        playsInline
-        preload="auto"
-        className="countdown-logo__layer countdown-logo__orbit rounded-2xl"
-        aria-hidden="true"
-        onEnded={handleOrbitEnded}
-        onError={() => setStage('settled')}
-      >
-        <source src="/brand/logo/logo-orbit.mp4" type="video/mp4" />
-      </video>
+      <canvas ref={canvasRef} className="countdown-logo__sequence" aria-hidden="true" />
     </div>
   );
 };
@@ -693,7 +730,6 @@ const Celebration: React.FC<{ elapsedMs: number }> = ({ elapsedMs }) => {
         } as React.CSSProperties
       }
     >
-      <div className="countdown-celebration__rays" aria-hidden="true" />
       <span className="countdown-celebration__shockwave" aria-hidden="true" />
       <span className="countdown-celebration__shockwave" aria-hidden="true" />
       <span className="countdown-celebration__shockwave" aria-hidden="true" />
