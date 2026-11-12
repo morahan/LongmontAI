@@ -11,7 +11,7 @@ import { STAR_TEXT_ALTERNATIVES, STAR_TEXT_EDITION } from '../../src/data/starTe
 import { CONSTELLATION_BUCKET_COUNT, getConstellationPhraseForBucket, selectConstellationPhrase, EASTER_EGG_PHRASES, selectEasterEggPhrase } from '../../src/components/spaceBackgroundModel.ts';
 
 const ledger = JSON.parse(await readFile(new URL('../../content/models/catalog.json', import.meta.url), 'utf8'));
-const fixture = (change = {}) => ({ version: 1, entries: [{ ...ledger.entries.find((e) => e.id === 'claude-opus-5-5'), ...change }] });
+const fixture = (change = {}) => ({ version: 1, entries: [{ ...ledger.entries.find((e) => e.id === 'claude-opus-5-5'), reviewedAt: '2026-10-10', frontierException: undefined, ...change }] });
 
 test('shared consumers match generated eligible identities and preserve all archived benchmark evidence', () => {
   const entries = modelCatalog.entries.filter((e) => e.weightUnits > 0);
@@ -77,7 +77,7 @@ test('real CLI is idempotent, no-write check detects drift, malformed input pres
     const ledgerPath = join(dir, 'content/models/catalog.json');
     const output = join(dir, 'src/data/modelCatalog.generated.ts');
     await writeFile(ledgerPath, JSON.stringify(ledger));
-    const run = (...args) => spawnSync(process.execPath, [join(dir, 'scripts/update-models.mjs'), '--as-of', '2026-10-10', ...args], { encoding: 'utf8' });
+    const run = (...args) => spawnSync(process.execPath, [join(dir, 'scripts/update-models.mjs'), '--as-of', modelCatalog.asOf, ...args], { encoding: 'utf8' });
     assert.equal(run().status, 0);
     const baseline = await readFile(output, 'utf8');
     assert.equal(run().status, 0);
