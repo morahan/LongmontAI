@@ -1,0 +1,77 @@
+# Maps
+
+`/maps` draws one world map and swaps a single overlay on top of it. Each overlay is a JSON file per
+fortnight. The page lists every dated folder on the timeline, so adding a folder adds a stop.
+
+## Files
+
+| Path | Role |
+| --- | --- |
+| `src/data/maps/world.json` | Pre-projected base map (countries and US states). Generated, do not edit. |
+| `src/data/maps/snapshots/<YYYY-MM-DD>/<overlay>.json` | One overlay's data for one fortnight. |
+| `src/lib/maps.ts` | Overlay registry (labels, legends, colours), projection, snapshot diff. |
+| `src/pages/Maps.tsx` | The page. |
+| `scripts/tests/maps-data.test.mjs` | Validates every snapshot. Run with `npm run test:maps`. |
+
+Overlay ids: `data-centers`, `autonomous-driving`, `autonomous-delivery`, `drone-delivery`, `internet`.
+
+## Fortnightly update
+
+1. `npm run maps:new-snapshot` copies the newest folder to a new one dated 14 days later.
+   Pass a date to override: `npm run maps:new-snapshot -- 2026-12-09`.
+2. Edit the copied files. Refresh the internet overlay with
+   `node scripts/maps/fetch-internet.mjs src/data/maps/snapshots/<date>/internet.json`.
+3. `npm run test:maps`, then commit and push.
+
+The folder date is the "Last updated" stamp. A fortnight may carry only the overlays that changed. An
+overlay missing from a folder shows its newest earlier file, with that file's date.
+
+Keep a site's `id` stable between fortnights. The timeline compares each snapshot with the one before
+it. A new `id`, a changed `status`, or a changed region `level` pulses on the map and counts in the
+"changes since" line.
+
+## Snapshot shape
+
+```json
+{
+  "sources": [{ "name": "Ookla Speedtest Global Index", "url": "https://www.speedtest.net/global-index" }],
+  "notes": "Coverage limits, in a sentence or two.",
+  "regions": { "USA": {}, "US-CA": {} },
+  "points": [{}]
+}
+```
+
+Region keys are ISO 3166-1 alpha-3 codes, or `US-XX` for a US state. When an overlay has any `US-XX`
+key the state layer is drawn and the `USA` record is used only for the tooltip on unlisted states.
+
+Points need `id`, `kind`, `name`, `lat`, `lon`, `place` (nearest city or town), `country` (alpha-3),
+`status` and `source`. Optional: `operator`, `detail`, `mw`, `mwBasis`, `vehicle`, `precision`.
+The test rejects a point whose coordinate falls outside its stated country.
+
+| Overlay | Point `kind:status` | Region fields |
+| --- | --- | --- |
+| `data-centers` | `data-center` with `operational`, `construction`, `proposed`, plus `mw` of 25 or more | none |
+| `autonomous-driving` | `robotaxi:driverless-public`, `driverless-limited`, `safety-driver`, `announced`. `factory:producing`, `construction`, `announced` | `level`: `driverless-service`, `driverless-permitted`, `supervised`, `restricted`. `fsd`: `unsupervised`, `supervised`, `none` |
+| `autonomous-delivery` | `sidewalk-robot` or `road-robot` with `commercial`, `pilot`, `announced` | `level`: `commercial`, `permitted`, `pilot`, `restricted` |
+| `drone-delivery` | `drone-hub` with `commercial`, `pilot`, `announced` | same levels as delivery |
+| `internet` | none | `fixedMbps`, `mobileMbps`, `usersPct`, `speedAsOf`, `usersAsOf` |
+
+Legal overlays also need `summary` and `source` on every region.
+
+## Adding an overlay
+
+Add an entry to `OVERLAYS` in `src/lib/maps.ts` and drop `<id>.json` into the newest snapshot folder.
+The dropdown, legend, list and timeline pick it up. Extend the `OverlayId` type to match.
+
+## Regenerating the base map
+
+Borders rarely change, so the atlas packages are not project dependencies.
+
+```sh
+npm i --no-save d3-geo@3 topojson-client@3 topojson-simplify@3 world-atlas@2 us-atlas@3
+node scripts/maps/build-world.mjs
+npm run test:maps
+```
+
+The test checks the runtime projection in `src/lib/maps.ts` against reference points that d3-geo
+wrote into `world.json`.

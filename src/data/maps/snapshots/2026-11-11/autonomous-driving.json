@@ -1,0 +1,649 @@
+{
+ "sources": [
+  {
+   "name": "IIHS: Highly automated vehicles, laws and regulations (November 2026)",
+   "url": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  {
+   "name": "Recording Law: Self-driving car laws by state (audited 29 Sep 2026)",
+   "url": "https://www.recordinglaw.com/us-laws/self-driving-car-laws/"
+  },
+  {
+   "name": "Recording Law: World self-driving car laws (audited 30 Sep 2026)",
+   "url": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/"
+  },
+  {
+   "name": "Robotaxi Report: Robotaxi cities 2026 (updated 9 Nov 2026)",
+   "url": "https://robotaxireport.com/data/robotaxi-cities-2026/"
+  },
+  {
+   "name": "The Charge Port: Robotaxi tracker (verified 9 Nov 2026)",
+   "url": "https://thechargeport.com/robotaxi-tracker"
+  },
+  {
+   "name": "robotaxi.fyi tracker (updated 23 Oct 2026)",
+   "url": "https://robotaxi.fyi/"
+  },
+  {
+   "name": "Wikipedia: Tesla Robotaxi",
+   "url": "https://en.wikipedia.org/wiki/Tesla_Robotaxi"
+  },
+  {
+   "name": "Not an FSD Tracker: global and EU tables (updated 11 Nov 2026)",
+   "url": "https://notanfsdtracker.com/"
+  },
+  {
+   "name": "Tesla Mag: FSD in Europe approved countries tracker (8 to 11 Nov 2026)",
+   "url": "https://www.tesla-mag.com/en/tesla-fsd-supervised-europe-approved-countries-tracker/"
+  }
+ ],
+ "notes": "Snapshot of 11 November 2026. US state law follows the IIHS table, with service status from robotaxi trackers; most non-US records rest on secondary trackers, law-firm notes and press, not regulators. Tesla \"unsupervised\" means the Tesla Robotaxi fleet in Texas and Florida only; no customer-owned car runs unsupervised.",
+ "regions": {
+  "ARE": {
+   "level": "driverless-service",
+   "fsd": "none",
+   "summary": "WeRide and Uber run fully driverless paid rides in Abu Dhabi and Dubai; a federal self-driving law was approved in 2026.",
+   "source": "https://investor.uber.com/news-events/news/press-release-details/2026/WeRide-and-Uber-Launch-Fully-Driverless-Robotaxi-Fare-Charging-Operations-in-Dubai-Accelerating-Autonomous-Mobility-in-the-Middle-East-2026-NSiF0EFKhd/default.aspx"
+  },
+  "AUS": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "The national Automated Vehicle Safety Law is not yet in force and is targeted for 2027; Tesla FSD Supervised is on sale.",
+   "source": "https://bnlaw.com.au/knowledge-hub/insights/automated-safety-law-2026"
+  },
+  "AUT": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Austria has made no national decision on Tesla FSD and is waiting for an EU-wide vote.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "BEL": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Tesla FSD Supervised was approved in June 2026; the Leuven autonomous shuttle still carries a safety officer.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "BRA": {
+   "level": "restricted",
+   "fsd": "none",
+   "summary": "Brazil has no autonomous vehicle law; Bill 1317/2023 is still pending in Congress.",
+   "source": "https://cms.law/en/int/publication/cms-automotive-outlook-2026/liability-and-the-regulation-for-autonomous-driving-in-latin-america"
+  },
+  "CAN": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Rules are provincial: Ontario runs a testing pilot to 2027 and British Columbia bans Level 3 and above; Waymo plans Toronto for 2028.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/"
+  },
+  "CHE": {
+   "level": "driverless-permitted",
+   "fsd": "none",
+   "summary": "A March 2025 ordinance allows driverless vehicles on approved routes under remote supervision; services are still in testing.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/"
+  },
+  "CHN": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Driverless robotaxis from Baidu, Pony.ai and WeRide carry the public in Wuhan, Beijing, Guangzhou and Shenzhen under city permits.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "CZE": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Czechia recognised the Dutch approval of Tesla FSD Supervised in September 2026 for driver-supervised use.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "DEU": {
+   "level": "driverless-permitted",
+   "fsd": "none",
+   "summary": "A 2021 law allows Level 4 driverless operation in approved areas with a permit, but no regular service runs yet; FSD awaits an EU decision.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/germany-self-driving-car-laws/"
+  },
+  "DNK": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Denmark recognised the Dutch approval of Tesla FSD Supervised in June 2026 and it is rolling out to customers.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "ESP": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "A national road-testing framework has applied since 2025; WeRide runs in Madrid with operators on board and Waymo plans riders in 2027.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "EST": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "A fixed-route shuttle at Tallinn airport runs with no operator on board; Estonia recognised Tesla FSD Supervised in May 2026.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "FIN": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Finland recognised the Dutch approval of Tesla FSD Supervised on 10 November 2026; rollout to customers was about to begin.",
+   "source": "https://www.tesla-mag.com/en/tesla-fsd-supervised-europe-approved-countries-tracker/"
+  },
+  "FRA": {
+   "level": "driverless-permitted",
+   "fsd": "none",
+   "summary": "Driverless vehicles may run only as automated road transport systems on set routes under a 2021 decree; Level 3 is allowed.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/france-self-driving-car-laws/"
+  },
+  "GBR": {
+   "level": "driverless-permitted",
+   "fsd": "none",
+   "summary": "Driverless passenger service permits opened in May 2026 under the Automated Vehicles Act 2024, but none is in use; Wayve rides in London have a safety driver.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/uk-self-driving-car-laws/"
+  },
+  "HKG": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Pilot licences only, with a trained backup operator required; Baidu Apollo Go is testing with no public riders.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/"
+  },
+  "HRV": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "Verne runs paid robotaxi rides in Zagreb with an operator on board, and driverless rides for invited passengers began in September 2026.",
+   "source": "https://techxplore.com/news/2026-10-croatia-fully-driverless-robotaxi.html"
+  },
+  "HUN": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Hungary has made no national decision on Tesla FSD and is following EU developments.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "IDN": {
+   "level": "restricted",
+   "fsd": "none",
+   "summary": "Indonesia has no autonomous vehicle legislation and relies on existing traffic law.",
+   "source": "https://www.hsfkramer.com/insights/2025-05/shifting-gears"
+  },
+  "IND": {
+   "level": "restricted",
+   "fsd": "none",
+   "summary": "India has no autonomous vehicle law and its transport minister has said driverless cars will not be allowed.",
+   "source": "https://www.autocarpro.in/News/government-will-never-allow-driverless-cars-in-india-gadkari-says-118320"
+  },
+  "IRL": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "No approval for Tesla FSD Supervised yet; Tesla is in talks with Irish regulators.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "ISR": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Supervised trials only; the transport ministry expects rules for Level 4 robotaxis to take effect in the second half of 2027.",
+   "source": "https://en.globes.co.il/en/article-1001551062"
+  },
+  "ITA": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Rules cover supervised road testing only; Italy has not recognised the Dutch approval of Tesla FSD and backs an EU-wide decision.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "JPN": {
+   "level": "driverless-permitted",
+   "fsd": "none",
+   "summary": "Level 4 driverless operation has been legal by prefectural permit since April 2023; Waymo plans public rides in Tokyo in 2027.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/japan-self-driving-car-laws/"
+  },
+  "KAZ": {
+   "level": "driverless-permitted",
+   "fsd": "none",
+   "summary": "Rules issued in mid-2026 set a three-year pilot that allows driverless taxis in Astana, Almaty and Kosshy; service is planned for 2027.",
+   "source": "https://astanatimes.com/2026/09/kazakhstan-plans-to-launch-driverless-taxi-service-in-2027/"
+  },
+  "KOR": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Paid autonomous rides are allowed only in designated pilot zones, and Seoul robotaxis still carry a safety supervisor.",
+   "source": "https://www.recordinglaw.com/world-laws/world-self-driving-car-laws/"
+  },
+  "LTU": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Lithuania recognised the Dutch approval of Tesla FSD Supervised in May 2026 and it is rolling out to customers.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "LUX": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Luxembourg has authorised supervised testing only, including a 12-month Level 4 pilot with Pony.ai.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "LVA": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Latvia recognised the Dutch approval of Tesla FSD Supervised in October 2026; rollout to customers was still pending.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "MEX": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "Mexico has no legal framework for autonomous driving and no federal bill; Tesla sells FSD Supervised there.",
+   "source": "https://cms.law/en/int/publication/cms-automotive-outlook-2026/liability-and-the-regulation-for-autonomous-driving-in-latin-america"
+  },
+  "MYS": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Malaysia allows testing under transport ministry guidelines, with a public test route in Cyberjaya; its roadmap targets Level 3 by 2030.",
+   "source": "https://www.thestar.com.my/news/nation/2026/08/13/malaysia-prepares-road-networks-and-laws-for-autonomous-vehicles-by-year-end-says-gobind"
+  },
+  "NLD": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "Driverless road experiments are allowed by permit, and the RDW approved Tesla FSD Supervised in April 2026, a first in Europe.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "NOR": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "A 2017 testing law governs trials; the Oslo pilot carries an operator on board, and Norway will follow the EU decision on Tesla FSD.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "NZL": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "There is no dedicated autonomous vehicle law, though existing law does not require a driver to be present; Tesla FSD Supervised is on sale.",
+   "source": "https://www.ansr.transport.govt.nz/about-us/queries/current-regulatory-settings-for-autonomous-vehicles"
+  },
+  "POL": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Poland requires local testing before any approval of Tesla FSD Supervised.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "PRT": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Portugal has not recognised the Dutch approval of Tesla FSD Supervised.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "QAT": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Pony.ai and Mowasalat run a public robotaxi service in Doha with a safety operator on board; driverless rides are invitation-only tests.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "ROU": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Romania has not recognised the Dutch approval of Tesla FSD; its road code bars drivers from releasing the steering wheel.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "RUS": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Robotaxis run under experimental regimes with a safety driver; a draft law to remove the driver would take effect in September 2027.",
+   "source": "https://www1.ru/en/news/2026/05/23/moskovskie-taksi-ostanutsia-bez-voditelei-v-2028-godu-tramvai-v-2030.html"
+  },
+  "SAU": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "WeRide robotaxis run on Uber in Riyadh with operators on board under a transport authority trial.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "SGP": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Grab and WeRide carry the public on approved routes in Punggol with a safety operator on board; Waymo plans driverless service in 2028.",
+   "source": "https://thechargeport.com/robotaxi-tracker"
+  },
+  "SVK": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Slovakia recognised the Dutch approval of Tesla FSD Supervised in October 2026 for driver-supervised use.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "SVN": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Slovenia approved Tesla FSD Supervised in September 2026 for driver-supervised use.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "SWE": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Only limited tests with trained drivers are permitted; Tesla FSD has public road testing approval but customers cannot use it.",
+   "source": "https://notanfsdtracker.com/eu-tracker"
+  },
+  "THA": {
+   "level": "restricted",
+   "fsd": "none",
+   "summary": "Thailand has no autonomous vehicle law; general traffic and vehicle law applies.",
+   "source": "https://law.asia/thailand-autonomous-vehicle-regulations/"
+  },
+  "TUR": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "A December 2024 regulation sets EU-style type approval for automated driving systems; no driverless service operates.",
+   "source": "https://www.mondaq.com/turkey/rail-road-cycling/1559294/the-first-legal-regulations-for-autonomous-vehicles-in-t%c3%bcrkiye-have-been-published"
+  },
+  "TWN": {
+   "level": "supervised",
+   "fsd": "none",
+   "summary": "Autonomous vehicles run only as time-limited sandbox trials under the 2019 unmanned vehicles experimentation act.",
+   "source": "https://law.asia/taiwan-navigates-path-autonomous-vehicle-law/"
+  },
+  "US-AK": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-AL": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver on board; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-AR": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "Driverless operation is allowed under a state-approved program, with a licensed driver on board for the first six months.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-AZ": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Waymo runs public driverless rides across metro Phoenix; state law lets Level 4 and 5 vehicles operate with no licensed driver.",
+   "source": "https://robotaxireport.com/data/robotaxi-cities-2026/"
+  },
+  "US-CA": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Waymo carries the public driverless in the Bay Area, Los Angeles and San Diego under DMV and CPUC permits; Tesla still uses safety drivers.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "US-CO": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Waymo driverless rides began in Denver in September 2026, by invitation at first; state law allows Level 4 and 5 deployment.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "US-CT": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing pilot only under state statute, with a human operator required.",
+   "source": "https://www.recordinglaw.com/us-laws/self-driving-car-laws/"
+  },
+  "US-DC": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing only: a test operator must be in the vehicle at first, and paid service is not authorized; a robotaxi bill is before the Council.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-DE": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-FL": {
+   "level": "driverless-service",
+   "fsd": "unsupervised",
+   "summary": "Waymo and Tesla Robotaxi both run driverless public rides in Miami, Orlando and Tampa; state law needs no permit or human driver.",
+   "source": "https://en.wikipedia.org/wiki/Tesla_Robotaxi"
+  },
+  "US-GA": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Waymo driverless rides run in Atlanta through the Uber app; state law lets Level 4 and 5 vehicles operate with no licensed driver.",
+   "source": "https://robotaxi.fyi/"
+  },
+  "US-HI": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing only under a 2020 pilot law; Level 4 and 5 vehicles need a licensed driver on board.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-IA": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of automated driving system vehicles with no licensed driver on board; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-ID": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-IL": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; Waymo has named Chicago as a future city but nothing operates yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-IN": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-KS": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows driverless deployment, with a licensed driver on board for the first 12 months in most passenger vehicles.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-KY": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows Level 4 and 5 vehicles with no licensed driver on board once a law enforcement plan is filed; no public service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-LA": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows driverless commercial trucks only; other vehicles are not addressed. Waymo lists New Orleans as a future city.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MA": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing only under MassDOT agreements, with a licensed test driver in the vehicle; no AV statute.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MD": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing is allowed with a licensed driver in the vehicle; there is no deployment law. Waymo lists Baltimore as a future city.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-ME": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State pilot rules cover testing only and do not require a licensed driver in the vehicle; no deployment law.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MI": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows driverless testing and manufacturer-run on-demand networks; Waymo plans Detroit but no public service runs yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MN": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; May Mobility shuttles run with an operator on board and Waymo has announced Minneapolis.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MO": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MS": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-MT": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "A 2025 law allows Level 4 and 5 deployment subject to state rulemaking; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-NC": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows Level 4 and 5 vehicles with no licensed driver; Waymo has named Charlotte as a future city but no service runs yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-ND": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-NE": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows Level 4 and 5 vehicles to operate with no operator present in the vehicle; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-NH": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver on board, subject to conditions; no public service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-NJ": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-NM": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "Fully autonomous vehicles may run with nobody on board after a filing with the state transport department; no public service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-NV": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Zoox carries the public driverless on the Las Vegas Strip and Waymo rides are by invitation; paid service needs a state permit.",
+   "source": "https://thechargeport.com/robotaxi-tracker"
+  },
+  "US-NY": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing pilot only, extended to April 2028; a licensed driver must be in the vehicle and there is no path to driverless service.",
+   "source": "https://www.recordinglaw.com/us-laws/self-driving-car-laws/"
+  },
+  "US-OH": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State rules cover testing only but allow it with no licensed driver in the vehicle; no deployment law or public service.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-OK": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows Level 4 and 5 vehicles with no licensed driver given a law enforcement plan and $1 million cover; no service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-OR": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law beyond naming ODOT as lead agency; Waymo has named Portland as a future city.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-PA": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "Highly automated vehicles may run with no driver under a PennDOT certificate; Waymo has announced Philadelphia and Pittsburgh.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-RI": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-SC": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-SD": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-TN": {
+   "level": "driverless-service",
+   "fsd": "supervised",
+   "summary": "Waymo opened driverless rides to everyone in Nashville in June 2026; state law lets Level 4 and 5 vehicles run with no licensed driver.",
+   "source": "https://thechargeport.com/robotaxi-tracker"
+  },
+  "US-TX": {
+   "level": "driverless-service",
+   "fsd": "unsupervised",
+   "summary": "Waymo and Tesla run driverless rides in Austin, Dallas, Houston and San Antonio; commercial driverless service needs TxDMV authorization.",
+   "source": "https://en.wikipedia.org/wiki/Tesla_Robotaxi"
+  },
+  "US-UT": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-VA": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No general AV statute: the only law covers driverless work-zone crash trucks. A licensing bill was carried over to 2027.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-VT": {
+   "level": "supervised",
+   "fsd": "supervised",
+   "summary": "Testing only; vehicles need a licensed driver on board and deployment is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-WA": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law covers testing only and allows it with no human operator on board; commercial driverless service is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-WI": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-WV": {
+   "level": "driverless-permitted",
+   "fsd": "supervised",
+   "summary": "State law allows deployment of Level 4 and 5 vehicles with no licensed driver; no public robotaxi service yet.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "US-WY": {
+   "level": "restricted",
+   "fsd": "supervised",
+   "summary": "No state autonomous vehicle law; driverless operation is not addressed.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "USA": {
+   "level": "driverless-service",
+   "fsd": "unsupervised",
+   "summary": "Law is set state by state: driverless robotaxis carry the public in eight states, while others allow testing only or have no AV law.",
+   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+  },
+  "ZAF": {
+   "level": "restricted",
+   "fsd": "none",
+   "summary": "South Africa has no legislation for autonomous vehicles, which cannot use public roads until rules exist.",
+   "source": "https://dealerfloor.co.za/industry-news/penalising-the-unpunishable"
+  }
+ }
+}

@@ -503,7 +503,7 @@ console.log('bounded production route validation: PASS');
 
 test('selector targets page and edition routes, skips known non-web paths, and fails unknown paths closed', async () => {
   assert.deepEqual(FULL_ROUTES, [
-    '/', '/tools', '/model-watch', '/timeline', '/newsletter', '/countdown', '/leaderboard', '/about',
+    '/', '/tools', '/model-watch', '/timeline', '/maps', '/newsletter', '/countdown', '/leaderboard', '/about',
     '/edition/edition-2026-06-10-ai-landscape',
   ]);
   assert.deepEqual(await selectMobileAudit(['src/pages/Tools.tsx']), {

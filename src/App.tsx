@@ -12,6 +12,7 @@ const ToolsPage = lazy(() => import('./pages/Tools'));
 const ModelWatch = lazy(() => import('./pages/ModelWatch'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Timeline = lazy(() => import('./pages/Timeline'));
+const Maps = lazy(() => import('./pages/Maps'));
 const Newsletter = lazy(() => import('./pages/Newsletter'));
 const Timer = lazy(() => import('./pages/Timer'));
 
@@ -76,6 +77,7 @@ function App() {
             <Route path="/model-watch" element={<ModelWatch />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/timeline" element={<Timeline />} />
+            <Route path="/maps" element={<Maps />} />
             <Route path="/newsletter" element={<Newsletter />} />
             <Route path="/timer" element={<Timer />} />
             <Route path="/about" element={

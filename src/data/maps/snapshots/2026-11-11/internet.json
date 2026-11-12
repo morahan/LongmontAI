@@ -1,0 +1,1448 @@
+{
+  "sources": [
+    {
+      "name": "Ookla Speedtest Global Index",
+      "url": "https://www.speedtest.net/global-index"
+    },
+    {
+      "name": "ITU via World Bank, individuals using the internet",
+      "url": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    }
+  ],
+  "notes": "Speeds are median downloads in Mbps from Ookla's 2026-09 Speedtest Global Index, a rolling three-month aggregate. Ookla ranks only countries with enough tests, so many have no speed. Population online is each country's latest ITU estimate as published by the World Bank, left out when more than 10 years old.",
+  "regions": {
+    "ABW": {
+      "usersPct": 97.2,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "AFG": {
+      "fixedMbps": 5.75,
+      "mobileMbps": 20.34,
+      "speedAsOf": "2026-09",
+      "usersPct": 16.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "AGO": {
+      "fixedMbps": 21.19,
+      "speedAsOf": "2026-09",
+      "usersPct": 40.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ALB": {
+      "fixedMbps": 91.87,
+      "mobileMbps": 137.97,
+      "speedAsOf": "2026-09",
+      "usersPct": 85.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "AND": {
+      "usersPct": 94.4,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "ARE": {
+      "fixedMbps": 387.85,
+      "mobileMbps": 681.14,
+      "speedAsOf": "2026-09",
+      "usersPct": 100,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ARG": {
+      "fixedMbps": 146.7,
+      "mobileMbps": 68.25,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ARM": {
+      "fixedMbps": 91.51,
+      "mobileMbps": 75.89,
+      "speedAsOf": "2026-09",
+      "usersPct": 81.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ATG": {
+      "fixedMbps": 43.95,
+      "speedAsOf": "2026-09",
+      "usersPct": 72.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "AUS": {
+      "fixedMbps": 180.58,
+      "mobileMbps": 123.36,
+      "speedAsOf": "2026-09",
+      "usersPct": 96.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "AUT": {
+      "fixedMbps": 110.63,
+      "mobileMbps": 116.03,
+      "speedAsOf": "2026-09",
+      "usersPct": 91.9,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "AZE": {
+      "fixedMbps": 92.94,
+      "mobileMbps": 98.92,
+      "speedAsOf": "2026-09",
+      "usersPct": 90.8,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BDI": {
+      "usersPct": 8.6,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "BEL": {
+      "fixedMbps": 142.49,
+      "mobileMbps": 144.32,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BEN": {
+      "fixedMbps": 46.05,
+      "speedAsOf": "2026-09",
+      "usersPct": 34,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BFA": {
+      "fixedMbps": 48.43,
+      "speedAsOf": "2026-09",
+      "usersPct": 28.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BGD": {
+      "fixedMbps": 71.46,
+      "mobileMbps": 40.12,
+      "speedAsOf": "2026-09",
+      "usersPct": 53.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BGR": {
+      "fixedMbps": 94.48,
+      "mobileMbps": 206.49,
+      "speedAsOf": "2026-09",
+      "usersPct": 82.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BHR": {
+      "fixedMbps": 180.41,
+      "mobileMbps": 241.37,
+      "speedAsOf": "2026-09",
+      "usersPct": 100,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BHS": {
+      "fixedMbps": 93.25,
+      "speedAsOf": "2026-09",
+      "usersPct": 92.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BIH": {
+      "fixedMbps": 37.45,
+      "mobileMbps": 25.84,
+      "speedAsOf": "2026-09",
+      "usersPct": 86.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BLR": {
+      "usersPct": 94.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "BLZ": {
+      "fixedMbps": 52.42,
+      "speedAsOf": "2026-09",
+      "usersPct": 80,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BMU": {
+      "usersPct": 98.4,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "BOL": {
+      "fixedMbps": 77.17,
+      "mobileMbps": 23.45,
+      "speedAsOf": "2026-09",
+      "usersPct": 79.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BRA": {
+      "fixedMbps": 243.69,
+      "mobileMbps": 274.38,
+      "speedAsOf": "2026-09",
+      "usersPct": 84.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BRB": {
+      "fixedMbps": 133.77,
+      "speedAsOf": "2026-09",
+      "usersPct": 70.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BRN": {
+      "fixedMbps": 85.67,
+      "speedAsOf": "2026-09",
+      "usersPct": 96.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "BTN": {
+      "usersPct": 91.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "BWA": {
+      "fixedMbps": 55.08,
+      "speedAsOf": "2026-09",
+      "usersPct": 57.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CAF": {
+      "usersPct": 13.8,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "CAN": {
+      "fixedMbps": 259.52,
+      "mobileMbps": 87.32,
+      "speedAsOf": "2026-09",
+      "usersPct": 94.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CHE": {
+      "fixedMbps": 284.94,
+      "mobileMbps": 128.06,
+      "speedAsOf": "2026-09",
+      "usersPct": 97.3,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CHL": {
+      "fixedMbps": 359.4,
+      "mobileMbps": 80.75,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CHN": {
+      "fixedMbps": 224.77,
+      "mobileMbps": 170.11,
+      "speedAsOf": "2026-09",
+      "usersPct": 91.6,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CIV": {
+      "fixedMbps": 62.87,
+      "speedAsOf": "2026-09",
+      "usersPct": 41.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CMR": {
+      "fixedMbps": 15.62,
+      "speedAsOf": "2026-09",
+      "usersPct": 46.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "COD": {
+      "fixedMbps": 46.44,
+      "speedAsOf": "2026-09",
+      "usersPct": 19.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "COG": {
+      "usersPct": 47.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "COL": {
+      "fixedMbps": 229.32,
+      "mobileMbps": 47.55,
+      "speedAsOf": "2026-09",
+      "usersPct": 79.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "COM": {
+      "usersPct": 32.5,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "CPV": {
+      "usersPct": 74.7,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "CRI": {
+      "fixedMbps": 184.72,
+      "mobileMbps": 71.3,
+      "speedAsOf": "2026-09",
+      "usersPct": 87.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CUB": {
+      "usersPct": 70.5,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "CUW": {
+      "usersPct": 68.1,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "CYM": {
+      "usersPct": 81.1,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "CYP": {
+      "fixedMbps": 151.03,
+      "mobileMbps": 109.48,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "CZE": {
+      "fixedMbps": 92.88,
+      "mobileMbps": 95.02,
+      "speedAsOf": "2026-09",
+      "usersPct": 87.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "DEU": {
+      "fixedMbps": 103.26,
+      "mobileMbps": 299.8,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "DJI": {
+      "usersPct": 65.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "DMA": {
+      "usersPct": 82,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "DNK": {
+      "fixedMbps": 282.61,
+      "mobileMbps": 166.18,
+      "speedAsOf": "2026-09",
+      "usersPct": 99.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "DOM": {
+      "fixedMbps": 74.4,
+      "mobileMbps": 124.76,
+      "speedAsOf": "2026-09",
+      "usersPct": 91,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "DZA": {
+      "fixedMbps": 93.55,
+      "mobileMbps": 77.67,
+      "speedAsOf": "2026-09",
+      "usersPct": 77.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ECU": {
+      "fixedMbps": 208.1,
+      "mobileMbps": 68.82,
+      "speedAsOf": "2026-09",
+      "usersPct": 77.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "EGY": {
+      "fixedMbps": 107.71,
+      "mobileMbps": 53.69,
+      "speedAsOf": "2026-09",
+      "usersPct": 74.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ERI": {
+      "usersPct": 14.3,
+      "usersAsOf": "2020",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "ESP": {
+      "fixedMbps": 266.98,
+      "mobileMbps": 88.11,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "EST": {
+      "fixedMbps": 94.63,
+      "mobileMbps": 144.82,
+      "speedAsOf": "2026-09",
+      "usersPct": 92.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ETH": {
+      "fixedMbps": 11.04,
+      "speedAsOf": "2026-09",
+      "usersPct": 21.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "FIN": {
+      "fixedMbps": 175.95,
+      "mobileMbps": 123.36,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "FJI": {
+      "usersPct": 74.7,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "FRA": {
+      "fixedMbps": 342.55,
+      "mobileMbps": 140.89,
+      "speedAsOf": "2026-09",
+      "usersPct": 88.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "FRO": {
+      "usersPct": 97.6,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "FSM": {
+      "usersPct": 39.5,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "GAB": {
+      "fixedMbps": 43.4,
+      "speedAsOf": "2026-09",
+      "usersPct": 68.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GBR": {
+      "fixedMbps": 192.62,
+      "mobileMbps": 78.59,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GEO": {
+      "fixedMbps": 51.12,
+      "mobileMbps": 147.46,
+      "speedAsOf": "2026-09",
+      "usersPct": 83.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GHA": {
+      "fixedMbps": 59.23,
+      "mobileMbps": 33.78,
+      "speedAsOf": "2026-09",
+      "usersPct": 72.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GIN": {
+      "fixedMbps": 18.19,
+      "speedAsOf": "2026-09",
+      "usersPct": 33.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GMB": {
+      "usersPct": 49.5,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "GNB": {
+      "usersPct": 29.8,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "GNQ": {
+      "usersPct": 63.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "GRC": {
+      "fixedMbps": 91.85,
+      "mobileMbps": 137,
+      "speedAsOf": "2026-09",
+      "usersPct": 86.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GRD": {
+      "fixedMbps": 90.31,
+      "speedAsOf": "2026-09",
+      "usersPct": 70.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GRL": {
+      "usersPct": 69.5,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "GTM": {
+      "fixedMbps": 99.83,
+      "mobileMbps": 65.15,
+      "speedAsOf": "2026-09",
+      "usersPct": 60.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "GUM": {
+      "usersPct": 80.5,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "GUY": {
+      "fixedMbps": 158.47,
+      "speedAsOf": "2026-09",
+      "usersPct": 83,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "HKG": {
+      "fixedMbps": 365.74,
+      "mobileMbps": 90.79,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "HND": {
+      "fixedMbps": 99.66,
+      "mobileMbps": 44.16,
+      "speedAsOf": "2026-09",
+      "usersPct": 58.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "HRV": {
+      "fixedMbps": 93.74,
+      "mobileMbps": 124.12,
+      "speedAsOf": "2026-09",
+      "usersPct": 83.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "HTI": {
+      "fixedMbps": 47.76,
+      "speedAsOf": "2026-09",
+      "usersPct": 47.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "HUN": {
+      "fixedMbps": 273.43,
+      "mobileMbps": 96.66,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "IDN": {
+      "fixedMbps": 52.62,
+      "mobileMbps": 70.77,
+      "speedAsOf": "2026-09",
+      "usersPct": 72.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "IND": {
+      "fixedMbps": 63.96,
+      "mobileMbps": 126.92,
+      "speedAsOf": "2026-09",
+      "usersPct": 70,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "IRL": {
+      "fixedMbps": 210.22,
+      "mobileMbps": 75.03,
+      "speedAsOf": "2026-09",
+      "usersPct": 97.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "IRN": {
+      "usersPct": 85.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "IRQ": {
+      "fixedMbps": 51.46,
+      "mobileMbps": 71.89,
+      "speedAsOf": "2026-09",
+      "usersPct": 81.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ISL": {
+      "fixedMbps": 280.47,
+      "speedAsOf": "2026-09",
+      "usersPct": 98.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ISR": {
+      "fixedMbps": 301.72,
+      "mobileMbps": 71.47,
+      "speedAsOf": "2026-09",
+      "usersPct": 88.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ITA": {
+      "fixedMbps": 113.07,
+      "mobileMbps": 87.07,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "JAM": {
+      "fixedMbps": 93.57,
+      "speedAsOf": "2026-09",
+      "usersPct": 90.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "JOR": {
+      "fixedMbps": 198.91,
+      "mobileMbps": 49.57,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "JPN": {
+      "fixedMbps": 242.89,
+      "mobileMbps": 67.6,
+      "speedAsOf": "2026-09",
+      "usersPct": 85.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KAZ": {
+      "fixedMbps": 90.42,
+      "mobileMbps": 93,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KEN": {
+      "fixedMbps": 25.58,
+      "mobileMbps": 43.07,
+      "speedAsOf": "2026-09",
+      "usersPct": 35,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KGZ": {
+      "fixedMbps": 89.07,
+      "mobileMbps": 51.91,
+      "speedAsOf": "2026-09",
+      "usersPct": 92,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KHM": {
+      "fixedMbps": 54.94,
+      "mobileMbps": 123.88,
+      "speedAsOf": "2026-09",
+      "usersPct": 68.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KIR": {
+      "usersPct": 89.4,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "KNA": {
+      "fixedMbps": 90.41,
+      "speedAsOf": "2026-09",
+      "usersPct": 76.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KOR": {
+      "fixedMbps": 253.97,
+      "mobileMbps": 244.17,
+      "speedAsOf": "2026-09",
+      "usersPct": 97.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "KWT": {
+      "fixedMbps": 270.55,
+      "mobileMbps": 410.79,
+      "speedAsOf": "2026-09",
+      "usersPct": 100,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LAO": {
+      "fixedMbps": 60.71,
+      "mobileMbps": 44.35,
+      "speedAsOf": "2026-09",
+      "usersPct": 65.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LBN": {
+      "fixedMbps": 21.69,
+      "mobileMbps": 37.4,
+      "speedAsOf": "2026-09",
+      "usersPct": 80.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LBR": {
+      "usersPct": 32.2,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "LBY": {
+      "fixedMbps": 11.11,
+      "mobileMbps": 19.92,
+      "speedAsOf": "2026-09",
+      "usersPct": 82,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LCA": {
+      "usersPct": 68.2,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "LIE": {
+      "usersPct": 98.3,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "LKA": {
+      "fixedMbps": 36.88,
+      "mobileMbps": 57.24,
+      "speedAsOf": "2026-09",
+      "usersPct": 54.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LSO": {
+      "usersPct": 51.8,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "LTU": {
+      "fixedMbps": 191.91,
+      "mobileMbps": 123.23,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LUX": {
+      "fixedMbps": 219.83,
+      "speedAsOf": "2026-09",
+      "usersPct": 99.1,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "LVA": {
+      "fixedMbps": 130.29,
+      "mobileMbps": 124.54,
+      "speedAsOf": "2026-09",
+      "usersPct": 92.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MAC": {
+      "fixedMbps": 327.4,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MAR": {
+      "fixedMbps": 56.69,
+      "mobileMbps": 68.41,
+      "speedAsOf": "2026-09",
+      "usersPct": 91.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MCO": {
+      "usersPct": 99,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "MDA": {
+      "fixedMbps": 160.67,
+      "mobileMbps": 68.1,
+      "speedAsOf": "2026-09",
+      "usersPct": 77.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MDG": {
+      "fixedMbps": 28.9,
+      "speedAsOf": "2026-09",
+      "usersPct": 18.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MDV": {
+      "usersPct": 85.2,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "MEX": {
+      "fixedMbps": 119.81,
+      "mobileMbps": 47.74,
+      "speedAsOf": "2026-09",
+      "usersPct": 83.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MHL": {
+      "usersPct": 65.9,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "MKD": {
+      "fixedMbps": 59.57,
+      "mobileMbps": 174.22,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.1,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MLI": {
+      "fixedMbps": 30.78,
+      "speedAsOf": "2026-09",
+      "usersPct": 36.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MLT": {
+      "fixedMbps": 209.32,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MMR": {
+      "fixedMbps": 23.46,
+      "speedAsOf": "2026-09",
+      "usersPct": 45.4,
+      "usersAsOf": "2020",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MNE": {
+      "fixedMbps": 91.77,
+      "speedAsOf": "2026-09",
+      "usersPct": 88.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MNG": {
+      "fixedMbps": 85.48,
+      "speedAsOf": "2026-09",
+      "usersPct": 85.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MOZ": {
+      "fixedMbps": 48.85,
+      "speedAsOf": "2026-09",
+      "usersPct": 20.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MRT": {
+      "fixedMbps": 59.65,
+      "speedAsOf": "2026-09",
+      "usersPct": 45.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MUS": {
+      "fixedMbps": 62.54,
+      "speedAsOf": "2026-09",
+      "usersPct": 73.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "MWI": {
+      "usersPct": 19,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "MYS": {
+      "fixedMbps": 181.24,
+      "mobileMbps": 169.81,
+      "speedAsOf": "2026-09",
+      "usersPct": 98,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NAM": {
+      "fixedMbps": 18.2,
+      "speedAsOf": "2026-09",
+      "usersPct": 64.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NCL": {
+      "usersPct": 82,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "NER": {
+      "usersPct": 15.6,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "NGA": {
+      "fixedMbps": 36.77,
+      "mobileMbps": 43.43,
+      "speedAsOf": "2026-09",
+      "usersPct": 41.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NIC": {
+      "fixedMbps": 104.97,
+      "mobileMbps": 28.15,
+      "speedAsOf": "2026-09",
+      "usersPct": 61.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NLD": {
+      "fixedMbps": 229.36,
+      "mobileMbps": 159.99,
+      "speedAsOf": "2026-09",
+      "usersPct": 97,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NOR": {
+      "fixedMbps": 158.33,
+      "mobileMbps": 141.73,
+      "speedAsOf": "2026-09",
+      "usersPct": 99,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NPL": {
+      "fixedMbps": 88.05,
+      "speedAsOf": "2026-09",
+      "usersPct": 46.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "NRU": {
+      "usersPct": 83,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "NZL": {
+      "fixedMbps": 215.1,
+      "mobileMbps": 148.06,
+      "speedAsOf": "2026-09",
+      "usersPct": 93.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "OMN": {
+      "fixedMbps": 109.19,
+      "mobileMbps": 169.61,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PAK": {
+      "fixedMbps": 19.07,
+      "mobileMbps": 32.36,
+      "speedAsOf": "2026-09",
+      "usersPct": 57.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PAN": {
+      "fixedMbps": 233.11,
+      "mobileMbps": 39.58,
+      "speedAsOf": "2026-09",
+      "usersPct": 72.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PER": {
+      "fixedMbps": 255.42,
+      "mobileMbps": 63.15,
+      "speedAsOf": "2026-09",
+      "usersPct": 82,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PHL": {
+      "fixedMbps": 119.03,
+      "mobileMbps": 66.97,
+      "speedAsOf": "2026-09",
+      "usersPct": 67.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PLW": {
+      "usersPct": 83.9,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "PNG": {
+      "fixedMbps": 67.23,
+      "speedAsOf": "2026-09",
+      "usersPct": 18.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "POL": {
+      "fixedMbps": 221.85,
+      "mobileMbps": 113.22,
+      "speedAsOf": "2026-09",
+      "usersPct": 88.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PRI": {
+      "usersPct": 87.3,
+      "usersAsOf": "2022",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "PRT": {
+      "fixedMbps": 260.2,
+      "mobileMbps": 130.91,
+      "speedAsOf": "2026-09",
+      "usersPct": 88.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PRY": {
+      "fixedMbps": 161.97,
+      "mobileMbps": 25.76,
+      "speedAsOf": "2026-09",
+      "usersPct": 81.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PSE": {
+      "fixedMbps": 92.68,
+      "speedAsOf": "2026-09",
+      "usersPct": 86.6,
+      "usersAsOf": "2023",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "PYF": {
+      "usersPct": 72.7,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "QAT": {
+      "fixedMbps": 235.57,
+      "mobileMbps": 526.41,
+      "speedAsOf": "2026-09",
+      "usersPct": 98.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ROU": {
+      "fixedMbps": 277.68,
+      "mobileMbps": 85.44,
+      "speedAsOf": "2026-09",
+      "usersPct": 91.3,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "RUS": {
+      "usersPct": 94.4,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "RWA": {
+      "fixedMbps": 39.79,
+      "speedAsOf": "2026-09",
+      "usersPct": 31.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SAU": {
+      "fixedMbps": 177.5,
+      "mobileMbps": 222.29,
+      "speedAsOf": "2026-09",
+      "usersPct": 100,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SDN": {
+      "fixedMbps": 44.15,
+      "speedAsOf": "2026-09",
+      "usersPct": 18.6,
+      "usersAsOf": "2017",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SEN": {
+      "fixedMbps": 49.27,
+      "speedAsOf": "2026-09",
+      "usersPct": 60.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SGP": {
+      "fixedMbps": 476.02,
+      "mobileMbps": 163.73,
+      "speedAsOf": "2026-09",
+      "usersPct": 94.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SLB": {
+      "usersPct": 29,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "SLE": {
+      "usersPct": 25.1,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "SLV": {
+      "fixedMbps": 139.62,
+      "mobileMbps": 39.53,
+      "speedAsOf": "2026-09",
+      "usersPct": 66.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SMR": {
+      "usersPct": 97.4,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "SOM": {
+      "fixedMbps": 32.56,
+      "speedAsOf": "2026-09",
+      "usersPct": 27.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SRB": {
+      "fixedMbps": 116.13,
+      "mobileMbps": 158.43,
+      "speedAsOf": "2026-09",
+      "usersPct": 87.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SSD": {
+      "usersPct": 6.7,
+      "usersAsOf": "2019",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "STP": {
+      "usersPct": 59.1,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "SUR": {
+      "fixedMbps": 192.09,
+      "speedAsOf": "2026-09",
+      "usersPct": 87.4,
+      "usersAsOf": "2023",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SVK": {
+      "fixedMbps": 119.56,
+      "mobileMbps": 124.45,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SVN": {
+      "fixedMbps": 213.43,
+      "mobileMbps": 145.59,
+      "speedAsOf": "2026-09",
+      "usersPct": 90.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SWE": {
+      "fixedMbps": 199.95,
+      "mobileMbps": 133.18,
+      "speedAsOf": "2026-09",
+      "usersPct": 95.8,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "SWZ": {
+      "usersPct": 63.4,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "SYC": {
+      "usersPct": 87.8,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "SYR": {
+      "usersPct": 33.8,
+      "usersAsOf": "2018",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "TCD": {
+      "usersPct": 12.6,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "TGO": {
+      "fixedMbps": 34.08,
+      "speedAsOf": "2026-09",
+      "usersPct": 39.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "THA": {
+      "fixedMbps": 303.68,
+      "mobileMbps": 133.71,
+      "speedAsOf": "2026-09",
+      "usersPct": 90.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "TJK": {
+      "fixedMbps": 56.94,
+      "speedAsOf": "2026-09",
+      "usersPct": 55.8,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "TKM": {
+      "usersPct": 18,
+      "usersAsOf": "2016",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "TLS": {
+      "usersPct": 35,
+      "usersAsOf": "2021",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "TON": {
+      "usersPct": 67.4,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "TTO": {
+      "fixedMbps": 170.65,
+      "speedAsOf": "2026-09",
+      "usersPct": 82.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "TUN": {
+      "fixedMbps": 23.27,
+      "mobileMbps": 49.01,
+      "speedAsOf": "2026-09",
+      "usersPct": 76.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "TUR": {
+      "fixedMbps": 86.59,
+      "mobileMbps": 129.41,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.8,
+      "usersAsOf": "2025",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "TWN": {
+      "fixedMbps": 293.82,
+      "mobileMbps": 110.77,
+      "speedAsOf": "2026-09",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "TZA": {
+      "fixedMbps": 41.63,
+      "mobileMbps": 32.41,
+      "speedAsOf": "2026-09",
+      "usersPct": 31.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "UGA": {
+      "fixedMbps": 37.55,
+      "speedAsOf": "2026-09",
+      "usersPct": 8.9,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "UKR": {
+      "fixedMbps": 93.01,
+      "mobileMbps": 94.75,
+      "speedAsOf": "2026-09",
+      "usersPct": 82.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "URY": {
+      "fixedMbps": 200.72,
+      "speedAsOf": "2026-09",
+      "usersPct": 92,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "USA": {
+      "fixedMbps": 314.35,
+      "mobileMbps": 190.59,
+      "speedAsOf": "2026-09",
+      "usersPct": 94.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "UZB": {
+      "fixedMbps": 94.71,
+      "mobileMbps": 66.81,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.5,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "VCT": {
+      "usersPct": 76.2,
+      "usersAsOf": "2024",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "VEN": {
+      "fixedMbps": 131.51,
+      "mobileMbps": 29.21,
+      "speedAsOf": "2026-09",
+      "usersPct": 76.7,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "VGB": {
+      "usersPct": 77.7,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "VIR": {
+      "usersPct": 64.4,
+      "usersAsOf": "2017",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "VNM": {
+      "fixedMbps": 297.64,
+      "mobileMbps": 230.31,
+      "speedAsOf": "2026-09",
+      "usersPct": 84.2,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "VUT": {
+      "usersPct": 22.4,
+      "usersAsOf": "2015",
+      "source": "https://data.worldbank.org/indicator/IT.NET.USER.ZS"
+    },
+    "XKX": {
+      "fixedMbps": 90.58,
+      "speedAsOf": "2026-09",
+      "usersPct": 89.4,
+      "usersAsOf": "2018",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "YEM": {
+      "fixedMbps": 16.02,
+      "speedAsOf": "2026-09",
+      "usersPct": 17.5,
+      "usersAsOf": "2019",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ZAF": {
+      "fixedMbps": 50.83,
+      "mobileMbps": 69.04,
+      "speedAsOf": "2026-09",
+      "usersPct": 78.4,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ZMB": {
+      "fixedMbps": 33.56,
+      "speedAsOf": "2026-09",
+      "usersPct": 17.1,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    },
+    "ZWE": {
+      "fixedMbps": 24.05,
+      "speedAsOf": "2026-09",
+      "usersPct": 41.6,
+      "usersAsOf": "2024",
+      "source": "https://www.speedtest.net/global-index"
+    }
+  }
+}

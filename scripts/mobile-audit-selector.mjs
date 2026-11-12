@@ -5,6 +5,7 @@ export const FULL_ROUTES = [
   '/tools',
   '/model-watch',
   '/timeline',
+  '/maps',
   '/newsletter',
   '/countdown',
   '/leaderboard',
@@ -17,6 +18,8 @@ const PAGE_ROUTES = new Map([
   ['src/pages/Tools.tsx', ['/tools']],
   ['src/pages/ModelWatch.tsx', ['/model-watch']],
   ['src/pages/Timeline.tsx', ['/timeline']],
+  ['src/pages/Maps.tsx', ['/maps']],
+  ['src/lib/maps.ts', ['/maps']],
   ['src/pages/Newsletter.tsx', ['/newsletter']],
   ['src/pages/Countdown.tsx', ['/countdown']],
   ['src/pages/Leaderboard.tsx', ['/leaderboard']],
@@ -78,6 +81,12 @@ export async function selectMobileAudit(paths, options = {}) {
 
     if (PAGE_ROUTES.has(path)) {
       addRoutes(routes, PAGE_ROUTES.get(path));
+      reasons.push(path);
+      continue;
+    }
+
+    if (path.startsWith('src/data/maps/')) {
+      addRoutes(routes, ['/maps']);
       reasons.push(path);
       continue;
     }

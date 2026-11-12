@@ -1,0 +1,1495 @@
+{
+ "sources": [
+  {
+   "name": "ITIF: States Should Learn from China on Sidewalk Delivery Robots (Mar 2026)",
+   "url": "https://itif.org/publications/2026/03/30/states-should-learn-from-china-on-sidewalk-delivery-robots/"
+  },
+  {
+   "name": "R-List: US states that have legalised personal delivery devices",
+   "url": "https://insights.rlist.io/2020/12/states-that-legalized-pdds.html"
+  },
+  {
+   "name": "PYMNTS: Robot Delivery Is Booming and Cities Want Their Cut (2026)",
+   "url": "https://www.pymnts.com/news/artificial-intelligence/2026/robot-delivery-is-booming-cities-want-their-cut"
+  },
+  {
+   "name": "The Robot Report: Serve Robotics fleet and market coverage",
+   "url": "https://www.therobotreport.com/serve-robotics-has-deployed-2000-delivery-robots-across-u-s/"
+  },
+  {
+   "name": "Serve Robotics investor releases",
+   "url": "https://investors.serverobotics.com/news-releases/news-release-details/serve-robotics-expands-chicago-bringing-autonomous-deliveries"
+  },
+  {
+   "name": "Coco Robotics press releases",
+   "url": "https://www.streetinsider.com/PRNewswire/Coco+Robotics+Brings+Autonomous+Delivery+to+Washington%2C+D.C./26772312.html"
+  },
+  {
+   "name": "Avride, Wonder and Grubhub expansion (Robotics 24/7, PhillyVoice)",
+   "url": "https://www.robotics247.com/article/wonder-expands-avride-partnership-for-more-autonomous-deliveries-on-grubhub-marketplace"
+  },
+  {
+   "name": "Starship Technologies press: Finland and grocery pivot",
+   "url": "https://www.starship.xyz/press/one-million-deliveries-finland/"
+  },
+  {
+   "name": "Starship Technologies: Doubles Down on Grocery Delivery (Jun 2026)",
+   "url": "https://www.starship.xyz/press/starship-technologies-doubles-down-on-grocery/"
+  },
+  {
+   "name": "Retail Gazette: UK pavement robot law change (Jun 2026)",
+   "url": "https://www.retailgazette.co.uk/blog/2026/06/delivery-robots-could-be-heading-for-englands-pavements-under-new-law-change/"
+  },
+  {
+   "name": "METI Japan: Road Traffic Act notification system for delivery robots",
+   "url": "https://www.meti.go.jp/english/press/2023/0327_001.html"
+  },
+  {
+   "name": "Korea JoongAng Daily: robots can legally use sidewalks",
+   "url": "https://www.koreajoongangdaily.com/business/robots-can-now-legally-roam-koreas-sidewalks/11561458"
+  },
+  {
+   "name": "Neolix press releases and Gasgoo city permit reports",
+   "url": "https://tools.prnewswire.com/en-us/live/20823/release/20260330EN22205"
+  },
+  {
+   "name": "Abu Dhabi Mobility: Masdar City autonomous delivery pilot",
+   "url": "https://admobility.gov.ae/en/news/pilot-autonomous-delivery-services-in-collaboration-with-masdar-city"
+  },
+  {
+   "name": "State statutes and legislature documents (see per-region source)",
+   "url": "https://azleg.gov/ars/28/01222.htm"
+  }
+ ],
+ "notes": "Ground delivery robots and driverless delivery vehicles as of 11 Nov 2026, one marker per city per operator. Starship ended US campus service in mid-2026 so those sites are omitted; China, Finland and campus fleets are far larger than the markers shown, and about 20 US states with no located statute are left as no data.",
+ "regions": {
+  "ARE": {
+   "level": "commercial",
+   "summary": "Dubai and Abu Dhabi license delivery robots and driverless delivery vans; Yango robots are cleared for public walkways.",
+   "source": "https://www.khaleejtimes.com/kt-network/yango-group-and-noon-announce-strategic-partnership-to-scale-autonomous-robot-delivery-across-the-gcc"
+  },
+  "AUS": {
+   "level": "pilot",
+   "summary": "Delivery robots are not automatically legal and rely on local approval; the first footpath service began on the Gold Coast in 2026.",
+   "source": "https://www.sbs.com.au/news/article/delivery-robots-australia-autonomous-door-dash-serve-robotics/yxfdzsc2n"
+  },
+  "AUT": {
+   "level": "pilot",
+   "summary": "Trials only: Zelos completed its first European unmanned delivery vehicle deployment in Linz.",
+   "source": "https://www.flanders-china.be/en/newsletterpublications/chinese-autonomous-delivery-vehicles-enter-the-international-market"
+  },
+  "BEL": {
+   "level": "pilot",
+   "summary": "Trials only: Collect&Go tested a remotely supervised Clevon vehicle in Leuven in 2026; full autonomy is not yet permitted.",
+   "source": "https://www.electrive.com/2026/04/08/online-supermarket-tests-autonomous-delivery-vehicles-in-belgium/"
+  },
+  "CAN": {
+   "level": "pilot",
+   "summary": "City by city: Toronto banned sidewalk robots in 2021, while Vancouver approved a six-month Serve Robotics pilot in May 2026.",
+   "source": "https://www.ctvnews.ca/vancouver/article/delivery-robots-rolling-onto-vancouvers-sidewalks-after-council-approves-pilot-project/"
+  },
+  "CHE": {
+   "level": "pilot",
+   "summary": "Driverless delivery vans run as pilots: LOXO and Planzer operate an automated parcel van on public roads in Bern.",
+   "source": "https://www.autonomousvehicleinternational.com/news/last-mile-delivery/loxo-and-planzer-begin-commercial-autonomous-delivery-in-europe.html"
+  },
+  "CHN": {
+   "level": "commercial",
+   "summary": "Unmanned delivery vans run at scale under city road-rights permits; ZTO alone reports 3,500 vehicles in 268 cities.",
+   "source": "https://enghunan.gov.cn/hneng/News/Text_News/202602/t20260213_33916765.html"
+  },
+  "CZE": {
+   "level": "pilot",
+   "summary": "No dedicated law found; foodora and Starship began the first Czech sidewalk robot pilot in Prague 8 in December 2025.",
+   "source": "https://retail-systems.com/rs/foodora_Becomes_First_In_Czech_Republic_To_Pilot_Robot_Deliveries.php"
+  },
+  "DEU": {
+   "level": "pilot",
+   "summary": "German law has no vehicle category for delivery robots; operations such as Starship and REWE in Hamburg run as pilots.",
+   "source": "https://www.lobbyregister.bundestag.de/media/f4/e6/836569/Stellungnahme-Gutachten-SG2608310006.pdf"
+  },
+  "EST": {
+   "level": "commercial",
+   "summary": "A 2017 Traffic Act change created a self-driving delivery robot category (6 km/h on sidewalks); Starship delivers in Tallinn.",
+   "source": "https://www.engadget.com/2017-06-15-estonia-welcomes-delivery-robots-to-sidewalks.html"
+  },
+  "FIN": {
+   "level": "commercial",
+   "summary": "Sidewalk robots operate nationwide: Starship and S Group run 650-plus robots in about 80 towns, with no licence scheme.",
+   "source": "https://www.starship.xyz/press/one-million-deliveries-finland/"
+  },
+  "GBR": {
+   "level": "pilot",
+   "summary": "Pavement robots sit in a legal grey area: the government has approved none but plans a lawful route, and trials run in several towns.",
+   "source": "https://www.retailgazette.co.uk/blog/2026/06/delivery-robots-could-be-heading-for-englands-pavements-under-new-law-change/"
+  },
+  "JPN": {
+   "level": "commercial",
+   "summary": "Since April 2023 the Road Traffic Act lets small remote-operated robots use sidewalks after police notification; Rakuten runs a service.",
+   "source": "https://www.meti.go.jp/english/press/2023/0327_001.html"
+  },
+  "KOR": {
+   "level": "commercial",
+   "summary": "Since November 2023 safety-certified outdoor robots count as pedestrians on sidewalks; Baemin and Neubility run delivery.",
+   "source": "https://www.koreajoongangdaily.com/business/robots-can-now-legally-roam-koreas-sidewalks/11561458"
+  },
+  "LTU": {
+   "level": "pilot",
+   "summary": "Clevon holds permits to run its driverless carriers on public roads and delivered groceries for IKI in Vilnius.",
+   "source": "https://www.autonomousvehicleinternational.com/news/last-mile-delivery/clevon-deploys-europes-first-fleet-of-autonomous-carriers-on-public-roads.html"
+  },
+  "SAU": {
+   "level": "pilot",
+   "summary": "Trials only: the Transport General Authority runs pilot schemes for delivery robots and driverless parcel vehicles in Riyadh.",
+   "source": "https://english.aawsat.com/business/5319088-riyadh-opens-way-driverless-parcel-delivery"
+  },
+  "SGP": {
+   "level": "pilot",
+   "summary": "Trials only: robots need LTA approval for public paths, with a precinct-wide testbed in Punggol Digital District from 2026.",
+   "source": "https://www.malaymail.com/news/singapore/2026/05/20/robots-to-clean-patrol-and-deliver-food-in-singapores-punggol-under-expanded-ai-trials/220639"
+  },
+  "SWE": {
+   "level": "pilot",
+   "summary": "Delivery robots run under trial permits from the Transport Agency (Ordinance 2017:309); foodora and Starship test in Stockholm.",
+   "source": "https://www.vti.se/en/archives/news/archives/2026-03-25-vti-reviews-robots-for-deliveries-in-stockholm"
+  },
+  "US-AR": {
+   "level": "permitted",
+   "summary": "Act HB1767 of 2021 added a personal delivery device subchapter to the traffic code, with a $100,000 insurance requirement.",
+   "source": "https://legiscan.com/AR/text/HB1767/id/2386702/Arkansas-2021-HB1767-Chaptered.pdf"
+  },
+  "US-AZ": {
+   "level": "commercial",
+   "summary": "ARS 28-1222 gives delivery robots pedestrian rules statewide; DoorDash Dot and Waymo vehicles deliver in metro Phoenix.",
+   "source": "https://azleg.gov/ars/28/01222.htm"
+  },
+  "US-CA": {
+   "level": "commercial",
+   "summary": "No statewide sidewalk-robot statute: cities permit or pause robots (Glendale moratorium, 2026); services run in LA and San Jose.",
+   "source": "https://www.restaurantbusinessonline.com/technology/california-city-presses-pause-food-delivery-robots"
+  },
+  "US-CO": {
+   "level": "permitted",
+   "summary": "Listed among states that have legalised personal delivery devices; no public robot delivery service found.",
+   "source": "https://insights.rlist.io/2020/12/states-that-legalized-pdds.html"
+  },
+  "US-DC": {
+   "level": "commercial",
+   "summary": "The District permits personal delivery devices under DDOT rules; Serve and Coco began DoorDash deliveries in 2026.",
+   "source": "https://www.therobotreport.com/serve-robotics-deploys-autonomous-delivery-robots-grubhub/"
+  },
+  "US-FL": {
+   "level": "commercial",
+   "summary": "Statute 316.2071 allows personal delivery devices on sidewalks with insurance; Serve and Coco run commercial delivery in Miami.",
+   "source": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&Search_String=&URL=0300-0399%2F0316%2FSections%2F0316.2071.html"
+  },
+  "US-GA": {
+   "level": "commercial",
+   "summary": "State law permits personal delivery devices; a 2026 act raised the sidewalk speed limit to 7 mph. Serve operates in Atlanta.",
+   "source": "https://nchstats.com/delivery-robots-atlanta-sidewalk-law/"
+  },
+  "US-IA": {
+   "level": "permitted",
+   "summary": "Iowa Code chapter 321O (2021) authorises personal delivery devices on roads and sidewalks, capped at 6 mph on sidewalks.",
+   "source": "https://iowadot.gov/automatedtransportation/Policies-Procedures"
+  },
+  "US-ID": {
+   "level": "permitted",
+   "summary": "State law allows personal delivery devices on sidewalks and crosswalks; no public robot delivery service found.",
+   "source": "https://www.geekwire.com/2019/washington-state-green-lights-delivery-robots-sidewalks/"
+  },
+  "US-IL": {
+   "level": "pilot",
+   "summary": "No state statute; Chicago runs a licensed sidewalk robot pilot with Coco and Serve that ends after May 2027 without council action.",
+   "source": "https://www.axios.com/local/chicago/2026/09/21/chicago-delivery-robots-coco-serve-robotics"
+  },
+  "US-IN": {
+   "level": "permitted",
+   "summary": "Indiana Code 9-21-11.5 permits personal delivery devices that carry an identifier and a controlled-stop system.",
+   "source": "https://codes.findlaw.com/in/title-9-motor-vehicles/in-code-sect-9-21-11-5-5/"
+  },
+  "US-KS": {
+   "level": "permitted",
+   "summary": "SB 161 (2022) authorises personal delivery devices, excludes them from the vehicle definition and sets a $50 annual fee.",
+   "source": "https://kslegislature.org/li/b2021_22/measures/documents/summary_sb_161_2022.pdf"
+  },
+  "US-LA": {
+   "level": "permitted",
+   "summary": "A 2021 law allows delivery devices at 12 mph in pedestrian areas and 20 mph elsewhere; parishes and cities may ban them.",
+   "source": "https://www.insurancejournal.com/news/southcentral/2021/06/18/619046.htm"
+  },
+  "US-MA": {
+   "level": "restricted",
+   "summary": "No state statute: personal delivery device bill H.3331 died in 2024 and later bills have not passed.",
+   "source": "https://malegislature.gov/Bills/193/H3331"
+  },
+  "US-MD": {
+   "level": "permitted",
+   "summary": "Chapter 351 of 2021 authorises personal delivery devices with marking, insurance and operator requirements.",
+   "source": "https://dlslibrary.state.md.us/publications/Exec/MDOT/MVA/SB726Ch351(2)(2021)_2021.pdf"
+  },
+  "US-MO": {
+   "level": "permitted",
+   "summary": "Rev. Stat. 304.900 authorises personal delivery devices on sidewalks, crosswalks and roadways and limits local regulation.",
+   "source": "https://codes.findlaw.com/mo/title-xix-motor-vehicles-watercraft-and-aviation/mo-rev-st-304-900/"
+  },
+  "US-MS": {
+   "level": "permitted",
+   "summary": "Miss. Code 63-3-1331 recognises personal delivery devices and exempts them from motor vehicle laws.",
+   "source": "https://codes.findlaw.com/ms/title-63-motor-vehicles-and-traffic-regulations/ms-code-sect-63-3-1331/"
+  },
+  "US-NC": {
+   "level": "permitted",
+   "summary": "G.S. 20-175.16 allows personal delivery devices on sidewalks at up to 10 mph with a remote operator; cities may restrict them.",
+   "source": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_20/GS_20-175.16.html"
+  },
+  "US-NJ": {
+   "level": "pilot",
+   "summary": "No state statute; Jersey City and Hoboken allow sidewalk robots under city-run pilot programmes.",
+   "source": "https://www.cocodelivery.com/blog/jersey-city-launches-autonomous-delivery-pilot-with-coco-robotics"
+  },
+  "US-NV": {
+   "level": "permitted",
+   "summary": "SB 422 (2023) allows personal delivery devices in limited places such as state university campuses.",
+   "source": "https://leg.state.nv.us/Session/82nd2023/Bills/SB/SB422_EN.pdf"
+  },
+  "US-NY": {
+   "level": "restricted",
+   "summary": "No framework: bills S9950 and A10766 to create a personal delivery device permit were introduced in 2026 but not enacted.",
+   "source": "https://www.nysenate.gov/legislation/bills/2025/S9950"
+  },
+  "US-OH": {
+   "level": "commercial",
+   "summary": "State law allows personal delivery devices on sidewalks; Avride and Grubhub run about 120 robots at Ohio State University.",
+   "source": "https://www.robotics247.com/article/wonder-expands-avride-partnership-for-more-autonomous-deliveries-on-grubhub-marketplace"
+  },
+  "US-OK": {
+   "level": "permitted",
+   "summary": "Oklahoma has approved autonomous sidewalk delivery devices by state law.",
+   "source": "https://www.governing.com/next/oklahoma-approves-autonomous-sidewalk-delivery-vehicles?_amp=true"
+  },
+  "US-PA": {
+   "level": "commercial",
+   "summary": "Act 106 of 2020 regulates delivery robots as pedestrians, up to 550 lb; Avride robots deliver in Philadelphia.",
+   "source": "https://pghcitypaper.com/news/pennsylvania-legalizes-autonomous-delivery-robots-classifies-them-as-pedestrians-18482040"
+  },
+  "US-TN": {
+   "level": "permitted",
+   "summary": "A 2026 law lets delivery robots use bike paths and road shoulders at up to 20 mph; Knoxville bans them downtown.",
+   "source": "https://www.pymnts.com/news/artificial-intelligence/2026/robot-delivery-is-booming-cities-want-their-cut"
+  },
+  "US-TX": {
+   "level": "commercial",
+   "summary": "Transportation Code chapter 552A (2019) lets businesses run delivery robots under pedestrian rules; Serve and Avride operate here.",
+   "source": "https://capitol.texas.gov/tlodocs/86R/billtext/html/SB00969F.HTM"
+  },
+  "US-UT": {
+   "level": "permitted",
+   "summary": "State law allows personal delivery devices on sidewalks and crosswalks; no public robot delivery service found.",
+   "source": "https://www.geekwire.com/2019/washington-state-green-lights-delivery-robots-sidewalks/"
+  },
+  "US-VA": {
+   "level": "commercial",
+   "summary": "First state to legalise personal delivery devices on sidewalks (2017); Serve and Avride robots now serve Alexandria and Arlington.",
+   "source": "https://www.foodlogistics.com/safety-security/risk-compliance/news/12314574/virginia-passes-pioneering-legislation-to-allow-personal-delivery-devices-on-sidewalks"
+  },
+  "US-WA": {
+   "level": "permitted",
+   "summary": "A 2019 law (RCW 46.75) allows registered personal delivery devices on sidewalks and crosswalks with human oversight.",
+   "source": "https://codes.findlaw.com/wa/title-46-motor-vehicles/wa-rev-code-46-75-020/"
+  },
+  "US-WI": {
+   "level": "permitted",
+   "summary": "State law allows personal delivery devices on sidewalks and crosswalks; Starship ended its UW-Madison campus service in 2026.",
+   "source": "https://www.geekwire.com/2019/washington-state-green-lights-delivery-robots-sidewalks/"
+  },
+  "US-WV": {
+   "level": "permitted",
+   "summary": "W. Va. Code 17C-24 allows personal delivery devices on sidewalks and crosswalks with an ID marker and operator contact details.",
+   "source": "https://code.wvlegislature.gov/17C-24-2/"
+  },
+  "USA": {
+   "level": "commercial",
+   "summary": "No federal sidewalk-robot law: states and cities set the rules, and commercial robot delivery runs in more than a dozen metro areas.",
+   "source": "https://itif.org/publications/2026/03/30/states-should-learn-from-china-on-sidewalk-delivery-robots/"
+  }
+ },
+ "points": [
+  {
+   "id": "del-autogo-masdar-city",
+   "kind": "road-robot",
+   "name": "AutoGo delivery pilot, Masdar City",
+   "operator": "AutoGo (K2), EMX",
+   "lat": 24.426,
+   "lon": 54.615,
+   "precision": "site",
+   "place": "Abu Dhabi",
+   "country": "ARE",
+   "status": "pilot",
+   "detail": "Abu Dhabi's first autonomous delivery vehicle pilot, with the first licence plate for such a vehicle.",
+   "source": "https://admobility.gov.ae/en/news/pilot-autonomous-delivery-services-in-collaboration-with-masdar-city"
+  },
+  {
+   "id": "del-avride-arlington",
+   "kind": "sidewalk-robot",
+   "name": "Avride Arlington County",
+   "operator": "Avride, Grubhub",
+   "lat": 38.88,
+   "lon": -77.107,
+   "precision": "town",
+   "place": "Arlington, Virginia",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named in the October 2026 Wonder and Avride expansion on Grubhub.",
+   "source": "https://www.phillyvoice.com/wonder-delivery-robots-philly-grubhub-avride/"
+  },
+  {
+   "id": "del-avride-austin",
+   "kind": "sidewalk-robot",
+   "name": "Avride Austin",
+   "operator": "Avride, Uber Eats",
+   "lat": 30.267,
+   "lon": -97.743,
+   "precision": "town",
+   "place": "Austin, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Avride sidewalk robots deliver Uber Eats orders.",
+   "source": "https://techcrunch.com/2025/02/13/avride-launches-sidewalk-delivery-bots-on-uber-eats-in-jersey-city"
+  },
+  {
+   "id": "del-avride-dallas",
+   "kind": "sidewalk-robot",
+   "name": "Avride Dallas",
+   "operator": "Avride, Uber Eats",
+   "lat": 32.777,
+   "lon": -96.797,
+   "precision": "town",
+   "place": "Dallas, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Avride sidewalk robots deliver Uber Eats orders.",
+   "source": "https://techcrunch.com/2025/02/13/avride-launches-sidewalk-delivery-bots-on-uber-eats-in-jersey-city"
+  },
+  {
+   "id": "del-avride-hoboken",
+   "kind": "sidewalk-robot",
+   "name": "Avride Hoboken",
+   "operator": "Avride, Grubhub",
+   "lat": 40.744,
+   "lon": -74.032,
+   "precision": "town",
+   "place": "Hoboken, New Jersey",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named in the October 2026 Wonder and Avride expansion on Grubhub.",
+   "source": "https://www.phillyvoice.com/wonder-delivery-robots-philly-grubhub-avride/"
+  },
+  {
+   "id": "del-avride-jersey-city",
+   "kind": "sidewalk-robot",
+   "name": "Avride Jersey City",
+   "operator": "Avride, Uber Eats, Grubhub",
+   "lat": 40.728,
+   "lon": -74.078,
+   "precision": "town",
+   "place": "Jersey City, New Jersey",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Uber Eats since February 2025; Grubhub with Wonder since October 2025.",
+   "source": "https://techcrunch.com/2025/02/13/avride-launches-sidewalk-delivery-bots-on-uber-eats-in-jersey-city"
+  },
+  {
+   "id": "del-avride-ohio-state",
+   "kind": "sidewalk-robot",
+   "name": "Avride at Ohio State University",
+   "operator": "Avride, Grubhub",
+   "lat": 40.001,
+   "lon": -83.02,
+   "precision": "site",
+   "place": "Columbus, Ohio",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "About 120 robots, described as the largest single-site robot food delivery programme in the US.",
+   "source": "https://www.robotics247.com/article/wonder-expands-avride-partnership-for-more-autonomous-deliveries-on-grubhub-marketplace"
+  },
+  {
+   "id": "del-avride-philadelphia",
+   "kind": "sidewalk-robot",
+   "name": "Avride Philadelphia",
+   "operator": "Avride, Uber Eats, Grubhub",
+   "lat": 39.952,
+   "lon": -75.165,
+   "precision": "town",
+   "place": "Philadelphia, Pennsylvania",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Uber Eats robots in Center City, Chinatown and Old City since March 2026; Grubhub being added.",
+   "source": "https://www.phillyvoice.com/wonder-delivery-robots-philly-grubhub-avride/"
+  },
+  {
+   "id": "del-baemin-dilly-gangnam",
+   "kind": "sidewalk-robot",
+   "name": "Baemin Dilly, Gangnam Nonhyeon",
+   "operator": "Woowa Brothers",
+   "lat": 37.511,
+   "lon": 127.028,
+   "precision": "site",
+   "place": "Seoul",
+   "country": "KOR",
+   "status": "commercial",
+   "detail": "Dilly robots deliver B Mart groceries within 2 km of the Nonhyeon branch since February 2025.",
+   "source": "https://www.koreatimes.co.kr/business/companies/20260803/woowa-brothers-unveils-smarter-faster-delivery-robot"
+  },
+  {
+   "id": "del-clevon-leuven",
+   "kind": "road-robot",
+   "name": "Collect&Go and Clevon Leuven",
+   "operator": "Clevon, Collect&Go",
+   "lat": 50.879,
+   "lon": 4.701,
+   "precision": "town",
+   "place": "Leuven",
+   "country": "BEL",
+   "status": "pilot",
+   "detail": "Three-month driverless grocery delivery trial in the city centre, mid-May to August 2026.",
+   "source": "https://www.electrive.com/2026/04/08/online-supermarket-tests-autonomous-delivery-vehicles-in-belgium/"
+  },
+  {
+   "id": "del-coco-chicago",
+   "kind": "sidewalk-robot",
+   "name": "Coco Chicago",
+   "operator": "Coco Robotics",
+   "lat": 41.878,
+   "lon": -87.63,
+   "precision": "town",
+   "place": "Chicago, Illinois",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Licensed under the city sidewalk robot pilot since November 2024.",
+   "source": "https://www.axios.com/local/chicago/2026/09/21/chicago-delivery-robots-coco-serve-robotics"
+  },
+  {
+   "id": "del-coco-helsinki",
+   "kind": "sidewalk-robot",
+   "name": "Coco Helsinki",
+   "operator": "Coco Robotics, Wolt",
+   "lat": 60.17,
+   "lon": 24.938,
+   "precision": "town",
+   "place": "Helsinki",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Coco robots deliver Wolt orders in Helsinki.",
+   "source": "https://www.streetinsider.com/PRNewswire/Coco+Robotics+Brings+Autonomous+Delivery+to+Washington%2C+D.C./26772312.html"
+  },
+  {
+   "id": "del-coco-jersey-city",
+   "kind": "sidewalk-robot",
+   "name": "Coco Jersey City",
+   "operator": "Coco Robotics",
+   "lat": 40.728,
+   "lon": -74.078,
+   "precision": "town",
+   "place": "Jersey City, New Jersey",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "City-supported pilot in The Heights, started January 2026 with 20 robots.",
+   "source": "https://www.cocodelivery.com/blog/jersey-city-launches-autonomous-delivery-pilot-with-coco-robotics"
+  },
+  {
+   "id": "del-coco-london-canary-wharf",
+   "kind": "sidewalk-robot",
+   "name": "Coco and Deliveroo Canary Wharf",
+   "operator": "Coco Robotics, Deliveroo",
+   "lat": 51.505,
+   "lon": -0.02,
+   "precision": "site",
+   "place": "London",
+   "country": "GBR",
+   "status": "pilot",
+   "detail": "Deliveroo partnership announced 5 October 2026, starting at Canary Wharf.",
+   "source": "https://deliveroo.co.uk/more/news-articles/autonomous-robot-launch"
+  },
+  {
+   "id": "del-coco-los-angeles",
+   "kind": "sidewalk-robot",
+   "name": "Coco Los Angeles",
+   "operator": "Coco Robotics",
+   "lat": 34.052,
+   "lon": -118.244,
+   "precision": "town",
+   "place": "Los Angeles, California",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Coco's home market, delivering for Uber Eats and DoorDash.",
+   "source": "https://www.streetinsider.com/PRNewswire/Coco+Robotics+Brings+Autonomous+Delivery+to+Washington%2C+D.C./26772312.html"
+  },
+  {
+   "id": "del-coco-miami",
+   "kind": "sidewalk-robot",
+   "name": "Coco Miami",
+   "operator": "Coco Robotics",
+   "lat": 25.774,
+   "lon": -80.194,
+   "precision": "town",
+   "place": "Miami, Florida",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Part of Coco's US delivery network.",
+   "source": "https://www.streetinsider.com/PRNewswire/Coco+Robotics+Brings+Autonomous+Delivery+to+Washington%2C+D.C./26772312.html"
+  },
+  {
+   "id": "del-coco-san-jose",
+   "kind": "sidewalk-robot",
+   "name": "Coco San Jose",
+   "operator": "Coco Robotics",
+   "lat": 37.338,
+   "lon": -121.886,
+   "precision": "town",
+   "place": "San Jose, California",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Uber Eats robot delivery downtown since spring 2026.",
+   "source": "https://iotm2mcouncil.org/iot-library/news/smart-logistics-news/coco-and-uber-eats-find-way-to-san-jose/"
+  },
+  {
+   "id": "del-coco-turku",
+   "kind": "sidewalk-robot",
+   "name": "Coco Turku",
+   "operator": "Coco Robotics",
+   "lat": 60.452,
+   "lon": 22.267,
+   "precision": "town",
+   "place": "Turku",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Listed with Helsinki as Coco's Finnish delivery cities.",
+   "source": "https://www.streetinsider.com/PRNewswire/Coco+Robotics+Brings+Autonomous+Delivery+to+Washington%2C+D.C./26772312.html"
+  },
+  {
+   "id": "del-coco-washington-dc",
+   "kind": "sidewalk-robot",
+   "name": "Coco Washington, D.C.",
+   "operator": "Coco Robotics",
+   "lat": 38.907,
+   "lon": -77.037,
+   "precision": "town",
+   "place": "Washington, D.C.",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Announced July 2026 with customer deliveries from that summer.",
+   "source": "https://www.streetinsider.com/PRNewswire/Coco+Robotics+Brings+Autonomous+Delivery+to+Washington%2C+D.C./26772312.html"
+  },
+  {
+   "id": "del-dot-fremont",
+   "kind": "road-robot",
+   "name": "DoorDash Dot Fremont",
+   "operator": "DoorDash",
+   "lat": 37.548,
+   "lon": -121.989,
+   "precision": "town",
+   "place": "Fremont, California",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Phased rollout with the City of Fremont, where Dot is manufactured.",
+   "source": "https://chainstoreage.com/doordash-brings-proprietary-delivery-robot-new-market"
+  },
+  {
+   "id": "del-dot-mesa",
+   "kind": "road-robot",
+   "name": "DoorDash Dot Mesa",
+   "operator": "DoorDash",
+   "lat": 33.415,
+   "lon": -111.831,
+   "precision": "town",
+   "place": "Mesa, Arizona",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Early-access programme for the Dot delivery robot.",
+   "source": "https://chainstoreage.com/doordash-deploys-proprietary-delivery-robot"
+  },
+  {
+   "id": "del-dot-tempe",
+   "kind": "road-robot",
+   "name": "DoorDash Dot Tempe",
+   "operator": "DoorDash",
+   "lat": 33.425,
+   "lon": -111.94,
+   "precision": "town",
+   "place": "Tempe, Arizona",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Early-access programme for Dot, which drives on roads, bike lanes and sidewalks at up to 20 mph.",
+   "source": "https://chainstoreage.com/doordash-deploys-proprietary-delivery-robot"
+  },
+  {
+   "id": "del-jahez-riyadh-roshn-front",
+   "kind": "sidewalk-robot",
+   "name": "Jahez robots, ROSHN Front",
+   "operator": "Jahez, ROSHN",
+   "lat": 24.713,
+   "lon": 46.675,
+   "precision": "town",
+   "place": "Riyadh",
+   "country": "SAU",
+   "status": "pilot",
+   "detail": "Five Level 4 robots deliver restaurant meals in the ROSHN Front business area.",
+   "source": "https://www.arabnews.pk/node/2610175"
+  },
+  {
+   "id": "del-kiwibot-ubc-vancouver",
+   "kind": "sidewalk-robot",
+   "name": "Kiwibot at UBC Vancouver",
+   "operator": "Robot.com (Kiwibot)",
+   "lat": 49.261,
+   "lon": -123.246,
+   "precision": "site",
+   "place": "Vancouver, British Columbia",
+   "country": "CAN",
+   "status": "pilot",
+   "detail": "Campus robots introduced through a UBC and Rogers innovation partnership announced September 2025.",
+   "source": "https://news.ubc.ca/2025/09/kiwibots-coming-to-ubc-vancouver/"
+  },
+  {
+   "id": "del-loxo-bern",
+   "kind": "road-robot",
+   "name": "LOXO and Planzer Bern",
+   "operator": "LOXO, Planzer",
+   "lat": 46.948,
+   "lon": 7.447,
+   "precision": "town",
+   "place": "Bern",
+   "country": "CHE",
+   "status": "pilot",
+   "detail": "Automated VW ID. Buzz van supplies parcel hubs on public roads in a two-year pilot.",
+   "source": "https://www.autonomousvehicleinternational.com/news/last-mile-delivery/loxo-and-planzer-begin-commercial-autonomous-delivery-in-europe.html"
+  },
+  {
+   "id": "del-magna-toronto",
+   "kind": "road-robot",
+   "name": "Magna driverless delivery pilot, Toronto",
+   "operator": "Magna",
+   "lat": 43.653,
+   "lon": -79.383,
+   "precision": "town",
+   "place": "Toronto, Ontario",
+   "country": "CAN",
+   "status": "pilot",
+   "detail": "Small three-wheeled road vehicles under Ontario's Automated Vehicle Pilot Program.",
+   "source": "https://globalnews.ca/news/11157181/driverless-delivery-vehicles-toronto"
+  },
+  {
+   "id": "del-meituan-beijing-shunyi",
+   "kind": "road-robot",
+   "name": "Meituan autonomous delivery, Shunyi",
+   "operator": "Meituan",
+   "lat": 40.13,
+   "lon": 116.654,
+   "precision": "town",
+   "place": "Beijing",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Hybrid model: unmanned vehicles carry orders to transfer points and couriers finish the delivery.",
+   "source": "https://chozan.co/food-delivery-robots/"
+  },
+  {
+   "id": "del-meituan-shenzhen",
+   "kind": "road-robot",
+   "name": "Meituan autonomous delivery, Shenzhen",
+   "operator": "Meituan",
+   "lat": 22.543,
+   "lon": 114.058,
+   "precision": "town",
+   "place": "Shenzhen",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Meituan vehicles had completed about 5 million orders in Shenzhen by October 2025.",
+   "source": "https://chozan.co/food-delivery-robots/"
+  },
+  {
+   "id": "del-neolix-changsha",
+   "kind": "road-robot",
+   "name": "Neolix Changsha",
+   "operator": "Neolix",
+   "lat": 28.228,
+   "lon": 112.939,
+   "precision": "town",
+   "place": "Changsha",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Approved for unmanned vehicle operations in Changsha.",
+   "source": "https://autonews.gasgoo.com/articles/icv/neolix-approved-for-unmanned-vehicle-operations-in-changsha-70035639"
+  },
+  {
+   "id": "del-neolix-chengdu",
+   "kind": "road-robot",
+   "name": "Neolix Chengdu",
+   "operator": "Neolix",
+   "lat": 30.572,
+   "lon": 104.066,
+   "precision": "town",
+   "place": "Chengdu",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Neolix launched unmanned delivery vehicles in Chengdu.",
+   "source": "https://autonews.gasgoo.com/articles/icv/neolix-launches-unmanned-delivery-vehicles-in-chengdu-sichuan-70035611"
+  },
+  {
+   "id": "del-neolix-incheon",
+   "kind": "road-robot",
+   "name": "Neolix Incheon",
+   "operator": "Neolix",
+   "lat": 37.456,
+   "lon": 126.705,
+   "precision": "town",
+   "place": "Incheon",
+   "country": "KOR",
+   "status": "announced",
+   "detail": "Cooperation agreement with Incheon for unmanned delivery vehicles on public roads.",
+   "source": "https://govt.chinadaily.com.cn/s/202510/28/WS690027f0498e368550336de5/neolix-accelerates-expansion-of-driverless-logistics.html"
+  },
+  {
+   "id": "del-neolix-lishui",
+   "kind": "road-robot",
+   "name": "Neolix Lishui",
+   "operator": "Neolix",
+   "lat": 28.468,
+   "lon": 119.923,
+   "precision": "town",
+   "place": "Lishui",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Received a city permit to launch unmanned delivery vehicles.",
+   "source": "https://autonews.gasgoo.com/articles/ICV/neolix-receives-permit-to-launch-unmanned-delivery-vehicle-in-lishui-city-70033888"
+  },
+  {
+   "id": "del-neolix-nanjing",
+   "kind": "road-robot",
+   "name": "Neolix Nanjing",
+   "operator": "Neolix",
+   "lat": 32.06,
+   "lon": 118.797,
+   "precision": "town",
+   "place": "Nanjing",
+   "country": "CHN",
+   "status": "pilot",
+   "detail": "Greenlighted for unmanned delivery vehicle road tests.",
+   "source": "https://autonews.gasgoo.com/articles/icv/neolixs-unmanned-delivery-vehicles-greenlighted-for-road-test-in-nanjing-70034213"
+  },
+  {
+   "id": "del-neolix-qingdao",
+   "kind": "road-robot",
+   "name": "Neolix Qingdao",
+   "operator": "Neolix",
+   "lat": 36.067,
+   "lon": 120.383,
+   "precision": "town",
+   "place": "Qingdao",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "More than 1,200 RoboVans, described by Neolix as its largest and densest city fleet.",
+   "source": "https://tools.prnewswire.com/en-us/live/20823/release/20260330EN22205"
+  },
+  {
+   "id": "del-neolix-shanghai",
+   "kind": "road-robot",
+   "name": "Neolix Shanghai",
+   "operator": "Neolix",
+   "lat": 31.23,
+   "lon": 121.474,
+   "precision": "town",
+   "place": "Shanghai",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Neolix unmanned delivery vehicles are licensed to operate on Shanghai roads.",
+   "source": "https://autonews.gasgoo.com/articles/news/neolixs-unmanned-delivery-vehicle-licensed-to-operate-in-shanghai-70033280"
+  },
+  {
+   "id": "del-neubility-seongnam",
+   "kind": "sidewalk-robot",
+   "name": "Neubility Neubie, Seongnam",
+   "operator": "Neubility",
+   "lat": 37.395,
+   "lon": 127.111,
+   "precision": "town",
+   "place": "Seongnam",
+   "country": "KOR",
+   "status": "commercial",
+   "detail": "Neubie robots deliver around Pangyo Station and Seohyeon-dong with the city since 2024.",
+   "source": "https://www.koreatimes.co.kr/pages/article.amp.asp?newsIdx=374968"
+  },
+  {
+   "id": "del-neubility-songdo",
+   "kind": "sidewalk-robot",
+   "name": "Neubility Neubie, Songdo",
+   "operator": "Neubility",
+   "lat": 37.382,
+   "lon": 126.656,
+   "precision": "town",
+   "place": "Incheon",
+   "country": "KOR",
+   "status": "pilot",
+   "detail": "Neubie delivery robots operate in the Songdo district.",
+   "source": "https://www.seoulz.com/korea-delivery-robots-2026/"
+  },
+  {
+   "id": "del-punggol-digital-district",
+   "kind": "sidewalk-robot",
+   "name": "Punggol Digital District robot trials",
+   "operator": "Grab and others",
+   "lat": 1.413,
+   "lon": 103.911,
+   "precision": "site",
+   "place": "Singapore",
+   "country": "SGP",
+   "status": "announced",
+   "detail": "Eight firms including Grab to trial delivery, cleaning and patrol robots on public paths by end-2026.",
+   "source": "https://www.malaymail.com/news/singapore/2026/05/20/robots-to-clean-patrol-and-deliver-food-in-singapores-punggol-under-expanded-ai-trials/220639"
+  },
+  {
+   "id": "del-rakuten-tokyo-harumi",
+   "kind": "sidewalk-robot",
+   "name": "Rakuten robot delivery, Harumi",
+   "operator": "Rakuten, Avride, Cartken",
+   "lat": 35.655,
+   "lon": 139.782,
+   "precision": "site",
+   "place": "Tokyo",
+   "country": "JPN",
+   "status": "commercial",
+   "detail": "Restaurant and grocery delivery in Harumi, Tsukishima and Kachidoki since November 2024.",
+   "source": "https://global.rakuten.com/corp/news/press/2025/0226_01.html"
+  },
+  {
+   "id": "del-serve-alexandria",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Alexandria",
+   "operator": "Serve Robotics",
+   "lat": 38.805,
+   "lon": -77.047,
+   "precision": "town",
+   "place": "Alexandria, Virginia",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "On-demand robot delivery launched with the city in December 2025.",
+   "source": "https://www.marketscreener.com/news/serve-robotics-inc-expands-to-d-c-area-bringing-autonomous-delivery-to-the-city-of-alexandria-va-ce7d50dadf89f022"
+  },
+  {
+   "id": "del-serve-atlanta",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Atlanta",
+   "operator": "Serve Robotics",
+   "lat": 33.749,
+   "lon": -84.388,
+   "precision": "town",
+   "place": "Atlanta, Georgia",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Launched with Uber Eats in June 2025.",
+   "source": "https://www.nasdaq.com/articles/serve-robotics-launches-autonomous-delivery-service-atlanta-uber-eats/"
+  },
+  {
+   "id": "del-serve-chicago",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Chicago",
+   "operator": "Serve Robotics",
+   "lat": 41.878,
+   "lon": -87.63,
+   "precision": "town",
+   "place": "Chicago, Illinois",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Launched September 2025 in 14 neighbourhoods; licensed for up to 60 robots under the city pilot.",
+   "source": "https://investors.serverobotics.com/news-releases/news-release-details/serve-robotics-expands-chicago-bringing-autonomous-deliveries"
+  },
+  {
+   "id": "del-serve-dallas",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Dallas-Fort Worth",
+   "operator": "Serve Robotics",
+   "lat": 32.777,
+   "lon": -96.797,
+   "precision": "town",
+   "place": "Dallas, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Sidewalk robot delivery across parts of the Dallas-Fort Worth metro.",
+   "source": "https://www.restaurantdive.com/news/serve-robotics-comes-to-chicago-uber-eats/761499/"
+  },
+  {
+   "id": "del-serve-fort-lauderdale",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Fort Lauderdale",
+   "operator": "Serve Robotics",
+   "lat": 26.122,
+   "lon": -80.137,
+   "precision": "town",
+   "place": "Fort Lauderdale, Florida",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Downtown and Las Olas Boulevard served via Uber Eats since December 2025.",
+   "source": "https://www.nasdaq.com/articles/serve-robotics-extends-autonomous-delivery-fort-lauderdale"
+  },
+  {
+   "id": "del-serve-gold-coast",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Gold Coast",
+   "operator": "Serve Robotics, DoorDash",
+   "lat": -27.962,
+   "lon": 153.382,
+   "precision": "town",
+   "place": "Gold Coast, Queensland",
+   "country": "AUS",
+   "status": "pilot",
+   "detail": "Australia's first footpath robot delivery, launched 29 October 2026 in the Health and Knowledge Precinct.",
+   "source": "https://newshub.medianet.com.au/2026/10/serve-robotics-and-doordash-launch-australias-first-footpath-delivery-robots-on-the-gold-coast/179064/"
+  },
+  {
+   "id": "del-serve-los-angeles",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Los Angeles",
+   "operator": "Serve Robotics",
+   "lat": 34.052,
+   "lon": -118.244,
+   "precision": "town",
+   "place": "Los Angeles, California",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Home market for Serve sidewalk robots, delivering for Uber Eats, DoorDash and 7-Eleven.",
+   "source": "https://www.therobotreport.com/serve-robotics-has-deployed-2000-delivery-robots-across-u-s/"
+  },
+  {
+   "id": "del-serve-miami",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Miami",
+   "operator": "Serve Robotics",
+   "lat": 25.774,
+   "lon": -80.194,
+   "precision": "town",
+   "place": "Miami, Florida",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Sidewalk robot delivery in the Miami metro with Uber Eats and DoorDash.",
+   "source": "https://www.restaurantdive.com/news/serve-robotics-comes-to-chicago-uber-eats/761499/"
+  },
+  {
+   "id": "del-serve-san-antonio",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics San Antonio",
+   "operator": "Serve Robotics",
+   "lat": 29.424,
+   "lon": -98.494,
+   "precision": "town",
+   "place": "San Antonio, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "First Beacon-format launch locations, reported on the Q3 2026 earnings call.",
+   "source": "https://marketbeat.com/instant-alerts/transcript-serve-robotics-q3-earnings-call-highlights-2026-11-05"
+  },
+  {
+   "id": "del-serve-san-jose",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics San Jose",
+   "operator": "Serve Robotics",
+   "lat": 37.338,
+   "lon": -121.886,
+   "precision": "town",
+   "place": "San Jose, California",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Launched in 2026 in partnership with DoorDash.",
+   "source": "https://www.therobotreport.com/serve-robotics-deploys-autonomous-delivery-robots-grubhub/"
+  },
+  {
+   "id": "del-serve-vancouver",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Vancouver pilot",
+   "operator": "Serve Robotics",
+   "lat": 49.283,
+   "lon": -123.121,
+   "precision": "town",
+   "place": "Vancouver, British Columbia",
+   "country": "CAN",
+   "status": "announced",
+   "detail": "Council approved a six-month sidewalk robot pilot for downtown and Kitsilano in May 2026.",
+   "source": "https://www.ctvnews.ca/vancouver/article/delivery-robots-rolling-onto-vancouvers-sidewalks-after-council-approves-pilot-project/"
+  },
+  {
+   "id": "del-serve-washington-dc",
+   "kind": "sidewalk-robot",
+   "name": "Serve Robotics Washington, D.C.",
+   "operator": "Serve Robotics",
+   "lat": 38.907,
+   "lon": -77.037,
+   "precision": "town",
+   "place": "Washington, D.C.",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Launched in 2026 in partnership with DoorDash.",
+   "source": "https://www.therobotreport.com/serve-robotics-deploys-autonomous-delivery-robots-grubhub/"
+  },
+  {
+   "id": "del-starship-barnsley",
+   "kind": "sidewalk-robot",
+   "name": "Starship and Just Eat Barnsley",
+   "operator": "Starship Technologies, Just Eat",
+   "lat": 53.553,
+   "lon": -1.479,
+   "precision": "town",
+   "place": "Barnsley",
+   "country": "GBR",
+   "status": "pilot",
+   "detail": "Just Eat robot delivery pilot launched 8 April 2026 in north-east Barnsley.",
+   "source": "https://www.uktech.news/foodtech/just-eat-and-starship-technologies-launch-delivery-robots-in-barnsley-20260408"
+  },
+  {
+   "id": "del-starship-cambourne",
+   "kind": "sidewalk-robot",
+   "name": "Starship Cambourne",
+   "operator": "Starship Technologies, Just Eat",
+   "lat": 52.218,
+   "lon": -0.07,
+   "precision": "town",
+   "place": "Cambourne",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "Robots since 2022; Just Eat added a Morrisons store in October 2026.",
+   "source": "https://retailtimes.co.uk/just-eat-expands-autonomous-delivery-with-morrisons/"
+  },
+  {
+   "id": "del-starship-espoo",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Espoo",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.205,
+   "lon": 24.656,
+   "precision": "town",
+   "place": "Espoo",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-hamburg",
+   "kind": "sidewalk-robot",
+   "name": "Starship and REWE Hamburg",
+   "operator": "Starship Technologies, REWE",
+   "lat": 53.587,
+   "lon": 10.043,
+   "precision": "town",
+   "place": "Hamburg",
+   "country": "DEU",
+   "status": "pilot",
+   "detail": "Grocery robot delivery in Barmbek, live since October 2025.",
+   "source": "https://retailtechinnovationhub.com/home/2025/10/17/starship-technologies-delivery-robots-roll-into-germany-as-rewe-goes-live-in-streets-of-hamburg"
+  },
+  {
+   "id": "del-starship-helsinki",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Helsinki",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.17,
+   "lon": 24.938,
+   "precision": "town",
+   "place": "Helsinki",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-jyvaskyla",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Jyväskylä",
+   "operator": "Starship Technologies, S Group",
+   "lat": 62.242,
+   "lon": 25.747,
+   "precision": "town",
+   "place": "Jyväskylä",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-karkkila",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Karkkila",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.535,
+   "lon": 24.21,
+   "precision": "town",
+   "place": "Karkkila",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-kuopio",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Kuopio",
+   "operator": "Starship Technologies, S Group",
+   "lat": 62.892,
+   "lon": 27.678,
+   "precision": "town",
+   "place": "Kuopio",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-leeds",
+   "kind": "sidewalk-robot",
+   "name": "Starship and Uber Eats Leeds",
+   "operator": "Starship Technologies, Uber Eats",
+   "lat": 53.801,
+   "lon": -1.549,
+   "precision": "town",
+   "place": "Leeds",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "Uber Eats robot delivery since December 2025.",
+   "source": "https://www.uktech.news/foodtech/uber-and-starship-expand-robotic-deliveries-to-new-uk-city-20260325"
+  },
+  {
+   "id": "del-starship-lieto",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Lieto",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.504,
+   "lon": 22.459,
+   "precision": "town",
+   "place": "Lieto",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-lohja",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Lohja",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.249,
+   "lon": 24.066,
+   "precision": "town",
+   "place": "Lohja",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-milton-keynes",
+   "kind": "sidewalk-robot",
+   "name": "Starship Milton Keynes",
+   "operator": "Starship Technologies",
+   "lat": 52.041,
+   "lon": -0.759,
+   "precision": "town",
+   "place": "Milton Keynes",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "Long-running Starship town, now including Just Eat deliveries from Morrisons Daily stores.",
+   "source": "https://retailtimes.co.uk/just-eat-expands-autonomous-delivery-with-morrisons/"
+  },
+  {
+   "id": "del-starship-northampton",
+   "kind": "sidewalk-robot",
+   "name": "Starship Northampton",
+   "operator": "Starship Technologies",
+   "lat": 52.24,
+   "lon": -0.903,
+   "precision": "town",
+   "place": "Northampton",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "Grocery robot delivery with Co-op, running for several years.",
+   "source": "https://www.thecaterer.com/news/self-driving-robots-to-deliver-uber-eats-takeaways-in-the-uk"
+  },
+  {
+   "id": "del-starship-oulu",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Oulu",
+   "operator": "Starship Technologies, S Group",
+   "lat": 65.012,
+   "lon": 25.465,
+   "precision": "town",
+   "place": "Oulu",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-pori",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Pori",
+   "operator": "Starship Technologies, S Group",
+   "lat": 61.485,
+   "lon": 21.797,
+   "precision": "town",
+   "place": "Pori",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-prague",
+   "kind": "sidewalk-robot",
+   "name": "Starship and foodora Prague",
+   "operator": "Starship Technologies, foodora",
+   "lat": 50.093,
+   "lon": 14.45,
+   "precision": "town",
+   "place": "Prague",
+   "country": "CZE",
+   "status": "pilot",
+   "detail": "Three robots testing hot-meal delivery in Karlín, Prague 8, since December 2025.",
+   "source": "https://retail-systems.com/rs/foodora_Becomes_First_In_Czech_Republic_To_Pilot_Robot_Deliveries.php"
+  },
+  {
+   "id": "del-starship-rauma",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Rauma",
+   "operator": "Starship Technologies, S Group",
+   "lat": 61.128,
+   "lon": 21.511,
+   "precision": "town",
+   "place": "Rauma",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-rovaniemi",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Rovaniemi",
+   "operator": "Starship Technologies, S Group",
+   "lat": 66.503,
+   "lon": 25.729,
+   "precision": "town",
+   "place": "Rovaniemi",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Northernmost of about 80 Finnish towns with S Group robot grocery delivery.",
+   "source": "https://www.starship.xyz/press/one-million-deliveries-finland/"
+  },
+  {
+   "id": "del-starship-salo",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Salo",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.384,
+   "lon": 23.129,
+   "precision": "town",
+   "place": "Salo",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-sheffield",
+   "kind": "sidewalk-robot",
+   "name": "Starship and Uber Eats Sheffield",
+   "operator": "Starship Technologies, Uber Eats",
+   "lat": 53.381,
+   "lon": -1.47,
+   "precision": "town",
+   "place": "Sheffield",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "Uber Eats robot delivery added in March 2026.",
+   "source": "https://www.uktech.news/foodtech/uber-and-starship-expand-robotic-deliveries-to-new-uk-city-20260325"
+  },
+  {
+   "id": "del-starship-somero",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Somero",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.629,
+   "lon": 23.514,
+   "precision": "town",
+   "place": "Somero",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-stockholm",
+   "kind": "sidewalk-robot",
+   "name": "Starship and foodora Stockholm",
+   "operator": "Starship Technologies, foodora",
+   "lat": 59.315,
+   "lon": 18.07,
+   "precision": "town",
+   "place": "Stockholm",
+   "country": "SWE",
+   "status": "pilot",
+   "detail": "Robot delivery in Södermalm, Solna and Sundbyberg since spring 2025 under a trial permit.",
+   "source": "https://www.vti.se/en/archives/news/archives/2026-03-25-vti-reviews-robots-for-deliveries-in-stockholm"
+  },
+  {
+   "id": "del-starship-sunderland",
+   "kind": "sidewalk-robot",
+   "name": "Starship and Just Eat Sunderland",
+   "operator": "Starship Technologies, Just Eat",
+   "lat": 54.906,
+   "lon": -1.381,
+   "precision": "town",
+   "place": "Sunderland",
+   "country": "GBR",
+   "status": "pilot",
+   "detail": "Just Eat robot delivery trial launched February 2026.",
+   "source": "https://www.grocerygazette.co.uk/2026/02/25/just-eat-debuts-delivery-robot-trial-at-sunderland"
+  },
+  {
+   "id": "del-starship-tallinn",
+   "kind": "sidewalk-robot",
+   "name": "Starship and Bolt Tallinn",
+   "operator": "Starship Technologies, Bolt",
+   "lat": 59.437,
+   "lon": 24.754,
+   "precision": "town",
+   "place": "Tallinn",
+   "country": "EST",
+   "status": "commercial",
+   "detail": "Bolt Market grocery orders delivered by robot through the Bolt Food app since October 2024.",
+   "source": "https://retail-systems.com/rs/Bolt_teams_up_with_starship_technologies_for_robot_deliveries.php"
+  },
+  {
+   "id": "del-starship-tampere",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Tampere",
+   "operator": "Starship Technologies, S Group",
+   "lat": 61.498,
+   "lon": 23.761,
+   "precision": "town",
+   "place": "Tampere",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-turku",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Turku",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.452,
+   "lon": 22.267,
+   "precision": "town",
+   "place": "Turku",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-starship-vantaa",
+   "kind": "sidewalk-robot",
+   "name": "Starship and S Group Vantaa",
+   "operator": "Starship Technologies, S Group",
+   "lat": 60.294,
+   "lon": 25.04,
+   "precision": "town",
+   "place": "Vantaa",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Grocery robot delivery from Alepa, Sale and S-market stores.",
+   "source": "https://retailtechinnovationhub.com/home/2024/5/1/s-group-expands-its-eco-friendly-robot-delivery-offering-in-finland-via-starship-technologies-partnership"
+  },
+  {
+   "id": "del-talabat-dubai-silicon-oasis",
+   "kind": "sidewalk-robot",
+   "name": "Talabat and QuikBot, Dubai Silicon Oasis",
+   "operator": "Talabat, QuikBot",
+   "lat": 25.121,
+   "lon": 55.378,
+   "precision": "site",
+   "place": "Dubai",
+   "country": "ARE",
+   "status": "pilot",
+   "detail": "Robot delivery trial for high-rise buildings at Dubai Digital Park.",
+   "source": "https://www.khaleejtimes.com/uae/talabat-quikbot-autonomous-delivery-robots-dubai-high-rise-buildings"
+  },
+  {
+   "id": "del-waymo-doordash-phoenix",
+   "kind": "road-robot",
+   "name": "DoorDash and Waymo delivery, Phoenix",
+   "operator": "Waymo, DoorDash",
+   "lat": 33.448,
+   "lon": -112.074,
+   "precision": "town",
+   "place": "Phoenix, Arizona",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Driverless Waymo cars deliver DoorDash orders, starting with DashMart, in metro Phoenix.",
+   "source": "https://www.businesswire.com/news/home/20251016179302/en/DoorDash-and-Waymo-Launch-Autonomous-Delivery-Service-and-Introduce-Limited-Time-Waymo-Promotion-for-DashPass-Members"
+  },
+  {
+   "id": "del-yango-dubai-sobha-hartland",
+   "kind": "sidewalk-robot",
+   "name": "Yango robots, Sobha Hartland",
+   "operator": "Yango, ROOTS",
+   "lat": 25.178,
+   "lon": 55.309,
+   "precision": "site",
+   "place": "Dubai",
+   "country": "ARE",
+   "status": "commercial",
+   "detail": "Ten robots delivering groceries, with a target of 100 in Dubai within a year.",
+   "source": "https://truckandfleetme.com/news/yango-rolls-out-robot-deliveries-at-sobha-hartland/"
+  },
+  {
+   "id": "del-zelos-abu-dhabi",
+   "kind": "road-robot",
+   "name": "Zelos Abu Dhabi",
+   "operator": "Zelos",
+   "lat": 24.453,
+   "lon": 54.377,
+   "precision": "town",
+   "place": "Abu Dhabi",
+   "country": "ARE",
+   "status": "commercial",
+   "detail": "Zelos announced regular RoboVan operations in Abu Dhabi.",
+   "source": "https://autonews.gasgoo.com/articles/news/zelos-officially-enters-abu-dhabi-launching-robovan-regular-operations-2015673942100774913"
+  },
+  {
+   "id": "del-zelos-linz",
+   "kind": "road-robot",
+   "name": "Zelos Linz",
+   "operator": "Zelos",
+   "lat": 48.306,
+   "lon": 14.286,
+   "precision": "town",
+   "place": "Linz",
+   "country": "AUT",
+   "status": "pilot",
+   "detail": "First European deployment of a Zelos unmanned delivery vehicle.",
+   "source": "https://www.flanders-china.be/en/newsletterpublications/chinese-autonomous-delivery-vehicles-enter-the-international-market"
+  },
+  {
+   "id": "del-zelos-singapore",
+   "kind": "road-robot",
+   "name": "Zelos Singapore",
+   "operator": "Zelos",
+   "lat": 1.352,
+   "lon": 103.82,
+   "precision": "town",
+   "place": "Singapore",
+   "country": "SGP",
+   "status": "pilot",
+   "detail": "Zelos secured the first licence for autonomous delivery vehicles in Singapore.",
+   "source": "https://mobile.chinadaily.com.cn/cn/html5/2025-07/30/content_014_68892f1ded50ccabe151692c.htm"
+  }
+ ]
+}

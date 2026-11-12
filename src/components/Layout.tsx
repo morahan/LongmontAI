@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, BrainCircuit, ExternalLink, Users, Clock, GitBranch, Mail, Menu, Trophy, X, Network } from 'lucide-react';
+import { Activity, BrainCircuit, ExternalLink, Users, Clock, GitBranch, Globe2, Mail, Menu, Trophy, X, Network } from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -119,6 +119,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <span>Timeline</span>
                         </Link>
                         <Link
+                            to="/maps"
+                            aria-label="Maps"
+                            title="Maps"
+                            aria-current={location.pathname === '/maps' ? 'page' : undefined}
+                            className={`nav-link${location.pathname === '/maps' ? ' is-active' : ''}`}
+                        >
+                            <Globe2 size={16} aria-hidden="true" />
+                            <span>Maps</span>
+                        </Link>
+                        <Link
                             to="/newsletter"
                             aria-label="Newsletter"
                             title="Newsletter"
@@ -192,6 +202,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span>Timeline</span>
                             </Link>
                             <Link
+                                to="/maps"
+                                aria-current={location.pathname === '/maps' ? 'page' : undefined}
+                                className={`mobile-nav-link${location.pathname === '/maps' ? ' is-active' : ''}`}
+                            >
+                                <Globe2 size={16} aria-hidden="true" />
+                                <span>Maps</span>
+                            </Link>
+                            <Link
                                 to="/newsletter"
                                 aria-current={location.pathname === '/newsletter' ? 'page' : undefined}
                                 className={`mobile-nav-link${location.pathname === '/newsletter' ? ' is-active' : ''}`}
@@ -262,6 +280,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <li><Link to="/model-watch" className="site-footer-link">Model Watch</Link></li>
                                     <li><Link to="/leaderboard" className="site-footer-link">Leaderboard</Link></li>
                                     <li><Link to="/timeline" className="site-footer-link">AI Timeline</Link></li>
+                                    <li><Link to="/maps" className="site-footer-link">Maps</Link></li>
                                     <li><Link to="/newsletter" className="site-footer-link">Newsletter</Link></li>
                                     <li><Link to="/tools" className="site-footer-link">Tools</Link></li>
                                 </ul>

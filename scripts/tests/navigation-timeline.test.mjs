@@ -17,7 +17,9 @@ test('every current page has a title, with unchanged route coverage', () => {
     '/model-watch': 'Model Watch | LongmontAI',
     '/leaderboard': 'Leaderboard | LongmontAI',
     '/timeline': 'AI Timeline | LongmontAI',
+    '/maps': 'Maps | LongmontAI',
     '/newsletter': 'Newsletter | LongmontAI',
+    '/timer': 'Hourglass Timer | LongmontAI',
     '/about': 'About | LongmontAI',
   };
   assert.equal(paths.length, Object.keys(expected).length + 1);

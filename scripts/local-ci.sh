@@ -17,6 +17,7 @@ npm run test:update-site
 npm run test:content
 npm run test:model-watch
 npm run test:space-background
+npm run test:maps
 npm run test:newsletter
 npm run test:mobile-contract
 npm run test:flows-contract
