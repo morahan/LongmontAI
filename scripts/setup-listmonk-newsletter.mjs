@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  LONGMONTAI_LIST_TAG,
   NEWSLETTER_OUTBOUND_LIMITS,
   listmonkConfig,
   newsletterFetch,
@@ -43,7 +44,7 @@ async function ensureList(lists, name, cadence) {
       type: 'public',
       optin: 'double',
       status: 'active',
-      tags: ['longmontai', 'ai-briefing', cadence],
+      tags: [LONGMONTAI_LIST_TAG, 'ai-briefing', cadence],
       description: `${cadence === 'weekly' ? 'Weekly' : 'Bi-weekly'} LongmontAI AI developments briefing.`,
     }),
   })).data;

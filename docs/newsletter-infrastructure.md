@@ -29,20 +29,20 @@ If you already created a Supabase project in the dashboard, skip `projects creat
 
 Listmonk should own subscription preferences, opt-in, unsubscribes, and newsletter campaign state.
 
-Configure Listmonk SMTP with Resend:
+LongmontAI uses 1023.Digital's Listmonk server at `https://lists.1023.digital`. It already sends through Resend SMTP (`smtp.resend.com`, user `resend`), so LongmontAI adds no server and no SMTP settings. The 1023.Digital site keeps its own lists on the same server.
 
-```text
-Host: smtp.resend.com
-Port: 465
-Username: resend
-Password: RESEND_API_KEY
-From: LongmontAI <news@longmontai.com>
-```
+Sharing rules:
 
-Then create the double-opt-in public list with the CLI helper:
+- **LongmontAI owns only what it creates.** That is the lists tagged `longmontai`, the `LongmontAI pass-through` template, and campaigns named `longmontai-*`. Leave instance-wide settings alone (SMTP, the opt-in email, site name, default from address), because 1023.Digital's newsletter depends on them.
+- **Give LongmontAI its own API user.** Create it in Listmonk under Users, so its token can be revoked without touching 1023.Digital.
+- **The edition email only sends to tagged lists.** Before it creates or starts a campaign, it reads each target list and refuses (409 `listmonk_list_not_longmontai`) unless the list carries the `longmontai` tag. A mistyped list ID cannot mail 1023.Digital's subscribers.
+- **The lists are public.** The signup endpoint uses Listmonk's public double opt-in API, which also adds someone already subscribed to a 1023.Digital list. Public lists also appear on `https://lists.1023.digital/subscription/form`.
+- **Branding is shared.** Listmonk's opt-in confirmation email and its unsubscribe and preferences pages use the server's 1023Digital branding. LongmontAI's own campaigns carry LongmontAI branding.
+
+Create the double opt-in public lists and the template with the CLI helper:
 
 ```bash
-LISTMONK_BASE_URL=https://newsletter.longmontai.com \
+LISTMONK_BASE_URL=https://lists.1023.digital \
 LISTMONK_API_USERNAME=<api-user> \
 LISTMONK_API_TOKEN=<api-token> \
 npm run newsletter:setup-listmonk
@@ -52,7 +52,9 @@ Save the returned cadence-specific list IDs and UUIDs. The signup endpoint route
 
 ### Resend
 
-Verify the sending domain in Resend and create an API key. Resend does not need a separate sender identity once the domain is verified; Listmonk sends through Resend SMTP using that API key.
+Listmonk sends through 1023.Digital's Resend account. Add `longmontai.com` to that account as a second sending domain (see DNS for Resend below). Do not rotate or reuse the 1023.Digital site's `RESEND_API_KEY`, because the 1023.Digital project inquiry form sends with it over Resend's HTTP API.
+
+The inquiry form and Listmonk share the account's sending quota and rate limit. A meetup email uses one send per subscriber. Before the list approaches the plan's daily limit, raise the Resend plan, or the inquiry notifications fail that day. Keep Listmonk's message rate (Settings, Performance) under Resend's per-second limit.
 
 ## Vercel Environment
 
@@ -114,7 +116,7 @@ Subscribers on every configured list get one email at the start of each meetup. 
 
 ### DNS for Resend
 
-`longmontai.com` DNS is hosted at Squarespace. The root domain already has Mailgun MX and SPF records and a DMARC policy of `p=reject` with strict alignment. Add the records Resend shows for the domain (a DKIM TXT at `resend._domainkey` and MX plus SPF TXT at `send`) and leave the Mailgun records alone. Verify `longmontai.com` itself in Resend, not a subdomain, so the DKIM signature matches the `news@longmontai.com` sender exactly. A mismatch is rejected under the current DMARC policy.
+`longmontai.com` DNS is hosted at Squarespace. The root domain already has Mailgun MX and SPF records and a DMARC policy of `p=reject` with strict alignment. Add the records Resend shows for the domain (a DKIM TXT at `resend._domainkey` and MX plus SPF TXT at `send`) and leave the Mailgun records alone. Verify `longmontai.com` itself in 1023.Digital's Resend account, not a subdomain, so the DKIM signature matches the `news@longmontai.com` sender exactly. A mismatch is rejected under the current DMARC policy.
 
 ## Provider data disclosures
 

@@ -189,7 +189,7 @@ function listmonkEnv(overrides = {}) {
 
 // A minimal Listmonk: campaigns live in memory so a second run sees what the
 // first one left behind.
-function fakeListmonk(campaigns = []) {
+function fakeListmonk(campaigns = [], listTags = { 3: ['longmontai'], 4: ['longmontai'] }) {
   const calls = [];
   const fetchImpl = async (url, options = {}) => {
     const { pathname, searchParams } = new URL(url);
@@ -204,6 +204,10 @@ function fakeListmonk(campaigns = []) {
       const campaign = { id: campaigns.length + 41, status: 'draft', ...body };
       campaigns.push(campaign);
       return Response.json({ data: campaign });
+    }
+    const listMatch = /^\/api\/lists\/(\d+)$/.exec(pathname);
+    if (method === 'GET' && listMatch && listTags[listMatch[1]]) {
+      return Response.json({ data: { id: Number(listMatch[1]), tags: listTags[listMatch[1]] } });
     }
     const statusMatch = /^\/api\/campaigns\/(\d+)\/status$/.exec(pathname);
     if (method === 'PUT' && statusMatch) {
@@ -295,10 +299,12 @@ test('a due edition creates one campaign for every list and starts it', async ()
   });
   assert.deepEqual(listmonk.calls.map((call) => `${call.method} ${call.pathname}`), [
     'GET /api/campaigns',
+    'GET /api/lists/3',
+    'GET /api/lists/4',
     'POST /api/campaigns',
     'PUT /api/campaigns/41/status',
   ]);
-  const created = listmonk.calls[1].body;
+  const created = listmonk.calls[3].body;
   assert.equal(created.name, IDENTITY);
   assert.equal(created.subject, 'Longmont AI meetup edition: Promised weights');
   assert.deepEqual(created.lists, [3, 4]);
@@ -308,8 +314,23 @@ test('a due edition creates one campaign for every list and starts it', async ()
   assert.equal(created.content_type, 'html');
   assert.ok(created.body.includes('{{ UnsubscribeURL }}'));
   assert.ok(created.altbody.includes('{{ UnsubscribeURL }}'));
-  assert.deepEqual(listmonk.calls[2].body, { status: 'running' });
+  assert.deepEqual(listmonk.calls[4].body, { status: 'running' });
   assert.ok(listmonk.calls.every((call) => call.authorization === 'token api:token'));
+});
+
+test('a list another site owns on the shared Listmonk stops the send before anything is written', async () => {
+  const sharedServer = fakeListmonk([], { 3: ['longmontai'], 4: ['studio-updates'] });
+  const fresh = await invoke(handlerAt(0, { listmonk: sharedServer }).handler);
+  assert.equal(fresh.status, 409);
+  assert.equal(fresh.body.error, 'listmonk_list_not_longmontai');
+  assert.match(fresh.body.message, /list 4/);
+
+  const withDraft = fakeListmonk([{ id: 7, name: IDENTITY, status: 'draft' }], { 3: ['longmontai'] });
+  const resumed = await invoke(handlerAt(HOUR_MS, { listmonk: withDraft }).handler);
+  assert.equal(resumed.status, 502);
+  assert.equal(resumed.body.error, 'listmonk_list_lookup_failed');
+
+  assert.equal(sharedServer.writes().length + withDraft.writes().length, 0);
 });
 
 test('the retry crons do nothing once the campaign is running', async () => {

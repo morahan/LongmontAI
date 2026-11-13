@@ -727,6 +727,32 @@ export async function recoverListmonkCampaign(env, campaignIdentity, fetchImpl =
   };
 }
 
+export const LONGMONTAI_LIST_TAG = 'longmontai';
+
+// The Listmonk server is shared with 1023.Digital, so a mistyped list ID could
+// mail another site's subscribers. Only lists the setup script tagged qualify.
+async function requireLongmontaiLists(config, listIds, fetchImpl) {
+  for (const id of listIds) {
+    const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/lists/${id}`, {
+      method: 'GET',
+      headers: { ...listmonkAuthHeaders(config), Accept: 'application/json' },
+    }, NEWSLETTER_OUTBOUND_LIMITS.listmonk);
+    const data = await providerJson(outbound.response, {
+      signal: outbound.signal,
+      maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonk.maxBytes,
+    });
+    if (!outbound.response.ok) {
+      throw new NewsletterError('Listmonk list lookup failed.', { status: 502, code: 'listmonk_list_lookup_failed' });
+    }
+    if (!data?.data?.tags?.includes(LONGMONTAI_LIST_TAG)) {
+      throw new NewsletterError(`Listmonk list ${id} is not tagged "${LONGMONTAI_LIST_TAG}", so the edition email will not send to it.`, {
+        status: 409,
+        code: 'listmonk_list_not_longmontai',
+      });
+    }
+  }
+}
+
 export function listmonkEditionListIds(env) {
   const config = listmonkConfig(env);
   if (!config) return [];
@@ -752,6 +778,9 @@ export async function sendListmonkEditionCampaign(env, { identity, subject, html
   const existing = await recoverListmonkCampaign(env, identity, fetchImpl);
   let campaignId = existing.campaignId;
   let status = existing.status;
+  if (!existing.ok || (status === 'draft' && mode === 'send')) {
+    await requireLongmontaiLists(config, lists, fetchImpl);
+  }
   if (!existing.ok) {
     ({ campaignId } = await postListmonkCampaign(config, {
       name: identity,
