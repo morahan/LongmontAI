@@ -1,6 +1,6 @@
 // The countdown show is a pure function of the clock: every value here derives from
-// msUntilMeetup (negative once the meetup has started), so the live page and the
-// /countdown/final demo replay the same sequence from any starting offset.
+// msUntilMeetup (negative once the meetup has started), so a page opened or reloaded
+// mid-show lands on the same moment as everyone else.
 
 export const SONG = {
   videoId: '9jK-NcRmVcw',

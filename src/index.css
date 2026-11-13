@@ -5331,7 +5331,7 @@ iframe {
   }
 }
 
-/* Countdown show: the last minute, zero, and the /countdown/final demo.
+/* Countdown show: the last minute and zero.
    --energy runs 0 to 1 across the last 30 seconds and is set inline every frame. */
 .countdown-stage {
   --energy: 0;
@@ -5657,8 +5657,7 @@ iframe {
   cursor: pointer;
 }
 
-.countdown-sound-chip:focus-visible,
-.countdown-demo__button:focus-visible {
+.countdown-sound-chip:focus-visible {
   outline: 3px solid var(--color-cyan);
   outline-offset: 4px;
 }
@@ -5818,81 +5817,6 @@ iframe {
 @keyframes countdown-live-reveal {
   from { transform: scale(0.9); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
-}
-
-.countdown-demo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  min-height: 70vh;
-  padding: 0 1rem;
-  text-align: center;
-}
-
-.countdown-demo__eyebrow {
-  color: var(--color-cyan);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-}
-
-.countdown-demo__title {
-  font-size: clamp(2.4rem, 9vw, 5.5rem);
-  line-height: 1;
-}
-
-.countdown-demo__copy {
-  max-width: 30rem;
-  color: var(--text-secondary);
-}
-
-.countdown-demo__button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #fff;
-  font-family: inherit;
-  font-weight: 700;
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.countdown-demo__button--play {
-  margin-top: 0.75rem;
-  padding: 0.9rem 1.75rem;
-  font-size: 1.05rem;
-  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
-  box-shadow: 0 0 2.5rem color-mix(in srgb, var(--color-purple) 55%, transparent);
-  transition: transform 180ms ease, box-shadow 180ms ease;
-}
-
-.countdown-demo__button--play:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 3.5rem color-mix(in srgb, var(--color-pink) 55%, transparent);
-}
-
-.countdown-demo__controls {
-  position: fixed;
-  right: 1.25rem;
-  bottom: 1.25rem;
-  z-index: 30;
-  display: flex;
-  gap: 0.6rem;
-  width: auto;
-}
-
-.countdown-demo__button--control {
-  padding: 0.5rem 1rem;
-  white-space: nowrap;
-  font-size: 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(9, 9, 11, 0.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 /* Respect reduced-motion across the countdown page */

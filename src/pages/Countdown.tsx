@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Calendar, Clock, MapPin, Play, RotateCcw, VolumeX } from 'lucide-react';
+import { Calendar, Clock, MapPin, VolumeX } from 'lucide-react';
 import {
   DENVER_TIME_ZONE,
   denverCalendarDate,
@@ -1037,100 +1037,6 @@ const Countdown: React.FC<{ now?: () => Date }> = ({ now = realNow }) => {
           />
         </div>
       )}
-    </div>
-  );
-};
-
-// ─── Final countdown demo (/countdown/final) ────────────────────────────────
-const DEMO_LEAD_IN_SECONDS = 68;
-const DEMO_LAST_SECONDS = 10;
-const DEMO_REPLAY_AFTER_SECONDS = 15;
-
-interface DemoRun {
-  id: number;
-  meetupAt: number;
-  clock: () => Date;
-}
-
-function readDemoStartSeconds(): number | null {
-  const raw = new URLSearchParams(window.location.search).get('at');
-  if (raw === null || raw.trim() === '') return null;
-  const seconds = Number(raw);
-  return Number.isFinite(seconds) ? seconds : null;
-}
-
-function startDemoRun(offsetSeconds: number): DemoRun {
-  const startedAt = performance.now();
-  const meetupAt = getNextMeetup(new Date()).getTime();
-  const simulatedStart = meetupAt + offsetSeconds * 1000;
-  return {
-    id: startedAt,
-    meetupAt,
-    clock: () => new Date(simulatedStart + performance.now() - startedAt),
-  };
-}
-
-export const CountdownFinalDemo: React.FC = () => {
-  const [run, setRun] = useState<DemoRun | null>(() => {
-    const startSeconds = readDemoStartSeconds();
-    return startSeconds === null ? null : startDemoRun(startSeconds);
-  });
-  const [canReplay, setCanReplay] = useState(false);
-
-  useEffect(() => {
-    if (!run) return undefined;
-    const replayAt = run.meetupAt + DEMO_REPLAY_AFTER_SECONDS * 1000;
-    const check = () => setCanReplay(run.clock().getTime() >= replayAt);
-    check();
-    const interval = window.setInterval(check, 500);
-    return () => window.clearInterval(interval);
-  }, [run]);
-
-  const play = () => setRun(startDemoRun(-DEMO_LEAD_IN_SECONDS));
-
-  const controls = (
-    <div className="countdown-demo__controls">
-      {canReplay && (
-        <button type="button" className="countdown-demo__button countdown-demo__button--control" onClick={play}>
-          <RotateCcw size={14} aria-hidden="true" />
-          Replay
-        </button>
-      )}
-      <button
-        type="button"
-        className="countdown-demo__button countdown-demo__button--control"
-        onClick={() => setRun(startDemoRun(-DEMO_LAST_SECONDS))}
-      >
-        <Play size={14} aria-hidden="true" />
-        Last {DEMO_LAST_SECONDS} seconds
-      </button>
-    </div>
-  );
-
-  if (!run) {
-    return (
-      <section className="countdown-demo" aria-labelledby="countdown-demo-title">
-        <p className="countdown-demo__eyebrow">Meetup countdown preview</p>
-        <h1 id="countdown-demo-title" className="countdown-demo__title">
-          <span className="text-gradient-vibrant">The Final Countdown</span>
-        </h1>
-        <p className="countdown-demo__copy">
-          Replay the last minute before a Longmont AI meetup starts. Turn your sound on.
-        </p>
-        <button type="button" className="countdown-demo__button countdown-demo__button--play" onClick={play}>
-          <Play size={18} aria-hidden="true" />
-          Play the Final Countdown
-        </button>
-        {controls}
-      </section>
-    );
-  }
-
-  // One wrapper element, because the layout stretches every direct child of the page container.
-  return (
-    <div>
-      <Countdown key={run.id} now={run.clock} />
-      {controls}
     </div>
   );
 };

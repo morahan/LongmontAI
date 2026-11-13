@@ -13,7 +13,6 @@ test('every current page has a title, with unchanged route coverage', () => {
     '/': 'LongmontAI',
     '/edition/example': 'Edition | LongmontAI',
     '/countdown': 'Meetup Countdown | LongmontAI',
-    '/countdown/final': 'Final Countdown Demo | LongmontAI',
     '/tools': 'AI Capabilities Matrix | LongmontAI',
     '/model-watch': 'Model Watch | LongmontAI',
     '/leaderboard': 'Leaderboard | LongmontAI',
