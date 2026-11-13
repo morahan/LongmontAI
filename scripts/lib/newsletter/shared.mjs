@@ -10,6 +10,7 @@ export const NEWSLETTER_OUTBOUND_LIMITS = Object.freeze({
   listmonk: { timeoutMs: 12_000, maxBytes: 1024 * 1024 },
   listmonkCampaign: { timeoutMs: 15_000, maxBytes: 1024 * 1024 },
   resend: { timeoutMs: 10_000, maxBytes: 256 * 1024 },
+  turnstile: { timeoutMs: 8_000, maxBytes: 16 * 1024 },
   openai: { timeoutMs: 30_000, maxBytes: 1024 * 1024 },
   liveSource: { timeoutMs: 9_000, maxBytes: 80_000 },
   setup: { timeoutMs: 10_000, maxBytes: 1024 * 1024 },
@@ -524,9 +525,6 @@ export function listmonkConfig(env) {
   if (!baseUrl) return null;
   return {
     baseUrl,
-    listUuid: envValue(env, 'LISTMONK_NEWSLETTER_LIST_UUID'),
-    weeklyListUuid: envValue(env, 'LISTMONK_WEEKLY_LIST_UUID'),
-    biweeklyListUuid: envValue(env, 'LISTMONK_BIWEEKLY_LIST_UUID'),
     listId: Number(envValue(env, 'LISTMONK_NEWSLETTER_LIST_ID')),
     weeklyListId: Number(envValue(env, 'LISTMONK_WEEKLY_LIST_ID')),
     biweeklyListId: Number(envValue(env, 'LISTMONK_BIWEEKLY_LIST_ID')),
@@ -538,16 +536,8 @@ export function listmonkConfig(env) {
 }
 
 function listmonkListForCadence(config, cadence) {
-  if (cadence === 'biweekly') {
-    return {
-      uuid: config.biweeklyListUuid ?? config.listUuid,
-      id: Number.isInteger(config.biweeklyListId) && config.biweeklyListId > 0 ? config.biweeklyListId : config.listId,
-    };
-  }
-  return {
-    uuid: config.weeklyListUuid ?? config.listUuid,
-    id: Number.isInteger(config.weeklyListId) && config.weeklyListId > 0 ? config.weeklyListId : config.listId,
-  };
+  const id = cadence === 'biweekly' ? config.biweeklyListId : config.weeklyListId;
+  return { id: Number.isInteger(id) && id > 0 ? id : config.listId };
 }
 
 export function canCreateListmonkCampaign(env, cadence) {
@@ -572,59 +562,117 @@ async function providerJson(response, { signal, maxBytes }) {
   return readBoundedResponseJson(response, { signal, maxBytes });
 }
 
-export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetch) {
-  const config = listmonkConfig(env);
-  if (!config) return { ok: false, skipped: true, reason: 'listmonk_not_configured' };
-  const list = listmonkListForCadence(config, subscriber.cadence);
-
-  let endpoint;
-  let payload;
-  let headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
-
-  if (list.uuid) {
-    endpoint = `${config.baseUrl}/api/public/subscription`;
-    payload = {
-      email: subscriber.email,
-      name: subscriber.name || '',
-      list_uuids: [list.uuid],
-    };
-  } else if (Number.isInteger(list.id) && list.id > 0 && config.username && config.token) {
-    endpoint = `${config.baseUrl}/api/subscribers`;
-    headers = { ...headers, ...listmonkAuthHeaders(config) };
-    payload = {
-      email: subscriber.email,
-      name: subscriber.name || '',
-      status: 'enabled',
-      lists: [list.id],
-      preconfirm_subscriptions: false,
-    };
-  } else {
-    return { ok: false, skipped: true, reason: 'listmonk_list_not_configured' };
-  }
-
-  const outbound = await newsletterFetch(fetchImpl, endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-    signal: subscriber.signal,
+async function listmonkRequest(config, pathname, { method = 'GET', body, signal } = {}, fetchImpl) {
+  const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}${pathname}`, {
+    method,
+    headers: {
+      ...listmonkAuthHeaders(config),
+      Accept: 'application/json',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    signal,
   }, NEWSLETTER_OUTBOUND_LIMITS.listmonk);
   const data = await providerJson(outbound.response, {
     signal: outbound.signal,
     maxBytes: NEWSLETTER_OUTBOUND_LIMITS.listmonk.maxBytes,
   });
+  return { status: outbound.response.status, ok: outbound.response.ok, data };
+}
 
-  if (!outbound.response.ok) {
-    const detail = JSON.stringify(data ?? {});
-    if (outbound.response.status === 409 || /already|duplicate|exists/i.test(detail)) {
-      return { ok: true, status: 'already-subscribed' };
-    }
-    throw new NewsletterError('Listmonk subscription failed.', {
-      status: 502,
-      code: 'listmonk_request_failed',
-    });
+function listmonkSubscriptionFailed() {
+  return new NewsletterError('Listmonk subscription failed.', { status: 502, code: 'listmonk_request_failed' });
+}
+
+// The lists are private, so only this authenticated path can add people to
+// them. Listmonk rejects a create for an email it already holds (for example
+// someone on another site's list on the shared server), so that person is
+// looked up and added to the list instead. A confirmed or blocklisted
+// subscriber is left as is; anyone else gets a fresh double opt-in email.
+export async function syncSubscriberToListmonk(env, subscriber, fetchImpl = fetch) {
+  const config = listmonkConfig(env);
+  if (!config) return { ok: false, skipped: true, reason: 'listmonk_not_configured' };
+  const { id: listId } = listmonkListForCadence(config, subscriber.cadence);
+  if (!Number.isInteger(listId) || listId <= 0 || !config.username || !config.token) {
+    return { ok: false, skipped: true, reason: 'listmonk_list_not_configured' };
+  }
+  const { signal } = subscriber;
+
+  const created = await listmonkRequest(config, '/api/subscribers', {
+    method: 'POST',
+    body: {
+      email: subscriber.email,
+      name: subscriber.name || '',
+      status: 'enabled',
+      lists: [listId],
+      preconfirm_subscriptions: false,
+    },
+    signal,
+  }, fetchImpl);
+  if (created.ok) return { ok: true, status: 'submitted' };
+  if (created.status !== 409) throw listmonkSubscriptionFailed();
+
+  const search = await listmonkRequest(
+    config,
+    `/api/subscribers?search=${encodeURIComponent(subscriber.email)}&per_page=100`,
+    { signal },
+    fetchImpl,
+  );
+  const existing = search.ok
+    ? campaignRows(search.data).find((row) => normalizeEmail(row?.email) === subscriber.email)
+    : undefined;
+  if (!Number.isInteger(existing?.id) || existing.id <= 0) throw listmonkSubscriptionFailed();
+
+  const membership = existing.lists?.find((list) => list?.id === listId);
+  if (existing.status === 'blocklisted' || membership?.subscription_status === 'confirmed') {
+    return { ok: true, status: 'already-subscribed' };
   }
 
+  const added = await listmonkRequest(config, '/api/subscribers/lists', {
+    method: 'PUT',
+    body: { ids: [existing.id], action: 'add', target_list_ids: [listId], status: 'unconfirmed' },
+    signal,
+  }, fetchImpl);
+  if (!added.ok) throw listmonkSubscriptionFailed();
+  const optin = await listmonkRequest(config, `/api/subscribers/${existing.id}/optin`, { method: 'POST', signal }, fetchImpl);
+  if (!optin.ok) throw listmonkSubscriptionFailed();
   return { ok: true, status: 'submitted' };
+}
+
+const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+export async function verifyTurnstileToken(env, { token }, fetchImpl = fetch) {
+  const secret = envValue(env, 'TURNSTILE_SECRET_KEY');
+  if (!secret) {
+    throw new NewsletterError('Newsletter bot protection is not configured.', {
+      status: 503,
+      code: 'turnstile_not_configured',
+    });
+  }
+  const failed = () => new NewsletterError('Complete the human check and try again.', {
+    status: 400,
+    code: 'verification_failed',
+  });
+  if (typeof token !== 'string' || !token || token.length > 2048) throw failed();
+
+  let data;
+  try {
+    const outbound = await newsletterFetch(fetchImpl, TURNSTILE_VERIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ secret, response: token }),
+    }, NEWSLETTER_OUTBOUND_LIMITS.turnstile);
+    data = await providerJson(outbound.response, {
+      signal: outbound.signal,
+      maxBytes: NEWSLETTER_OUTBOUND_LIMITS.turnstile.maxBytes,
+    });
+  } catch {
+    throw new NewsletterError('Newsletter signup is temporarily unavailable.', {
+      status: 503,
+      code: 'turnstile_unavailable',
+    });
+  }
+  if (data?.success !== true) throw failed();
 }
 
 async function postListmonkCampaign(config, body, signal, fetchImpl) {
@@ -729,9 +777,12 @@ export async function recoverListmonkCampaign(env, campaignIdentity, fetchImpl =
 
 export const LONGMONTAI_LIST_TAG = 'longmontai';
 
-// The Listmonk server is shared with 1023.Digital, so a mistyped list ID could
-// mail another site's subscribers. Only lists the setup script tagged qualify.
+// The Listmonk server is shared with another site, so a mistyped list ID could
+// mail that site's subscribers. Only lists the setup script tagged qualify.
+// Returns how many confirmed subscribers the lists hold, counting anyone on two
+// lists twice, which only overstates the send.
 async function requireLongmontaiLists(config, listIds, fetchImpl) {
+  let recipients = 0;
   for (const id of listIds) {
     const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/lists/${id}`, {
       method: 'GET',
@@ -750,6 +801,41 @@ async function requireLongmontaiLists(config, listIds, fetchImpl) {
         code: 'listmonk_list_not_longmontai',
       });
     }
+    const confirmed = data.data.subscriber_statuses?.confirmed ?? data.data.subscriber_count;
+    recipients += Number.isInteger(confirmed) && confirmed > 0 ? confirmed : 0;
+  }
+  return recipients;
+}
+
+const DEFAULT_RESEND_RESERVE = 20;
+
+// The Resend account also carries another site's transactional mail, such as
+// its contact form. Starting a campaign that would exhaust the daily or monthly
+// quota would make that mail fail until the quota resets, so the campaign waits
+// unless the send leaves the reserve untouched.
+async function requireResendHeadroom(env, recipients, fetchImpl) {
+  const reserveValue = Number(envValue(env, 'NEWSLETTER_RESEND_RESERVE'));
+  const reserve = Number.isInteger(reserveValue) && reserveValue >= 0 ? reserveValue : DEFAULT_RESEND_RESERVE;
+  const outbound = await newsletterFetch(fetchImpl, 'https://api.resend.com/usage', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${envValue(env, 'RESEND_API_KEY')}`, Accept: 'application/json' },
+  }, NEWSLETTER_OUTBOUND_LIMITS.resend);
+  const data = await providerJson(outbound.response, {
+    signal: outbound.signal,
+    maxBytes: NEWSLETTER_OUTBOUND_LIMITS.resend.maxBytes,
+  });
+  const windows = [data?.emails?.daily, data?.emails?.monthly];
+  if (!outbound.response.ok || windows.some((window) => !Number.isFinite(window?.used))) {
+    throw new NewsletterError('Resend usage lookup failed.', { status: 502, code: 'resend_usage_unavailable' });
+  }
+  const remaining = Math.min(...windows.map((window) => (
+    Number.isFinite(window.limit) ? window.limit - window.used : Infinity
+  )));
+  if (recipients + reserve > remaining) {
+    throw new NewsletterError(
+      `The edition email needs ${recipients} sends plus a reserve of ${reserve}, but Resend has ${remaining} left. It stays a draft.`,
+      { status: 409, code: 'resend_quota_insufficient' },
+    );
   }
 }
 
@@ -774,12 +860,14 @@ export async function sendListmonkEditionCampaign(env, { identity, subject, html
   if (!Number.isInteger(config.editionTemplateId) || config.editionTemplateId <= 0) {
     return skipped('listmonk_template_not_configured');
   }
+  if (mode === 'send' && !envValue(env, 'RESEND_API_KEY')) return skipped('resend_usage_not_configured');
 
   const existing = await recoverListmonkCampaign(env, identity, fetchImpl);
   let campaignId = existing.campaignId;
   let status = existing.status;
+  let recipients = 0;
   if (!existing.ok || (status === 'draft' && mode === 'send')) {
-    await requireLongmontaiLists(config, lists, fetchImpl);
+    recipients = await requireLongmontaiLists(config, lists, fetchImpl);
   }
   if (!existing.ok) {
     ({ campaignId } = await postListmonkCampaign(config, {
@@ -801,6 +889,7 @@ export async function sendListmonkEditionCampaign(env, { identity, subject, html
   if (status !== 'draft' || mode !== 'send') {
     return { ok: true, campaignId, status, created, started: false };
   }
+  await requireResendHeadroom(env, recipients, fetchImpl);
 
   const outbound = await newsletterFetch(fetchImpl, `${config.baseUrl}/api/campaigns/${campaignId}/status`, {
     method: 'PUT',

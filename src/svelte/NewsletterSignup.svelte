@@ -1,10 +1,12 @@
 <svelte:options customElement="longmont-newsletter-signup" />
 
 <script lang="ts">
+  import { onDestroy, onMount } from 'svelte';
   import {
     newsletterSignupErrorMessage,
     readNewsletterSubscribeResponse,
   } from '../lib/newsletterResponse';
+  import { mountTurnstile, turnstileSiteKey, type TurnstileWidget } from '../lib/turnstile';
 
   let email = '';
   let name = '';
@@ -12,6 +14,9 @@
   let company = '';
   let status: 'idle' | 'loading' | 'success' | 'error' = 'idle';
   let message = '';
+  let turnstileContainer: HTMLDivElement;
+  let turnstileToken = '';
+  let turnstile: TurnstileWidget | undefined;
 
   export let source = 'newsletter-page';
   export let defaultCadence: 'weekly' | 'biweekly' = 'weekly';
@@ -20,7 +25,24 @@
     cadence = cadence === 'weekly' || cadence === 'biweekly' ? cadence : defaultCadence;
   }
 
+  onMount(() => {
+    if (!turnstileSiteKey) return;
+    mountTurnstile(turnstileContainer, turnstileSiteKey, (token) => { turnstileToken = token; })
+      .then((widget) => { turnstile = widget; })
+      .catch(() => {
+        status = 'error';
+        message = 'The human check could not load. Refresh the page to try again.';
+      });
+  });
+
+  onDestroy(() => turnstile?.remove());
+
   async function submit() {
+    if (turnstileSiteKey && !turnstileToken) {
+      status = 'error';
+      message = 'Complete the human check first.';
+      return;
+    }
     status = 'loading';
     message = '';
     try {
@@ -34,6 +56,7 @@
           company,
           source,
           page: window.location.pathname,
+          turnstileToken,
         }),
       });
       const payload = await readNewsletterSubscribeResponse(response);
@@ -46,6 +69,9 @@
     } catch (error) {
       status = 'error';
       message = newsletterSignupErrorMessage(error);
+    } finally {
+      turnstileToken = '';
+      turnstile?.reset();
     }
   }
 </script>
@@ -93,6 +119,8 @@
       </label>
     </div>
   </fieldset>
+
+  <div class="newsletter-turnstile" bind:this={turnstileContainer}></div>
 
   <button type="submit" disabled={status === 'loading'}>
     {status === 'loading' ? 'Joining...' : 'Get the briefing'}
@@ -163,6 +191,10 @@
     width: 1px;
     height: 1px;
     overflow: hidden;
+  }
+
+  .newsletter-turnstile:empty {
+    display: none;
   }
 
   .newsletter-cadence {

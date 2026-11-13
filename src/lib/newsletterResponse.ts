@@ -11,6 +11,7 @@ const SAFE_ERROR_MESSAGES: Readonly<Record<string, string>> = {
   invalid_json: 'Newsletter signup request was not accepted.',
   unsupported_content_type: 'Newsletter signup request was not accepted.',
   origin_not_allowed: 'Newsletter signup is unavailable from this page.',
+  verification_failed: 'Complete the human check and try again.',
   method_not_allowed: UNAVAILABLE_MESSAGE,
 };
 

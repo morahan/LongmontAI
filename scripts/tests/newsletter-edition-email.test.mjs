@@ -183,19 +183,28 @@ function listmonkEnv(overrides = {}) {
     LISTMONK_NEWSLETTER_LIST_ID: '3',
     LISTMONK_EDITION_TEMPLATE_ID: '9',
     NEWSLETTER_FROM_EMAIL: 'LongmontAI <news@longmontai.com>',
+    RESEND_API_KEY: 'resend-key',
     ...overrides,
   };
 }
 
-// A minimal Listmonk: campaigns live in memory so a second run sees what the
-// first one left behind.
-function fakeListmonk(campaigns = [], listTags = { 3: ['longmontai'], 4: ['longmontai'] }) {
+const LONGMONTAI_LISTS = {
+  3: { tags: ['longmontai'], subscriber_statuses: { confirmed: 30, unconfirmed: 4 } },
+  4: { tags: ['longmontai'], subscriber_statuses: { confirmed: 10 } },
+};
+
+// A minimal Listmonk, plus Resend's usage endpoint. Campaigns live in memory so
+// a second run sees what the first one left behind.
+function fakeListmonk(campaigns = [], lists = LONGMONTAI_LISTS, usage = { daily: { used: 5, limit: 100 }, monthly: { used: 200, limit: 3000 } }) {
   const calls = [];
   const fetchImpl = async (url, options = {}) => {
-    const { pathname, searchParams } = new URL(url);
+    const { host, pathname, searchParams } = new URL(url);
     const method = options.method ?? 'GET';
     const body = options.body ? JSON.parse(options.body) : undefined;
     calls.push({ method, pathname, body, authorization: options.headers?.Authorization });
+    if (host === 'api.resend.com' && pathname === '/usage') {
+      return Response.json({ object: 'usage', emails: usage });
+    }
     if (method === 'GET' && pathname === '/api/campaigns') {
       const query = searchParams.get('query');
       return Response.json({ data: { results: campaigns.filter((campaign) => campaign.name.includes(query)) } });
@@ -206,8 +215,8 @@ function fakeListmonk(campaigns = [], listTags = { 3: ['longmontai'], 4: ['longm
       return Response.json({ data: campaign });
     }
     const listMatch = /^\/api\/lists\/(\d+)$/.exec(pathname);
-    if (method === 'GET' && listMatch && listTags[listMatch[1]]) {
-      return Response.json({ data: { id: Number(listMatch[1]), tags: listTags[listMatch[1]] } });
+    if (method === 'GET' && listMatch && lists[listMatch[1]]) {
+      return Response.json({ data: { id: Number(listMatch[1]), ...lists[listMatch[1]] } });
     }
     const statusMatch = /^\/api\/campaigns\/(\d+)\/status$/.exec(pathname);
     if (method === 'PUT' && statusMatch) {
@@ -302,6 +311,7 @@ test('a due edition creates one campaign for every list and starts it', async ()
     'GET /api/lists/3',
     'GET /api/lists/4',
     'POST /api/campaigns',
+    'GET /usage',
     'PUT /api/campaigns/41/status',
   ]);
   const created = listmonk.calls[3].body;
@@ -314,23 +324,52 @@ test('a due edition creates one campaign for every list and starts it', async ()
   assert.equal(created.content_type, 'html');
   assert.ok(created.body.includes('{{ UnsubscribeURL }}'));
   assert.ok(created.altbody.includes('{{ UnsubscribeURL }}'));
-  assert.deepEqual(listmonk.calls[4].body, { status: 'running' });
-  assert.ok(listmonk.calls.every((call) => call.authorization === 'token api:token'));
+  assert.deepEqual(listmonk.calls[5].body, { status: 'running' });
+  assert.equal(listmonk.calls[4].authorization, 'Bearer resend-key');
+  assert.ok(listmonk.calls.filter((call) => call.pathname.startsWith('/api/'))
+    .every((call) => call.authorization === 'token api:token'));
 });
 
 test('a list another site owns on the shared Listmonk stops the send before anything is written', async () => {
-  const sharedServer = fakeListmonk([], { 3: ['longmontai'], 4: ['studio-updates'] });
+  const sharedServer = fakeListmonk([], { 3: LONGMONTAI_LISTS[3], 4: { tags: ['studio-updates'] } });
   const fresh = await invoke(handlerAt(0, { listmonk: sharedServer }).handler);
   assert.equal(fresh.status, 409);
   assert.equal(fresh.body.error, 'listmonk_list_not_longmontai');
   assert.match(fresh.body.message, /list 4/);
 
-  const withDraft = fakeListmonk([{ id: 7, name: IDENTITY, status: 'draft' }], { 3: ['longmontai'] });
+  const withDraft = fakeListmonk([{ id: 7, name: IDENTITY, status: 'draft' }], { 3: LONGMONTAI_LISTS[3] });
   const resumed = await invoke(handlerAt(HOUR_MS, { listmonk: withDraft }).handler);
   assert.equal(resumed.status, 502);
   assert.equal(resumed.body.error, 'listmonk_list_lookup_failed');
 
   assert.equal(sharedServer.writes().length + withDraft.writes().length, 0);
+});
+
+test('a send that would eat into the Resend reserve stays a draft until the quota allows it', async () => {
+  const nearlySpent = { daily: { used: 45, limit: 100 }, monthly: { used: 200, limit: 3000 } };
+  const listmonk = fakeListmonk([], LONGMONTAI_LISTS, nearlySpent);
+  const blocked = await invoke(handlerAt(0, { listmonk }).handler);
+  assert.equal(blocked.status, 409);
+  assert.equal(blocked.body.error, 'resend_quota_insufficient');
+  assert.match(blocked.body.message, /needs 40 sends plus a reserve of 20, but Resend has 55 left/);
+  assert.deepEqual(listmonk.writes().map((call) => `${call.method} ${call.pathname}`), ['POST /api/campaigns']);
+  assert.equal(listmonk.campaigns[0].status, 'draft');
+
+  const smallerReserve = listmonkEnv({ NEWSLETTER_RESEND_RESERVE: '10' });
+  const sent = await invoke(handlerAt(HOUR_MS, { env: smallerReserve, listmonk }).handler);
+  assert.deepEqual(sent.body.campaign, { ok: true, campaignId: 41, status: 'running', created: false, started: true });
+
+  const monthSpent = fakeListmonk([], LONGMONTAI_LISTS, { daily: { used: 0, limit: null }, monthly: { used: 2950, limit: 3000 } });
+  const monthly = await invoke(handlerAt(0, { listmonk: monthSpent }).handler);
+  assert.equal(monthly.body.error, 'resend_quota_insufficient');
+});
+
+test('an unreadable Resend usage answer blocks the send', async () => {
+  const listmonk = fakeListmonk([], LONGMONTAI_LISTS, { daily: {} });
+  const result = await invoke(handlerAt(0, { listmonk }).handler);
+  assert.equal(result.status, 502);
+  assert.equal(result.body.error, 'resend_usage_unavailable');
+  assert.ok(!listmonk.writes().some((call) => call.method === 'PUT'));
 });
 
 test('the retry crons do nothing once the campaign is running', async () => {
@@ -376,7 +415,7 @@ test('a draft left by a crashed run is started without a second create', async (
 
 test('draft mode creates the campaign once and never starts it', async () => {
   const listmonk = fakeListmonk();
-  const env = listmonkEnv({ NEWSLETTER_EDITION_EMAIL_MODE: 'draft' });
+  const env = listmonkEnv({ NEWSLETTER_EDITION_EMAIL_MODE: 'draft', RESEND_API_KEY: '' });
   const first = await invoke(handlerAt(0, { env, listmonk }).handler);
   const second = await invoke(handlerAt(HOUR_MS, { env, listmonk }).handler);
 
@@ -397,6 +436,7 @@ test('a due edition answers 503 with the reason when delivery is not configured'
     },
     newsletter_from_email_not_configured: { NEWSLETTER_FROM_EMAIL: '' },
     listmonk_template_not_configured: { LISTMONK_EDITION_TEMPLATE_ID: '' },
+    resend_usage_not_configured: { RESEND_API_KEY: '' },
   };
   for (const [reason, overrides] of Object.entries(cases)) {
     const { handler, listmonk } = handlerAt(0, { env: listmonkEnv(overrides) });

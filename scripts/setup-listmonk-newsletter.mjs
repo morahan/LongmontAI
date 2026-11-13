@@ -35,13 +35,18 @@ async function listmonk(pathname, options = {}) {
   return data;
 }
 
+// Private lists keep them off the shared server's public subscription page, so
+// signups can only arrive through the rate-limited, bot-checked site endpoint.
 async function ensureList(lists, name, cadence) {
   const match = lists.find((list) => list.name === name);
+  if (match && match.type !== 'private') {
+    throw new Error(`Listmonk list "${name}" is ${match.type}. Make it private in Listmonk, then rerun.`);
+  }
   const list = match ?? (await listmonk('/api/lists', {
     method: 'POST',
     body: JSON.stringify({
       name,
-      type: 'public',
+      type: 'private',
       optin: 'double',
       status: 'active',
       tags: [LONGMONTAI_LIST_TAG, 'ai-briefing', cadence],
@@ -80,14 +85,12 @@ console.log(JSON.stringify({
     weekly: {
       created: weekly.created,
       id: weekly.list.id,
-      uuid: weekly.list.uuid,
       name: weekly.list.name,
       optin: weekly.list.optin,
     },
     biweekly: {
       created: biweekly.created,
       id: biweekly.list.id,
-      uuid: biweekly.list.uuid,
       name: biweekly.list.name,
       optin: biweekly.list.optin,
     },
@@ -99,9 +102,7 @@ console.log(JSON.stringify({
   },
   nextEnv: {
     LISTMONK_WEEKLY_LIST_ID: String(weekly.list.id),
-    LISTMONK_WEEKLY_LIST_UUID: weekly.list.uuid,
     LISTMONK_BIWEEKLY_LIST_ID: String(biweekly.list.id),
-    LISTMONK_BIWEEKLY_LIST_UUID: biweekly.list.uuid,
     LISTMONK_EDITION_TEMPLATE_ID: String(passThrough.template.id),
   },
 }, null, 2));

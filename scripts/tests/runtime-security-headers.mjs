@@ -28,7 +28,7 @@ for (const directive of [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
-  "script-src 'self'",
+  "script-src 'self' https://challenges.cloudflare.com",
   "connect-src 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",
@@ -37,8 +37,8 @@ for (const directive of [
   assert(csp.split(';').some((part) => part.trim() === directive), `missing CSP directive: ${directive}`);
 }
 
-assert(!csp.includes("script-src 'self' 'unsafe-inline'"), 'inline scripts must remain blocked');
-assert(!csp.includes("script-src 'self' 'unsafe-eval'"), 'evaluated scripts must remain blocked');
+assert(!/script-src[^;]*'unsafe-inline'/.test(csp), 'inline scripts must remain blocked');
+assert(!/script-src[^;]*'unsafe-eval'/.test(csp), 'evaluated scripts must remain blocked');
 assert(!csp.includes('*'), 'CSP sources must be explicitly allowlisted');
 assert(csp.includes('https://fonts.googleapis.com'), 'Google Fonts styles must remain available');
 assert(csp.includes('https://fonts.gstatic.com'), 'Google Fonts files must remain available');
@@ -46,6 +46,7 @@ assert(csp.includes('https://images.unsplash.com'), 'published article images mu
 assert(csp.includes('https://quickchart.io'), 'countdown Discord QR images must remain available');
 assert(csp.includes('https://view.officeapps.live.com'), 'PowerPoint embeds must remain available');
 assert(csp.includes("frame-src 'self' https://view.officeapps.live.com https://www.youtube-nocookie.com"), 'countdown song embed must remain available');
+assert(/frame-src[^;]*https:\/\/challenges\.cloudflare\.com/.test(csp), 'newsletter bot check frame must remain available');
 assert(headers.get('permissions-policy').includes('autoplay=(self "https://www.youtube-nocookie.com")'), 'countdown song embed must be allowed to autoplay');
 assert.equal(headers.get('cross-origin-opener-policy'), 'same-origin');
 assert.equal(headers.get('x-content-type-options'), 'nosniff');

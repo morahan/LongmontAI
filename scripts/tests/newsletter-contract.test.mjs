@@ -362,10 +362,13 @@ test('provider wrappers accept null success bodies and reject malformed non-null
   const noContent = async () => new Response(null, { status: 204 });
   assert.equal(await supabaseRest(env(), 'newsletter_subscribers?select=id', {}, noContent), null);
 
-  const listmonk = await syncSubscriberToListmonk(env({
+  const listmonkEnv = {
     LISTMONK_BASE_URL: 'https://listmonk.example.test',
-    LISTMONK_WEEKLY_LIST_UUID: '11111111-1111-4111-8111-111111111111',
-  }), {
+    LISTMONK_WEEKLY_LIST_ID: '42',
+    LISTMONK_API_USERNAME: 'api-user',
+    LISTMONK_API_TOKEN: 'api-token',
+  };
+  const listmonk = await syncSubscriberToListmonk(env(listmonkEnv), {
     email: 'empty-response@example.com',
     cadence: 'weekly',
     source: 'contract-test',
@@ -389,10 +392,7 @@ test('provider wrappers accept null success bodies and reject malformed non-null
     (error) => error.code === 'newsletter_response_invalid',
   );
   await assert.rejects(
-    syncSubscriberToListmonk(env({
-      LISTMONK_BASE_URL: 'https://listmonk.example.test',
-      LISTMONK_WEEKLY_LIST_UUID: '11111111-1111-4111-8111-111111111111',
-    }), {
+    syncSubscriberToListmonk(env(listmonkEnv), {
       email: 'malformed-response@example.com', cadence: 'weekly', source: 'contract-test',
     }, malformed),
     (error) => error.code === 'newsletter_response_invalid',
@@ -505,8 +505,6 @@ test('Listmonk admin subscription sends only identity, required list, and double
   let captured;
   const result = await syncSubscriberToListmonk(env({
     LISTMONK_BASE_URL: 'https://listmonk.example.test',
-    LISTMONK_WEEKLY_LIST_UUID: undefined,
-    LISTMONK_NEWSLETTER_LIST_UUID: undefined,
     LISTMONK_WEEKLY_LIST_ID: '42',
     LISTMONK_API_USERNAME: 'api-user',
     LISTMONK_API_TOKEN: 'api-token',
@@ -639,6 +637,7 @@ test('outbound budgets are finite, provider-specific, and setup check terminates
 });
 
 function request(body, headers = {}) {
+  if (body && typeof body === 'object') body = { turnstileToken: 'XXXX.DUMMY.TOKEN.XXXX', ...body };
   return {
     method: 'POST',
     headers: {
@@ -658,6 +657,7 @@ function env(overrides = {}) {
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     NEWSLETTER_ALLOWED_ORIGINS: 'https://longmontai.com',
     NEWSLETTER_RATE_LIMIT_SECRET: rateLimitSecret,
+    TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
     ...overrides,
   };
 }
@@ -668,6 +668,9 @@ function successfulFetch(calls = []) {
     if (url.endsWith('/rest/v1/rpc/newsletter_enforce_signup_rate_limit')) {
       return new Response(JSON.stringify([{ allowed: true, retry_after_seconds: 0 }]), { status: 200 });
     }
+    if (url === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    }
     if (url.includes('/rest/v1/newsletter_subscribers?on_conflict=email')) {
       return new Response(JSON.stringify([{ id: '00000000-0000-4000-8000-000000000001', email: 'test@example.com' }]), { status: 201 });
     }
@@ -677,8 +680,8 @@ function successfulFetch(calls = []) {
     if (url.includes('/rest/v1/newsletter_subscribers?id=')) {
       return new Response(JSON.stringify([{ id: '00000000-0000-4000-8000-000000000001' }]), { status: 200 });
     }
-    if (url.includes('/api/public/subscription')) {
-      return new Response(JSON.stringify({ data: true }), { status: 200 });
+    if (url.endsWith('/api/subscribers')) {
+      return new Response(JSON.stringify({ data: { id: 900 } }), { status: 200 });
     }
     throw new Error(`unexpected fetch ${url}`);
   };
@@ -1685,13 +1688,15 @@ test('generation cron authorization remains required before claims or work', asy
   assert.equal(drafts, 0);
 });
 
-test('subscribe handler rate limits first, then captures to Supabase and preserves Listmonk double opt-in', async () => {
+test('subscribe handler rate limits first, checks Turnstile, then captures to Supabase and preserves Listmonk double opt-in', async () => {
   const calls = [];
   const handler = createNewsletterSubscribeHandler({
     env: env({
       LISTMONK_BASE_URL: 'https://listmonk.example.com',
-      LISTMONK_WEEKLY_LIST_UUID: '11111111-1111-4111-8111-111111111111',
-      LISTMONK_BIWEEKLY_LIST_UUID: '22222222-2222-4222-8222-222222222222',
+      LISTMONK_WEEKLY_LIST_ID: '3',
+      LISTMONK_BIWEEKLY_LIST_ID: '4',
+      LISTMONK_API_USERNAME: 'api-user',
+      LISTMONK_API_TOKEN: 'api-token',
     }),
     fetchImpl: successfulFetch(calls),
     now: () => new Date('2026-08-24T12:00:00Z'),
@@ -1707,13 +1712,17 @@ test('subscribe handler rate limits first, then captures to Supabase and preserv
   assert.match(limiterBody.p_email_hash, /^\\x[0-9a-f]{64}$/);
   assert.notEqual(limiterBody.p_ip_hash, limiterBody.p_email_hash);
   assert.doesNotMatch(calls[0].options.body, /203\.0\.113\.10|test@example\.com/i);
+  assert.equal(calls[1].url, 'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+  assert.doesNotMatch(calls[1].options.body, /test@example\.com|203\.0\.113\.10/i);
   const subscriberCall = calls.find((call) => call.url.includes('/rest/v1/newsletter_subscribers?on_conflict=email'));
   assert.equal(JSON.parse(subscriberCall.options.body).email, 'test@example.com');
-  const listmonkCall = calls.find((call) => call.url.includes('/api/public/subscription'));
+  const listmonkCall = calls.find((call) => call.url.endsWith('/api/subscribers'));
   assert.deepEqual(JSON.parse(listmonkCall.options.body), {
     email: 'test@example.com',
     name: '',
-    list_uuids: ['22222222-2222-4222-8222-222222222222'],
+    status: 'enabled',
+    lists: [4],
+    preconfirm_subscriptions: false,
   });
   const eventBodies = calls
     .filter((call) => call.url.includes('/rest/v1/newsletter_delivery_events'))

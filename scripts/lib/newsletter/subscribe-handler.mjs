@@ -16,6 +16,7 @@ import {
   syncSubscriberToListmonk,
   trustedClientIp,
   upsertSubscriber,
+  verifyTurnstileToken,
 } from './shared.mjs';
 
 function clientMetadata(request, payload) {
@@ -45,6 +46,7 @@ export function createNewsletterSubscribeHandler({ env = process.env, fetchImpl 
         { ip: trustedClientIp(request), email, now: requestTime },
         fetchImpl,
       );
+      await verifyTurnstileToken(env, { token: payload.turnstileToken }, fetchImpl);
       if (sanitizeText(payload.company, 120)) {
         return sendJson(response, 202, { ok: true, status: 'accepted' });
       }

@@ -5,7 +5,7 @@ LongmontAI now has the repo-side plumbing for an AI-curated newsletter loop:
 - Svelte signup UI embedded in the existing Vite/React site at `/newsletter` and on the home page.
 - Vercel API endpoint `/api/newsletter/subscribe` for server-side subscriber capture.
 - Supabase migration with RLS-forced newsletter tables and no browser-role table grants.
-- Listmonk audience sync through `/api/public/subscription` or admin API credentials.
+- Listmonk audience sync into private, double opt-in lists through the admin API, behind a Cloudflare Turnstile check.
 - Cron-protected `/api/newsletter/generate` for AI-assisted draft generation.
 - Resend support as Listmonk SMTP, plus optional owner notifications through the Resend HTTP API.
 
@@ -29,32 +29,37 @@ If you already created a Supabase project in the dashboard, skip `projects creat
 
 Listmonk should own subscription preferences, opt-in, unsubscribes, and newsletter campaign state.
 
-LongmontAI uses 1023.Digital's Listmonk server at `https://lists.1023.digital`. It already sends through Resend SMTP (`smtp.resend.com`, user `resend`), so LongmontAI adds no server and no SMTP settings. The 1023.Digital site keeps its own lists on the same server.
+The Listmonk server and the Resend account it sends through are shared with another site the owner runs. That site's private repo holds the server's address, the API user's role and the sharing rules. The code here assumes only this:
 
-Sharing rules:
+- **LongmontAI owns what it creates.** That is the lists tagged `longmontai`, the `LongmontAI pass-through` template, and campaigns named `longmontai-*`. Leave instance-wide Listmonk settings alone.
+- **The edition email only sends to tagged lists.** Before it creates or starts a campaign, it reads each target list and refuses (409 `listmonk_list_not_longmontai`) unless the list carries the `longmontai` tag. A mistyped list ID cannot mail the other site's subscribers.
+- **The lists are private.** Listmonk's public subscription form and API cannot add anyone to them. The only way in is `/api/newsletter/subscribe`, behind the rate limit and the Turnstile check. It creates the subscriber through the admin API with `preconfirm_subscriptions: false`, so Listmonk sends its double opt-in email. When the email already belongs to a subscriber of another list, it adds them to the LongmontAI list as unconfirmed and sends the opt-in email. Confirmed and blocklisted subscribers are left alone. The lookup uses Listmonk's `search` parameter, which needs Listmonk v5 or later.
 
-- **LongmontAI owns only what it creates.** That is the lists tagged `longmontai`, the `LongmontAI pass-through` template, and campaigns named `longmontai-*`. Leave instance-wide settings alone (SMTP, the opt-in email, site name, default from address), because 1023.Digital's newsletter depends on them.
-- **Give LongmontAI its own API user.** Create it in Listmonk under Users, so its token can be revoked without touching 1023.Digital.
-- **The edition email only sends to tagged lists.** Before it creates or starts a campaign, it reads each target list and refuses (409 `listmonk_list_not_longmontai`) unless the list carries the `longmontai` tag. A mistyped list ID cannot mail 1023.Digital's subscribers.
-- **The lists are public.** The signup endpoint uses Listmonk's public double opt-in API, which also adds someone already subscribed to a 1023.Digital list. Public lists also appear on `https://lists.1023.digital/subscription/form`.
-- **Branding is shared.** Listmonk's opt-in confirmation email and its unsubscribe and preferences pages use the server's 1023Digital branding. LongmontAI's own campaigns carry LongmontAI branding.
-
-Create the double opt-in public lists and the template with the CLI helper:
+Create the private double opt-in lists and the template with the CLI helper:
 
 ```bash
-LISTMONK_BASE_URL=https://lists.1023.digital \
+LISTMONK_BASE_URL=<listmonk origin> \
 LISTMONK_API_USERNAME=<api-user> \
 LISTMONK_API_TOKEN=<api-token> \
 npm run newsletter:setup-listmonk
 ```
 
-Save the returned cadence-specific list IDs and UUIDs. The signup endpoint routes weekly subscribers to `LISTMONK_WEEKLY_LIST_UUID` and bi-weekly subscribers to `LISTMONK_BIWEEKLY_LIST_UUID`. The older `LISTMONK_NEWSLETTER_LIST_ID` / `LISTMONK_NEWSLETTER_LIST_UUID` names are still supported as a fallback single-list setup.
+Save the returned `LISTMONK_WEEKLY_LIST_ID`, `LISTMONK_BIWEEKLY_LIST_ID` and `LISTMONK_EDITION_TEMPLATE_ID`. `LISTMONK_NEWSLETTER_LIST_ID` still works as a single-list fallback.
 
 ### Resend
 
-Listmonk sends through 1023.Digital's Resend account. Add `longmontai.com` to that account as a second sending domain (see DNS for Resend below). Do not rotate or reuse the 1023.Digital site's `RESEND_API_KEY`, because the 1023.Digital project inquiry form sends with it over Resend's HTTP API.
+Listmonk sends through Resend SMTP. `NEWSLETTER_FROM_EMAIL` must use a domain verified in that Resend account. `RESEND_API_KEY` here is used for owner notices and for the edition email's quota check (`GET https://api.resend.com/usage`).
 
-The inquiry form and Listmonk share the account's sending quota and rate limit. A meetup email uses one send per subscriber. Before the list approaches the plan's daily limit, raise the Resend plan, or the inquiry notifications fail that day. Keep Listmonk's message rate (Settings, Performance) under Resend's per-second limit.
+The account's daily and monthly quotas are shared with the other site's transactional mail. Before the edition email starts a campaign, it reads Resend's usage and adds up the confirmed subscribers on its lists. It refuses (409 `resend_quota_insufficient`) unless the send leaves `NEWSLETTER_RESEND_RESERVE` emails (default 20) of the smaller remaining quota. The campaign then stays a draft, and the next cron run checks again. The free plan's daily quota resets at midnight UTC.
+
+### Cloudflare Turnstile
+
+Turnstile keeps bots from triggering opt-in emails. Create a free widget in the Cloudflare dashboard for `longmontai.com` (add `localhost` for development).
+
+- **Site key.** Set `VITE_TURNSTILE_SITE_KEY` at build time. It is public. The signup form loads `https://challenges.cloudflare.com/turnstile/v0/api.js` only when it is set, and the CSP allows that origin in `script-src` and `frame-src`.
+- **Secret.** Set `TURNSTILE_SECRET_KEY` for the API. Without it the endpoint answers 503 `turnstile_not_configured`.
+- **Order.** The endpoint checks the token after the rate limit and before any Supabase write or Listmonk call. A failed check answers 400 `verification_failed`.
+- **Testing.** Cloudflare's test keys work on any host. Site key `1x00000000000000000000AA` with secret `1x0000000000000000000000000000000AA` always passes, using the dummy token `XXXX.DUMMY.TOKEN.XXXX`.
 
 ## Vercel Environment
 
@@ -64,16 +69,17 @@ Use Vercel CLI to add production secrets:
 vercel env add SUPABASE_URL production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
 vercel env add LISTMONK_BASE_URL production
-vercel env add LISTMONK_WEEKLY_LIST_UUID production
 vercel env add LISTMONK_WEEKLY_LIST_ID production
-vercel env add LISTMONK_BIWEEKLY_LIST_UUID production
 vercel env add LISTMONK_BIWEEKLY_LIST_ID production
+vercel env add LISTMONK_EDITION_TEMPLATE_ID production
 vercel env add LISTMONK_API_USERNAME production
 vercel env add LISTMONK_API_TOKEN production
 vercel env add RESEND_API_KEY production
 vercel env add NEWSLETTER_FROM_EMAIL production
 vercel env add NEWSLETTER_ALLOWED_ORIGINS production
 vercel env add NEWSLETTER_RATE_LIMIT_SECRET production
+vercel env add TURNSTILE_SECRET_KEY production
+vercel env add VITE_TURNSTILE_SITE_KEY production
 vercel env add CRON_SECRET production
 vercel env add OPENAI_API_KEY production
 ```
@@ -84,6 +90,8 @@ Optional:
 vercel env add NEWSLETTER_OWNER_EMAIL production
 vercel env add NEWSLETTER_NOTIFY_OWNER production
 vercel env add NEWSLETTER_CURATOR_MODEL production
+vercel env add NEWSLETTER_RESEND_RESERVE production
+vercel env add NEWSLETTER_POSTAL_ADDRESS production
 ```
 
 ## Signup security
@@ -111,20 +119,19 @@ Subscribers on every configured list get one email at the start of each meetup. 
 - **Rehearsal.** `NEWSLETTER_EDITION_EMAIL_MODE=draft` creates the campaign without starting it. Use it for the first meetup, send yourself a test from the Listmonk UI, and trigger the endpoint twice to confirm the second response says `created: false`. Then set the mode to `send`.
 - **Dry run.** `curl -H "Authorization: Bearer $CRON_SECRET" "https://longmontai.com/api/newsletter/edition-email?dryRun=1"` returns the phase, subject and list IDs without calling Listmonk.
 - **Template.** The email is a complete HTML document. `npm run newsletter:setup-listmonk` creates the `LongmontAI pass-through` template and prints `LISTMONK_EDITION_TEMPLATE_ID`. The weekly drafts keep `LISTMONK_DEFAULT_TEMPLATE_ID`, because they rely on Listmonk's wrapper for their unsubscribe footer.
-- **Required env.** `CRON_SECRET`, `LISTMONK_BASE_URL`, `LISTMONK_API_USERNAME`, `LISTMONK_API_TOKEN`, at least one list ID, `LISTMONK_EDITION_TEMPLATE_ID` and `NEWSLETTER_FROM_EMAIL`. A due edition with any of these missing answers 503 with the reason. This path does not use Supabase or OpenAI.
+- **Required env.** `CRON_SECRET`, `LISTMONK_BASE_URL`, `LISTMONK_API_USERNAME`, `LISTMONK_API_TOKEN`, at least one list ID, `LISTMONK_EDITION_TEMPLATE_ID`, `NEWSLETTER_FROM_EMAIL`, and `RESEND_API_KEY` in send mode. A due edition with any of these missing answers 503 with the reason. This path does not use Supabase or OpenAI.
+- **Quota.** A send that would leave less than `NEWSLETTER_RESEND_RESERVE` of Resend's quota stays a draft (see Resend above).
 - **Footer.** Set `NEWSLETTER_POSTAL_ADDRESS` to show a mailing address. US bulk-mail rules expect one.
-
-### DNS for Resend
-
-`longmontai.com` DNS is hosted at Squarespace. The root domain already has Mailgun MX and SPF records and a DMARC policy of `p=reject` with strict alignment. Add the records Resend shows for the domain (a DKIM TXT at `resend._domainkey` and MX plus SPF TXT at `send`) and leave the Mailgun records alone. Verify `longmontai.com` itself in 1023.Digital's Resend account, not a subdomain, so the DKIM signature matches the `news@longmontai.com` sender exactly. A mismatch is rejected under the current DMARC policy.
 
 ## Provider data disclosures
 
 Outbound payloads are purpose-limited. API keys, service-role keys, Listmonk tokens, cron credentials, request headers, client IPs, and browser metadata are never placed in provider request bodies or newsletter event payloads.
 
 - **OpenAI Responses API:** receives the requested output schema plus a bounded curation projection: cadence and period, recent article title/summary/public URL/source links, aggregate Model Watch health and detected model names, matched live-source highlights, and the three public LongmontAI review surfaces. It does not receive repository paths, collection/provider errors, timestamps and internal metadata, the complete website snapshot, the monitored-source inventory, subscriber data, or credentials.
-- **Listmonk subscriber sync:** receives only normalized email, optional display name, and the required cadence list UUID for the public double-opt-in endpoint. The authenticated fallback receives those identity fields, the required list ID, `status: enabled`, and `preconfirm_subscriptions: false` so confirmation is not bypassed. It does not receive signup source, cadence attributes, page/client metadata, IP addresses, or internal subscriber records. Draft campaign creation separately receives the reviewed newsletter subject, HTML/plain-text bodies, sending identity, selected list ID, and required campaign settings.
+- **Listmonk subscriber sync:** receives only normalized email, optional display name, the required cadence list ID, `status: enabled`, and `preconfirm_subscriptions: false` so confirmation is not bypassed. For an email Listmonk already holds, it also receives a search for that email, the subscriber ID with the list to add, and an opt-in request. It does not receive signup source, cadence attributes, page/client metadata, IP addresses, or internal subscriber records. Draft campaign creation separately receives the reviewed newsletter subject, HTML/plain-text bodies, sending identity, selected list ID, and required campaign settings.
 - **Resend HTTP owner notice:** receives the configured sender and owner routing addresses, a workflow tag, issue ID, a short HTML-escaped summary, and the fixed first-party review pointer `https://longmontai.com/newsletter`. It does not receive the complete newsletter HTML/text, item inventory, source snapshot, campaign identity, subscriber data, or credentials. Listmonk's separately configured Resend SMTP transport receives campaign mail only when an operator later sends an approved draft.
+- **Cloudflare Turnstile:** receives the widget secret and the browser's single-use token. It does not receive the client IP, email, or name.
+- **Resend usage check:** sends only the API key and reads the account's usage counts.
 - **Supabase:** stores subscriber consent and newsletter workflow records under the migration's forced-RLS/service-role controls. Delivery-event JSON is limited to operational status identifiers and does not duplicate credentials or subscriber profile metadata.
 
 ## Verification
