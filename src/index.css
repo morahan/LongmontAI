@@ -5359,6 +5359,15 @@ iframe {
   left: 0;
 }
 
+.countdown-confetti {
+  transition: opacity 1.2s ease-out, visibility 0s linear 1.2s;
+}
+
+.countdown-confetti--stopped {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .countdown-song iframe {
   position: absolute;
   top: 50%;

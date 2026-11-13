@@ -481,6 +481,8 @@ const FinalCountdownDisplay: React.FC<{ seconds: number; progress: number }> = (
 
 const LOGO_INTRO_MS = 5000;
 const LOGO_SEQUENCE_URL = '/brand/logo/logo-sequence.mp4';
+// The orbit clip's three loops fill the first 435 frames at 24 fps, then the AI to SI morph begins.
+const LOGO_MORPH_AT_S = 435 / 24;
 
 // No single video format with alpha plays in every browser, so the logo sequence is an
 // H.264 video with premultiplied colour stacked over its alpha. WebGL recombines the halves.
@@ -502,7 +504,13 @@ void main() {
 }`;
 
 // Plays the stacked video once onto the canvas, holding its last frame. Returns a stop function.
-function playStackedAlphaVideo(canvas: HTMLCanvasElement, src: string, delayMs: number, onFirstFrame: () => void) {
+function playStackedAlphaVideo(
+  canvas: HTMLCanvasElement,
+  src: string,
+  delayMs: number,
+  onFirstFrame: () => void,
+  cue: { atSeconds: number; run: () => void },
+) {
   const gl = canvas.getContext('webgl', { premultipliedAlpha: true });
   if (!gl) return () => {};
   const program = gl.createProgram()!;
@@ -532,6 +540,7 @@ function playStackedAlphaVideo(canvas: HTMLCanvasElement, src: string, delayMs: 
 
   let frame = 0;
   let drawn = false;
+  let cued = false;
   const draw = () => {
     if (canvas.width !== video.videoWidth) {
       canvas.width = video.videoWidth;
@@ -543,6 +552,10 @@ function playStackedAlphaVideo(canvas: HTMLCanvasElement, src: string, delayMs: 
     if (!drawn) {
       drawn = true;
       onFirstFrame();
+    }
+    if (!cued && video.currentTime >= cue.atSeconds) {
+      cued = true;
+      cue.run();
     }
   };
   const loop = () => {
@@ -566,15 +579,18 @@ function playStackedAlphaVideo(canvas: HTMLCanvasElement, src: string, delayMs: 
 
 // The first logo plays for five seconds, then the orbit clip runs three times and
 // turns into the AI to SI morph, which holds on its last frame.
-const AnimatedLogo: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
+const AnimatedLogo: React.FC<{ compact?: boolean; onMorph?: () => void }> = ({ compact = false, onMorph }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [sequenceShown, setSequenceShown] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    return playStackedAlphaVideo(canvas, LOGO_SEQUENCE_URL, LOGO_INTRO_MS, () => setSequenceShown(true));
-  }, []);
+    return playStackedAlphaVideo(canvas, LOGO_SEQUENCE_URL, LOGO_INTRO_MS, () => setSequenceShown(true), {
+      atSeconds: LOGO_MORPH_AT_S,
+      run: () => onMorph?.(),
+    });
+  }, [onMorph]);
 
   return (
     <div
@@ -661,7 +677,7 @@ function randomConfettiColor(): string {
   return CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
 }
 
-const Confetti = React.memo(function Confetti({ count }: { count: number }) {
+const Confetti = React.memo(function Confetti({ count, stopped }: { count: number; stopped: boolean }) {
   const [pieces] = useState(() =>
     Array.from({ length: count }, (_, id) => ({
       id,
@@ -680,7 +696,7 @@ const Confetti = React.memo(function Confetti({ count }: { count: number }) {
   );
 
   return (
-    <div className="countdown-confetti" aria-hidden="true">
+    <div className={`countdown-confetti${stopped ? ' countdown-confetti--stopped' : ''}`} aria-hidden="true">
       {pieces.map((piece) => (
         <div key={piece.id} className="confetti-fall" style={piece.style} />
       ))}
@@ -764,6 +780,9 @@ const Countdown: React.FC<{ now?: () => Date }> = ({ now = realNow }) => {
   const [demo] = useState(readDemoOverride);
   const lastCue = useRef('');
   const disarmSound = useCallback(() => setSoundArmed(false), []);
+  // Confetti falls through the logo's orbit loops and stops when the AI to SI morph begins.
+  const [confettiStopped, setConfettiStopped] = useState(false);
+  const stopConfetti = useCallback(() => setConfettiStopped(true), []);
 
   useEffect(() => {
     detectReducedMotion();
@@ -859,7 +878,7 @@ const Countdown: React.FC<{ now?: () => Date }> = ({ now = realNow }) => {
         </>
       )}
 
-      {phase === 'live' && <Confetti count={30} />}
+      {phase === 'live' && <Confetti count={30} stopped={confettiStopped} />}
       {phase === 'celebration' && <Celebration elapsedMs={-msUntilMeetup} />}
 
       {isSoundPromptVisible && (
@@ -950,7 +969,7 @@ const Countdown: React.FC<{ now?: () => Date }> = ({ now = realNow }) => {
           {phase === 'live' && (
             <div className={`countdown-live-experience ${isDiscordInviteVisible ? 'countdown-live-experience--with-invite' : ''}`}>
               <div className="countdown-live-animation">
-                <AnimatedLogo compact={isDiscordInviteVisible} />
+                <AnimatedLogo compact={isDiscordInviteVisible} onMorph={stopConfetti} />
               </div>
               {isDiscordInviteVisible && <DiscordInvite needsUpdate={needsDiscordInviteUpdate} />}
             </div>
