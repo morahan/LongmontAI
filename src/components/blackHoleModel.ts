@@ -6,11 +6,17 @@ export interface HoleSource extends HolePoint { visible: boolean; id?: number; c
 export interface HawkingSpark extends HoleBody { age: number; lifetime: number; returning: boolean }
 export type HolePull = 'star' | 'jet' | 'galaxy';
 export type HoleTravelerRole = 'ignored' | 'star' | 'galaxy';
-export interface HoleGalaxySource extends HolePoint { id: number; cycle: number; visible: boolean; radius: number }
+export interface HoleGalaxySource extends HolePoint {
+    id: number; cycle: number; visible: boolean; radius: number;
+    /** Lifecycle progress and opacity at this instant; frozen into the absorption at capture. */
+    progress: number; opacity: number;
+}
 /** x/y are screen space during infall, then hole-relative so the stream follows a moving hole. */
 export interface GalaxyAbsorption extends HoleBody {
     cycle: number;
     radius: number;
+    progress: number;
+    opacity: number;
     phase: 'infall' | 'shredding' | 'consumed';
     /** Seconds in the current phase. */
     age: number;
@@ -329,9 +335,10 @@ function stepGalaxies(
     let feastAge = previous.feastAge + delta;
     let feastPower = previous.feastPower;
     for (const source of sources) {
-        if (!source.visible) continue;
         const prior = previous.galaxies.get(source.id);
-        let galaxy = prior?.cycle === source.cycle ? prior : undefined;
+        // A capture in progress outlives its source fading out or recycling: near galaxies move
+        // fast and leave the scene within seconds, and the hole must still finish them.
+        let galaxy = prior && (prior.cycle === source.cycle || prior.phase !== 'consumed') ? prior : undefined;
         if (galaxy?.phase === 'consumed') { galaxies.set(source.id, galaxy); continue; }
         if (galaxy?.phase === 'shredding') {
             const consumed = galaxy.age + delta >= GALAXY_SHRED_SECONDS;
@@ -344,19 +351,22 @@ function stepGalaxies(
                     feastPower = power;
                 }
             }
-            galaxies.set(source.id, consumed ? { ...galaxy, phase: 'consumed', age: 0 }
-                : { ...galaxy, age: galaxy.age + delta });
+            if (!consumed) galaxies.set(source.id, { ...galaxy, age: galaxy.age + delta });
+            // Nothing to remember once the source has moved on to its next lifecycle.
+            else if (galaxy.cycle === source.cycle) galaxies.set(source.id, { ...galaxy, phase: 'consumed', age: 0 });
             continue;
         }
         if (!galaxy) {
-            if (Math.hypot(source.x - center.x, source.y - center.y) >= BLACK_HOLE_RADIUS) continue;
+            if (!source.visible
+                || Math.hypot(source.x - center.x, source.y - center.y) >= BLACK_HOLE_RADIUS) continue;
             galaxy = { x: source.x, y: source.y, vx: 0, vy: 0, cycle: source.cycle, radius: source.radius,
-                phase: 'infall', age: 0 };
+                progress: source.progress, opacity: source.opacity, phase: 'infall', age: 0 };
         }
         // Captured: the source's own drift no longer applies, so only the hole leaving can free it.
         const body = { ...galaxy, age: galaxy.age + delta };
         if (Math.hypot(body.x - center.x, body.y - center.y) >= BLACK_HOLE_RADIUS) {
             // The hole moved away: ease back onto the source track before letting go, so no pop.
+            if (!source.visible || galaxy.cycle !== source.cycle) continue;
             const ease = Math.exp(-GALAXY_RELEASE_RATE * delta);
             const x = source.x + (body.x - source.x) * ease;
             const y = source.y + (body.y - source.y) * ease;

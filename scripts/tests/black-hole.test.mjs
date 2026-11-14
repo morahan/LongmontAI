@@ -14,8 +14,8 @@ import {
 
 const center = { x: 300, y: 300 };
 const source = (x, y, visible = true) => ({ x, y, visible });
-const galaxy = (x, y, { cycle = 0, visible = true, id = -1, radius = 25 } = {}) =>
-  ({ x, y, id, cycle, visible, radius });
+const galaxy = (x, y, { cycle = 0, visible = true, id = -1, radius = 25, progress = 0.5, opacity = 0.6 } = {}) =>
+  ({ x, y, id, cycle, visible, radius, progress, opacity });
 const feed = (state, sources, frames, hole = center) => {
   for (let frame = 0; frame < frames; frame++) state = stepBlackHole(state, [], hole, 1 / 60, sources);
   return state;
@@ -468,5 +468,39 @@ test('renderer paints an opaque shadow at the pointer and leaves the canvas stat
     assert.ok(shadow, 'shadow occludes whatever is behind it');
     assert.deepEqual(calls[shadow.index - 1].args.slice(0, 3), [0, 0, BLACK_HOLE_SHADOW_RADIUS]);
     assert.equal(strokesBeyond(100) > 0, scene === feasting, 'only a feast reaches out toward the gravity edge');
+  }
+});
+
+test('a captured galaxy is finished even if its source fades out or recycles mid-fall', () => {
+  // Near galaxies cross the hole fast and leave the scene within seconds of capture.
+  for (const leave of ['fade', 'recycle']) {
+    for (const startDistance of [60, 120, 180]) {
+      let state = stepBlackHole(createBlackHole(), [], center, 1 / 60,
+        [galaxy(center.x + startDistance, center.y, { progress: 0.8, opacity: 0.7 })]);
+      const captured = state.galaxies.get(-1);
+      assert.equal(captured.phase, 'infall');
+      let phases = new Set();
+      for (let frame = 1; frame < 60 * 12; frame += 1) {
+        // The source races off screen, then fades or starts a new lifecycle far away.
+        const gone = frame > 30;
+        const source = gone && leave === 'recycle'
+          ? galaxy(center.x + 900, center.y + 500, { cycle: 1, progress: 0, opacity: 0 , visible: false })
+          : galaxy(center.x + startDistance + frame * 2, center.y, { visible: !gone, progress: 0.99, opacity: 0.01 });
+        state = stepBlackHole(state, [], center, 1 / 60, [source]);
+        const now = state.galaxies.get(-1);
+        if (now) {
+          phases.add(now.phase);
+          // The look is frozen at capture, not dragged along by the departing source.
+          assert.equal(now.progress, 0.8);
+          assert.equal(now.opacity, 0.7);
+          assert.equal(now.cycle, 0);
+        }
+      }
+      const label = `${leave} from ${startDistance}px`;
+      assert.equal(state.feasts, 1, label);
+      assert.ok(phases.has('shredding'), label);
+      // A faded source of the same lifecycle stays swallowed; a recycled one is free to return.
+      assert.equal(state.galaxies.get(-1)?.phase, leave === 'fade' ? 'consumed' : undefined, label);
+    }
   }
 });
