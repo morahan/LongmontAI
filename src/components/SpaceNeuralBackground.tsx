@@ -84,6 +84,7 @@ import {
     selectEasterEggPhrase,
     selectProminentSystemOwner,
     syncNeuralContagionState,
+    TRAVELER_DETAIL_THRESHOLDS,
     travelerCountForWidth,
     updateNeuralContagionForSignal,
     type ConstellationGeometry,
@@ -1025,6 +1026,9 @@ const drawPlanetarySystem = (
     ctx.restore();
 };
 
+/** Close enough to show a surface: a world to the eye, no longer a point of light. */
+const isNearBody = (projection: ProjectedTraveler) => projection.progress >= TRAVELER_DETAIL_THRESHOLDS[0];
+
 const SpaceNeuralBackground: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -1244,11 +1248,14 @@ const SpaceNeuralBackground: React.FC = () => {
             );
             let positions = frame.positions;
             if (blackHole) {
+                const fallingStars = blackHole.stars;
                 const previousCaptures = blackHole.captures;
                 holeOpenedAt ??= elapsed;
                 const roles = projections.map((projection, index) => holeTravelerRole(
                     getTravelerVariant(travelers[index], projection.cycle),
                     index === prominentSystemOwner?.travelerIndex,
+                    // A star already falling stays the hole's; it must not snap back as it nears.
+                    isNearBody(projection) && !fallingStars.has(-1 - index),
                 ));
                 const travelerVisible = (projection: ProjectedTraveler) => projection.opacity
                     * getNebulaDepthTransmission(
@@ -1399,6 +1406,7 @@ const SpaceNeuralBackground: React.FC = () => {
             });
 
             const frontMatter: [Traveler, ProjectedTraveler, GalaxyAbsorption][] = [];
+            const foreground: (() => void)[] = [];
             let planetarySystem: [Traveler, ProjectedTraveler, number] | null = null;
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
@@ -1434,6 +1442,7 @@ const SpaceNeuralBackground: React.FC = () => {
                             y: projection.y - height * 0.45,
                         });
                     } else {
+                      const drawBody = () => {
                         if (sameCycle) {
                             const distance = Math.hypot(deltaX, deltaY);
                             if (distance > 0.35) {
@@ -1449,6 +1458,10 @@ const SpaceNeuralBackground: React.FC = () => {
                         if (index !== prominentSystemOwner?.travelerIndex) {
                             drawTravelerStar(ctx, traveler, projection, simulationSeconds, transmission);
                         }
+                      };
+                      // Near worlds pass in front of the hole; distant points and falling stars stay behind it.
+                      if (blackHole && !pulledStar && isNearBody(projection)) foreground.push(drawBody);
+                      else drawBody();
                     }
                 }
 
@@ -1466,6 +1479,7 @@ const SpaceNeuralBackground: React.FC = () => {
                     drawAbsorbedGalaxy(ctx, traveler, projection, simulationSeconds, absorption, holeCenter, 'front');
                 }
             }
+            foreground.forEach((drawBody) => drawBody());
             // The near planetary system passes in front of everything distant, the hole included.
             if (planetarySystem) {
                 drawPlanetarySystem(ctx, planetarySystem[0], planetarySystem[1], simulationSeconds, planetarySystem[2]);

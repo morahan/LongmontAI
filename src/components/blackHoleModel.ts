@@ -91,9 +91,14 @@ export const createBlackHole = (): BlackHoleState => ({
     stars: new Map(), sparks: [], captures: 0, recaptures: 0,
     galaxies: new Map(), feasts: 0, feastAge: Infinity, feastPower: 0,
 });
-/** The foreground planetary system is never the hole's to take, whatever its owner's variant. */
-export const holeTravelerRole = (variant: string, ownsPlanetarySystem: boolean): HoleTravelerRole =>
-    ownsPlanetarySystem ? 'ignored' : variant === 'star' || variant === 'galaxy' ? variant : 'ignored';
+/**
+ * The foreground is never the hole's to take: the planetary system, and any traveler close enough
+ * to read as a world rather than a point of light. Those pass in front of the hole instead.
+ */
+export const holeTravelerRole = (
+    variant: string, ownsPlanetarySystem: boolean, nearBody = false,
+): HoleTravelerRole => ownsPlanetarySystem ? 'ignored'
+    : variant === 'galaxy' ? 'galaxy' : variant === 'star' && !nearBody ? 'star' : 'ignored';
 export const boundedHoleDelta = (dt: number) => Number.isFinite(dt)
     ? Math.max(0, Math.min(BLACK_HOLE_MAX_DELTA, dt)) : 0;
 

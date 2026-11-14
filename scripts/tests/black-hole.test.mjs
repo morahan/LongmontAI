@@ -164,6 +164,9 @@ test('only free stars and galaxies answer the hole; the planetary system owner n
   assert.equal(holeTravelerRole('galaxy', false), 'galaxy');
   for (const variant of ['star', 'galaxy', 'ufo', 'comet']) assert.equal(holeTravelerRole(variant, true), 'ignored');
   for (const variant of ['ufo', 'comet', 'planet']) assert.equal(holeTravelerRole(variant, false), 'ignored');
+  // A traveler near enough to read as a world passes in front instead of falling in; galaxies still fall.
+  assert.equal(holeTravelerRole('star', false, true), 'ignored');
+  assert.equal(holeTravelerRole('galaxy', false, true), 'galaxy');
 });
 
 test('a galaxy anywhere in reach is shredded and swallowed exactly once, slower than a star', () => {
