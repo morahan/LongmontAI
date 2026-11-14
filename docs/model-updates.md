@@ -12,6 +12,8 @@ Use `just update-models --as-of 2026-10-10` for an explicit historical snapshot;
 
 `just update-models --discover` runs the existing source detector separately. Its output consists of unreviewed leads; it does not update the reviewed ledger or claim release verification. Review those leads before modifying `catalog.json`. Discovery and check mode cannot be combined.
 
+The roster is refreshed every week by an agent that follows [the weekly Model Watch runbook](model-watch-weekly.md). `just update-models-weekly` prints its worklist.
+
 `just update` runs `just update-models`, `just update-models --discover`, and `just update-maps` in that order. It does no release research. See [Maps](maps.md) for the map step.
 
 The Timeline builds its model releases from the same generated artifact. Each included entry with a release date on or before the snapshot date gets one Timeline event, and the event stays after the entry leaves rotation. `just update-models` and `just update` refresh the Timeline as well as Model Watch and Star Text. Papers, compute events, and research events are hand-written in `src/data/timeline.ts`.

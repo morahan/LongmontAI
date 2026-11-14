@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { compileCatalog, dateValue, renderCatalog, matrix } from '../update-models.mjs';
+import { weeklyWorklist } from '../model-watch-weekly.mjs';
 import { modelCatalog } from '../../src/data/modelCatalog.generated.ts';
 import { activeModelWatchModels, latestBriefingModelIds, modelWatchArchive, modelWatchModels } from '../../src/data/modelWatch.ts';
 import { STAR_TEXT_ALTERNATIVES, STAR_TEXT_EDITION } from '../../src/data/starText.ts';
@@ -102,4 +103,35 @@ test('real CLI is idempotent, no-write check detects drift, malformed input pres
     assert.equal(run('--as-of', '2999-01-01').status, 1);
     assert.equal(await readFile(output, 'utf8'), baseline);
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+const weeklyEntry = (change) => ({
+  id: 'model-a', phrase: 'Model A', provider: 'Lab', category: 'base', priorities: [], releaseDate: '2026-11-01', reviewedAt: '2026-11-10',
+  sourceUrl: 'https://openai.com/index/model-a/', availability: 'API', disposition: 'include', reason: 'Primary release identity reviewed.', ...change,
+});
+const weeklyLedger = (...entries) => ({ version: 1, entries });
+const weeklyIds = (list) => list.map((item) => item.id);
+
+test('an entry whose 30-day review lapses within the week is listed for re-review before it drops out', () => {
+  const work = weeklyWorklist(weeklyLedger(weeklyEntry({ reviewedAt: '2026-10-18' }), weeklyEntry({ id: 'fresh', phrase: 'Fresh', reviewedAt: '2026-11-10' })), [], '2026-11-14');
+  assert.deepEqual(weeklyIds(work.rereview), ['model-a']);
+  assert.deepEqual(work.lapsed, []);
+  assert.equal(work.included, 2);
+});
+
+test('an entry already held for a stale review is listed as lapsed', () => {
+  const work = weeklyWorklist(weeklyLedger(weeklyEntry({ reviewedAt: '2026-10-01' }), weeklyEntry({ id: 'fresh', phrase: 'Fresh' })), [], '2026-11-14');
+  assert.deepEqual(weeklyIds(work.lapsed), ['model-a']);
+  assert.deepEqual(work.rereview, []);
+});
+
+test('an entry that ages out of its window this week is listed as leaving, not as needing review', () => {
+  const work = weeklyWorklist(weeklyLedger(weeklyEntry({ releaseDate: '2026-10-03' }), weeklyEntry({ id: 'fresh', phrase: 'Fresh' })), [], '2026-11-14');
+  assert.deepEqual(weeklyIds(work.leaving), ['model-a']);
+  assert.deepEqual(work.rereview, []);
+});
+
+test('leads are detected names the ledger has no entry for, whatever the spacing or case', () => {
+  const work = weeklyWorklist(weeklyLedger(weeklyEntry({})), ['model-a', 'MODEL A', 'Model B', 'Model B'], '2026-11-14');
+  assert.deepEqual(work.leads, ['Model B']);
 });

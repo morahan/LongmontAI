@@ -5,6 +5,11 @@ set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 update-models *args:
     @node scripts/update-models.mjs "$@"
 
+# Print this week's Model Watch worklist: reviews about to lapse, entries aging out, and unreviewed leads. Changes nothing.
+[positional-arguments]
+update-models-weekly *args:
+    @node scripts/model-watch-weekly.mjs "$@"
+
 # Start the new fortnight's snapshot folder when one is due, rerun every scripts/maps/fetch-<name>.mjs into the newest folder, then validate the snapshots.
 update-maps:
     @node scripts/maps/update.mjs
