@@ -136,12 +136,20 @@
 <style>
   :host {
     display: block;
+    container-type: inline-size;
+  }
+
+  /* The page's global reset does not reach into the shadow root. */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
   .newsletter-signup {
     display: grid;
-    gap: 0.9rem;
-    padding: 1rem;
+    gap: 1rem;
+    padding: clamp(1rem, 5cqi, 1.5rem);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     background: rgba(9, 9, 11, 0.62);
@@ -156,7 +164,13 @@
   label,
   fieldset {
     min-width: 0;
+    margin: 0;
+    padding: 0;
     border: 0;
+  }
+
+  legend {
+    padding: 0;
   }
 
   label span,
@@ -177,7 +191,14 @@
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.055);
     color: #fff;
+    font: inherit;
+    /* 16px floor stops iOS Safari zooming the page on focus. */
+    font-size: max(16px, 0.85rem);
     outline: none;
+  }
+
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.38);
   }
 
   input:focus {
@@ -247,6 +268,7 @@
     background: #3b82f6;
     color: #fff;
     cursor: pointer;
+    font: inherit;
     font-weight: 700;
     transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
   }
@@ -277,7 +299,7 @@
     color: #fca5a5;
   }
 
-  @media (max-width: 720px) {
+  @container (max-width: 30rem) {
     .newsletter-signup-grid {
       grid-template-columns: 1fr;
     }
