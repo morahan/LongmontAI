@@ -67,3 +67,7 @@ const MESSAGES: { [R in SignupResult]: (outcome: Extract<SignupOutcome, { result
 export function signupMessage(outcome: SignupOutcome): string {
   return (MESSAGES[outcome.result] as (outcome: SignupOutcome) => string)(outcome);
 }
+
+export function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] ?? '';
+}

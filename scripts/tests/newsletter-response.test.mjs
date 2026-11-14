@@ -5,6 +5,7 @@ import test from 'node:test';
 
 const source = await readFile(new URL('../../src/lib/newsletterResponse.ts', import.meta.url), 'utf8');
 const {
+  firstName,
   readSubscribeResponse,
   signupMessage,
   subscribeRequest,
@@ -94,4 +95,11 @@ test('an already-read body is unavailable instead of throwing', async () => {
   const consumed = response({ result: 'received' }, 202);
   await consumed.text();
   assert.deepEqual(await readSubscribeResponse(consumed), { result: 'unavailable' });
+});
+
+test('the confirmation greets by the first word of the name, or not at all', () => {
+  assert.equal(firstName('Michael Morahan'), 'Michael');
+  assert.equal(firstName('  Ada  '), 'Ada');
+  assert.equal(firstName(''), '');
+  assert.equal(firstName('   '), '');
 });

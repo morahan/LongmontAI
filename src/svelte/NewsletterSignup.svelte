@@ -3,6 +3,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte';
   import {
+    firstName,
     readSubscribeResponse,
     signupMessage,
     subscribeRequest,
@@ -20,6 +21,7 @@
   let turnstileToken = '';
   let turnstile: TurnstileWidget | undefined;
   let confirmedEmail = '';
+  let confirmedFirstName = '';
   let confirmation: HTMLElement;
 
   onMount(() => {
@@ -60,6 +62,7 @@
       return;
     }
     confirmedEmail = email;
+    confirmedFirstName = firstName(name);
     email = '';
     name = '';
     await tick();
@@ -78,7 +81,7 @@
       <path d="m3 7 9 6 9-6" />
     </svg>
   </span>
-  <h2 id="newsletter-confirmation-title" tabindex="-1" bind:this={confirmation}>Check your inbox</h2>
+  <h2 id="newsletter-confirmation-title" tabindex="-1" bind:this={confirmation}>Check your inbox{confirmedFirstName ? `, ${confirmedFirstName}` : ''}</h2>
   <p class="newsletter-confirmation-lead">
     One step left. We're sending a confirmation link to
     <strong>{confirmedEmail}</strong>.
