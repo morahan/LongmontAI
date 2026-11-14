@@ -1,7 +1,7 @@
 <svelte:options customElement="longmont-newsletter-signup" />
 
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import {
     readSubscribeResponse,
     signupMessage,
@@ -19,6 +19,8 @@
   let turnstileContainer: HTMLDivElement;
   let turnstileToken = '';
   let turnstile: TurnstileWidget | undefined;
+  let confirmedEmail = '';
+  let confirmation: HTMLElement;
 
   onMount(() => {
     if (!turnstileSiteKey) return;
@@ -53,15 +55,45 @@
       turnstileToken = '';
       turnstile?.reset();
     }
-    show(outcome);
-    if (outcome.result === 'received') {
-      email = '';
-      name = '';
+    if (outcome.result !== 'received') {
+      show(outcome);
+      return;
     }
+    confirmedEmail = email;
+    email = '';
+    name = '';
+    await tick();
+    confirmation.focus();
+  }
+
+  function startOver() {
+    confirmedEmail = '';
   }
 </script>
 
-<form class="newsletter-signup" on:submit|preventDefault={submit} aria-label="Subscribe to the LongmontAI newsletter">
+<section class="newsletter-confirmation" hidden={!confirmedEmail} aria-labelledby="newsletter-confirmation-title">
+  <span class="newsletter-confirmation-mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  </span>
+  <h2 id="newsletter-confirmation-title" tabindex="-1" bind:this={confirmation}>Check your inbox</h2>
+  <p class="newsletter-confirmation-lead">
+    One step left. We're sending a confirmation link to
+    <strong>{confirmedEmail}</strong>.
+  </p>
+  <ol>
+    <li>Open the email from 1023 Digital, our newsletter partner. It can take a few minutes to arrive.</li>
+    <li>Click the confirmation link to join the weekly briefing.</li>
+  </ol>
+  <p class="newsletter-confirmation-note">
+    Nothing after ten minutes? Check your spam folder, or
+    <button type="button" class="newsletter-link" on:click={startOver}>use a different email</button>.
+  </p>
+</section>
+
+<form class="newsletter-signup" hidden={Boolean(confirmedEmail)} on:submit|preventDefault={submit} aria-label="Subscribe to the LongmontAI newsletter">
   <div class="newsletter-signup-grid">
     <label>
       <span>Email</span>
@@ -111,6 +143,135 @@
   *::before,
   *::after {
     box-sizing: border-box;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  .newsletter-confirmation {
+    display: grid;
+    justify-items: start;
+    gap: 0.85rem;
+    padding: clamp(1.25rem, 6cqi, 1.75rem);
+    border: 1px solid rgba(59, 130, 246, 0.55);
+    border-radius: 12px;
+    background:
+      radial-gradient(120% 90% at 0% 0%, rgba(59, 130, 246, 0.22), transparent 60%),
+      rgba(9, 9, 11, 0.72);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12), 0 18px 48px -24px rgba(59, 130, 246, 0.55);
+    animation: newsletter-confirmation-in 320ms ease-out both;
+  }
+
+  .newsletter-confirmation-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(59, 130, 246, 0.7);
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+  }
+
+  .newsletter-confirmation h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.35rem, 6cqi, 1.7rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    outline: none;
+  }
+
+  .newsletter-confirmation .newsletter-confirmation-lead {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .newsletter-confirmation strong {
+    color: #fff;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .newsletter-confirmation ol {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .newsletter-confirmation li {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: start;
+    counter-increment: step;
+  }
+
+  .newsletter-confirmation li::before {
+    content: counter(step);
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.22);
+    color: #bfdbfe;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .newsletter-confirmation .newsletter-confirmation-note {
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  button.newsletter-link {
+    display: inline;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: none;
+    color: #93c5fd;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  button.newsletter-link:hover,
+  button.newsletter-link:focus-visible {
+    background: none;
+    color: #fff;
+    transform: none;
+  }
+
+  button.newsletter-link:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  @keyframes newsletter-confirmation-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .newsletter-confirmation {
+      animation: none;
+    }
   }
 
   .newsletter-signup {
