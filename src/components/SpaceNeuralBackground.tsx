@@ -3,8 +3,15 @@ import {
     BLACK_HOLE_LONG_PRESS_MS,
     BLACK_HOLE_LONG_PRESS_SLOP_PX,
     createBlackHole,
+    galaxyCohesion,
+    holeGalaxyCenter,
+    holeTravelerRole,
+    shredGalaxyParticle,
     stepBlackHole,
     type BlackHoleState,
+    type GalaxyAbsorption,
+    type HoleGalaxySource,
+    type HolePoint,
 } from './blackHoleModel';
 import { drawBlackHole } from './blackHoleRenderer';
 import {
@@ -81,6 +88,8 @@ import {
     type ConstellationGeometry,
     type ConstellationPhrase,
     type EasterEggClickSequence,
+    type GalaxyAppearance,
+    type GalaxyMatterKind,
     type OrbitingMoon,
     type Point,
     type OrbitingPlanet,
@@ -595,35 +604,20 @@ const drawTravelerStar = (
     }
 };
 
-const drawGalaxy = (
+const GALAXY_MATTER_RGB: Record<GalaxyMatterKind, readonly [number, number, number]> = {
+    dust: [111, 86, 83], 'young-star': [151, 211, 255], star: [238, 242, 247],
+};
+const SHREDDED_MATTER_RGB = [255, 232, 190] as const;
+
+/** Dark core and miniature systems, in the galaxy's rotated local frame. */
+const drawGalaxyNucleus = (
     ctx: CanvasRenderingContext2D,
     traveler: Traveler,
-    projection: ProjectedTraveler,
+    cycle: number,
+    appearance: GalaxyAppearance,
+    opacity: number,
     simulationSeconds: number,
 ) => {
-    const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
-    // Particle motion is resolved before local-plane flattening; sky tilt stays fixed.
-    const animation = getGalaxyAnimationState(traveler, projection.cycle, 0);
-    const { x, y, opacity } = projection;
-
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(animation.rotation);
-
-    // Formation identity comes entirely from seeded point positions, colors, and density.
-    for (let star = 0; star < appearance.internalStarCount; star += 1) {
-        const particle = getGalaxyParticleState(
-            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
-        );
-        if (particle.opacity <= 0) continue;
-        const color = particle.kind === 'dust' ? '111, 86, 83'
-            : particle.kind === 'young-star' ? '151, 211, 255' : '238, 242, 247';
-        ctx.fillStyle = `rgba(${color}, ${opacity * particle.opacity})`;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
-        ctx.fill();
-    }
-
     if (appearance.formation === 'spiral' || appearance.formation === 'barred-spiral') {
         ctx.fillStyle = `rgba(2, 3, 7, ${Math.min(1, opacity * 0.9)})`;
         ctx.beginPath();
@@ -634,7 +628,7 @@ const drawGalaxy = (
     // Miniature systems use only filled points. Planets are ordered around their moving host.
     const embeddedSystemOpacity = opacity * getEmbeddedGalaxySystemOpacity(appearance.outerRadius);
     if (embeddedSystemOpacity > 0) {
-        const systems = createEmbeddedGalaxySystems(traveler, projection.cycle, appearance);
+        const systems = createEmbeddedGalaxySystems(traveler, cycle, appearance);
         ctx.globalAlpha = embeddedSystemOpacity;
         for (let systemIndex = 0; systemIndex < systems.length; systemIndex += 1) {
             const system = systems[systemIndex];
@@ -661,6 +655,101 @@ const drawGalaxy = (
             }
         }
     }
+};
+
+/** Tidal disruption in screen space: each particle stretches, then spirals into the hole, heating as it goes. */
+const drawAbsorbedGalaxy = (
+    ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    simulationSeconds: number,
+    absorption: GalaxyAbsorption,
+    holeCenter: HolePoint,
+) => {
+    const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
+    const animation = getGalaxyAnimationState(traveler, projection.cycle, 0);
+    const cos = Math.cos(animation.rotation);
+    const sin = Math.sin(animation.rotation);
+    const { opacity } = projection;
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let star = 0; star < appearance.internalStarCount; star += 1) {
+        const particle = getGalaxyParticleState(
+            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
+        );
+        if (particle.opacity <= 0) continue;
+        const local = {
+            x: particle.x * cos - particle.y * sin,
+            y: particle.x * sin + particle.y * cos,
+        };
+        // Outer matter is stripped first; the golden-ratio term keeps equal radii from leaving as rings.
+        const order = Math.min(0.999, 0.8 * Math.max(0, 1 - Math.hypot(local.x, local.y) / appearance.outerRadius)
+            + 0.2 * (star * 0.618034 % 1));
+        const shred = shredGalaxyParticle(absorption, holeCenter, local, order);
+        // Infalling matter heats up, so the stream brightens toward the hole instead of thinning out.
+        const alpha = Math.min(1, opacity * particle.opacity * shred.alpha * (1 + 1.5 * shred.heat));
+        if (alpha <= 0.002) continue;
+        const [red, green, blue] = GALAXY_MATTER_RGB[particle.kind];
+        const [hotRed, hotGreen, hotBlue] = SHREDDED_MATTER_RGB;
+        const color = `rgba(${Math.round(red + (hotRed - red) * shred.heat)}, `
+            + `${Math.round(green + (hotGreen - green) * shred.heat)}, `
+            + `${Math.round(blue + (hotBlue - blue) * shred.heat)}, ${alpha})`;
+        ctx.globalCompositeOperation = shred.heat > 0 ? 'lighter' : 'source-over';
+        if (Math.hypot(shred.x - shred.tail.x, shred.y - shred.tail.y) > 1) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(0.9, particle.radius * 1.4);
+            ctx.beginPath();
+            ctx.moveTo(shred.tail.x, shred.tail.y);
+            ctx.lineTo(shred.x, shred.y);
+            ctx.stroke();
+        }
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(shred.x, shred.y, particle.radius, 0, TAU);
+        ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    const cohesion = galaxyCohesion(absorption);
+    if (cohesion > 0) {
+        const galaxyCenter = holeGalaxyCenter(absorption, holeCenter);
+        ctx.translate(galaxyCenter.x, galaxyCenter.y);
+        ctx.rotate(animation.rotation);
+        drawGalaxyNucleus(ctx, traveler, projection.cycle, appearance, opacity * cohesion, simulationSeconds);
+    }
+    ctx.restore();
+};
+
+const drawGalaxy = (
+    ctx: CanvasRenderingContext2D,
+    traveler: Traveler,
+    projection: ProjectedTraveler,
+    simulationSeconds: number,
+) => {
+    const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
+    // Particle motion is resolved before local-plane flattening; sky tilt stays fixed.
+    const animation = getGalaxyAnimationState(traveler, projection.cycle, 0);
+    const { x, y, opacity } = projection;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(animation.rotation);
+
+    // Formation identity comes entirely from seeded point positions, colors, and density.
+    for (let star = 0; star < appearance.internalStarCount; star += 1) {
+        const particle = getGalaxyParticleState(
+            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
+        );
+        if (particle.opacity <= 0) continue;
+        const [red, green, blue] = GALAXY_MATTER_RGB[particle.kind];
+        ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${opacity * particle.opacity})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
+        ctx.fill();
+    }
+
+    drawGalaxyNucleus(ctx, traveler, projection.cycle, appearance, opacity, simulationSeconds);
     ctx.restore();
 };
 
@@ -1007,6 +1096,9 @@ const SpaceNeuralBackground: React.FC = () => {
             holeCaptureAt = null;
             delete canvas.dataset.blackHole;
             delete canvas.dataset.blackHoleCaptures;
+            delete canvas.dataset.blackHoleFeasts;
+            delete canvas.dataset.blackHoleFeastPower;
+            delete canvas.dataset.blackHoleGalaxyPhase;
         };
 
         const clearEasterEggDataset = () => {
@@ -1136,31 +1228,57 @@ const SpaceNeuralBackground: React.FC = () => {
             if (blackHole) {
                 const previousCaptures = blackHole.captures;
                 holeOpenedAt ??= elapsed;
+                const roles = projections.map((projection, index) => holeTravelerRole(
+                    getTravelerVariant(travelers[index], projection.cycle),
+                    index === prominentSystemOwner?.travelerIndex,
+                ));
+                const travelerVisible = (projection: ProjectedTraveler) => projection.opacity
+                    * getNebulaDepthTransmission(
+                        nebulaAt(projection.x, projection.y),
+                        (projection.depth - NEAR_DEPTH) / (FAR_DEPTH - NEAR_DEPTH),
+                    ) > 0.01;
+                const galaxySources: HoleGalaxySource[] = [];
+                projections.forEach((projection, index) => {
+                    if (roles[index] !== 'galaxy') return;
+                    galaxySources.push({ x: projection.x, y: projection.y, id: -1 - index,
+                        cycle: projection.cycle, visible: travelerVisible(projection),
+                        radius: getGalaxyAppearance(travelers[index], projection.progress, projection.cycle).outerRadius });
+                });
                 blackHole = stepBlackHole(blackHole, [
                     ...positions.map((point, index) => ({
                         ...point, visible: Boolean(styles[index] && isStarRenderable(styles[index])),
                     })),
                     ...projections.map((projection, index) => ({
                         ...projection, id: -1 - index,
-                        visible: projection.opacity * getNebulaDepthTransmission(
-                            nebulaAt(projection.x, projection.y),
-                            (projection.depth - NEAR_DEPTH) / (FAR_DEPTH - NEAR_DEPTH),
-                        ) > 0.01
-                            && index !== prominentSystemOwner?.travelerIndex
-                            && getTravelerVariant(travelers[index], projection.cycle) === 'star',
+                        visible: roles[index] === 'star' && travelerVisible(projection),
                     })),
-                ], holeCenter, holeLastElapsed === null ? 0 : elapsed - holeLastElapsed);
-                projections.forEach((projection, index) => {
-                    const star = blackHole?.stars.get(-1 - index);
-                    if (!star) return;
+                ], holeCenter, holeLastElapsed === null ? 0 : elapsed - holeLastElapsed, galaxySources);
+                let galaxyPhase: GalaxyAbsorption['phase'] | null = null;
+                for (let index = 0; index < projections.length; index += 1) {
+                    const projection = projections[index];
+                    const galaxy = blackHole.galaxies.get(-1 - index);
+                    if (galaxy) {
+                        const galaxyCenter = holeGalaxyCenter(galaxy, holeCenter);
+                        projection.x = galaxyCenter.x;
+                        projection.y = galaxyCenter.y;
+                        if (galaxy.phase === 'consumed') projection.opacity = 0;
+                        else galaxyPhase ??= galaxy.phase;
+                        continue;
+                    }
+                    const star = blackHole.stars.get(-1 - index);
+                    if (!star) continue;
                     projection.x = star.x;
                     projection.y = star.y;
                     if (star.consumed) projection.opacity = 0;
-                });
+                }
                 holeLastElapsed = elapsed;
                 if (blackHole.captures > previousCaptures) holeCaptureAt = elapsed;
                 positions = positions.map((point, index) => blackHole?.stars.get(index) ?? point);
                 canvas.dataset.blackHoleCaptures = String(blackHole.captures);
+                canvas.dataset.blackHoleFeasts = String(blackHole.feasts);
+                canvas.dataset.blackHoleFeastPower = blackHole.feastPower.toFixed(2);
+                if (galaxyPhase) canvas.dataset.blackHoleGalaxyPhase = galaxyPhase;
+                else delete canvas.dataset.blackHoleGalaxyPhase;
             }
             if (easterEgg) {
                 canvas.dataset.constellationPhrase = easterEgg.phrase;
@@ -1275,7 +1393,10 @@ const SpaceNeuralBackground: React.FC = () => {
                     const deltaX = pulledStar ? pulledStar.vx * 0.1 : sameCycle ? projection.x - previous.x : 0;
                     const deltaY = pulledStar ? pulledStar.vy * 0.1 : sameCycle ? projection.y - previous.y : 0;
                     const variant = getTravelerVariant(traveler, projection.cycle);
-                    if (variant === 'galaxy') {
+                    const absorption = variant === 'galaxy' ? blackHole?.galaxies.get(-1 - index) : undefined;
+                    if (absorption) {
+                        drawAbsorbedGalaxy(ctx, traveler, projection, simulationSeconds, absorption, holeCenter);
+                    } else if (variant === 'galaxy') {
                         drawGalaxy(ctx, traveler, projection, simulationSeconds);
                     } else if (variant === 'ufo') {
                         drawUfo(ctx, traveler, projection, deltaX, deltaY, simulationSeconds);
