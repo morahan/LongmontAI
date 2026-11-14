@@ -50,8 +50,8 @@ const Newsletter: React.FC = () => (
       </article>
       <article>
         <MailCheck size={18} aria-hidden="true" />
-        <h2>Newsletter Ops</h2>
-        <p>Supabase captures consent, Listmonk manages audiences and campaigns, and Resend sends mail.</p>
+        <h2>Your Inbox</h2>
+        <p>You confirm by email before anything is sent, and you can unsubscribe whenever you like.</p>
         <a href="mailto:hello@longmontai.com?subject=LongmontAI%20newsletter">Contact LongmontAI <ArrowRight size={14} aria-hidden="true" /></a>
       </article>
     </section>

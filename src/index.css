@@ -4894,6 +4894,13 @@ iframe {
   color: var(--accent-cyan);
 }
 
+@media (max-width: 1000px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2.25rem;
+  }
+}
+
 @media (max-width: 760px) {
   .site-footer {
     padding-top: 2.75rem;
