@@ -1,0 +1,7 @@
+# deepmerge 4.3.1 is the newest release and has no patched version. It reaches
+# this project only through @sveltejs/vite-plugin-svelte at build time.
+# Remove this entry once a fixed release exists.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-02-14
+reason = "No patched deepmerge release exists; build-time only via @sveltejs/vite-plugin-svelte."
