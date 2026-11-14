@@ -29,7 +29,7 @@ for (const directive of [
   "base-uri 'self'",
   "object-src 'none'",
   "script-src 'self' https://challenges.cloudflare.com",
-  "connect-src 'self'",
+  "connect-src 'self' https://1023.digital",
   "frame-ancestors 'none'",
   "form-action 'self'",
   'upgrade-insecure-requests',
