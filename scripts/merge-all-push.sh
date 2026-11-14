@@ -120,7 +120,8 @@ one_pass() {
 while :; do
   one_pass
   if [[ "$DID" == 0 || "$MINUTES" == 0 ]]; then
-    log "done: main == origin/main ($(git rev-parse --short main)); $(git worktree list | wc -l | tr -d ' ') worktree(s), $(git for-each-ref refs/heads/ | wc -l | tr -d ' ') branch(es)"
+    left="$( { linked_worktrees | cut -f1; git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vx main; } | paste -sd ' ' -)"
+    log "done: main == origin/main ($(git rev-parse --short main)); leftovers: ${left:-none}"
     exit 0
   fi
   log "work was published; rechecking in ${MINUTES}m for new work (Ctrl-C to stop)"
