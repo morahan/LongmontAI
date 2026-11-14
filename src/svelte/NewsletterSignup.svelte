@@ -3,75 +3,60 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import {
-    newsletterSignupErrorMessage,
-    readNewsletterSubscribeResponse,
+    readSubscribeResponse,
+    signupMessage,
+    subscribeRequest,
+    SUBSCRIBE_URL,
+    type SignupOutcome,
   } from '../lib/newsletterResponse';
   import { mountTurnstile, turnstileSiteKey, type TurnstileWidget } from '../lib/turnstile';
 
   let email = '';
   let name = '';
-  let cadence: 'weekly' | 'biweekly' = 'weekly';
   let company = '';
-  let status: 'idle' | 'loading' | 'success' | 'error' = 'idle';
-  let message = '';
+  let loading = false;
+  let notice: { tone: 'success' | 'error'; text: string } | undefined;
   let turnstileContainer: HTMLDivElement;
   let turnstileToken = '';
   let turnstile: TurnstileWidget | undefined;
-
-  export let source = 'newsletter-page';
-  export let defaultCadence: 'weekly' | 'biweekly' = 'weekly';
-
-  $: if (defaultCadence === 'weekly' || defaultCadence === 'biweekly') {
-    cadence = cadence === 'weekly' || cadence === 'biweekly' ? cadence : defaultCadence;
-  }
 
   onMount(() => {
     if (!turnstileSiteKey) return;
     mountTurnstile(turnstileContainer, turnstileSiteKey, (token) => { turnstileToken = token; })
       .then((widget) => { turnstile = widget; })
       .catch(() => {
-        status = 'error';
-        message = 'The human check could not load. Refresh the page to try again.';
+        notice = { tone: 'error', text: 'The human check could not load. Refresh the page to try again.' };
       });
   });
 
   onDestroy(() => turnstile?.remove());
 
+  function show(outcome: SignupOutcome) {
+    notice = { tone: outcome.result === 'received' ? 'success' : 'error', text: signupMessage(outcome) };
+  }
+
   async function submit() {
-    if (turnstileSiteKey && !turnstileToken) {
-      status = 'error';
-      message = 'Complete the human check first.';
+    if (!turnstileSiteKey || !turnstileToken) {
+      show({ result: turnstileSiteKey ? 'challenge' : 'unavailable' });
       return;
     }
-    status = 'loading';
-    message = '';
+    loading = true;
+    notice = undefined;
+    let outcome: SignupOutcome;
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          name,
-          cadence,
-          company,
-          source,
-          page: window.location.pathname,
-          turnstileToken,
-        }),
-      });
-      const payload = await readNewsletterSubscribeResponse(response);
-      status = 'success';
-      message = payload.status === 'confirmation_pending'
-        ? 'You are on the briefing list. Check your inbox for the opt-in step.'
-        : 'You are on the briefing intake list.';
-      email = '';
-      name = '';
-    } catch (error) {
-      status = 'error';
-      message = newsletterSignupErrorMessage(error);
+      const response = await fetch(SUBSCRIBE_URL, subscribeRequest({ email, name, website: company, turnstileToken }));
+      outcome = await readSubscribeResponse(response);
+    } catch {
+      outcome = { result: 'unavailable' };
     } finally {
+      loading = false;
       turnstileToken = '';
       turnstile?.reset();
+    }
+    show(outcome);
+    if (outcome.result === 'received') {
+      email = '';
+      name = '';
     }
   }
 </script>
@@ -106,31 +91,13 @@
     <input bind:value={company} type="text" name="company" tabindex="-1" autocomplete="off" />
   </label>
 
-  <fieldset>
-    <legend>Cadence</legend>
-    <div class="newsletter-cadence">
-      <label class:active={cadence === 'weekly'}>
-        <input bind:group={cadence} type="radio" name="cadence" value="weekly" />
-        <span>Weekly</span>
-      </label>
-      <label class:active={cadence === 'biweekly'}>
-        <input bind:group={cadence} type="radio" name="cadence" value="biweekly" />
-        <span>Bi-weekly</span>
-      </label>
-    </div>
-  </fieldset>
-
   <div class="newsletter-turnstile" bind:this={turnstileContainer}></div>
 
-  <button type="submit" disabled={status === 'loading'}>
-    {status === 'loading' ? 'Joining...' : 'Get the briefing'}
+  <button type="submit" disabled={loading}>
+    {loading ? 'Joining...' : 'Get the briefing'}
   </button>
 
-  {#if message}
-    <p class:success={status === 'success'} class:error={status === 'error'} aria-live="polite">
-      {message}
-    </p>
-  {/if}
+  <p class={notice?.tone} role="status">{notice?.text ?? ''}</p>
 </form>
 
 <style>
@@ -161,20 +128,11 @@
     gap: 0.75rem;
   }
 
-  label,
-  fieldset {
+  label {
     min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
   }
 
-  legend {
-    padding: 0;
-  }
-
-  label span,
-  legend {
+  label span {
     display: block;
     margin-bottom: 0.35rem;
     color: rgba(255, 255, 255, 0.62);
@@ -218,45 +176,6 @@
     display: none;
   }
 
-  .newsletter-cadence {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
-  }
-
-  .newsletter-cadence label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 2.5rem;
-    padding: 0.55rem 0.65rem;
-    border: 1px solid rgba(255, 255, 255, 0.11);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    cursor: pointer;
-    transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
-  }
-
-  .newsletter-cadence label.active {
-    border-color: rgba(59, 130, 246, 0.68);
-    background: rgba(59, 130, 246, 0.18);
-    color: #fff;
-  }
-
-  .newsletter-cadence input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .newsletter-cadence span {
-    margin: 0;
-    color: inherit;
-    font-size: 0.84rem;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
   button {
     display: inline-flex;
     align-items: center;
@@ -289,6 +208,11 @@
     margin: 0;
     color: rgba(255, 255, 255, 0.64);
     font-size: 0.9rem;
+  }
+
+  /* Kept in the accessibility tree while empty so its first message is announced. */
+  p:empty {
+    position: absolute;
   }
 
   p.success {

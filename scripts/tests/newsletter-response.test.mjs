@@ -5,83 +5,93 @@ import test from 'node:test';
 
 const source = await readFile(new URL('../../src/lib/newsletterResponse.ts', import.meta.url), 'utf8');
 const {
-  newsletterSignupErrorMessage,
-  readNewsletterSubscribeResponse,
-  UNAVAILABLE_MESSAGE,
+  readSubscribeResponse,
+  signupMessage,
+  subscribeRequest,
+  SUBSCRIBE_URL,
 } = await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString('base64')}`);
 
-function response(payload, status = 400, contentType = 'application/json') {
-  return new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': contentType } });
+const UNAVAILABLE = 'Newsletter signup is temporarily unavailable.';
+
+function response(payload, status, headers = {}) {
+  return new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json', ...headers } });
 }
 
-async function errorMessage(result) {
-  try {
-    await readNewsletterSubscribeResponse(result);
-    assert.fail('Expected newsletter response rejection');
-  } catch (error) {
-    // Do not let an assertion failure masquerade as a safe response error.
-    assert.equal(error.name, 'NewsletterResponseError');
-    return newsletterSignupErrorMessage(error);
-  }
+async function messageFor(result) {
+  return signupMessage(await readSubscribeResponse(result));
 }
 
-test('newsletter response preserves both success states', async () => {
-  for (const status of ['confirmation_pending', 'intake_recorded']) {
-    const payload = { ok: true, status };
-    assert.deepEqual(await readNewsletterSubscribeResponse(response(payload, 200, 'Application/JSON; charset=utf-8')), payload);
+test('signup posts the strict shared-endpoint body without credentials', () => {
+  const init = subscribeRequest({ email: 'reader@example.com', name: 'Reader', website: '', turnstileToken: 'token' });
+  assert.equal(SUBSCRIBE_URL, 'https://1023.digital/api/subscribe');
+  assert.equal(init.method, 'POST');
+  assert.equal(init.credentials, 'omit');
+  assert.deepEqual(init.headers, { 'Content-Type': 'application/json' });
+  assert.deepEqual(JSON.parse(init.body), {
+    email: 'reader@example.com',
+    name: 'Reader',
+    source: 'longmont-ai',
+    website: '',
+    turnstileToken: 'token',
+  });
+  assert.ok(init.signal instanceof AbortSignal);
+});
+
+test('each documented endpoint result maps to its reader message', async () => {
+  assert.deepEqual(await readSubscribeResponse(response({ result: 'received' }, 202)), { result: 'received' });
+  assert.equal(
+    await messageFor(response({ result: 'received' }, 202)),
+    "You're almost in. Check your inbox in the next few minutes for a confirmation email.",
+  );
+  assert.equal(await messageFor(response({ result: 'invalid' }, 400)), 'Enter a valid email address.');
+  assert.equal(await messageFor(response({ result: 'challenge_failed' }, 400)), 'Complete the human check and try again.');
+  assert.equal(await messageFor(response({ result: 'unavailable' }, 503)), UNAVAILABLE);
+  assert.equal(await messageFor(response({ result: 'forbidden' }, 403)), UNAVAILABLE);
+});
+
+test('rate limiting uses Retry-After seconds and falls back to ten minutes', async () => {
+  assert.equal(
+    await messageFor(response({ result: 'limited' }, 429, { 'Retry-After': '300' })),
+    'Too many attempts. Try again in about 5 minutes.',
+  );
+  assert.equal(
+    await messageFor(response({ result: 'limited' }, 429, { 'Retry-After': '61' })),
+    'Too many attempts. Try again in about 2 minutes.',
+  );
+  assert.equal(
+    await messageFor(response({ result: 'limited' }, 429, { 'Retry-After': '20' })),
+    'Too many attempts. Try again in about 1 minute.',
+  );
+  for (const headers of [{}, { 'Retry-After': 'Wed, 21 Oct 2026 07:28:00 GMT' }, { 'Retry-After': '-5' }]) {
+    assert.equal(
+      await messageFor(response({ result: 'limited' }, 429, headers)),
+      'Too many attempts. Try again in about 10 minutes.',
+    );
   }
 });
 
-test('newsletter client errors use only explicitly allowlisted messages', async () => {
-  const messages = {
-    invalid_email: 'Enter a valid email address.',
-    body_too_large: 'Newsletter signup request is too large.',
-    invalid_json: 'Newsletter signup request was not accepted.',
-    unsupported_content_type: 'Newsletter signup request was not accepted.',
-    origin_not_allowed: 'Newsletter signup is unavailable from this page.',
-    method_not_allowed: UNAVAILABLE_MESSAGE,
-  };
-  for (const [error, expected] of Object.entries(messages)) {
-    assert.equal(await errorMessage(response({ error, message: 'private backend details' })), expected);
-    assert.equal(await errorMessage(response({ error, message: 'private backend details' }, 503)), UNAVAILABLE_MESSAGE);
+test('mismatched, malformed, or unknown responses are unavailable', async () => {
+  const cases = [
+    response({ result: 'received' }, 200),
+    response({ result: 'invalid' }, 202),
+    response({ result: 'unknown' }, 400),
+    response({ result: 'toString' }, 400),
+    response({ result: '__proto__' }, 400),
+    response({ ok: true }, 202),
+    response(null, 202),
+    response([], 202),
+    response('received', 202),
+    new Response('{', { status: 202, headers: { 'Content-Type': 'application/json' } }),
+    new Response('<h1>Bad Gateway</h1>', { status: 502, headers: { 'Content-Type': 'text/html' } }),
+    new Response(null, { status: 204 }),
+  ];
+  for (const result of cases) {
+    assert.deepEqual(await readSubscribeResponse(result), { result: 'unavailable' });
   }
 });
 
-test('unknown errors, prototype keys, and backend text stay generic', async () => {
-  for (const error of ['unknown', '__proto__', 'constructor', 'toString', 'private backend details', null, {}]) {
-    assert.equal(await errorMessage(response({ error, message: 'private backend details' })), UNAVAILABLE_MESSAGE);
-  }
-  assert.equal(await errorMessage(response({ ok: true, message: 'private backend details' }, 500)), UNAVAILABLE_MESSAGE);
-});
-
-test('malformed JSON, non-object payloads, and non-JSON responses fail safely', async () => {
-  for (const payload of [null, [], 'private backend details', 1, true, {}, { ok: 'true' }, { ok: 1 }]) {
-    assert.equal(await errorMessage(response(payload, 200)), UNAVAILABLE_MESSAGE);
-  }
-  for (const contentType of ['text/html', 'text/plain', 'application/jsonp', 'text/application/json']) {
-    assert.equal(await errorMessage(response({ ok: true }, 200, contentType)), UNAVAILABLE_MESSAGE);
-  }
-  for (const body of ['', '{', '<html>private upstream failure</html>']) {
-    assert.equal(await errorMessage(new Response(body, { headers: { 'Content-Type': 'application/json' } })), UNAVAILABLE_MESSAGE);
-  }
-  assert.equal(await errorMessage(new Response(null, { status: 204 })), UNAVAILABLE_MESSAGE);
-});
-
-test('body read and network failures do not expose arbitrary exception text', async () => {
-  const unreadable = response({ ok: true }, 200);
-  await unreadable.text();
-  assert.equal(await errorMessage(unreadable), UNAVAILABLE_MESSAGE);
-  for (const error of [new TypeError('private network details'), new Error('private server details'), 'private details', null]) {
-    assert.equal(newsletterSignupErrorMessage(error), UNAVAILABLE_MESSAGE);
-  }
-});
-
-test('signup uses the safe response boundary and preserves payload and success text', async () => {
-  const component = await readFile(new URL('../../src/svelte/NewsletterSignup.svelte', import.meta.url), 'utf8');
-  assert.match(component, /const payload = await readNewsletterSubscribeResponse\(response\)/);
-  assert.match(component, /message = newsletterSignupErrorMessage\(error\)/);
-  assert.doesNotMatch(component, /payload\.message|error\.message|response\.json\(/);
-  assert.match(component, /JSON\.stringify\(\{\s*email,\s*name,\s*cadence,\s*company,\s*source,\s*page: window\.location\.pathname,/);
-  assert.match(component, /You are on the briefing list\. Check your inbox for the opt-in step\./);
-  assert.match(component, /You are on the briefing intake list\./);
+test('an already-read body is unavailable instead of throwing', async () => {
+  const consumed = response({ result: 'received' }, 202);
+  await consumed.text();
+  assert.deepEqual(await readSubscribeResponse(consumed), { result: 'unavailable' });
 });

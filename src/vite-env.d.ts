@@ -11,9 +11,6 @@ declare module '*.md?raw' {
 
 declare namespace React.JSX {
   interface IntrinsicElements {
-    'longmont-newsletter-signup': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-      source?: string;
-      'default-cadence'?: 'weekly' | 'biweekly';
-    };
+    'longmont-newsletter-signup': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
   }
 }

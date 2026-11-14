@@ -12,11 +12,7 @@ import {
 import { pageTitle } from '../../src/lib/documentTitle.ts';
 import { canonicalEditionUrl, shareEdition } from '../../src/lib/editionShare.ts';
 import { countDistinctModels } from '../../src/lib/modelWatchPresentation.ts';
-import {
-  newsletterSignupErrorMessage,
-  readNewsletterSubscribeResponse,
-  UNAVAILABLE_MESSAGE,
-} from '../../src/lib/newsletterResponse.ts';
+import { readSubscribeResponse, signupMessage } from '../../src/lib/newsletterResponse.ts';
 import { watchRetryingResource } from '../../src/lib/retryingWatcher.ts';
 import { unavailableScheduledEditionPhase } from '../../src/lib/scheduledEditionState.ts';
 import { reconcileVisibleSelection } from '../../src/lib/timelineSelection.ts';
@@ -202,55 +198,20 @@ test('timeline selection is reconciled to the visible result set', () => {
   assert.equal(reconcileVisibleSelection(old, []), null);
 });
 
-test('newsletter response preserves expected JSON messages and masks gateway bodies', async () => {
-  await assert.rejects(
-    readNewsletterSubscribeResponse(new Response('<h1>Bad Gateway</h1>', {
-      status: 502,
-      headers: { 'content-type': 'text/html' },
-    })),
-    new RegExp(UNAVAILABLE_MESSAGE.replaceAll('.', '\\.'), 'i'),
+test('newsletter response maps shared-endpoint results and masks gateway bodies', async () => {
+  const json = (payload, status, headers = {}) => new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'content-type': 'application/json', ...headers },
+  });
+  assert.deepEqual(await readSubscribeResponse(json({ result: 'received' }, 202)), { result: 'received' });
+  assert.deepEqual(await readSubscribeResponse(json({ result: 'challenge_failed' }, 400)), { result: 'challenge' });
+  assert.equal(
+    signupMessage(await readSubscribeResponse(json({ result: 'limited' }, 429, { 'retry-after': '600' }))),
+    'Too many attempts. Try again in about 10 minutes.',
   );
-  await assert.rejects(
-    readNewsletterSubscribeResponse(new Response('{', {
-      status: 503,
-      headers: { 'content-type': 'application/json' },
-    })),
-    new RegExp(UNAVAILABLE_MESSAGE.replaceAll('.', '\\.'), 'i'),
+  assert.deepEqual(
+    await readSubscribeResponse(new Response('<h1>Bad Gateway</h1>', { status: 502, headers: { 'content-type': 'text/html' } })),
+    { result: 'unavailable' },
   );
-  await assert.rejects(
-    readNewsletterSubscribeResponse(new Response(JSON.stringify({ ok: false, error: 'invalid_email', message: 'provider marker' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    })),
-    (error) => {
-      assert.equal(error.message, 'Enter a valid email address.');
-      assert.equal(newsletterSignupErrorMessage(error), 'Enter a valid email address.');
-      return true;
-    },
-  );
-  for (const code of ['toString', 'constructor', '__proto__']) {
-    await assert.rejects(
-      readNewsletterSubscribeResponse(new Response(JSON.stringify({ ok: false, error: code, message: 'untrusted provider copy' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json' },
-      })),
-      (error) => {
-        assert.equal(error.message, UNAVAILABLE_MESSAGE);
-        assert.equal(newsletterSignupErrorMessage(error), UNAVAILABLE_MESSAGE);
-        return true;
-      },
-    );
-  }
-  await assert.rejects(
-    readNewsletterSubscribeResponse(new Response(JSON.stringify({ ok: false, error: 'unknown', message: 'internal provider marker' }), {
-      status: 500,
-      headers: { 'content-type': 'application/json' },
-    })),
-    new RegExp(UNAVAILABLE_MESSAGE.replaceAll('.', '\\.'), 'i'),
-  );
-  assert.equal(newsletterSignupErrorMessage(new TypeError('network internals marker')), UNAVAILABLE_MESSAGE);
-  assert.equal((await readNewsletterSubscribeResponse(new Response(JSON.stringify({ ok: true, status: 'accepted' }), {
-    status: 202,
-    headers: { 'content-type': 'application/json' },
-  }))).status, 'accepted');
+  assert.equal(signupMessage({ result: 'unavailable' }), 'Newsletter signup is temporarily unavailable.');
 });

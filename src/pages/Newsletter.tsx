@@ -13,8 +13,8 @@ const Newsletter: React.FC = () => (
         </div>
         <h1 id="newsletter-title">The LongmontAI AI Briefing</h1>
         <p>
-          A weekly or bi-weekly synthesis of model releases, frontier benchmarks, agent workflows,
-          research breakthroughs, and the strongest signals from the LongmontAI archive.
+          One weekly email, shared with 1023 Digital: model releases, frontier benchmarks, agent
+          workflows, research breakthroughs, and the strongest signals from the LongmontAI archive.
         </p>
         <p>
           Subscribers also get a short summary of each meetup edition when the meetup starts.
@@ -25,7 +25,7 @@ const Newsletter: React.FC = () => (
         </p>
       </div>
       <div className="newsletter-hero-panel" aria-label="Newsletter signup">
-        <NewsletterSignupHost source="newsletter-page" />
+        <NewsletterSignupHost />
       </div>
     </section>
 
