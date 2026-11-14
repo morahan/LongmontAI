@@ -120,7 +120,7 @@ one_pass() {
 while :; do
   one_pass
   if [[ "$DID" == 0 || "$MINUTES" == 0 ]]; then
-    left="$( { linked_worktrees | cut -f1; git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vx main; } | paste -sd ' ' -)"
+    left="$( { linked_worktrees | cut -f1; git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vx main || true; } | paste -sd ' ' -)"
     log "done: main == origin/main ($(git rev-parse --short main)); leftovers: ${left:-none}"
     exit 0
   fi
