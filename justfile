@@ -62,10 +62,10 @@ test-flows-ios:
 loop-push minutes="2":
     @bash scripts/loop-push.sh {{quote(minutes)}}
 
-# Merge every branch/worktree into main, push through the normal hooks, prune merged leftovers.
-# On conflict exits 3 with the file list: resolve, `git add`, re-run. minutes=0 for a single pass.
 alias lmp := loop-merge-push
 
+# Merge every branch/worktree into main, push through the normal hooks, prune merged leftovers.
+# On conflict exits 3 with the file list: resolve, `git add`, re-run. minutes=0 for a single pass.
 loop-merge-push minutes="2" *args:
     @bash scripts/merge-all-push.sh {{quote(minutes)}}
 
