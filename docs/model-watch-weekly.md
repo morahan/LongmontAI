@@ -18,7 +18,15 @@ After the run, the ledger lists every model and tool release from the last 14 da
 
 ## Steps
 
-1. **Start clean.** Work in `/Users/msfm6/Coding/LongmontAI` on `main`. Run `git status --porcelain` and `git pull --ff-only`. If the tree has changes you did not make, stop and report them. Do not stash, reset or commit another agent's work.
+1. **Work in your own worktree.** Other agents often have uncommitted work in `/Users/msfm6/Coding/LongmontAI`, so do not edit that checkout. From it, run:
+
+   ```sh
+   git fetch origin
+   git worktree add -b model-watch/weekly ../LongmontAI-model-watch origin/main
+   cd ../LongmontAI-model-watch && ln -s ../LongmontAI/node_modules node_modules
+   ```
+
+   If `package-lock.json` differs from the main checkout's, run `npm ci --ignore-scripts` in the worktree instead of linking. Never stash, reset or commit another agent's work.
 2. **Refresh the leads.** Run `just update-models --discover`. It needs the network and writes unreviewed detections. If it fails, note the failure and continue with the existing leads.
 3. **Print the worklist.** Run `just update-models-weekly`. It prints:
    - `rereview`: in rotation today, but the review lapses within 7 days.
@@ -46,7 +54,7 @@ After the run, the ledger lists every model and tool release from the last 14 da
    ```
 
    A test that pins a specific roster name or count may need its expectation updated to the new reviewed fact. Never loosen a test that checks behavior, and never skip one.
-9. **Commit and push.** Follow the Publication section of `AGENTS.md`: commit to `main` and push through the normal hooks, without `--no-verify`. Write the commit body as the roster change: Added, Superseded, Aged out, Re-reviewed. If nothing changed in the ledger, still commit the regenerated snapshot as `chore: refresh the Model Watch snapshot`.
+9. **Commit and push.** Commit in the worktree, then run `git fetch origin && git rebase origin/main` and `git push origin HEAD:main`. The hooks run on the push; never pass `--no-verify`. Write the commit body as the roster change: Added, Superseded, Aged out, Re-reviewed. If nothing changed in the ledger, still commit the regenerated snapshot as `chore: refresh the Model Watch snapshot`. After the push succeeds, remove the worktree and delete the branch, as the Publication section of `AGENTS.md` requires.
 10. **Report.** End with what was added, superseded, aged out and re-reviewed, each new entry's source URL, anything you could not confirm, and whether the push succeeded.
 
 ## Limits
