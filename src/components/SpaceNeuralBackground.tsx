@@ -1243,6 +1243,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 travelers, projections, width, height, prominentSystemOwner,
             );
             let positions = frame.positions;
+            /*DBG*/ const dbgRaw = projections.map((p) => ({ x: p.x, y: p.y, o: p.opacity }));
             if (blackHole) {
                 const previousCaptures = blackHole.captures;
                 holeOpenedAt ??= elapsed;
@@ -1297,6 +1298,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 canvas.dataset.blackHoleCaptures = String(blackHole.captures);
                 canvas.dataset.blackHoleFeasts = String(blackHole.feasts);
                 canvas.dataset.blackHoleFeastPower = blackHole.feastPower.toFixed(2);
+                /*DBG*/ canvas.dataset.dbg = JSON.stringify(travelers.map((t, i) => t.isGalaxy ? { i, x: Math.round(dbgRaw[i].x), y: Math.round(dbgRaw[i].y), o: +dbgRaw[i].o.toFixed(2), role: roles[i], vis: travelerVisible({ ...projections[i], ...dbgRaw[i] } as ProjectedTraveler), r: Math.round(getGalaxyAppearance(t, projections[i].progress, projections[i].cycle).outerRadius), ph: blackHole.galaxies.get(-1 - i)?.phase ?? null } : null).filter(Boolean));
                 if (galaxyPhase) canvas.dataset.blackHoleGalaxyPhase = galaxyPhase;
                 else delete canvas.dataset.blackHoleGalaxyPhase;
             }
