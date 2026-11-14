@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   BLACK_HOLE_RADIUS, BLACK_HOLE_MAX_STARS, BLACK_HOLE_MAX_SPARKS, BLACK_HOLE_MAX_DELTA,
-  BLACK_HOLE_SHADOW_RADIUS, GALAXY_FEAST_SECONDS, GALAXY_SHRED_SECONDS, GALAXY_TIDAL_RADIUS,
-  advanceHoleBody, boundedHoleDelta, createBlackHole, createHawkingJets, holeAcceleration,
-  galaxyFeastPower, holeGalaxyCenter, holeTravelerRole, shredGalaxyParticle, stepBlackHole,
+  BLACK_HOLE_SHADOW_RADIUS, BLACK_HOLE_DISK_TILT, FEAST_RIPPLE_PX, GALAXY_FEAST_SECONDS,
+  GALAXY_SHRED_SECONDS, GALAXY_TIDAL_RADIUS,
+  advanceHoleBody, boundedHoleDelta, createBlackHole, createHawkingJets, feastRipple, holeAcceleration,
+  galaxyFeastPower, galaxyTide, holeGalaxyCenter, holeTravelerRole, lensRadius, shredGalaxyParticle,
+  stepBlackHole,
 } from '../../src/components/blackHoleModel.ts';
 import {
   BLACK_HOLE_OPEN_SECONDS, drawBlackHole,
@@ -196,8 +198,12 @@ test('a galaxy anywhere in reach is shredded and swallowed exactly once, slower 
   assert.ok(galaxyFrame > starFrame + 60 * 1.5, `galaxy ${galaxyFrame} frames vs star ${starFrame}`);
 });
 
-test('finale scales with galaxy size and a speck cannot cut a big feast short', () => {
-  assert.ok(galaxyFeastPower(4) < 0.2);
+test('every finale is grand, scales with galaxy size, and a speck cannot cut a big feast short', () => {
+  for (let radius = 0; radius <= 60; radius += 0.5) {
+    assert.ok(galaxyFeastPower(radius) >= 0.6 && galaxyFeastPower(radius) <= 1, `radius ${radius}`);
+    assert.ok(galaxyFeastPower(radius + 0.5) >= galaxyFeastPower(radius));
+  }
+  assert.ok(galaxyFeastPower(9.5) > 0.6 && galaxyFeastPower(9.5) < 0.75);
   assert.equal(galaxyFeastPower(30), 1);
   const eat = (state, options) => {
     const feasts = state.feasts;
@@ -266,44 +272,158 @@ test('the shredding stream rides along with a moving hole', () => {
   assert.ok(Math.abs(after.x - before.x - 80) < 1e-9 && Math.abs(after.y - before.y + 40) < 1e-9);
 });
 
-test('tidal disruption stretches, then winds every particle into the shadow with no pop', () => {
-  const locals = Array.from({ length: 48 }, (_, index) => ({
-    point: { x: Math.cos(index * 2.4) * (4 + index % 7 * 3), y: Math.sin(index * 2.4) * (4 + index % 5 * 3) },
-    order: (index * 0.618034) % 1,
-  }));
-  const edge = { x: center.x + BLACK_HOLE_RADIUS, y: center.y, vx: 0, vy: 0, base: center, cycle: 0, phase: 'infall', age: 5 };
+const locals = Array.from({ length: 48 }, (_, index) => ({
+  point: { x: Math.cos(index * 2.4) * (2 + index % 7 * 1.2), y: Math.sin(index * 2.4) * (2 + index % 5 * 1.2) },
+  jitter: (index * 0.618034) % 1,
+}));
+const speck = { x: center.x + BLACK_HOLE_RADIUS, y: center.y, vx: 0, vy: 0, cycle: 0, radius: 9.5, phase: 'infall', age: 5 };
+const shredAt = (offset) => ({ ...speck, ...offset, phase: 'shredding', age: 0 });
+const holeRadius = (point) => Math.hypot(point.x - center.x, point.y - center.y);
+
+test('tides grow steeply with proximity: stretched along the fall, squeezed across it', () => {
   for (const { point } of locals) {
-    const particle = shredGalaxyParticle(edge, center, point, 0.5);
-    assert.ok(Math.abs(particle.x - edge.x - point.x) < 1e-9 && Math.abs(particle.y - edge.y - point.y) < 1e-9,
+    const particle = shredGalaxyParticle(speck, center, point, 0.5);
+    assert.ok(Math.abs(particle.x - speck.x - point.x) < 1e-9 && Math.abs(particle.y - speck.y - point.y) < 1e-9,
       'no tidal stretch at the edge of reach');
   }
-  const near = { ...edge, x: center.x + GALAXY_TIDAL_RADIUS + 1 };
-  const radial = shredGalaxyParticle(near, center, { x: 10, y: 0 }, 0.5);
-  const across = shredGalaxyParticle(near, center, { x: 0, y: 10 }, 0.5);
-  assert.ok(Math.abs(radial.x - near.x) > 15, 'stretched along the fall');
-  assert.ok(Math.abs(across.y - near.y) < 7, 'squeezed across it');
-  assert.equal(radial.heat, 0);
+  assert.equal(galaxyTide(BLACK_HOLE_RADIUS), 0);
+  assert.ok(galaxyTide(GALAXY_TIDAL_RADIUS) > 0.99);
+  assert.ok(galaxyTide(100) > 4 * galaxyTide(150), 'inverse-cube tide, not a linear ramp');
+  const near = { ...speck, x: center.x + GALAXY_TIDAL_RADIUS + 1 };
+  const radial = shredGalaxyParticle(near, center, { x: 8, y: 0 }, 0.5);
+  const across = shredGalaxyParticle(near, center, { x: 0, y: 8 }, 0.5);
+  assert.ok(Math.abs(radial.x - near.x) > 18, 'stretched along the fall');
+  assert.ok(Math.abs(across.y - near.y) < 4.5, 'squeezed across it');
+  const fresh = shredGalaxyParticle({ ...near, age: 0 }, center, { x: 8, y: 0 }, 0.5);
+  assert.ok(Math.abs(fresh.x - near.x - 8) < 1e-9, 'a just-acquired galaxy eases into its tides');
+});
 
+test('shredding hands over without a pop, unspools into a lensed stream, and every particle crosses the horizon', () => {
   const offset = { x: GALAXY_TIDAL_RADIUS - 2, y: 9 };
-  const lastInfall = { ...edge, x: center.x + offset.x, y: center.y + offset.y };
-  const shredding = { ...edge, ...offset, phase: 'shredding', age: 0 };
-  for (const { point, order } of locals) {
-    const from = shredGalaxyParticle(lastInfall, center, point, order);
-    const to = shredGalaxyParticle(shredding, center, point, order);
+  const lastInfall = { ...speck, x: center.x + offset.x, y: center.y + offset.y };
+  const shredding = shredAt(offset);
+  for (const { point, jitter } of locals) {
+    const from = shredGalaxyParticle(lastInfall, center, point, jitter);
+    const to = shredGalaxyParticle(shredding, center, point, jitter);
     assert.ok(Math.hypot(from.x - to.x, from.y - to.y) < 1e-9, 'infall hands over to shredding without a pop');
     assert.equal(to.alpha, 1);
+    assert.equal(to.heat, from.heat);
     let previous = to;
     for (let age = 1 / 60; age <= GALAXY_SHRED_SECONDS + 1e-9; age += 1 / 60) {
-      const particle = shredGalaxyParticle({ ...shredding, age }, center, point, order);
-      assert.ok(Math.hypot(particle.x - previous.x, particle.y - previous.y) < 20, 'stream stays continuous');
-      assert.ok(particle.heat >= previous.heat && particle.heat <= 1);
+      const particle = shredGalaxyParticle({ ...shredding, age }, center, point, jitter);
+      if (particle.alpha > 0.02 && previous.alpha > 0.02) {
+        assert.ok(Math.hypot(particle.x - previous.x, particle.y - previous.y) < 20, 'visible stream stays continuous');
+        assert.ok(Math.hypot(particle.x - particle.tail.x, particle.y - particle.tail.y) < 60, 'streaks stay bounded');
+      }
+      assert.ok(particle.heat >= previous.heat - 1e-12 && particle.heat <= 1, 'matter only heats up');
+      if (particle.alpha > 0.02 && !particle.front) {
+        assert.ok(holeRadius(particle) > BLACK_HOLE_SHADOW_RADIUS, 'visible matter behind the hole is lensed around the shadow');
+      }
       previous = particle;
     }
-    const end = shredGalaxyParticle({ ...shredding, age: GALAXY_SHRED_SECONDS }, center, point, order);
-    assert.ok(Math.hypot(end.x - center.x, end.y - center.y) <= BLACK_HOLE_SHADOW_RADIUS);
+    const end = shredGalaxyParticle({ ...shredding, age: GALAXY_SHRED_SECONDS }, center, point, jitter);
+    assert.ok(holeRadius(end) <= BLACK_HOLE_SHADOW_RADIUS * 1.2);
     assert.equal(end.alpha, 0);
     assert.equal(end.heat, 1);
+    assert.deepEqual(end, shredGalaxyParticle({ ...shredding, phase: 'consumed', age: 7 }, center, point, jitter));
   }
+
+  const nearSide = { x: -8, y: 0 };
+  const farSide = { x: 8, y: 0 };
+  const early = { ...shredding, age: GALAXY_SHRED_SECONDS * 0.25 };
+  assert.ok(shredGalaxyParticle(early, center, nearSide, 0.5).heat
+    > shredGalaxyParticle(early, center, farSide, 0.5).heat, 'near-side matter is stripped first');
+  const releaseRadius = holeRadius(shredGalaxyParticle({ ...shredding, age: GALAXY_SHRED_SECONDS * 0.4 }, center, farSide, 0.5));
+  const flung = Math.max(...Array.from({ length: 60 }, (_, step) => holeRadius(shredGalaxyParticle(
+    { ...shredding, age: GALAXY_SHRED_SECONDS * (0.4 + step / 100) }, center, farSide, 0.5))));
+  assert.ok(flung > releaseRadius + 10, 'far-side matter is flung outward before it falls back');
+
+  const mid = { ...shredding, age: GALAXY_SHRED_SECONDS * 0.55 };
+  const angles = locals.map(({ point, jitter }) => shredGalaxyParticle(mid, center, point, jitter))
+    .filter((particle) => particle.alpha > 0.05)
+    .map((particle) => Math.atan2(particle.y - center.y, particle.x - center.x))
+    .sort((a, b) => a - b);
+  const gaps = angles.map((angle, index) => (angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2));
+  assert.ok(Math.PI * 2 - Math.max(...gaps) > Math.PI * 0.8, 'the stream wraps a good part of a turn at once');
+  const late = shredGalaxyParticle({ ...shredding, age: GALAXY_SHRED_SECONDS * 0.95 }, center, farSide, 0.9);
+  assert.ok(late.heat > 0.9);
+  assert.ok(Math.hypot(late.x - late.tail.x, late.y - late.tail.y) > 3, 'inner matter streaks');
+  const cold = locals.map(({ point, jitter }) => shredGalaxyParticle(mid, center, point, jitter));
+  assert.deepEqual(cold, locals.map(({ point, jitter }) => shredGalaxyParticle(mid, center, point, jitter)), 'deterministic');
+});
+
+test('the stream beams like the disk: approaching left limb bright, receding right limb dim', () => {
+  const shredding = { ...shredAt({ x: GALAXY_TIDAL_RADIUS - 2, y: 0 }), age: GALAXY_SHRED_SECONDS * 0.9 };
+  const particles = locals.map(({ point, jitter }) => shredGalaxyParticle(shredding, center, point, jitter))
+    .filter((particle) => particle.alpha > 0.05);
+  const tilt = (particle) => (particle.x - center.x) * Math.cos(BLACK_HOLE_DISK_TILT)
+    + (particle.y - center.y) * Math.sin(BLACK_HOLE_DISK_TILT);
+  for (const particle of particles) {
+    if (tilt(particle) < -8) assert.ok(particle.beaming > 1);
+    if (tilt(particle) > 8) assert.ok(particle.beaming < 1);
+  }
+});
+
+test('the point lens never images matter inside the shadow and fades to no bending far out', () => {
+  let previous = -Infinity;
+  for (let radius = 0; radius <= 400; radius += 0.25) {
+    const imaged = lensRadius(radius);
+    assert.ok(imaged > BLACK_HOLE_SHADOW_RADIUS && imaged >= radius && imaged > previous);
+    previous = imaged;
+  }
+  assert.ok(lensRadius(400) - 400 < 1);
+});
+
+test('any visible galaxy whose centre enters the radius is swallowed exactly once, even drifting outward', () => {
+  const drift = 30;
+  for (let ring = 0; ring <= 12; ring++) {
+    const radius = ring === 12 ? BLACK_HOLE_RADIUS - 0.5 : ring * 15;
+    for (let spoke = 0; spoke < 12; spoke++) {
+      const angle = spoke * Math.PI / 6 + ring * 0.37;
+      const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+      let state = createBlackHole();
+      let consumedAt = null;
+      for (let frame = 0; frame < 60 * 9; frame++) {
+        const out = radius + drift * frame / 60;
+        state = stepBlackHole(state, [], center, 1 / 60,
+          [galaxy(center.x + direction.x * out, center.y + direction.y * out, { radius: 9.5 })]);
+        if (consumedAt === null && state.galaxies.get(-1)?.phase === 'consumed') consumedAt = frame / 60;
+      }
+      assert.ok(consumedAt !== null && consumedAt < 7, `radius ${radius} spoke ${spoke} consumed at ${consumedAt}`);
+      assert.equal(state.feasts, 1, `radius ${radius} spoke ${spoke} feasts once`);
+    }
+  }
+});
+
+test('the space-time ripple is idle without a finale, bounded, travels out, and decays', () => {
+  const idle = createBlackHole();
+  const point = { x: 520, y: 300, extra: 'kept' };
+  assert.equal(feastRipple(idle, center, point), point);
+  assert.equal(feastRipple({ ...idle, feastAge: GALAXY_FEAST_SECONDS, feastPower: 1 }, center, point), point);
+  for (const power of [0.6, 1]) {
+    const peaks = [];
+    for (let age = 0; age < GALAXY_FEAST_SECONDS; age += 0.1) {
+      const state = { ...idle, feastAge: age, feastPower: power };
+      let peak = 0;
+      let at = 0;
+      for (let distance = 0; distance <= 1200; distance += 2) {
+        const moved = feastRipple(state, center, { x: center.x + distance, y: center.y });
+        assert.ok(Math.abs(moved.y - center.y) < 1e-9, 'displacement is radial');
+        const push = Math.abs(moved.x - center.x - distance);
+        assert.ok(push <= FEAST_RIPPLE_PX * power + 1e-9);
+        if (push > peak) { peak = push; at = distance; }
+      }
+      peaks.push({ peak, at });
+    }
+    assert.ok(peaks[0].peak > 0.8 * FEAST_RIPPLE_PX * power, 'the shock is strong at first');
+    assert.ok(peaks.at(-1).at > 600, 'the ripple crosses several hundred px');
+    assert.ok(peaks.at(-1).peak < peaks[0].peak * 0.1, 'the ripple decays');
+  }
+  const playing = { ...idle, feastAge: 0.4, feastPower: 1 };
+  const snapshot = structuredClone(playing);
+  const moved = feastRipple(playing, center, point);
+  assert.equal(moved.extra, 'kept');
+  assert.deepEqual(playing, snapshot, 'display only: physics state is untouched');
 });
 
 test('renderer paints an opaque shadow at the pointer and leaves the canvas state balanced', () => {

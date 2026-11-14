@@ -3,6 +3,7 @@ import {
     BLACK_HOLE_LONG_PRESS_MS,
     BLACK_HOLE_LONG_PRESS_SLOP_PX,
     createBlackHole,
+    feastRipple,
     galaxyCohesion,
     holeGalaxyCenter,
     holeTravelerRole,
@@ -607,7 +608,19 @@ const drawTravelerStar = (
 const GALAXY_MATTER_RGB: Record<GalaxyMatterKind, readonly [number, number, number]> = {
     dust: [111, 86, 83], 'young-star': [151, 211, 255], star: [238, 242, 247],
 };
-const SHREDDED_MATTER_RGB = [255, 232, 190] as const;
+/** Blackbody ramp for heated matter: ember, gold, white, then blue-white at the innermost orbit. */
+const SHRED_HEAT_RAMP: readonly (readonly [number, number, number, number])[] = [
+    [0.3, 255, 96, 44], [0.55, 255, 176, 72], [0.8, 255, 246, 226], [1, 196, 222, 255],
+];
+const shredColor = (rgb: readonly [number, number, number], heat: number, alpha: number) => {
+    const stops = [[0, ...rgb], ...SHRED_HEAT_RAMP];
+    const upper = Math.max(1, stops.findIndex(([at]) => at >= heat));
+    const [fromAt, ...from] = stops[upper - 1];
+    const [toAt, ...to] = stops[upper];
+    const t = Math.max(0, Math.min(1, (heat - fromAt) / (toAt - fromAt)));
+    const channel = (index: number) => Math.round(from[index] + (to[index] - from[index]) * t);
+    return `rgba(${channel(0)}, ${channel(1)}, ${channel(2)}, ${alpha})`;
+};
 
 /** Dark core and miniature systems, in the galaxy's rotated local frame. */
 const drawGalaxyNucleus = (
@@ -657,7 +670,11 @@ const drawGalaxyNucleus = (
     }
 };
 
-/** Tidal disruption in screen space: each particle stretches, then spirals into the hole, heating as it goes. */
+/**
+ * Tidal disruption in screen space: the galaxy stretches, unspools into a heated stream, and
+ * winds into the hole. The back pass draws everything except matter crossing in front of the
+ * shadow, which the front pass draws after the hole.
+ */
 const drawAbsorbedGalaxy = (
     ctx: CanvasRenderingContext2D,
     traveler: Traveler,
@@ -665,40 +682,41 @@ const drawAbsorbedGalaxy = (
     simulationSeconds: number,
     absorption: GalaxyAbsorption,
     holeCenter: HolePoint,
+    pass: 'back' | 'front',
 ) => {
+    if (pass === 'front' && absorption.phase !== 'shredding') return;
     const appearance = getGalaxyAppearance(traveler, projection.progress, projection.cycle);
     const animation = getGalaxyAnimationState(traveler, projection.cycle, 0);
     const cos = Math.cos(animation.rotation);
     const sin = Math.sin(animation.rotation);
     const { opacity } = projection;
+    // Freeze the galaxy's own rotation once it is torn apart, so each particle keeps its release slot.
+    const particleSeconds = absorption.phase === 'shredding' ? simulationSeconds - absorption.age : simulationSeconds;
 
     ctx.save();
     ctx.lineCap = 'round';
     for (let star = 0; star < appearance.internalStarCount; star += 1) {
         const particle = getGalaxyParticleState(
-            traveler, projection.cycle, projection.progress, simulationSeconds, star, appearance,
+            traveler, projection.cycle, projection.progress, particleSeconds, star, appearance,
         );
         if (particle.opacity <= 0) continue;
         const local = {
             x: particle.x * cos - particle.y * sin,
             y: particle.x * sin + particle.y * cos,
         };
-        // Outer matter is stripped first; the golden-ratio term keeps equal radii from leaving as rings.
-        const order = Math.min(0.999, 0.8 * Math.max(0, 1 - Math.hypot(local.x, local.y) / appearance.outerRadius)
-            + 0.2 * (star * 0.618034 % 1));
-        const shred = shredGalaxyParticle(absorption, holeCenter, local, order);
-        // Infalling matter heats up, so the stream brightens toward the hole instead of thinning out.
-        const alpha = Math.min(1, opacity * particle.opacity * shred.alpha * (1 + 1.5 * shred.heat));
+        const shred = shredGalaxyParticle(absorption, holeCenter, local, star * 0.618034 % 1);
+        if (shred.front !== (pass === 'front')) continue;
+        // Heated matter glows at its own brightness, however faint the galaxy was.
+        const glow = Math.min(1, shred.heat / 0.35);
+        const base = opacity * particle.opacity;
+        const alpha = Math.min(1, (base + (Math.max(base, 0.9) - base) * glow) * shred.alpha * shred.beaming);
         if (alpha <= 0.002) continue;
-        const [red, green, blue] = GALAXY_MATTER_RGB[particle.kind];
-        const [hotRed, hotGreen, hotBlue] = SHREDDED_MATTER_RGB;
-        const color = `rgba(${Math.round(red + (hotRed - red) * shred.heat)}, `
-            + `${Math.round(green + (hotGreen - green) * shred.heat)}, `
-            + `${Math.round(blue + (hotBlue - blue) * shred.heat)}, ${alpha})`;
+        const color = shredColor(GALAXY_MATTER_RGB[particle.kind], shred.heat, alpha);
         ctx.globalCompositeOperation = shred.heat > 0 ? 'lighter' : 'source-over';
-        if (Math.hypot(shred.x - shred.tail.x, shred.y - shred.tail.y) > 1) {
+        const radius = Math.max(particle.radius, 0.45 + 0.75 * glow);
+        if (Math.hypot(shred.x - shred.tail.x, shred.y - shred.tail.y) > 0.6) {
             ctx.strokeStyle = color;
-            ctx.lineWidth = Math.max(0.9, particle.radius * 1.4);
+            ctx.lineWidth = radius * 1.6;
             ctx.beginPath();
             ctx.moveTo(shred.tail.x, shred.tail.y);
             ctx.lineTo(shred.x, shred.y);
@@ -706,12 +724,12 @@ const drawAbsorbedGalaxy = (
         }
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(shred.x, shred.y, particle.radius, 0, TAU);
+        ctx.arc(shred.x, shred.y, radius, 0, TAU);
         ctx.fill();
     }
     ctx.globalCompositeOperation = 'source-over';
 
-    const cohesion = galaxyCohesion(absorption);
+    const cohesion = pass === 'back' ? galaxyCohesion(absorption, holeCenter) : 0;
     if (cohesion > 0) {
         const galaxyCenter = holeGalaxyCenter(absorption, holeCenter);
         ctx.translate(galaxyCenter.x, galaxyCenter.y);
@@ -1273,7 +1291,9 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
                 holeLastElapsed = elapsed;
                 if (blackHole.captures > previousCaptures) holeCaptureAt = elapsed;
-                positions = positions.map((point, index) => blackHole?.stars.get(index) ?? point);
+                const hole = blackHole;
+                positions = positions.map((point, index) =>
+                    feastRipple(hole, holeCenter, hole.stars.get(index) ?? point));
                 canvas.dataset.blackHoleCaptures = String(blackHole.captures);
                 canvas.dataset.blackHoleFeasts = String(blackHole.feasts);
                 canvas.dataset.blackHoleFeastPower = blackHole.feastPower.toFixed(2);
@@ -1374,13 +1394,17 @@ const SpaceNeuralBackground: React.FC = () => {
                 );
             });
 
+            const frontMatter: [Traveler, ProjectedTraveler, GalaxyAbsorption][] = [];
+            let planetarySystem: [Traveler, ProjectedTraveler, number] | null = null;
             for (let index = 0; index < travelers.length; index += 1) {
                 const traveler = travelers[index];
                 const originalProjection = projections[index];
                 const transmission = nebulaTransmissions[index];
+                const absorption = blackHole?.galaxies.get(-1 - index);
+                const placed = blackHole && !absorption
+                    ? feastRipple(blackHole, holeCenter, originalProjection) : originalProjection;
                 // Keep geometry/owner selection/neural timing unchanged; attenuate all stellar light.
-                const projection = { ...originalProjection,
-                    opacity: originalProjection.opacity * transmission };
+                const projection = { ...placed, opacity: originalProjection.opacity * transmission };
                 if (projection.opacity > 0.01) {
                     const previous = projectTraveler(
                         traveler,
@@ -1393,9 +1417,9 @@ const SpaceNeuralBackground: React.FC = () => {
                     const deltaX = pulledStar ? pulledStar.vx * 0.1 : sameCycle ? projection.x - previous.x : 0;
                     const deltaY = pulledStar ? pulledStar.vy * 0.1 : sameCycle ? projection.y - previous.y : 0;
                     const variant = getTravelerVariant(traveler, projection.cycle);
-                    const absorption = variant === 'galaxy' ? blackHole?.galaxies.get(-1 - index) : undefined;
-                    if (absorption) {
-                        drawAbsorbedGalaxy(ctx, traveler, projection, simulationSeconds, absorption, holeCenter);
+                    if (absorption && variant === 'galaxy') {
+                        drawAbsorbedGalaxy(ctx, traveler, projection, simulationSeconds, absorption, holeCenter, 'back');
+                        frontMatter.push([traveler, projection, absorption]);
                     } else if (variant === 'galaxy') {
                         drawGalaxy(ctx, traveler, projection, simulationSeconds);
                     } else if (variant === 'ufo') {
@@ -1425,7 +1449,7 @@ const SpaceNeuralBackground: React.FC = () => {
                 }
 
                 if (index === prominentSystemOwner?.travelerIndex) {
-                    drawPlanetarySystem(ctx, traveler, projection, simulationSeconds, transmission);
+                    planetarySystem = [traveler, projection, transmission];
                 }
             }
             if (blackHole) {
@@ -1434,6 +1458,13 @@ const SpaceNeuralBackground: React.FC = () => {
                     time: elapsed,
                     flashAge: holeCaptureAt === null ? Infinity : elapsed - holeCaptureAt,
                 });
+                for (const [traveler, projection, absorption] of frontMatter) {
+                    drawAbsorbedGalaxy(ctx, traveler, projection, simulationSeconds, absorption, holeCenter, 'front');
+                }
+            }
+            // The near planetary system passes in front of everything distant, the hole included.
+            if (planetarySystem) {
+                drawPlanetarySystem(ctx, planetarySystem[0], planetarySystem[1], simulationSeconds, planetarySystem[2]);
             }
             ctx.globalAlpha = 1;
             if (canvas.dataset.spaceDetailReady !== 'true') {
