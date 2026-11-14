@@ -300,6 +300,25 @@ const Feed: React.FC = () => {
                 </motion.div>
             </motion.section>
 
+            <motion.section
+                className="home-subscribe home-reveal"
+                aria-labelledby="home-subscribe-heading"
+                initial={revealInitial}
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.3 }}
+                variants={revealVariants}
+            >
+                <div>
+                    <span className="home-archive-eyebrow">Newsletter</span>
+                    <h2 id="home-subscribe-heading">Get the weekly AI briefing</h2>
+                    <p>One email a week: model releases, benchmarks and what we covered at the meetup.</p>
+                </div>
+                <Link to="/newsletter" className="home-hero-action home-hero-action-primary">
+                    <span>Subscribe</span>
+                    <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+            </motion.section>
+
             {/* All Editions */}
             <motion.section
                 id="archive"
