@@ -15,7 +15,22 @@
       "disposition": "include",
       "reviewedAt": "2026-11-12",
       "reason": "Primary release identity reviewed.",
-      "supersedes": "claude-fable-5-1"
+      "supersedes": "claude-fable-5-1",
+      "benchmarks": {
+        "hle": {
+          "value": 74.2,
+          "note": "with tools",
+          "sourceUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2"
+        },
+        "inputCost": {
+          "value": 8,
+          "sourceUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2"
+        },
+        "outputCost": {
+          "value": 40,
+          "sourceUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2"
+        }
+      }
     },
     {
       "id": "claude-mythos-5-2",
@@ -30,7 +45,19 @@
       "availability": "Approved organizations only",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Less-restricted twin of Claude Fable 5.2 for approved security and biomedical research organizations."
+      "reason": "Less-restricted twin of Claude Fable 5.2 for approved security and biomedical research organizations.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 8,
+          "note": "limited availability",
+          "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+        },
+        "outputCost": {
+          "value": 40,
+          "note": "limited availability",
+          "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+        }
+      }
     },
     {
       "id": "gpt-6-astra",
@@ -45,7 +72,8 @@
       "availability": "API",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Primary release identity reviewed."
+      "reason": "Primary release identity reviewed.",
+      "benchmarks": {}
     },
     {
       "id": "claude-opus-5-5",
@@ -60,7 +88,22 @@
       "availability": "Released",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Primary release identity reviewed."
+      "reason": "Primary release identity reviewed.",
+      "benchmarks": {
+        "hle": {
+          "value": 67.7,
+          "note": "with tools",
+          "sourceUrl": "https://www.anthropic.com/claude-opus-5-5"
+        },
+        "inputCost": {
+          "value": 4,
+          "sourceUrl": "https://www.anthropic.com/claude-opus-5-5"
+        },
+        "outputCost": {
+          "value": 20,
+          "sourceUrl": "https://www.anthropic.com/claude-opus-5-5"
+        }
+      }
     },
     {
       "id": "grok-4-7",
@@ -75,7 +118,17 @@
       "availability": "API",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Primary release identity reviewed."
+      "reason": "Primary release identity reviewed.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 2,
+          "sourceUrl": "https://x.ai/news/grok-4-7"
+        },
+        "outputCost": {
+          "value": 6,
+          "sourceUrl": "https://x.ai/news/grok-4-7"
+        }
+      }
     },
     {
       "id": "gemini-4-argon",
@@ -90,7 +143,19 @@
       "availability": "Generally available",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Primary release identity reviewed."
+      "reason": "Primary release identity reviewed.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 2,
+          "note": "introductory; $4 after",
+          "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/"
+        },
+        "outputCost": {
+          "value": 10,
+          "note": "introductory; $20 after",
+          "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/"
+        }
+      }
     },
     {
       "id": "gemini-4-carbon",
@@ -105,7 +170,19 @@
       "availability": "Gemini API, Gemini for business, and Google AI Ultra",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Primary release identity reviewed."
+      "reason": "Primary release identity reviewed.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 2,
+          "note": "introductory; $4 after",
+          "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/"
+        },
+        "outputCost": {
+          "value": 10,
+          "note": "introductory; $20 after",
+          "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/"
+        }
+      }
     },
     {
       "id": "muse-wonder",
@@ -120,7 +197,8 @@
       "availability": "Meta developer API and Muse Code",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Meta Superintelligence Labs frontier model; the larger Wonder Full is limited to Muse Code subscribers."
+      "reason": "Meta Superintelligence Labs frontier model; the larger Wonder Full is limited to Muse Code subscribers.",
+      "benchmarks": {}
     },
     {
       "id": "deepseek-v4-1-flash",
@@ -135,7 +213,8 @@
       "availability": "API and open weights",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
+      "benchmarks": {}
     },
     {
       "id": "deepseek-v4-1-flash-1017",
@@ -151,7 +230,24 @@
       "disposition": "include",
       "reviewedAt": "2026-11-12",
       "reason": "Dated refresh of DeepSeek V4.1 Flash. Editorial quality/cost candidate; benchmark gains are DeepSeek-reported.",
-      "supersedes": "deepseek-v4-1-flash"
+      "supersedes": "deepseek-v4-1-flash",
+      "benchmarks": {
+        "hle": {
+          "value": 42.6,
+          "note": "without tools",
+          "sourceUrl": "https://api-docs.deepseek.com/updates/"
+        },
+        "inputCost": {
+          "value": 0.3,
+          "note": "peak, cache miss",
+          "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing"
+        },
+        "outputCost": {
+          "value": 1.2,
+          "note": "peak",
+          "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing"
+        }
+      }
     },
     {
       "id": "claude-fable-5-1",
@@ -166,7 +262,22 @@
       "availability": "API",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Primary release identity reviewed."
+      "reason": "Primary release identity reviewed.",
+      "benchmarks": {
+        "hle": {
+          "value": 65.6,
+          "note": "with tools",
+          "sourceUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2"
+        },
+        "inputCost": {
+          "value": 10,
+          "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+        },
+        "outputCost": {
+          "value": 50,
+          "sourceUrl": "https://platform.claude.com/docs/en/about-claude/pricing"
+        }
+      }
     },
     {
       "id": "deepseek-v4-pro",
@@ -194,7 +305,17 @@
       "availability": "Released",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 2,
+          "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+        },
+        "outputCost": {
+          "value": 10,
+          "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+        }
+      }
     },
     {
       "id": "gpt-6-1-terra",
@@ -209,7 +330,17 @@
       "availability": "Released",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 1,
+          "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-terra"
+        },
+        "outputCost": {
+          "value": 5,
+          "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-terra"
+        }
+      }
     },
     {
       "id": "claude-sonnet-5-5",
@@ -224,7 +355,22 @@
       "availability": "Released",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
+      "benchmarks": {
+        "hle": {
+          "value": 64.5,
+          "note": "with tools",
+          "sourceUrl": "https://www.anthropic.com/claude-sonnet-5-5"
+        },
+        "inputCost": {
+          "value": 2,
+          "sourceUrl": "https://www.anthropic.com/claude-sonnet-5-5"
+        },
+        "outputCost": {
+          "value": 10,
+          "sourceUrl": "https://www.anthropic.com/claude-sonnet-5-5"
+        }
+      }
     },
     {
       "id": "claude-haiku-5-5",
@@ -239,7 +385,24 @@
       "availability": "Released",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier."
+      "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
+      "benchmarks": {
+        "hle": {
+          "value": 57.4,
+          "note": "with tools; 45.9 without",
+          "sourceUrl": "https://www.anthropic.com/claude-haiku-5-5"
+        },
+        "inputCost": {
+          "value": 0.1,
+          "note": "prompts up to 100K tokens",
+          "sourceUrl": "https://www.anthropic.com/claude-haiku-5-5"
+        },
+        "outputCost": {
+          "value": 0.5,
+          "note": "prompts up to 100K tokens",
+          "sourceUrl": "https://www.anthropic.com/claude-haiku-5-5"
+        }
+      }
     },
     {
       "id": "muse-ember",
@@ -254,7 +417,19 @@
       "availability": "Meta developer API",
       "disposition": "include",
       "reviewedAt": "2026-11-12",
-      "reason": "Meta's smallest and cheapest Muse model, built for repeated agent steps. Editorial quality/cost candidate."
+      "reason": "Meta's smallest and cheapest Muse model, built for repeated agent steps. Editorial quality/cost candidate.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 0.1,
+          "note": "prompts up to 200K tokens",
+          "sourceUrl": "https://research.meta.ai/blog/muse-ember"
+        },
+        "outputCost": {
+          "value": 0.5,
+          "note": "prompts up to 200K tokens",
+          "sourceUrl": "https://research.meta.ai/blog/muse-ember"
+        }
+      }
     },
     {
       "id": "mistral-large-4",

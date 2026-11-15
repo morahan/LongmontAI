@@ -2,7 +2,7 @@
 
 See the [October 10 matrix](model-matrix.md) for a dated reference of all 44 rows and 11 columns under the earlier 30-day rule, including held and removed phrases; `just update-models --matrix --check` calculates the current snapshot report.
 
-Run `just update-models` to regenerate the shared Model Watch and Star Text snapshot from `content/models/catalog.json`. This is deterministic regeneration of reviewed facts, not automatic research. The generated TypeScript artifact is the single active roster for both surfaces. Historical benchmarks and timeline records remain in the archive.
+Run `just update-models` to regenerate the shared Model Watch and Star Text snapshot from `content/models/catalog.json`. This is deterministic regeneration of reviewed facts, not automatic research. The generated TypeScript artifact is the single active roster for both surfaces. The Leaderboard reads the same artifact: an entry's `benchmarks` scores override the hand-written archive's scores for that model, and a held entry keeps its scores on the Leaderboard after it leaves the rotation. Older benchmarks and timeline records remain in the archive.
 
 Before changing the ledger, verify the original release date, specific product/version, access status, and category against primary sources. Record the source URL and actual `reviewedAt` date. A patch date applies only to that explicitly versioned tool entry, never to a base model. Pareto labels are editorial selections, not independently proven benchmark results.
 

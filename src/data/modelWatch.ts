@@ -1779,8 +1779,11 @@ export const historicalBriefingModelIds = [
 
 export const coreSourceCount = modelWatchSources.filter((source) => source.priority === 'Core').length;
 export const modelCatalogAsOf = modelCatalog.asOf;
-export const latestBriefingModelIds: readonly string[] = modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => entry.id);
-export const activeModelWatchModels: ModelWatchModel[] = modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => {
+type CatalogEntry = (typeof modelCatalog.entries)[number];
+/** Scores reviewed in content/models/catalog.json; absent until the weekly review records them. */
+const ledgerScores = (entry: CatalogEntry): ModelWatchModel['benchmarks'] | undefined =>
+  (entry as { benchmarks?: ModelWatchModel['benchmarks'] }).benchmarks;
+const toModelWatchModel = (entry: CatalogEntry): ModelWatchModel => {
   const historical = modelWatchArchive.find((model) => model.id === entry.id);
   return {
     ...historical,
@@ -1793,9 +1796,18 @@ export const activeModelWatchModels: ModelWatchModel[] = modelCatalog.entries.fi
     releaseDateSort: entry.releaseDate!,
     sourceLabel: entry.provider,
     sourceUrl: entry.sourceUrl,
-    benchmarks: historical?.benchmarks ?? {},
+    benchmarks: { ...historical?.benchmarks, ...ledgerScores(entry) },
   };
-});
-export const modelWatchModels: ModelWatchModel[] = [...activeModelWatchModels, ...modelWatchArchive.filter((model) => !latestBriefingModelIds.includes(model.id))];
+};
+const hasLedgerScores = (entry: CatalogEntry) => Object.keys(ledgerScores(entry) ?? {}).length > 0;
+export const latestBriefingModelIds: readonly string[] = modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map((entry) => entry.id);
+export const activeModelWatchModels: ModelWatchModel[] = modelCatalog.entries.filter((entry) => entry.weightUnits > 0).map(toModelWatchModel);
+/** Held ledger entries keep their reviewed scores on the Leaderboard after they leave the rotation. */
+const scoredHeldModels = modelCatalog.entries
+  .filter((entry) => entry.weightUnits === 0 && entry.disposition !== 'remove' && entry.releaseDate && hasLedgerScores(entry))
+  .map(toModelWatchModel);
+const ledgerModelIds = new Set([...activeModelWatchModels, ...scoredHeldModels].map((model) => model.id));
+export const modelWatchModels: ModelWatchModel[] = [...activeModelWatchModels, ...scoredHeldModels, ...modelWatchArchive.filter((model) => !ledgerModelIds.has(model.id))];
+export const defaultLeaderboardBenchmarkKey: ModelBenchmarkKey = 'hle';
 export const openWeightSourceCount = modelWatchSources.filter((source) => source.priority === 'Open-weight').length;
 export const regionCount = new Set(modelWatchSources.map((source) => source.region)).size;

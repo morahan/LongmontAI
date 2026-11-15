@@ -4,10 +4,11 @@ import { readFile, mkdtemp, mkdir, writeFile, rm, access } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { compileCatalog, dateValue, renderCatalog, matrix } from '../update-models.mjs';
+import { compileCatalog, dateValue, renderCatalog, matrix, needsBenchmarkReview } from '../update-models.mjs';
 import { weeklyWorklist } from '../model-watch-weekly.mjs';
 import { modelCatalog } from '../../src/data/modelCatalog.generated.ts';
-import { activeModelWatchModels, latestBriefingModelIds, modelWatchArchive, modelWatchModels } from '../../src/data/modelWatch.ts';
+import { activeModelWatchModels, defaultLeaderboardBenchmarkKey, latestBriefingModelIds, modelBenchmarkDefinitions, modelWatchArchive, modelWatchModels } from '../../src/data/modelWatch.ts';
+import { rankBenchmarkModels } from '../../src/lib/benchmarkRanking.ts';
 import { STAR_TEXT_ALTERNATIVES, STAR_TEXT_EDITION } from '../../src/data/starText.ts';
 import { CONSTELLATION_BUCKET_COUNT, getConstellationPhraseForBucket, selectConstellationPhrase, EASTER_EGG_PHRASES, selectEasterEggPhrase } from '../../src/components/spaceBackgroundModel.ts';
 
@@ -19,7 +20,10 @@ test('shared consumers match generated eligible identities and preserve all arch
   assert.deepEqual(latestBriefingModelIds, entries.map((e) => e.id));
   assert.deepEqual(activeModelWatchModels.map((e) => e.name), STAR_TEXT_ALTERNATIVES.map((e) => e.phrase));
   assert.equal(new Set(modelWatchModels.map((e) => e.id)).size, modelWatchModels.length);
-  for (const old of modelWatchArchive) assert.deepEqual(modelWatchModels.find((e) => e.id === old.id).benchmarks, old.benchmarks);
+  for (const old of modelWatchArchive) {
+    const reviewed = ledger.entries.find((e) => e.id === old.id)?.benchmarks ?? {};
+    for (const [key, score] of Object.entries(old.benchmarks)) assert.equal(modelWatchModels.find((e) => e.id === old.id).benchmarks[key].value, reviewed[key]?.value ?? score.value);
+  }
   assert.equal(renderCatalog(compileCatalog(ledger, modelCatalog.asOf)), renderCatalog(modelCatalog));
   assert.ok(STAR_TEXT_EDITION.reviewedOn <= modelCatalog.asOf);
 });
@@ -134,4 +138,29 @@ test('an entry that ages out of its window this week is listed as leaving, not a
 test('leads are detected names the ledger has no entry for, whatever the spacing or case', () => {
   const work = weeklyWorklist(weeklyLedger(weeklyEntry({})), ['model-a', 'MODEL A', 'Model B', 'Model B'], '2026-11-14');
   assert.deepEqual(work.leads, ['Model B']);
+});
+
+test('every frontier or Pareto base model in rotation has a benchmark review, so the Leaderboard moves with Model Watch', () => {
+  const unreviewed = modelCatalog.entries.filter((e) => e.weightUnits > 0 && needsBenchmarkReview(e) && !('benchmarks' in e)).map((e) => e.id);
+  assert.deepEqual(unreviewed, [], 'record vendor-published scores (or {} when none are published) per docs/model-watch-weekly.md');
+});
+
+test('the default Leaderboard benchmark is led by a model in the current rotation', () => {
+  const benchmark = modelBenchmarkDefinitions.find((b) => b.key === defaultLeaderboardBenchmarkKey);
+  const [leader] = rankBenchmarkModels(modelWatchModels, benchmark);
+  assert.ok(leader.rank === 1 && latestBriefingModelIds.includes(leader.model.id), `${leader.model.name} leads ${benchmark.label} but has left the rotation`);
+});
+
+test('ledger scores fail closed on unknown keys, bad values and unapproved sources', () => {
+  const scored = (benchmarks) => fixture({ benchmarks });
+  assert.equal(compileCatalog(scored({}), '2026-10-10').entries[0].weight, 7);
+  assert.equal(compileCatalog(scored({ sweBenchPro: { value: 70, sourceUrl: 'https://www.anthropic.com/x' } }), '2026-10-10').entries[0].benchmarks.sweBenchPro.value, 70);
+  for (const benchmarks of [[], null, { madeUp: { value: 1, sourceUrl: 'https://www.anthropic.com/x' } }, { hle: { value: -1, sourceUrl: 'https://www.anthropic.com/x' } }, { hle: { value: '50', sourceUrl: 'https://www.anthropic.com/x' } }, { hle: { value: 50 } }, { hle: { value: 50, sourceUrl: 'https://example.com/' } }]) {
+    assert.throws(() => compileCatalog(scored(benchmarks), '2026-10-10'), /benchmark|Source/i);
+  }
+});
+
+test('an unscored frontier or Pareto base model in rotation is listed for benchmark review', () => {
+  const work = weeklyWorklist(weeklyLedger(weeklyEntry({ priorities: ['frontier'] }), weeklyEntry({ id: 'scored', phrase: 'Scored', priorities: ['pareto'], benchmarks: {} }), weeklyEntry({ id: 'tool', phrase: 'Tool', category: 'tools', priorities: ['frontier'] })), [], '2026-11-14');
+  assert.deepEqual(weeklyIds(work.unscored), ['model-a']);
 });

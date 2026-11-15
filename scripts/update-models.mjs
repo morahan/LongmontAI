@@ -9,6 +9,8 @@ const day = 86400000;
 export const weights = { frontier: 7, pareto: 5, decision: 3, world: 3, science: 3, audio: 3, image: 3, video: 3, tools: 2, new: 1.5, base: 1 };
 export const windows = { standard: 45, frontier: 60 };
 const categories = ['base', 'decision', 'world', 'science', 'audio', 'image', 'video', 'tools'];
+export const benchmarkKeys = ['sweBenchVerified', 'sweBenchPro', 'hle', 'browseComp', 'deepSearchQa', 'sweBenchMultilingual', 'gpqaDiamond', 'costPerTask', 'inputCost', 'outputCost'];
+export const needsBenchmarkReview = (entry) => entry.category === 'base' && entry.priorities.some((p) => p === 'frontier' || p === 'pareto');
 export function dateValue(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error(`Invalid date: ${value}`);
   const time = Date.parse(`${value}T00:00:00Z`);
@@ -18,7 +20,7 @@ export function dateValue(value) {
 function source(value) {
   if (typeof value !== 'string' || value.length > 2048) throw new Error('Invalid source URL');
   const url = new URL(value);
-  const hosts = ['anthropic.com', 'openai.com', 'x.ai', 'google', 'deepseek.com', 'typesafe.ai', 'cloudflare.com', 'pi.dev', 'github.com', 'worldlabs.ai', 'fb.com', 'z.ai', 'ibm.com', 'tencent.com', 'longmont.ai', 'meta.ai', 'mistral.ai', 'thinkingmachines.ai', 'huggingface.co', 'fish.audio', 'suno.com', 'acemusic.ai'];
+  const hosts = ['anthropic.com', 'claude.com', 'openai.com', 'x.ai', 'google', 'deepseek.com', 'typesafe.ai', 'cloudflare.com', 'pi.dev', 'github.com', 'worldlabs.ai', 'fb.com', 'z.ai', 'ibm.com', 'tencent.com', 'longmont.ai', 'meta.ai', 'mistral.ai', 'thinkingmachines.ai', 'huggingface.co', 'fish.audio', 'suno.com', 'acemusic.ai'];
   if (url.protocol !== 'https:' || url.username || url.password || url.port || !hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))) throw new Error('Sources must use an approved primary HTTPS host');
 }
 export function compileCatalog(ledger, asOf) {
@@ -36,6 +38,13 @@ export function compileCatalog(ledger, asOf) {
     ids.add(id); names.add(normalized);
     if (!['include', 'hold', 'remove'].includes(disposition) || !categories.includes(category) || !Array.isArray(priorities) || priorities.some((p) => !['frontier', 'pareto'].includes(p))) throw new Error(`Invalid classification: ${id}`);
     source(sourceUrl);
+    if (entry.benchmarks !== undefined) {
+      if (!entry.benchmarks || typeof entry.benchmarks !== 'object' || Array.isArray(entry.benchmarks)) throw new Error(`Invalid benchmarks: ${id}`);
+      for (const [key, score] of Object.entries(entry.benchmarks)) {
+        if (!benchmarkKeys.includes(key) || !score || typeof score !== 'object' || !Number.isFinite(score.value) || score.value < 0 || (score.note !== undefined && !validText(score.note, 120))) throw new Error(`Invalid benchmark ${key}: ${id}`);
+        source(score.sourceUrl);
+      }
+    }
     const review = dateValue(reviewedAt);
     const release = releaseDate === null && disposition === 'remove' ? null : dateValue(releaseDate);
     return { entry, review, ageDays: release === null ? null : (now - release) / day };

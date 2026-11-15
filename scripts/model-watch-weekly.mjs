@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { compileCatalog, dateValue } from './update-models.mjs';
+import { compileCatalog, dateValue, needsBenchmarkReview } from './update-models.mjs';
 
 const root = new URL('../', import.meta.url);
 const day = 86400000;
@@ -14,6 +14,7 @@ const isoDate = (time) => new Date(time).toISOString().slice(0, 10);
  * `rereview`: in rotation today, but the 30-day source review lapses within `horizonDays`, so the entry would drop out unreviewed.
  * `lapsed`: already held only because the review is older than 30 days.
  * `leaving`: ages out of its 45- or 60-day window within `horizonDays`. Nothing to do; listed so the change is expected.
+ * `unscored`: in rotation as a frontier or Pareto base model, but no benchmark review is recorded, so the Leaderboard cannot rank it.
  * `leads`: names the detector saw that the ledger has no entry for. Unreviewed, and many are old models.
  */
 export function weeklyWorklist(ledger, detectedModels, asOf, horizonDays = 7) {
@@ -28,6 +29,7 @@ export function weeklyWorklist(ledger, detectedModels, asOf, horizonDays = 7) {
     rereview: today.filter((entry) => entry.eligibility === 'include' && later.get(entry.id).eligibility === reviewLapse).map(brief),
     lapsed: today.filter((entry) => entry.eligibility === reviewLapse).map(brief),
     leaving: today.filter((entry) => entry.eligibility === 'include' && /^hold: older than \d+ days$/.test(later.get(entry.id).eligibility)).map(brief),
+    unscored: today.filter((entry) => entry.eligibility === 'include' && needsBenchmarkReview(entry) && entry.benchmarks === undefined).map(brief),
     leads: [...new Set(detectedModels)].filter((name) => !known.has(normalize(name))).sort(),
   };
 }

@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, ExternalLink, SlidersHorizontal, Trophy } from 'lucide-react';
 import {
+  defaultLeaderboardBenchmarkKey,
   modelBenchmarkDefinitions,
+  modelCatalogAsOf,
   modelWatchModels,
 } from '../data/modelWatch';
 import type {
@@ -12,8 +14,6 @@ import type {
   ModelWatchModel,
 } from '../data/modelWatch';
 import { benchmarkPosition, benchmarkRange, rankBenchmarkModels } from '../lib/benchmarkRanking';
-
-const defaultBenchmarkKey: ModelBenchmarkKey = 'sweBenchVerified';
 
 const getBenchmarkDefinition = (key: ModelBenchmarkKey) =>
   modelBenchmarkDefinitions.find((benchmark) => benchmark.key === key) ?? modelBenchmarkDefinitions[0];
@@ -120,7 +120,7 @@ const SourceLink: React.FC<{ model: ModelWatchModel }> = ({ model }) => {
 };
 
 const Leaderboard: React.FC = () => {
-  const [selectedBenchmarkKey, setSelectedBenchmarkKey] = useState<ModelBenchmarkKey>(defaultBenchmarkKey);
+  const [selectedBenchmarkKey, setSelectedBenchmarkKey] = useState<ModelBenchmarkKey>(defaultLeaderboardBenchmarkKey);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const selectedBenchmark = getBenchmarkDefinition(selectedBenchmarkKey);
 
@@ -210,7 +210,8 @@ const Leaderboard: React.FC = () => {
           <h1 id="leaderboard-title">Leaderboard</h1>
           <p>
             Models surfaced by Model Watch, ranked by the benchmark you select. The chart only plots models with an
-            exact release date and a reported score.
+            exact release date and a reported score. Scores are reviewed weekly with Model Watch, catalog snapshot{' '}
+            {modelCatalogAsOf} (UTC).
           </p>
         </div>
         <div className="model-watch-hero-actions" aria-label="Leaderboard links">
