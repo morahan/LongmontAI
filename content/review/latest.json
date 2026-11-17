@@ -1896,6 +1896,15 @@
           "publishedAt": "2026-09-01T17:53:52.000Z"
         },
         {
+          "id": "1c7fafc0b312ac0a176009bb2b6fcd17169ebd9e5c036eb31562d923d8cea083",
+          "sourceId": "anthropic-claude-code",
+          "category": "tool",
+          "kind": "dated-official-entry",
+          "name": "v2.1.325",
+          "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.325",
+          "publishedAt": "2026-11-13T20:40:01.000Z"
+        },
+        {
           "id": "25e792280f66639843460dc9aa1f5d2c6624328773d264fb0c2d1c0cf7782124",
           "sourceId": "anthropic-claude-code",
           "category": "tool",
@@ -2211,6 +2220,15 @@
           "publishedAt": "2026-10-16T20:53:06.000Z"
         },
         {
+          "id": "c540ff021da941b5249e5f266e7c4612189d8ded190c0956583ef91c72ce3739",
+          "sourceId": "anthropic-claude-code",
+          "category": "tool",
+          "kind": "dated-official-entry",
+          "name": "v2.1.323",
+          "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.323",
+          "publishedAt": "2026-11-12T22:12:13.000Z"
+        },
+        {
           "id": "c60dee3f0ee43c2d5b3a6d253edb0f198cc9389a394214cbb7d99f2800d92e47",
           "sourceId": "anthropic-claude-code",
           "category": "tool",
@@ -2299,6 +2317,15 @@
           "name": "v2.1.260",
           "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.260",
           "publishedAt": "2026-09-03T23:48:12.000Z"
+        },
+        {
+          "id": "e8b88b0037b33dfe90a694cc7aa8e412feb8b0598bbd48bb06e5fa3fe87fabd8",
+          "sourceId": "anthropic-claude-code",
+          "category": "tool",
+          "kind": "dated-official-entry",
+          "name": "v2.1.326",
+          "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.326",
+          "publishedAt": "2026-11-16T22:11:05.000Z"
         },
         {
           "id": "f1d6ca7c3711dd53b46dae0a291fec28961b6fe235b7a74ec086c8bbe47d115b",
@@ -2776,6 +2803,7 @@
         "18b5d16f2d8b4c147c3f64c89af5f37bdc19783efa10a4679f13e055bed8d815",
         "195f44f38fefa064e22e2d11728317e8c2249cdd8d51f9ea415d76c5090179e8",
         "1af5908ec932c149f40bc2116fce5efb635d839a9c8d03df3c19518659e3e1f6",
+        "1c7fafc0b312ac0a176009bb2b6fcd17169ebd9e5c036eb31562d923d8cea083",
         "1ecdaf1cca1aeda0c5a9262231d6f606750c0e35c4b2ca5f55b935b92924a8f2",
         "1fb3957ccf3883b9a1850df960a29ca27f054d3e27d6d0ab2b6a8a60ff6c4664",
         "2006a387f23028ea9a50037ee0f1b198f946a072b69575a85e339d3783b21591",
@@ -2937,6 +2965,7 @@
         "c2e49f3e25043f88252d4d1b89b31d4bb547f7eec196a694cbd91f12c4e60bd1",
         "c465554f6d4594e657d025b4e3e1513af88e87e9f2f5720bf5fbb7f263b732a8",
         "c4b418a2b26e9375cf7adb3a35ba0f4f91476ea5fcd29b845928c862a6a2745a",
+        "c540ff021da941b5249e5f266e7c4612189d8ded190c0956583ef91c72ce3739",
         "c5970bf6076ffd212bfa4f9b0282a1d07b72d9442492f71a5beb1ffa4527fb81",
         "c60dee3f0ee43c2d5b3a6d253edb0f198cc9389a394214cbb7d99f2800d92e47",
         "c622513d0b6606274431366d19132f57d6ce1b71574ba07372b81b1e386e7824",
@@ -2969,6 +2998,7 @@
         "e4d591d09a1f8adfc94ce747ff9902b59a5ab0638fef2150b9545fdcd43e9dea",
         "e5a5c87d4d8e7400334967aa040384d0d995180c60b37d1e660e0a2dd28930e0",
         "e6fbb2319595c10ba2526d30150e3b79ecc69c20ea91f19335c7c7bfe5ddc904",
+        "e8b88b0037b33dfe90a694cc7aa8e412feb8b0598bbd48bb06e5fa3fe87fabd8",
         "e923d6939ed8553db196ecd30ec729485f4e8f7e4dcfbdeaed00fff131ff5c77",
         "e9c4abb1fd95586f58104b0ec6714e15a9a8a27ca8d2ccf3ef649f83a21c5eee",
         "eadcf1fbdf28c349c69f07e5067e4885f0960c9e830cabca73cf4c24e576bdcd",

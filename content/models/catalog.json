@@ -185,6 +185,33 @@
       }
     },
     {
+      "id": "gemini-4-hydrogen",
+      "phrase": "Gemini 4 Hydrogen",
+      "provider": "Google",
+      "releaseDate": "2026-11-12",
+      "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/",
+      "category": "base",
+      "priorities": [
+        "pareto"
+      ],
+      "availability": "Gemini API, Google AI Studio, Gemini for business, the Gemini app and Google Search",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Google's fast Gemini 4 model for everyday coding and agent work, priced flat across its 1M-token context. Editorial quality/cost candidate.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 1.5,
+          "note": "flat across the 1M-token context",
+          "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/"
+        },
+        "outputCost": {
+          "value": 7.5,
+          "note": "flat across the 1M-token context",
+          "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/"
+        }
+      }
+    },
+    {
       "id": "muse-wonder",
       "phrase": "Muse Wonder",
       "provider": "Meta",
@@ -471,6 +498,31 @@
       "reason": "API release October 23; weights published November 4 under a custom license."
     },
     {
+      "id": "qwen4-max",
+      "phrase": "Qwen4-Max",
+      "provider": "Qwen",
+      "releaseDate": "2026-11-16",
+      "sourceUrl": "https://www.alibabacloud.com/help/en/model-studio/newly-released-models",
+      "category": "base",
+      "priorities": [],
+      "availability": "Alibaba Cloud Model Studio API (international) and Qwen apps",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Production release of Alibaba's Qwen4 flagship after the November 11 preview. Smaller Qwen4 models are promised as open source.",
+      "benchmarks": {
+        "inputCost": {
+          "value": 1.5,
+          "note": "international, prompts up to 1M tokens",
+          "sourceUrl": "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+        },
+        "outputCost": {
+          "value": 4.5,
+          "note": "international, prompts up to 1M tokens",
+          "sourceUrl": "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+        }
+      }
+    },
+    {
       "id": "hy4",
       "phrase": "Hy4",
       "provider": "Tencent",
@@ -509,6 +561,32 @@
       "disposition": "include",
       "reviewedAt": "2026-11-12",
       "reason": "Security-research model restricted to approved customers."
+    },
+    {
+      "id": "ernie-5-5-flash-preview",
+      "phrase": "ERNIE 5.5 Flash Preview",
+      "provider": "Baidu",
+      "releaseDate": "2026-11-11",
+      "sourceUrl": "https://ernie.baidu.com/release/ernie-5-5-flash-preview/",
+      "category": "base",
+      "priorities": [],
+      "availability": "Baidu Qianfan API; weights promised",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "First post-trained model on ERNIE 5.5 Flash Base, 280B parameters with 14B active. Apache 2.0 weights promised but not yet published when reviewed."
+    },
+    {
+      "id": "swe-2-flash",
+      "phrase": "SWE-2 Flash",
+      "provider": "Cognition",
+      "releaseDate": "2026-11-04",
+      "sourceUrl": "https://cognition.com/blog/swe-2-flash",
+      "category": "base",
+      "priorities": [],
+      "availability": "Devin Desktop and CLI",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Cognition's small coding model, trained on top of Inkling-Small. Weights go only to partners and researchers through a planned program."
     },
     {
       "id": "jev",
@@ -576,6 +654,19 @@
       "reason": "Closed-set decision model behind the Gemini Decisions API; benchmark claims are Google-reported."
     },
     {
+      "id": "subq-snap-1-2",
+      "phrase": "SubQ Snap 1.2",
+      "provider": "Subquadratic",
+      "releaseDate": "2026-11-11",
+      "sourceUrl": "https://subq.ai/subq-snap-1-2",
+      "category": "decision",
+      "priorities": [],
+      "availability": "Subquadratic console and API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Long-context decision model; existing Snap users are upgraded automatically. Benchmark claims are Subquadratic-reported."
+    },
+    {
       "id": "dots",
       "phrase": "Dots",
       "provider": "OpenAI",
@@ -641,6 +732,20 @@
       "reviewedAt": "2026-11-12",
       "reason": "Current versioned release on GitHub.",
       "supersedes": "hermes-agent-0-21-6"
+    },
+    {
+      "id": "hermes-agent-0-23-2",
+      "phrase": "Hermes Agent 0.23.2",
+      "provider": "Nous Research",
+      "releaseDate": "2026-11-16",
+      "sourceUrl": "https://github.com/NousResearch/hermes-agent/releases/tag/v0.23.2",
+      "category": "tools",
+      "priorities": [],
+      "availability": "Versioned agent harness release",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Current stable patch release on GitHub.",
+      "supersedes": "hermes-agent-0-23-1"
     },
     {
       "id": "genie-3",
@@ -722,6 +827,32 @@
       "reason": "Closed music model. ACE Studio published no launch date, so this uses the date of its Artificial Analysis vocal-leaderboard debut."
     },
     {
+      "id": "fish-audio-live-3",
+      "phrase": "Fish Audio Live 3",
+      "provider": "Fish Audio",
+      "releaseDate": "2026-11-10",
+      "sourceUrl": "https://fish.audio/blog/introducing-live-3/",
+      "category": "audio",
+      "priorities": [],
+      "availability": "Fish Agent Platform and API; on-premises for enterprises",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Full-duplex voice model that keeps listening while it speaks. English only at release."
+    },
+    {
+      "id": "scribe-v3",
+      "phrase": "Scribe v3",
+      "provider": "ElevenLabs",
+      "releaseDate": "2026-11-10",
+      "sourceUrl": "https://elevenlabs.io/blog/scribe-v3",
+      "category": "audio",
+      "priorities": [],
+      "availability": "ElevenAPI; Scribe v3 Live also in ElevenAgents",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Speech-to-text model released with a real-time Scribe v3 Live variant. Accuracy claims are ElevenLabs-reported."
+    },
+    {
       "id": "gpt-image-2-6-sunburst",
       "phrase": "GPT-Image-2.6 Sunburst",
       "provider": "OpenAI",
@@ -733,6 +864,19 @@
       "disposition": "include",
       "reviewedAt": "2026-11-12",
       "reason": "Higher-quality model of ChatGPT Images 2.6, released alongside the faster GPT-Image-2.6 Flare."
+    },
+    {
+      "id": "minimax-h3-image",
+      "phrase": "MiniMax H3-Image",
+      "provider": "MiniMax",
+      "releaseDate": "2026-11-11",
+      "sourceUrl": "https://www.minimax.io/blog/minimax-h3-image",
+      "category": "image",
+      "priorities": [],
+      "availability": "Open weights; MiniMax API Platform, MiniMax Code and Hailuo AI",
+      "disposition": "include",
+      "reviewedAt": "2026-11-17",
+      "reason": "Open-weight image generation and editing model that renders 4K images."
     },
     {
       "id": "gemini-omni-1-2-flash",

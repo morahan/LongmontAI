@@ -20,7 +20,7 @@ export function dateValue(value) {
 function source(value) {
   if (typeof value !== 'string' || value.length > 2048) throw new Error('Invalid source URL');
   const url = new URL(value);
-  const hosts = ['anthropic.com', 'claude.com', 'openai.com', 'x.ai', 'google', 'deepseek.com', 'typesafe.ai', 'cloudflare.com', 'pi.dev', 'github.com', 'worldlabs.ai', 'fb.com', 'z.ai', 'ibm.com', 'tencent.com', 'longmont.ai', 'meta.ai', 'mistral.ai', 'thinkingmachines.ai', 'huggingface.co', 'fish.audio', 'suno.com', 'acemusic.ai'];
+  const hosts = ['anthropic.com', 'claude.com', 'openai.com', 'x.ai', 'google', 'deepseek.com', 'typesafe.ai', 'cloudflare.com', 'pi.dev', 'github.com', 'worldlabs.ai', 'fb.com', 'z.ai', 'ibm.com', 'tencent.com', 'longmont.ai', 'meta.ai', 'mistral.ai', 'thinkingmachines.ai', 'huggingface.co', 'fish.audio', 'suno.com', 'acemusic.ai', 'alibabacloud.com', 'baidu.com', 'cognition.com', 'subq.ai', 'elevenlabs.io', 'minimax.io'];
   if (url.protocol !== 'https:' || url.username || url.password || url.port || !hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))) throw new Error('Sources must use an approved primary HTTPS host');
 }
 export function compileCatalog(ledger, asOf) {
