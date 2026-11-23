@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "ee5279286b76ad3496ba7014",
+  "releaseRevision": "9af8c84608a3961edcf99109",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "913a94ec2d5744869ef3829dd899ba55754ca6f3fba5bfa12dc107243827f322"
+    "sha256": "fdc65b4cf7c2e1f2a405e411d2a5dd0c3ee78aa11b8b389ae19f1c23c4b395dd"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
@@ -78,7 +78,7 @@ const release = Object.freeze({
       "file": "media/slide-03-gemini-neon.png",
       "sourceUrl": "/weekly-screenshots/2026.11.25/slide-03-gemini-neon.png",
       "contentType": "image/png",
-      "sha256": "d46eecb84aaf51ba34db22031bafd9a0c36f22bec33d9282ad2b530808dd8b1c"
+      "sha256": "ccec602eb71bd8aba172d32e2687f989ab143a7c6ba09d1a2f073a148ab93e6f"
     },
     "slide-04-medchembench.png": {
       "file": "media/slide-04-medchembench.png",
@@ -114,7 +114,7 @@ const release = Object.freeze({
       "file": "media/slide-09-billionaires-poverty.png",
       "sourceUrl": "/weekly-screenshots/2026.11.25/slide-09-billionaires-poverty.png",
       "contentType": "image/png",
-      "sha256": "6fc1563eefa1c2c0079b3c00250834d930e29773947dd43acae45da4c768e4f7"
+      "sha256": "612bf7d0aab8be1cf5355cf5faab2a7f46d55af864cee746f140a7516a2eaf02"
     },
     "slide-10-close.png": {
       "file": "media/slide-10-close.png",
