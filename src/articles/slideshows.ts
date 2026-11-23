@@ -25,6 +25,53 @@ function createSlides(basePath: string, titles: string[]): SlideshowSlide[] {
 }
 
 export const slideshowDecks: Record<string, SlideshowDeck> = {
+    "promised-weights-gated-agents": {
+        "id": "promised-weights-gated-agents",
+        "title": "Promised weights, gated agents",
+        "description": "Ten educational slides for October 29–November 11, 2026: the new-model release board (Claude Fable 5.2, Gemini 4 Carbon, Muse Ember, Mistral Large 4 open weights), promised versus shipped open weights, the cost of a token versus the cost of a task, agent checkpoints, agent memory and dreaming, robotaxi expansion and sealed paperwork, humanoid orders and a 24-hour store trial, Colorado's pending AI rules, and three things to try this week. Vendor-reported and company-published figures are labeled in the article.",
+        "slides": [
+            {
+                "title": "Promised weights, gated agents",
+                "src": "/weekly-screenshots/2026.11.11/slide-01-cover.png"
+            },
+            {
+                "title": "New this fortnight: Fable 5.2, Gemini 4 Carbon, Muse Ember, Mistral Large 4 weights",
+                "src": "/weekly-screenshots/2026.11.11/slide-02-release-board.png"
+            },
+            {
+                "title": "Promised vs. shipped: Kimi weights out, Hy4 and Inkling 2 Small pending",
+                "src": "/weekly-screenshots/2026.11.11/slide-03-promised-vs-shipped.png"
+            },
+            {
+                "title": "The cost of a token vs. the cost of a task",
+                "src": "/weekly-screenshots/2026.11.11/slide-04-token-vs-task.png"
+            },
+            {
+                "title": "Agents get checkpoints: hooks, isolated desktops, and a scope test",
+                "src": "/weekly-screenshots/2026.11.11/slide-05-agents-get-checkpoints.png"
+            },
+            {
+                "title": "Agents that remember: notes, dreaming, and a Claude Duet expectation",
+                "src": "/weekly-screenshots/2026.11.11/slide-06-agent-memory.png"
+            },
+            {
+                "title": "More cities, still-sealed paperwork",
+                "src": "/weekly-screenshots/2026.11.11/slide-07-cities-and-sealed-paper.png"
+            },
+            {
+                "title": "Orders, listings, and a 24-hour store shift",
+                "src": "/weekly-screenshots/2026.11.11/slide-08-orders-listings-store-shift.png"
+            },
+            {
+                "title": "Colorado: rules pending, permits and data-center limits moving",
+                "src": "/weekly-screenshots/2026.11.11/slide-09-colorado-pending.png"
+            },
+            {
+                "title": "Close and ask: three things to try this week",
+                "src": "/weekly-screenshots/2026.11.11/slide-10-close-ask.png"
+            }
+        ]
+    },
     "opening-the-books": {
         "id": "opening-the-books",
         "title": "Opening the Books",

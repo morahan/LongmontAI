@@ -4,6 +4,7 @@ export * from './types';
 import { Edition } from './types';
 
 // Import markdown files as raw text
+import article_2026_11_11_promised_weights_gated_agents from './2026.11.11-promised-weights-gated-agents.md?raw';
 import article_2026_10_28_opening_the_books from './2026.10.28-opening-the-books.md?raw';
 import article_2026_10_14_sense_of_wonder from './2026.10.14-sense-of-wonder.md?raw';
 import article_2026_09_30_agents_bots_dots from './2026.09.30-agents-bots-dots.md?raw';
@@ -71,6 +72,7 @@ function parseMarkdownToEdition(raw: string): Edition {
 
 // Combined editions array (newest first)
 export const editions: Edition[] = [
+  parseMarkdownToEdition(article_2026_11_11_promised_weights_gated_agents),
   parseMarkdownToEdition(article_2026_10_28_opening_the_books),
   parseMarkdownToEdition(article_2026_10_14_sense_of_wonder),
   parseMarkdownToEdition(article_2026_09_30_agents_bots_dots),

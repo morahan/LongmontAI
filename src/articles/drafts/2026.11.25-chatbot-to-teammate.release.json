@@ -1,0 +1,119 @@
+{
+  "editionId": "edition-2026-11-25-chatbot-to-teammate",
+  "meetingDate": "2026-11-25",
+  "timezone": "America/Denver",
+  "meetupStartsAt": "2026-11-25T12:00:00-07:00",
+  "publishAt": "2026-11-25T11:30:00-07:00",
+  "status": "scheduled",
+  "emailDigest": {
+    "intro": "This fortnight's thread: AI tools are being sold as teammates that take a task from start to finish. The tools got more capable, and the fortnight shows why handing AI a whole task only works if someone still checks the result.",
+    "modelReleases": [
+      {
+        "name": "GPT-6.2 Astra and Sol (OpenAI, Nov 17)",
+        "detail": "Astra for the hardest professional and science work at $8 / $40 per million tokens; Sol for everyday work at $2 / $10. OpenAI's own safety report says the new models were more likely to leave known obstacles out of their reports."
+      },
+      {
+        "name": "Gemini 4 Neon (Google, Nov 18)",
+        "detail": "Google's middle model at $3 / $15 per million tokens. It scores 61 on the Artificial Analysis Intelligence Index, third behind Claude Fable 5.2 and GPT-6.2 Astra."
+      },
+      {
+        "name": "Gemini 4 Hydrogen (Google, Nov 12)",
+        "detail": "The fast, everyday Gemini 4 model for coding and agent work at $1.50 / $7.50 per million tokens. It also powers parts of Google Search."
+      },
+      {
+        "name": "Qwen4-Max (Alibaba, Nov 16)",
+        "detail": "Alibaba's hosted flagship: 2.4 trillion parameters, 71 billion active per token, and a one-million-token context window. Not open weights."
+      },
+      {
+        "name": "Grok Bot 1.0 (xAI, Nov 11)",
+        "detail": "AI teammates shared across a whole team, working inside Slack, Microsoft Teams, and video calls. xAI says bots ask before taking sensitive actions."
+      },
+      {
+        "name": "Claude Meetings beta (Anthropic, Nov 12)",
+        "detail": "Claude joins Google Meet calls as a visible participant, answers questions, and writes notes and action items. Team and Enterprise plans."
+      }
+    ],
+    "keyNews": [
+      {
+        "headline": "Xhigh effort beat max effort",
+        "detail": "Anthropic's chart shows Claude Fable 5.2 scoring 49.1% on FrontierCode 2.0 at Xhigh effort and 45.6% at Max, which cost about three times more per task."
+      },
+      {
+        "headline": "Patches become attacks faster",
+        "detail": "Google Threat Intelligence Group says growth in exploited flaws is concentrated in quickly weaponized, already-disclosed bugs. Zero-days rose only marginally, apart from a jump to 22 in August."
+      },
+      {
+        "headline": "California sues OpenAI",
+        "detail": "The Attorney General alleges agents on experimental OpenAI models attacked Hugging Face after they should have been contained. These are allegations; no court has ruled."
+      },
+      {
+        "headline": "Anthropic goes public",
+        "detail": "Anthropic began trading on the Nasdaq as ANT on November 19, selling 1.127 billion shares at $83 each."
+      },
+      {
+        "headline": "Americans are among the least hopeful about AI",
+        "detail": "In Gallup's 37-country survey with Microsoft, 36% of AI-aware U.S. adults say AI will mostly help the country, third from the bottom, ahead of only Egypt and Bangladesh."
+      },
+      {
+        "headline": "Starship came home",
+        "detail": "On November 14, a launch tower in Texas caught a returning Starship upper stage for the first time. The booster diverted and exploded just before hitting the water."
+      },
+      {
+        "headline": "Boulder County caps data centers",
+        "detail": "Just before this window, on November 10, commissioners limited data centers in unincorporated Boulder County to 50 kilowatts."
+      }
+    ]
+  },
+  "articlePath": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
+  "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
+  "slideshowId": "chatbot-to-teammate",
+  "assetFolder": "2026.11.25",
+  "assetRoot": "src/articles/drafts/assets/2026.11.25",
+  "slideshow": {
+    "id": "chatbot-to-teammate",
+    "title": "From chatbot to teammate",
+    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch and launch costs, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
+    "slides": [
+      {
+        "title": "From chatbot to teammate",
+        "path": "slide-01-teammate-cover.png"
+      },
+      {
+        "title": "AI is moving from answers to ownership",
+        "path": "slide-02-chatbot-to-teammate.png"
+      },
+      {
+        "title": "Google's middle model scores near the top: Gemini 4 Neon",
+        "path": "slide-03-gemini-neon.png"
+      },
+      {
+        "title": "Models are learning to read molecules: MedChemBench",
+        "path": "slide-04-medchembench.png"
+      },
+      {
+        "title": "Xhigh effort beat max effort",
+        "path": "slide-05-max-effort.png"
+      },
+      {
+        "title": "Zero-day exploits spiked in August",
+        "path": "slide-06-zero-days.png"
+      },
+      {
+        "title": "Americans are among the least hopeful about AI",
+        "path": "slide-07-optimism.png"
+      },
+      {
+        "title": "Starship came home",
+        "path": "slide-08-starship-catch.png"
+      },
+      {
+        "title": "More billionaires, less poverty?",
+        "path": "slide-09-billionaires-poverty.png"
+      },
+      {
+        "title": "Thank you",
+        "path": "slide-10-close.png"
+      }
+    ]
+  }
+}
