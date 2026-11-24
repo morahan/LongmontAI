@@ -29,13 +29,11 @@ The thread running through all of it: **handing AI a whole task works only if so
 - **Money: Anthropic goes public**, and a chart about billionaires and poverty
 - **Space: Starship came home**
 - **Colorado**: Boulder County caps data centers
-- **Takeaways**, then **one clip to end on**
+- **Takeaways**, **one clip to end on**, and **the slides**: the ten-slide briefing and "Who checks the work?", each with a PDF to download and share
 
 This edition covers **November 11–25, 2026** (America/Denver).
 
 > **Evidence note:** Model launches, benchmark scores, and prices come from the companies that made them unless we name an independent source. When a company compares itself with a rival, the rival's numbers are the company's reading, not ours. A lawsuit is a set of allegations until a court rules. Posts on X are linked so you can see them; they are people's own claims, not primary sources.
-
-{{slideshow:chatbot-to-teammate}}
 
 ![Longmont AI branded cover for the November 25 briefing: "From chatbot to teammate." Brand layout, not a product screenshot.](/weekly-screenshots/2026.11.25/slide-01-teammate-cover.png)
 
@@ -277,3 +275,25 @@ On November 10, just before this window, Boulder County commissioners voted unan
 On November 21, the X user [@jaime_srr](https://x.com/jaime_srr/status/2124112545321468279) shared a 73-second clip of someone at a webcam whose hands are tracked in real time. Glowing lines stretch between their fingertips and stay hanging in the air, building up a web of "strings" that they keep adding to with each gesture. The post's caption, translated from Spanish: "What's coming at us. For good and for bad. How much of each, I have no idea." We couldn't confirm who made the demo or what software it uses.
 
 [Watch the clip on X](https://x.com/jaime_srr/status/2124112545321468279)
+
+## The briefing in ten slides
+
+{{slideshow:chatbot-to-teammate}}
+
+[Download the ten-slide briefing (PDF)](/documents/2026.11.25/chatbot-to-teammate-briefing.pdf)
+
+## Who checks the work? In slides
+
+Nine slides on this edition's two late additions: Gemini 4 Neon's place near the cost-per-task frontier, and how Anthropic's Claude Ship reviews, fixes, and approves code. Each slide names its source and what kind of evidence it is: an independent benchmark, or a vendor's own example.
+
+![Cover slide: Who checks the work?](/weekly-screenshots/2026.11.25/who-checks-the-work-01-cover.jpg)
+![Gemini 4 Neon sits just under the efficient frontier. Artificial Analysis chart of Intelligence Index against cost per task, with Gemini 4 Neon circled just under the Pareto line.](/weekly-screenshots/2026.11.25/who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg)
+![Claude Ship: review, fix, approve. Anthropic diagram: Code Review finds issues, PR Steward pushes fixes, and Claude Approvals approves under team policy.](/weekly-screenshots/2026.11.25/who-checks-the-work-03-claude-ship-review-fix-approve.jpg)
+![Review: each flag shows its reasoning. Example Code Review comment flagging a retry bug, with its reasoning and how it was verified.](/weekly-screenshots/2026.11.25/who-checks-the-work-04-claude-ship-code-review-finding.jpg)
+![Fix: every push says how to undo it. Example PR Steward comments: it confirms a finding, pushes a fix, and explains how to revert it or stop it.](/weekly-screenshots/2026.11.25/who-checks-the-work-05-claude-ship-pr-steward-fix.jpg)
+![Approve: people write the rules. Example Claude Approvals policy file with rules for most code, docs, and billing code.](/weekly-screenshots/2026.11.25/who-checks-the-work-06-claude-ship-approvals-policy.jpg)
+![A docs fix, approved by Claude. Example pull request fixing broken doc links, approved by Claude Approvals with all checks passing.](/weekly-screenshots/2026.11.25/who-checks-the-work-07-claude-ship-approved-pr.jpg)
+![Developers start it with /ship. Terminal running /ship in Claude Code, which reviews a change and watches the pull request.](/weekly-screenshots/2026.11.25/who-checks-the-work-08-claude-ship-command.jpg)
+![Closing slide: three questions for any AI teammate.](/weekly-screenshots/2026.11.25/who-checks-the-work-09-three-questions.jpg)
+
+[Download "Who checks the work?" (PDF)](/documents/2026.11.25/who-checks-the-work.pdf)

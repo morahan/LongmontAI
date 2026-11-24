@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "546e298e48d3e1652e3a89fe",
+  "releaseRevision": "0aff8a8bc86658871a92cd76",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "1234e7b0cf0d2a0a4c0622c71cddc4daba5cc4457c4d0f99378fb01aa1a4e331"
+    "sha256": "38cbcd3ea2f100d9b52e51fb2c90d2ad5bcb77c03b221b6c329a7f82fe6c81a7"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
@@ -62,6 +62,12 @@ const release = Object.freeze({
     ]
   },
   "media": {
+    "chatbot-to-teammate-briefing.pdf": {
+      "file": "media/chatbot-to-teammate-briefing.pdf",
+      "sourceUrl": "/documents/2026.11.25/chatbot-to-teammate-briefing.pdf",
+      "contentType": "application/pdf",
+      "sha256": "91bcd9f2fc66624e46c56ba0c765926faa452e75dd2c8a74fac85c450e4870fa"
+    },
     "claude-ship-approvals-policy.png": {
       "file": "media/claude-ship-approvals-policy.png",
       "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-approvals-policy.png",
@@ -163,6 +169,66 @@ const release = Object.freeze({
       "sourceUrl": null,
       "contentType": "image/png",
       "sha256": "b9fc8088e8e42be172217b9eed3550ba13cfc946ce6a05cf4630a9cce03d1698"
+    },
+    "who-checks-the-work-01-cover.jpg": {
+      "file": "media/who-checks-the-work-01-cover.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-01-cover.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "eeeb15b59725a955c9351fd2527ab0fd8724d89228778f5d208e39b40e584c76"
+    },
+    "who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg": {
+      "file": "media/who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "f0f5b183508ab40771c3424d408b739b1b1cb82fca04490396fe55936d9aff35"
+    },
+    "who-checks-the-work-03-claude-ship-review-fix-approve.jpg": {
+      "file": "media/who-checks-the-work-03-claude-ship-review-fix-approve.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-03-claude-ship-review-fix-approve.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "eed3162b643b631adf750389c1a0b926ab9d1eb1d1076a9b5b79b2d1fcbac737"
+    },
+    "who-checks-the-work-04-claude-ship-code-review-finding.jpg": {
+      "file": "media/who-checks-the-work-04-claude-ship-code-review-finding.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-04-claude-ship-code-review-finding.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "f58e3a2af2caea202d01552c3469e1a434fd7e0e6bae74c0685b76eab234c9be"
+    },
+    "who-checks-the-work-05-claude-ship-pr-steward-fix.jpg": {
+      "file": "media/who-checks-the-work-05-claude-ship-pr-steward-fix.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-05-claude-ship-pr-steward-fix.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "3e397537ac434bcd1ce3420e15e970f565d8a11a5ad89520e79b35036d573b7f"
+    },
+    "who-checks-the-work-06-claude-ship-approvals-policy.jpg": {
+      "file": "media/who-checks-the-work-06-claude-ship-approvals-policy.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-06-claude-ship-approvals-policy.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "35f42beef96a8df655a27ff79a7d2400e24f97550141c0222983f6a4dc275b24"
+    },
+    "who-checks-the-work-07-claude-ship-approved-pr.jpg": {
+      "file": "media/who-checks-the-work-07-claude-ship-approved-pr.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-07-claude-ship-approved-pr.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "0eb29e75ad2bf80be6eeae82aca32305030ea479883e6bcb89a2bcd68cb8de4b"
+    },
+    "who-checks-the-work-08-claude-ship-command.jpg": {
+      "file": "media/who-checks-the-work-08-claude-ship-command.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-08-claude-ship-command.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "a539d02e43fe7793426b20ee391e0a41393e35ef33ad7a49047bf79bd7a5d5ba"
+    },
+    "who-checks-the-work-09-three-questions.jpg": {
+      "file": "media/who-checks-the-work-09-three-questions.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-09-three-questions.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "4aae4d4e8a81ee7376c136adff19fabab7d422209bd491477a9fa3cb675c3ca1"
+    },
+    "who-checks-the-work.pdf": {
+      "file": "media/who-checks-the-work.pdf",
+      "sourceUrl": "/documents/2026.11.25/who-checks-the-work.pdf",
+      "contentType": "application/pdf",
+      "sha256": "ccc46f0b2ba466f7292aa815965063ecbf038f9a00150200a0cb2869f39ca8b8"
     }
   }
 });
