@@ -316,6 +316,7 @@ On November 10, just before this window, Boulder County commissioners voted unan
 ## Key dates
 
 - **November 30**: Gemini 4 Carbon's introductory API price is scheduled to end, according to Google's launch pricing.
+- **December**: Tesla FSD (Supervised) v15 wide release, according to Elon Musk. No exact date.
 - **December 9**: next Longmont AI meetup, at noon.
 
 ## Takeaways
@@ -325,8 +326,9 @@ On November 10, just before this window, Boulder County commissioners voted unan
 3. **AI is starting to review AI.** Anthropic's Claude Ship can review, fix, and even approve code changes, but only where a team's written policy allows it. The human job shifts to writing good rules.
 4. **Xhigh effort beat the max setting on FrontierCode.** On one coding test, Claude Fable 5.2's most expensive setting cost three times more and scored lower.
 5. **The middle tier keeps getting stronger.** Gemini 4 Neon posts near-top scores at a mid-tier price and sits just under the cost-per-task efficient frontier.
-6. **Attackers have agents too.** Patch quickly and turn on automatic updates.
-7. **Americans are skeptical.** Only 36% of AI-aware U.S. adults say AI will mostly help the country.
+6. **Cars are showing their plans.** Tesla's FSD v15 draws what it intends to do on screen, but it is still supervised: the driver checks the work.
+7. **Attackers have agents too.** Patch quickly and turn on automatic updates.
+8. **Americans are skeptical.** Only 36% of AI-aware U.S. adults say AI will mostly help the country.
 
 ## One clip to end on
 
@@ -342,7 +344,7 @@ On November 21, the X user [@jaime_srr](https://x.com/jaime_srr/status/212411254
 
 ## Who checks the work? In slides
 
-Nine slides on this edition's two late additions: Gemini 4 Neon's place near the cost-per-task frontier, and how Anthropic's Claude Ship reviews, fixes, and approves code. Each slide names its source and what kind of evidence it is: an independent benchmark, or a vendor's own example.
+Ten slides on this edition's late additions: Gemini 4 Neon's place near the cost-per-task frontier, how Anthropic's Claude Ship reviews, fixes, and approves code, and Tesla's FSD v15, which shows its plan while the driver supervises. Each slide names its source and what kind of evidence it is: an independent benchmark, or a company's own example.
 
 ![Cover slide: Who checks the work?](/weekly-screenshots/2026.11.25/who-checks-the-work-01-cover.jpg)
 ![Gemini 4 Neon sits just under the efficient frontier. Artificial Analysis chart of Intelligence Index against cost per task, with Gemini 4 Neon circled just under the Pareto line.](/weekly-screenshots/2026.11.25/who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg)
@@ -352,6 +354,7 @@ Nine slides on this edition's two late additions: Gemini 4 Neon's place near the
 ![Approve: people write the rules. Example Claude Approvals policy file with rules for most code, docs, and billing code.](/weekly-screenshots/2026.11.25/who-checks-the-work-06-claude-ship-approvals-policy.jpg)
 ![A docs fix, approved by Claude. Example pull request fixing broken doc links, approved by Claude Approvals with all checks passing.](/weekly-screenshots/2026.11.25/who-checks-the-work-07-claude-ship-approved-pr.jpg)
 ![Developers start it with /ship. Terminal running /ship in Claude Code, which reviews a change and watches the pull request.](/weekly-screenshots/2026.11.25/who-checks-the-work-08-claude-ship-command.jpg)
-![Closing slide: three questions for any AI teammate.](/weekly-screenshots/2026.11.25/who-checks-the-work-09-three-questions.jpg)
+![FSD v15 shows its plan. You still supervise.. Six Tesla screenshots of Reality View in FSD v15, showing generated views of the drive with the planned path in blue.](/weekly-screenshots/2026.11.25/who-checks-the-work-09-tesla-fsd-v15-reality-view-shots.jpg)
+![Closing slide: three questions for any AI teammate.](/weekly-screenshots/2026.11.25/who-checks-the-work-10-three-questions.jpg)
 
 [Download "Who checks the work?" (PDF)](/documents/2026.11.25/who-checks-the-work.pdf)

@@ -38,6 +38,9 @@ const slides = [
   { section: 'Agents', label: 'Vendor example', source: 'Anthropic, Nov 23', img: ['claude-ship-command'],
     title: 'Developers start it with <em>/ship</em>', note: 'Claude reviews the change, then watches the pull request for up to 7 days.',
     alt: 'Terminal running /ship in Claude Code, which reviews a change and watches the pull request.' },
+  { section: 'Driving', label: 'Company images', source: 'Tesla, Nov 21 · via Teslarati', img: ['tesla-fsd-v15-reality-view-shots'],
+    title: 'FSD v15 shows its plan. <em>You still supervise.</em>', note: 'Reality View draws the car\'s plan. Tesla claims 25x better on critical cases.',
+    alt: 'Six Tesla screenshots of Reality View in FSD v15, showing generated views of the drive with the planned path in blue.' },
 ];
 
 function size(file) {
@@ -123,8 +126,8 @@ function contentSlide(slide, index, total) {
 function deck() {
   const total = slides.length + 2;
   const cover = `<section class="slide poster"><div class="eyebrow mono">+ Longmont AI / November 25 briefing</div>
-<h1>Who checks<br><span>the work?</span></h1><p class="note">Claude Ship lets AI review, fix and approve code, under rules people write. Plus Gemini 4 Neon's cost per task.</p>
-<div class="tags mono">Models / Agents</div>${parrot}${foot}</section>`;
+<h1>Who checks<br><span>the work?</span></h1><p class="note">Claude Ship lets AI review, fix and approve code, under rules people write. Plus Gemini 4 Neon's cost per task and Tesla's FSD v15.</p>
+<div class="tags mono">Models / Agents / Driving</div>${parrot}${foot}</section>`;
   const closing = `<section class="slide poster"><div class="eyebrow mono">+ Longmont AI / November 25 briefing</div>
 <h1 style="font-size:84px">Three questions<br><span>for any AI teammate</span></h1><ol>
 <li><b>ASK 1</b>Who wrote the rules?</li><li><b>ASK 2</b>What did it leave out?</li><li><b>ASK 3</b>Can you undo it?</li>

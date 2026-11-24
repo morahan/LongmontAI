@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "b567b23f78928c4e67d43eb6",
+  "releaseRevision": "d89eebc80036097e502e81d5",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "8cf00a17224fd2df9c33210dc723a23c4c15d5b9245ee91e2e61e1a024f21df8"
+    "sha256": "8a77fe3fc399a7ff43076735034326f8577ae4830e4e3fbc430349428da3b192"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
@@ -66,7 +66,7 @@ const release = Object.freeze({
       "file": "media/chatbot-to-teammate-briefing.pdf",
       "sourceUrl": "/documents/2026.11.25/chatbot-to-teammate-briefing.pdf",
       "contentType": "application/pdf",
-      "sha256": "572023aa9078324737143a75379fb80677d6f8f928b2e768d76c204b387e6445"
+      "sha256": "1daacf5b5efd30d6e02fa6a79d4c8a07c84fbfef43b99b0a6439169c346b7e64"
     },
     "claude-artifacts-desktop-apps.png": {
       "file": "media/claude-artifacts-desktop-apps.png",
@@ -204,61 +204,67 @@ const release = Object.freeze({
       "file": "media/who-checks-the-work-01-cover.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-01-cover.jpg",
       "contentType": "image/jpeg",
-      "sha256": "eeeb15b59725a955c9351fd2527ab0fd8724d89228778f5d208e39b40e584c76"
+      "sha256": "916aa24982a53b338c835f8a55141285f8de561c7a8ec1827106c07c2a27f898"
     },
     "who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg": {
       "file": "media/who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-02-neon-intelligence-vs-cost-per-task.jpg",
       "contentType": "image/jpeg",
-      "sha256": "f0f5b183508ab40771c3424d408b739b1b1cb82fca04490396fe55936d9aff35"
+      "sha256": "d0381846e87cc10efa0b360b1764baf8dd1688856f5035cfbc08cdb4d42cb0af"
     },
     "who-checks-the-work-03-claude-ship-review-fix-approve.jpg": {
       "file": "media/who-checks-the-work-03-claude-ship-review-fix-approve.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-03-claude-ship-review-fix-approve.jpg",
       "contentType": "image/jpeg",
-      "sha256": "eed3162b643b631adf750389c1a0b926ab9d1eb1d1076a9b5b79b2d1fcbac737"
+      "sha256": "3a268f6171ae762f3adfdc4231b2ddb410103499f0573716139cda3a60a64011"
     },
     "who-checks-the-work-04-claude-ship-code-review-finding.jpg": {
       "file": "media/who-checks-the-work-04-claude-ship-code-review-finding.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-04-claude-ship-code-review-finding.jpg",
       "contentType": "image/jpeg",
-      "sha256": "f58e3a2af2caea202d01552c3469e1a434fd7e0e6bae74c0685b76eab234c9be"
+      "sha256": "996ca98f2f9ad69980eeea626e09cc08062d614eb40c2612995f1cebc9dd3e40"
     },
     "who-checks-the-work-05-claude-ship-pr-steward-fix.jpg": {
       "file": "media/who-checks-the-work-05-claude-ship-pr-steward-fix.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-05-claude-ship-pr-steward-fix.jpg",
       "contentType": "image/jpeg",
-      "sha256": "3e397537ac434bcd1ce3420e15e970f565d8a11a5ad89520e79b35036d573b7f"
+      "sha256": "e37cb34cbd68f4cbbcb265f9f9f76d9d2959d67b52827cf0047224abecb346bf"
     },
     "who-checks-the-work-06-claude-ship-approvals-policy.jpg": {
       "file": "media/who-checks-the-work-06-claude-ship-approvals-policy.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-06-claude-ship-approvals-policy.jpg",
       "contentType": "image/jpeg",
-      "sha256": "35f42beef96a8df655a27ff79a7d2400e24f97550141c0222983f6a4dc275b24"
+      "sha256": "1afa1e453dd287ea38fc970d4ed77a5c4c7e637ee3c82cdde305bc78a0272612"
     },
     "who-checks-the-work-07-claude-ship-approved-pr.jpg": {
       "file": "media/who-checks-the-work-07-claude-ship-approved-pr.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-07-claude-ship-approved-pr.jpg",
       "contentType": "image/jpeg",
-      "sha256": "0eb29e75ad2bf80be6eeae82aca32305030ea479883e6bcb89a2bcd68cb8de4b"
+      "sha256": "80581f3c82cb49a9a9f770ff11e97729c0cfbb5439b8939f8e16b9de59f3a904"
     },
     "who-checks-the-work-08-claude-ship-command.jpg": {
       "file": "media/who-checks-the-work-08-claude-ship-command.jpg",
       "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-08-claude-ship-command.jpg",
       "contentType": "image/jpeg",
-      "sha256": "a539d02e43fe7793426b20ee391e0a41393e35ef33ad7a49047bf79bd7a5d5ba"
+      "sha256": "a9e3e590ee7438b62f75d39a6f6d801f65b866547384645f17355591e1b26b65"
     },
-    "who-checks-the-work-09-three-questions.jpg": {
-      "file": "media/who-checks-the-work-09-three-questions.jpg",
-      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-09-three-questions.jpg",
+    "who-checks-the-work-09-tesla-fsd-v15-reality-view-shots.jpg": {
+      "file": "media/who-checks-the-work-09-tesla-fsd-v15-reality-view-shots.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-09-tesla-fsd-v15-reality-view-shots.jpg",
       "contentType": "image/jpeg",
-      "sha256": "4aae4d4e8a81ee7376c136adff19fabab7d422209bd491477a9fa3cb675c3ca1"
+      "sha256": "2ed207c6f66c88009a1aad85e5d0cb04a0400708285d52fd63132a4f260f8064"
+    },
+    "who-checks-the-work-10-three-questions.jpg": {
+      "file": "media/who-checks-the-work-10-three-questions.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/who-checks-the-work-10-three-questions.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "9b3e711ef9368814e48083631b31b98c2d8223f203f564acfc58dc7af59dd471"
     },
     "who-checks-the-work.pdf": {
       "file": "media/who-checks-the-work.pdf",
       "sourceUrl": "/documents/2026.11.25/who-checks-the-work.pdf",
       "contentType": "application/pdf",
-      "sha256": "ccc46f0b2ba466f7292aa815965063ecbf038f9a00150200a0cb2869f39ca8b8"
+      "sha256": "ce8cb7f84e74898d68646834267089fbde2b23f50ecff38de126739ae6626d05"
     }
   }
 });
