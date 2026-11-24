@@ -17,9 +17,10 @@ The thread running through all of it: **handing AI a whole task works only if so
 
 **In this edition:**
 
-- **New this fortnight: the release board**: GPT-6.2 Astra and Sol, Gemini 4 Neon and Hydrogen, Qwen4-Max, Grok Bot 1.0, Claude Meetings, and Genie 4 for developers
+- **New this fortnight: the release board**: GPT-6.2 Astra and Sol, Gemini 4 Neon and Hydrogen, Qwen4-Max, Grok Bot 1.0, Claude Meetings, Genie 4 for developers, and Claude Ship
 - **From answers to ownership**: what "AI teammate" means, and what OpenAI's own safety report says to watch for
-- **Google's middle model scores near the top**: Gemini 4 Neon by the numbers
+- **Claude Ship: AI that reviews, fixes, and approves code**: Anthropic's take on letting a teammate sign off, under rules people write
+- **Google's middle model scores near the top**: Gemini 4 Neon by the numbers, and why it sits near the efficient frontier on cost per task
 - **Models are learning to read molecules**: OpenAI's MedChemBench
 - **Xhigh effort beat max effort**: why the priciest setting can score lower
 - **Security: patches become attacks faster**, and attackers bring agents
@@ -52,6 +53,7 @@ Here is what shipped between November 11 and November 25. Prices are the vendors
 | Nov 17 | GPT-6.2 Sol | OpenAI | Everyday work | $2 / $10 |
 | Nov 18 | **Gemini 4 Neon** | Google | Between Carbon and Hydrogen: complex work, faster | $3 / $15 |
 | Nov 19 | Genie 4 in the Gemini API | Google | Interactive generated worlds for developers | paid API tier |
+| Nov 23 | Claude Ship (Code Review GA; PR Steward and Claude Approvals in beta) | Anthropic | Agents that review, fix, and approve code changes on GitHub | billed by tokens; Team and Enterprise plans |
 
 **GPT-6.2 Astra and Sol (November 17).** OpenAI says both models get better results while using fewer output tokens, and that Astra's slides, spreadsheets, and documents "read less like AI." Astra's token prices are 20% lower than GPT-6 Astra's. Both are in ChatGPT Work and Codex for paid plans and in the API ([OpenAI](https://openai.com/index/introducing-gpt-6-2-astra-sol/)).
 
@@ -76,6 +78,66 @@ Two launches this fortnight put that idea into products:
 
 If an AI hands you finished work, ask it what went wrong along the way, and check.
 
+## Claude Ship: AI that reviews, fixes, and approves code
+
+![Anthropic diagram of Claude Ship in three rows. Review (Code Review) finds 2 issues in a pull request; Fix (PR Steward, beta) pushes fixes; Review finds 1 more; another fix is pushed; Review finds no issues; Approve (Claude Approvals, beta) approves under team policy, and the change is "Ready to merge." Footnote: "Claude Ship uses AI and may miss bugs, security vulnerabilities, or other issues."](/weekly-screenshots/2026.11.25/claude-ship-review-fix-approve.png)
+
+The previous section ended on "check the work." Two days before this meetup, Anthropic shipped a product that asks the next question: what if an AI does some of the checking too?
+
+On November 23, Anthropic launched **Claude Ship** ([Anthropic](https://claude.com/resources/articles/introducing-claude-ship); [announced on X by @ClaudeDevs](https://x.com/ClaudeDevs/status/2124959436640858475)). It works on **pull requests**: when a programmer changes a shared codebase, they propose the change as a pull request, and teammates review it before it is merged into the main project. That review step is where a lot of team time goes, and with AI writing much more code, it has become the bottleneck.
+
+Anthropic's own pitch: "Open a pull request and get back to building." Claude Ship splits the job into three agents, each with a plain-English job title.
+
+### 1. Review: Claude reads the change and flags problems
+
+![Anthropic example of Code Review on a pull request: a red-flagged comment from Claude on a code change explains that retries can go out back to back against a rate-limited server, because a "Retry-After" header can be a date or missing, turning the wait into zero. It suggests a fix and includes a "Why this was flagged" section with how it verified the problem.](/weekly-screenshots/2026.11.25/claude-ship-code-review-finding.png)
+
+**Code Review**, the one part that is generally available rather than in beta, reads each pull request against the rest of the codebase. Anthropic says it looks at a change "through multiple lenses," double-checks its own findings before posting them, and labels each one as important, a nitpick, or a problem that was already there. Teams pick a quick, standard, or deep review for each repository.
+
+In Anthropic's example above, Claude catches a subtle bug: code meant to wait politely before retrying a busy server would, in some cases, not wait at all. Note the "Why this was flagged" section. The comment shows its reasoning, so a person can check it.
+
+### 2. Fix: Claude works on its own findings
+
+![Anthropic example of PR Steward on a pull request titled "Retry rate-limited requests in the API client." Claude confirms the Code Review finding, says it is fixing the parsing and a test, then reports the commit it pushed, how to undo it, and how to stop it. All checks have passed below.](/weekly-screenshots/2026.11.25/claude-ship-pr-steward-fix.png)
+
+**PR Steward** (beta) picks up from there. It works on failing automated tests, conflicts with other people's changes, and feedback from Code Review or from teammates. After every change it pushes, it leaves a comment saying what it changed and **how to undo it**, as in the example above. Developers can steer it by commenting `@claude`, or stop it with `@claude stop`. Anthropic says PR Steward is designed to leave approving and merging to the team.
+
+### 3. Approve: Claude signs off, but only where people said it may
+
+![Anthropic example of a Claude Approvals policy file, approvals.yml. Most code needs two people, or one when Claude's review passes. Docs changes can be approved by Claude alone when its review passes. Billing code needs two people who aren't the authors, one of them from the payments team.](/weekly-screenshots/2026.11.25/claude-ship-approvals-policy.png)
+
+This is the new and most debated part. **Claude Approvals** (beta) lets Claude give the final sign-off on routine changes. It doesn't decide for itself what counts as routine. Each team writes the rules in a policy file kept with the code. Anthropic says it works "like a smarter CODEOWNERS file," the list many teams already use to say who must review which files.
+
+The example policy above reads almost like plain English:
+
+- **Most code:** two people must approve, or one person if Claude's review passes.
+- **Documentation:** Claude can approve on its own if its review passes.
+- **Billing code:** two people who didn't write the change, and one of them must be from the payments team. Claude only comments.
+
+![Anthropic example of a documentation pull request, "Fix broken links in the setup guide," that met its policy. Claude Approvals reports "Passing," Claude posts an approving review, and the required Claude Approvals check, Code Review, docs build, and link check all pass.](/weekly-screenshots/2026.11.25/claude-ship-approved-pr.png)
+
+Here is that docs rule in action: a small fix to broken links passed Claude's review and every automated check, so Claude approved it with no human reviewer.
+
+**The safety valve.** Anthropic recommends most customers start Claude Approvals in **observe-only mode**, where it reports what it *would* have decided without blocking or approving anything, before letting it count. Its docs also warn that a policy with no required human can let changes merge without a person ever looking ([Claude Approvals docs](https://code.claude.com/docs/en/approvals)).
+
+### How developers start it
+
+![Terminal window running /ship in Claude Code. The message says /ship started for a pull request, Claude reviews the change, then watches the pull request for up to 7 days in this session, on your usage. Keep this session open, this computer awake, and this branch checked out. "/ship stop" ends the watch.](/weekly-screenshots/2026.11.25/claude-ship-command.png)
+
+A developer using Claude Code can type `/ship` when a change is ready. Claude pushes the change, opens the pull request, reviews it, and keeps working on feedback and failing tests. Whether it can merge depends on that developer's own permissions and the repository's rules ([`/ship` docs](https://code.claude.com/docs/en/ship-command)). Admins can also switch Code Review and PR Steward on for a whole repository, so they run on every pull request.
+
+### Who can use it, and what it costs
+
+- **Plans:** Claude Team and Enterprise, for code hosted on GitHub. It isn't available to organizations using Zero Data Retention, Anthropic's HIPAA configuration, or customer-managed encryption keys.
+- **Price:** billed by tokens, so cost depends on how many pull requests a team opens, how big they are, and how deep the reviews go. Admins can set monthly spending limits. Running `/ship` counts as regular Claude Code usage.
+- **Credits:** eligible Enterprise organizations can claim at least $10,000 in Claude Ship credits by January 15, 2027.
+
+### What Anthropic claims, and what to watch
+
+Anthropic says its own Claude Code team runs Claude Ship on many of its pull requests, and that from June to September the team's merged pull requests "more than doubled" while the share of changes it had to undo fell by more than 40% ([Anthropic](https://claude.com/resources/articles/introducing-claude-ship)). Those are the company's own numbers about its own team, and nobody outside Anthropic has checked them.
+
+The design is the interesting part for everyone else. Claude Ship doesn't remove the reviewer; it moves the human's job from reading every line to **writing the rules for when a person must read**. That only works if the rules are good. Anthropic's own diagram carries the right footnote: "Claude Ship uses AI and may miss bugs, security vulnerabilities, or other issues."
+
 ## Google's middle model scores near the top
 
 ![Bar chart in Longmont AI style: Artificial Analysis Intelligence Index, top five models at their highest setting, as of November 23. Claude Fable 5.2 64.6, GPT-6.2 Astra 62.1, Gemini 4 Neon 61.4 (highlighted, third), Gemini 4 Carbon 60.0, Claude Opus 5.5 59.1.](/weekly-screenshots/2026.11.25/slide-03-gemini-neon.png)
@@ -95,6 +157,24 @@ Here is Google's own comparison table. Rival scores are as Google reported them,
 | GraphWalks (very long documents) | 95.2% | 66.8% | 80.1% |
 
 Neon doesn't win every row. Opus 5.5 edges it on command-line work and FrontierCode. The point Google is making is about price: near-top scores from a model that isn't its biggest.
+
+### Near the efficient frontier on cost per task
+
+![Artificial Analysis scatter chart, Intelligence Index against cost per task in U.S. dollars on a log scale, 28 of 156 models, with a dotted Pareto line. Longmont AI has circled Gemini 4 Neon (xhigh), which sits just under the Pareto line at an index of about 61 and roughly $6 per task, near GPT-6.2 Astra (max), about 62 at roughly $4. Claude Fable 5.2 (max) is highest at about 65 but costs roughly $27 per task; Claude Opus 5.5 (max) scores about 59 at roughly $10. Footer: highlight added by Longmont AI; chart by Artificial Analysis, captured November 24, 2026.](/weekly-screenshots/2026.11.25/neon-intelligence-vs-cost-per-task.png)
+
+Price per token only tells half the story, because some models write far more tokens than others to finish the same job. Artificial Analysis measures what it actually costs a model to work through its test suite, as an average **cost per task**, and plots that against its Intelligence Index.
+
+The dotted **Pareto line** in the chart is the efficient frontier: the models for which no other model scores higher for less money. Anything on the line is a best buy at its price; anything below it is beaten by something cheaper, smarter, or both.
+
+Gemini 4 Neon (circled) sits **just under that line**. Reading the chart, Neon scores about 61 at roughly $6 per task. That puts it:
+
+- **Close to the frontier, but not on it.** GPT-6.2 Astra at max effort scores slightly higher (about 62) for a bit less (roughly $4 per task).
+- **Ahead of Google's own Gemini 4 Carbon** and of **Claude Opus 5.5** (about 59 at roughly $10) on both score and cost.
+- **About a quarter of the cost of the top model.** Claude Fable 5.2 leads at about 65, but at roughly $27 per task.
+
+For most everyday work, a few points on an index matter less than a fourfold difference in cost. That is the case for Neon: near-top results without paying for the very top.
+
+Dollar figures here are our readings from Artificial Analysis's log-scale chart, captured November 24, so treat them as approximate. The circle and caption are ours ([Artificial Analysis](https://artificialanalysis.ai/)).
 
 ## Models are learning to read molecules
 
@@ -174,7 +254,7 @@ On November 10, just before this window, Boulder County commissioners voted unan
 
 - **Gemini 4 Carbon, Neon, and Hydrogen** are three different Google models, from deepest to fastest. **Genie 4** is Google's world model, not a chatbot.
 - **GPT-6.2 Astra** is OpenAI's top model and **GPT-6.2 Sol** its everyday model. **Terra** and **Luna** are older, smaller lines.
-- **Claude Fable 5.2** is Anthropic's top public model. **Claude Opus 5.5** is its recommended everyday model. **Claude Meetings** is a feature, not a model.
+- **Claude Fable 5.2** is Anthropic's top public model. **Claude Opus 5.5** is its recommended everyday model. **Claude Meetings** and **Claude Ship** are products built on Claude, not models.
 - **Grok Bot** is xAI's AI-teammate app. **Grok** is the model family behind it.
 
 ## Key dates
@@ -186,10 +266,11 @@ On November 10, just before this window, Boulder County commissioners voted unan
 
 1. **AI is being sold as a teammate.** Grok Bot 1.0 and Claude Meetings put AI into team chats and calls.
 2. **Teammates still need a reviewer.** OpenAI says its newest models were more likely to leave obstacles out of their reports. Ask what went wrong, and check.
-3. **Xhigh effort beat the max setting on FrontierCode.** On one coding test, Claude Fable 5.2's most expensive setting cost three times more and scored lower.
-4. **The middle tier keeps getting stronger.** Gemini 4 Neon posts near-top scores at a mid-tier price.
-5. **Attackers have agents too.** Patch quickly and turn on automatic updates.
-6. **Americans are skeptical.** Only 36% of AI-aware U.S. adults say AI will mostly help the country.
+3. **AI is starting to review AI.** Anthropic's Claude Ship can review, fix, and even approve code changes, but only where a team's written policy allows it. The human job shifts to writing good rules.
+4. **Xhigh effort beat the max setting on FrontierCode.** On one coding test, Claude Fable 5.2's most expensive setting cost three times more and scored lower.
+5. **The middle tier keeps getting stronger.** Gemini 4 Neon posts near-top scores at a mid-tier price and sits just under the cost-per-task efficient frontier.
+6. **Attackers have agents too.** Patch quickly and turn on automatic updates.
+7. **Americans are skeptical.** Only 36% of AI-aware U.S. adults say AI will mostly help the country.
 
 ## One clip to end on
 

@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "9af8c84608a3961edcf99109",
+  "releaseRevision": "546e298e48d3e1652e3a89fe",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "fdc65b4cf7c2e1f2a405e411d2a5dd0c3ee78aa11b8b389ae19f1c23c4b395dd"
+    "sha256": "1234e7b0cf0d2a0a4c0622c71cddc4daba5cc4457c4d0f99378fb01aa1a4e331"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
@@ -62,6 +62,48 @@ const release = Object.freeze({
     ]
   },
   "media": {
+    "claude-ship-approvals-policy.png": {
+      "file": "media/claude-ship-approvals-policy.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-approvals-policy.png",
+      "contentType": "image/png",
+      "sha256": "e59317a5bcaa94bfbf0d2e7442fc33c40e184a591b47750a3ab84d667eaa22fc"
+    },
+    "claude-ship-approved-pr.png": {
+      "file": "media/claude-ship-approved-pr.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-approved-pr.png",
+      "contentType": "image/png",
+      "sha256": "ba8eabb5026eba1a4233f5399a7c474440dc856ae622356e90c6a5fab2e39e60"
+    },
+    "claude-ship-code-review-finding.png": {
+      "file": "media/claude-ship-code-review-finding.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-code-review-finding.png",
+      "contentType": "image/png",
+      "sha256": "ab0a88fd9fb510dd894138b9595a1a6af383bc52117a0e21fab1ca7b7372c95e"
+    },
+    "claude-ship-command.png": {
+      "file": "media/claude-ship-command.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-command.png",
+      "contentType": "image/png",
+      "sha256": "0e8c06c1420394e1310e2bc9f32f6dc3b8f0d6c86953f778adb98e5b3ab98480"
+    },
+    "claude-ship-pr-steward-fix.png": {
+      "file": "media/claude-ship-pr-steward-fix.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-pr-steward-fix.png",
+      "contentType": "image/png",
+      "sha256": "b17e7276d37df247f62e5452b90f6605d3857202f3b0fbe96b477436bde9a273"
+    },
+    "claude-ship-review-fix-approve.png": {
+      "file": "media/claude-ship-review-fix-approve.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-review-fix-approve.png",
+      "contentType": "image/png",
+      "sha256": "1477e7a3d29fac54e1ad610d027eb67a36797c571a3168c0a1fdff098861454e"
+    },
+    "neon-intelligence-vs-cost-per-task.png": {
+      "file": "media/neon-intelligence-vs-cost-per-task.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/neon-intelligence-vs-cost-per-task.png",
+      "contentType": "image/png",
+      "sha256": "dfdcecf6af06a639ad3a24eac3fb9c7f4ac3a8fb73ba5197167220c934438c6a"
+    },
     "slide-01-teammate-cover.png": {
       "file": "media/slide-01-teammate-cover.png",
       "sourceUrl": "/weekly-screenshots/2026.11.25/slide-01-teammate-cover.png",

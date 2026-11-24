@@ -14,7 +14,7 @@
       },
       {
         "name": "Gemini 4 Neon (Google, Nov 18)",
-        "detail": "Google's middle model at $3 / $15 per million tokens. It scores 61.4 on the Artificial Analysis Intelligence Index, third behind Claude Fable 5.2 and GPT-6.2 Astra."
+        "detail": "Google's middle model at $3 / $15 per million tokens. It scores 61.4 on the Artificial Analysis Intelligence Index, third overall, and sits just under the cost-per-task efficient frontier at about a quarter of Fable 5.2's cost."
       },
       {
         "name": "Gemini 4 Hydrogen (Google, Nov 12)",
@@ -31,6 +31,10 @@
       {
         "name": "Claude Meetings beta (Anthropic, Nov 12)",
         "detail": "Claude joins Google Meet calls as a visible participant, answers questions, and writes notes and action items. Team and Enterprise plans."
+      },
+      {
+        "name": "Claude Ship (Anthropic, Nov 23)",
+        "detail": "Agents that review, fix, and approve code changes on GitHub. Claude approves only what a team's written policy allows, and Anthropic recommends starting in observe-only mode. Team and Enterprise plans."
       }
     ],
     "keyNews": [
