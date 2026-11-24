@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><title>Starship came home</title>
 <!-- Source for src/articles/drafts/assets/2026.11.25/slide-08-starship-catch.png.
      Render: Chrome --headless=new --screenshot --window-size=1920,1080 this file.
-     Bar heights: log10($/kg) * 75 px, so $1 sits on the baseline. -->
+     Bars are drawn to scale on a linear axis: 340 px = $25,000/kg (0.0136 px per $). -->
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#09090b}
@@ -20,9 +20,9 @@ h1{position:absolute;left:96px;top:196px;margin:0;font-size:86px;font-weight:700
 .col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:28px;margin-bottom:14px;white-space:nowrap}
 .bar{width:210px;border-radius:6px}
-.name{margin-top:22px;font-size:26px;color:#d4d4d8;text-align:center;line-height:1.25;height:66px}
+.name{margin-top:22px;font-size:26px;color:#d4d4d8;text-align:center;line-height:1.25;height:88px}
 .name small{display:block;font-size:19px;color:#A1A1AA}
-.range{display:flex;flex-direction:column}.range i{display:block;border-radius:6px 6px 0 0;background:#27272a}.range u{display:block;border-radius:0 0 6px 6px;background:#3f3f46;margin-top:2px}
+.range{display:flex;flex-direction:column}.range i{display:block;border-radius:6px 6px 0 0;background:repeating-linear-gradient(135deg,#3f3f46 0 10px,#2a2a2f 10px 20px)}.range u{display:block;border-radius:0 0 6px 6px;background:#52525b;margin-top:2px}
 .fuel{border:3px dashed #00F0FF;background:rgba(0,240,255,.12)}
 .fuel-val{color:#00F0FF}
 .est{border:3px dashed #FF0080;background:rgba(255,0,128,.18)}
@@ -36,12 +36,12 @@ footer{position:absolute;inset:auto 0 0 0;height:84px;background:#1b1033;display
 <h1>Starship came home</h1>
 <p class="dek">A tower caught the upper stage on Nov 14. That viral <b>“$2/kg”</b> counts fuel only.</p>
 <div class="chart">
-  <div class="col"><div class="val">$6k–25k/kg</div><div class="bar range"><i style="height:45px"></i><u style="height:283px"></u></div><div class="name">Older rockets</div></div>
-  <div class="col"><div class="val">~$2,600/kg</div><div class="bar" style="height:256px;background:#7c5640"></div><div class="name">Falcon 9</div></div>
-  <div class="col"><div class="val">~$1,500/kg</div><div class="bar" style="height:238px;background:#FF9E64"></div><div class="name">Falcon Heavy</div></div>
-  <div class="col"><div class="val">~$200/kg</div><div class="bar est" style="height:173px"></div><div class="name">Starship<small>full cost, projected</small></div></div>
-  <div class="col"><div class="val fuel-val">~$2.50/kg</div><div class="bar fuel" style="height:30px"></div><div class="name">Starship fuel<small>Musk’s target, fuel only</small></div></div>
+  <div class="col"><div class="val">$6k–25k/kg</div><div class="bar range"><i style="height:258px"></i><u style="height:82px"></u></div><div class="name">Older rockets</div></div>
+  <div class="col"><div class="val">~$2,600/kg</div><div class="bar" style="height:35px;background:#7c5640"></div><div class="name">Falcon 9</div></div>
+  <div class="col"><div class="val">~$1,500/kg</div><div class="bar" style="height:20px;background:#FF9E64"></div><div class="name">Falcon Heavy</div></div>
+  <div class="col"><div class="val">~$200/kg</div><div class="bar" style="height:3px;border-radius:0;background:#FF0080"></div><div class="name">Starship<small>full cost, projected</small></div></div>
+  <div class="col"><div class="val fuel-val">~$2.50/kg</div><div class="bar" style="height:1px;border-radius:0;background:#00F0FF"></div><div class="name">Starship fuel<small>Musk’s target, fuel only<br>(true height under 1 px)</small></div></div>
 </div>
-<div class="note mono">Cost to low Earth orbit, $/kg, log scale &middot; estimates via Visual Capitalist &middot; fuel: Musk’s &lt;$500k ÷ 200 t, no date</div>
+<div class="note mono">Cost to low Earth orbit, $/kg, drawn to scale &middot; estimates via Visual Capitalist &middot; fuel: Musk’s &lt;$500k ÷ 200 t, no date</div>
 <footer class="mono"><span>longmontai.com</span><span>Curated by intelligence.</span></footer>
 </section></html>

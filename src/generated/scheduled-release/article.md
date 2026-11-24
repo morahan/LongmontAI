@@ -17,9 +17,10 @@ The thread running through all of it: **handing AI a whole task works only if so
 
 **In this edition:**
 
-- **New this fortnight: the release board**: GPT-6.2 Astra and Sol, Gemini 4 Neon and Hydrogen, Qwen4-Max, Grok Bot 1.0, Claude Meetings, Genie 4 for developers, and Claude Ship
+- **New this fortnight: the release board**: GPT-6.2 Astra and Sol, Gemini 4 Neon and Hydrogen, Qwen4-Max, Grok Bot 1.0, Claude Meetings, Genie 4 for developers, Claude Ship, and two more Claude releases on November 24
 - **From answers to ownership**: what "AI teammate" means, and what OpenAI's own safety report says to watch for
 - **Claude Ship: AI that reviews, fixes, and approves code**: Anthropic's take on letting a teammate sign off, under rules people write
+- **Two more Claude releases**: connectors that bring their own skills and run long jobs, and artifacts that become desktop apps
 - **Google's middle model scores near the top**: Gemini 4 Neon by the numbers, and why it sits near the efficient frontier on cost per task
 - **Models are learning to read molecules**: OpenAI's MedChemBench
 - **Xhigh effort beat max effort**: why the priciest setting can score lower
@@ -52,6 +53,8 @@ Here is what shipped between November 11 and November 25. Prices are the vendors
 | Nov 18 | **Gemini 4 Neon** | Google | Between Carbon and Hydrogen: complex work, faster | $3 / $15 |
 | Nov 19 | Genie 4 in the Gemini API | Google | Interactive generated worlds for developers | paid API tier |
 | Nov 23 | Claude Ship (Code Review GA; PR Steward and Claude Approvals in beta) | Anthropic | Agents that review, fix, and approve code changes on GitHub | billed by tokens; Team and Enterprise plans |
+| Nov 24 | Skills over MCP (beta), plus MCP Tasks and Elicitation | Anthropic | Connectors that bring their own know-how, run long jobs in the background, and ask you for input | included in paid plans; rolling out to Team and Enterprise |
+| Nov 24 | Install as app (beta) | Anthropic | Turn things Claude builds into Mac and Windows apps | all plans; counts toward plan usage limits |
 
 **GPT-6.2 Astra and Sol (November 17).** OpenAI says both models get better results while using fewer output tokens, and that Astra's slides, spreadsheets, and documents "read less like AI." Astra's token prices are 20% lower than GPT-6 Astra's. Both are in ChatGPT Work and Codex for paid plans and in the API ([OpenAI](https://openai.com/index/introducing-gpt-6-2-astra-sol/)).
 
@@ -135,6 +138,35 @@ A developer using Claude Code can type `/ship` when a change is ready. Claude pu
 Anthropic says its own Claude Code team runs Claude Ship on many of its pull requests, and that from June to September the team's merged pull requests "more than doubled" while the share of changes it had to undo fell by more than 40% ([Anthropic](https://claude.com/resources/articles/introducing-claude-ship)). Those are the company's own numbers about its own team, and nobody outside Anthropic has checked them.
 
 The design is the interesting part for everyone else. Claude Ship doesn't remove the reviewer; it moves the human's job from reading every line to **writing the rules for when a person must read**. That only works if the rules are good. Anthropic's own diagram carries the right footnote: "Claude Ship uses AI and may miss bugs, security vulnerabilities, or other issues."
+
+## Two more Claude releases (November 24)
+
+The day before this meetup, Anthropic shipped two more pieces of the teammate picture: Claude can now get expert know-how and long-running help from the outside tools it connects to, and the small apps Claude builds for you can become real desktop apps ([Anthropic, connectors](https://claude.com/resources/articles/skills-over-mcp-tasks-and-more); [Anthropic, desktop apps](https://claude.com/resources/articles/install-as-app); [@ClaudeDevs on X](https://x.com/ClaudeDevs/status/2125315491522650299)).
+
+### Connectors get smarter: skills, background tasks, and questions
+
+![Anthropic diagram, "Skills over MCP (beta): ship expertise alongside tools and resources." An MCP server gives Claude three layers: skills (domain knowledge tailored to each user or organization), tools (actions Claude can take), and resources (context Claude can pull in). Skills load only when needed and update with the server.](/weekly-screenshots/2026.11.25/claude-skills-over-mcp.png)
+
+Claude plugs into other software, such as a calendar, a database, or a company's internal systems, through **connectors** built on the Model Context Protocol (MCP), an open standard for connecting AI to other software. Anthropic says there are now more than 10,000 MCP connectors for Claude. The November 24 update lets those connectors do more than offer buttons to press:
+
+- **Skills over MCP (public beta).** A connector can now ship a **skill** along with its tools: packaged know-how about how to use them well, which can be tailored to a person or a company. Claude loads a skill only when it needs it, and the skill updates whenever the connector does.
+- **Tasks (generally available).** Claude can hand a long job, such as a big export or report, to a connector, keep working on other things, and pick up the result when it's ready.
+- **Elicitation (generally available).** A connector can pause and **ask you** for input through a form or a link, instead of guessing.
+- **File uploads (coming soon).** Claude will be able to pass PDFs, spreadsheets, and images to a connector.
+
+![Anthropic diagram, "Tasks: hand off long-running work." Claude hands off a long-running job to an MCP server, keeps working through several steps, and picks up the result when the server returns it.](/weekly-screenshots/2026.11.25/claude-mcp-tasks.png)
+
+Skills over MCP is on by default for Pro, Max, and Ultra plans, available to Team plans once an admin turns it on, and "coming soon" to Enterprise. Tasks and Elicitation are available now on Pro, Max, and Ultra, and rolling out to Team and Enterprise ([Anthropic](https://claude.com/resources/articles/skills-over-mcp-tasks-and-more)).
+
+### Artifacts become desktop apps
+
+![Anthropic's demo: a retro pixel-art desktop full of apps made as Claude artifacts, including an image editor, a body atlas, a terminal, and a break reminder, with a welcome window titled "Claude can now make desktop apps." Anthropic says these demo apps are not official Anthropic products.](/weekly-screenshots/2026.11.25/claude-artifacts-desktop-apps.png)
+
+An **artifact** is the small app, page, or tool Claude builds for you inside a chat. As of November 24, you can install one as a Mac or Windows app with its own icon and window, and share it with a link. "Starting today, you can use Claude artifacts to create, run, and share desktop apps," Anthropic says ([Anthropic](https://claude.com/resources/articles/install-as-app)).
+
+How much an app can do is set by permissions, in three levels: **default** (the same limits as a web page), **app permissions**, and **full computer access**. Team and Enterprise admins decide which levels their people can use. The feature is rolling out in beta on all plans and needs the Claude desktop app for Mac or Windows. It's on by default for Team plans with full access switched off, and off for Enterprise until an owner turns it on. It isn't available for HIPAA-ready organizations. Anything an app asks Claude to do counts toward your plan's usage limits.
+
+**Why it fits this edition.** Both releases hand Claude more of the work, and both come with a way to keep people in charge: a connector that stops to ask, and permission levels for what an app may touch on your computer.
 
 ## Google's middle model scores near the top
 
@@ -236,7 +268,7 @@ Our slide shows seven of the 64 countries. Two cautions: $30 a day is a prosperi
 
 ## Space: Starship came home
 
-![Bar chart in Longmont AI style: estimated cost to low Earth orbit per kilogram, log scale. Older rockets about $6,000 to $25,000, Falcon 9 about $2,600, Falcon Heavy about $1,500, Starship about $200 as a projection of full cost, and Starship's fuel alone about $2.50, from Musk's target of under $500,000 of propellant for over 200 tons of payload.](/weekly-screenshots/2026.11.25/slide-08-starship-catch.png)
+![Bar chart in Longmont AI style: estimated cost to low Earth orbit per kilogram, drawn to scale. Older rockets about $6,000 to $25,000, Falcon 9 about $2,600, Falcon Heavy about $1,500, Starship about $200 as a projection of full cost, and Starship's fuel alone about $2.50, from Musk's target of under $500,000 of propellant for over 200 tons of payload. At true scale, the Starship bars are a thin line and a hairline next to older rockets.](/weekly-screenshots/2026.11.25/slide-08-starship-catch.png)
 
 On November 14 at 2:20 PM Mountain time, the upper stage of SpaceX's Starship came back from orbit and was caught by the arms of its launch tower in Texas. It was the first time SpaceX has caught a Starship upper stage. The booster didn't make it: it diverted from its own catch and exploded just before hitting the water offshore in the Gulf of Mexico. The flight, which launched on November 13, also deployed 26 Starlink satellites ([Spaceflight Now](https://spaceflightnow.com/2026/11/13/live-coverage-starship-flight-15-attempts-to-recover-full-vehicle-in-double-launch-pad-catch/); [Aviation Week](https://aviationweek.com/space/operations-safety/starship-flight-15-ends-first-ship-tower-catch)).
 
@@ -255,6 +287,7 @@ On November 10, just before this window, Boulder County commissioners voted unan
 - **Gemini 4 Carbon, Neon, and Hydrogen** are three different Google models, from deepest to fastest. **Genie 4** is Google's world model, not a chatbot.
 - **GPT-6.2 Astra** is OpenAI's top model and **GPT-6.2 Sol** its everyday model. **Terra** and **Luna** are older, smaller lines.
 - **Claude Fable 5.2** is Anthropic's top public model. **Claude Opus 5.5** is its recommended everyday model. **Claude Meetings** and **Claude Ship** are products built on Claude, not models.
+- **MCP** (Model Context Protocol) is the standard for connecting Claude to other software. A **skill** is packaged know-how Claude loads when needed. An **artifact** is something Claude builds in a chat, and it can now be installed as a desktop app.
 - **Grok Bot** is xAI's AI-teammate app. **Grok** is the model family behind it.
 
 ## Key dates

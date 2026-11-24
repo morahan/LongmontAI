@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "ddf4bd1702e7b5c15e47bac9",
+  "releaseRevision": "70cbd42113f24a7594b5ed04",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,12 +12,12 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "96696eea222ac2c86cb838910423f928aeb2162689d819134d1a5d9019bebfdc"
+    "sha256": "fb49bdedb3c4e2b6abb8629919fc9d6b376374894865b39a2024302d5f6751f4"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
     "title": "From chatbot to teammate",
-    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch, launch costs, and where the \"$2/kg\" figure comes from, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
+    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch, launch costs drawn to scale, and where the \"$2/kg\" figure comes from, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
     "slides": [
       {
         "title": "From chatbot to teammate",
@@ -66,7 +66,19 @@ const release = Object.freeze({
       "file": "media/chatbot-to-teammate-briefing.pdf",
       "sourceUrl": "/documents/2026.11.25/chatbot-to-teammate-briefing.pdf",
       "contentType": "application/pdf",
-      "sha256": "c9d113c2089757a1fdd1528a0f613457f4bae1ca943aca31be412147bb858a86"
+      "sha256": "572023aa9078324737143a75379fb80677d6f8f928b2e768d76c204b387e6445"
+    },
+    "claude-artifacts-desktop-apps.png": {
+      "file": "media/claude-artifacts-desktop-apps.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-artifacts-desktop-apps.png",
+      "contentType": "image/png",
+      "sha256": "a31689d45642537001f4a12174ab05705b0dce9c74d0dd13027d8b81d2319a69"
+    },
+    "claude-mcp-tasks.png": {
+      "file": "media/claude-mcp-tasks.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-mcp-tasks.png",
+      "contentType": "image/png",
+      "sha256": "cf1ed97696e9cba473989c32899c6aef2924be1b0db9715e1b040b3c51b6700e"
     },
     "claude-ship-approvals-policy.png": {
       "file": "media/claude-ship-approvals-policy.png",
@@ -103,6 +115,12 @@ const release = Object.freeze({
       "sourceUrl": "/weekly-screenshots/2026.11.25/claude-ship-review-fix-approve.png",
       "contentType": "image/png",
       "sha256": "1477e7a3d29fac54e1ad610d027eb67a36797c571a3168c0a1fdff098861454e"
+    },
+    "claude-skills-over-mcp.png": {
+      "file": "media/claude-skills-over-mcp.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/claude-skills-over-mcp.png",
+      "contentType": "image/png",
+      "sha256": "6a7e6dbbb8b1218064209c622ed005298a49234e156553bdd2532ee51f9b8bf8"
     },
     "neon-intelligence-vs-cost-per-task.png": {
       "file": "media/neon-intelligence-vs-cost-per-task.png",
@@ -156,7 +174,7 @@ const release = Object.freeze({
       "file": "media/slide-08-starship-catch.png",
       "sourceUrl": "/weekly-screenshots/2026.11.25/slide-08-starship-catch.png",
       "contentType": "image/png",
-      "sha256": "e19229d366fda3e973e9d221e447f25c0ffa5623034e992516f401cbb4ee191b"
+      "sha256": "e4a82d079e359bbb4890b20326ce254c88bf50ac7120fd7bfda659cc189905ff"
     },
     "slide-09-billionaires-poverty.png": {
       "file": "media/slide-09-billionaires-poverty.png",

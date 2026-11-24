@@ -35,6 +35,10 @@
       {
         "name": "Claude Ship (Anthropic, Nov 23)",
         "detail": "Agents that review, fix, and approve code changes on GitHub. Claude approves only what a team's written policy allows, and Anthropic recommends starting in observe-only mode. Team and Enterprise plans."
+      },
+      {
+        "name": "Skills over MCP and desktop apps (Anthropic, Nov 24)",
+        "detail": "Connectors can now bring Claude packaged know-how (beta), run long jobs in the background, and ask you for input. Things Claude builds can also be installed as Mac and Windows apps (beta)."
       }
     ],
     "keyNews": [
@@ -76,7 +80,7 @@
   "slideshow": {
     "id": "chatbot-to-teammate",
     "title": "From chatbot to teammate",
-    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch, launch costs, and where the \"$2/kg\" figure comes from, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
+    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch, launch costs drawn to scale, and where the \"$2/kg\" figure comes from, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
     "slides": [
       {
         "title": "From chatbot to teammate",
