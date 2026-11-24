@@ -236,13 +236,15 @@ Our slide shows seven of the 64 countries. Two cautions: $30 a day is a prosperi
 
 ## Space: Starship came home
 
-![Bar chart in Longmont AI style: estimated cost to low Earth orbit per kilogram, log scale. Older rockets about $6,000 to $25,000, Falcon 9 about $2,600, Falcon Heavy about $1,500, Starship about $200 as a projection.](/weekly-screenshots/2026.11.25/slide-08-starship-catch.png)
+![Bar chart in Longmont AI style: estimated cost to low Earth orbit per kilogram, log scale. Older rockets about $6,000 to $25,000, Falcon 9 about $2,600, Falcon Heavy about $1,500, Starship about $200 as a projection of full cost, and Starship's fuel alone about $2.50, from Musk's target of under $500,000 of propellant for over 200 tons of payload.](/weekly-screenshots/2026.11.25/slide-08-starship-catch.png)
 
 On November 14 at 2:20 PM Mountain time, the upper stage of SpaceX's Starship came back from orbit and was caught by the arms of its launch tower in Texas. It was the first time SpaceX has caught a Starship upper stage. The booster didn't make it: it diverted from its own catch and exploded just before hitting the water offshore in the Gulf of Mexico. The flight, which launched on November 13, also deployed 26 Starlink satellites ([Spaceflight Now](https://spaceflightnow.com/2026/11/13/live-coverage-starship-flight-15-attempts-to-recover-full-vehicle-in-double-launch-pad-catch/); [Aviation Week](https://aviationweek.com/space/operations-safety/starship-flight-15-ends-first-ship-tower-catch)).
 
-Catching and reusing both stages is SpaceX's plan for making orbit far cheaper. On November 16, Elon Musk posted that Starship's "propellant cost per flight will drop below $500k and payload will exceed 200 tons." He gave no date. Fuel is only part of a launch's cost: building, refurbishing, and operating the rocket cost much more ([Tesla North](https://teslanorth.com/2026/11/16/musk-starship-propellant-cost-500000/)).
+Catching and reusing both stages is SpaceX's plan for making orbit far cheaper. Late on November 15, Elon Musk posted that Starship's "propellant cost per flight will drop below $500k and payload will exceed 200 tons." He gave no date. Fuel is only part of a launch's cost: building, refurbishing, and operating the rocket cost much more ([Musk on X](https://x.com/elonmusk/status/2122217639540134337); [Tesla North](https://teslanorth.com/2026/11/16/musk-starship-propellant-cost-500000/)).
 
-The slide shows cost per kilogram to low Earth orbit using estimates compiled by [Visual Capitalist](https://www.visualcapitalist.com/the-cost-of-space-flight/). The Starship figure is a projection, not a price anyone pays today.
+**Where "$2 a kilogram" comes from.** You may have seen claims that Starship will reach orbit for about $2 per kilogram. We couldn't find Musk or SpaceX saying that. It appears to come from dividing his post: $500,000 of fuel spread over 200 tons (200,000 kg) of payload is about $2.50 per kilogram. That counts fuel only, for targets with no date. Musk's own all-in goal is "under $100 a kilogram to orbit," which he gave in an interview with investor Ron Baron ([TASS](https://tass.com/economy/2214163)). Even that would be more than 25 times cheaper than Falcon 9 today.
+
+The slide shows cost per kilogram to low Earth orbit using estimates compiled by [Visual Capitalist](https://www.visualcapitalist.com/the-cost-of-space-flight/), plus the fuel-only $2.50 figure for comparison. Both Starship figures are projections, not prices anyone pays today.
 
 ## Colorado: Boulder County caps data centers
 

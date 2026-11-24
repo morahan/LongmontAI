@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Starship came home</title>
+<!-- Source for src/articles/drafts/assets/2026.11.25/slide-08-starship-catch.png.
+     Render: Chrome --headless=new --screenshot --window-size=1920,1080 this file.
+     Bar heights: log10($/kg) * 75 px, so $1 sits on the baseline. -->
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#09090b}
+.slide{width:1920px;height:1080px;position:relative;overflow:hidden;color:#fff;font-family:'Libre Baskerville',serif;
+background:radial-gradient(900px 700px at 0% 85%,rgba(121,40,202,.16),transparent 70%),radial-gradient(700px 500px at 100% 0%,rgba(0,240,255,.08),transparent 70%),#09090b}
+.mono{font-family:'JetBrains Mono',monospace;text-transform:uppercase}
+header{position:absolute;inset:0 0 auto 0;height:96px;background:#161618;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 64px}
+header .brand{display:flex;align-items:center;gap:20px;font-size:34px;font-weight:700}
+header img{width:56px;height:56px;border-radius:4px;object-fit:cover}
+header .count{color:#71717A;font-size:19px;letter-spacing:.3em}
+.eyebrow{position:absolute;left:96px;top:150px;color:#00F0FF;font-size:24px;letter-spacing:.3em;font-weight:500}
+h1{position:absolute;left:96px;top:196px;margin:0;font-size:86px;font-weight:700;letter-spacing:-.02em}
+.dek{position:absolute;left:96px;top:310px;margin:0;font-size:34px;color:#A1A1AA}
+.dek b{color:#fff;font-weight:400}
+.chart{position:absolute;left:96px;right:96px;top:420px;height:480px;display:grid;grid-template-columns:repeat(5,1fr);align-items:end}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:28px;margin-bottom:14px;white-space:nowrap}
+.bar{width:210px;border-radius:6px}
+.name{margin-top:22px;font-size:26px;color:#d4d4d8;text-align:center;line-height:1.25;height:66px}
+.name small{display:block;font-size:19px;color:#A1A1AA}
+.range{display:flex;flex-direction:column}.range i{display:block;border-radius:6px 6px 0 0;background:#27272a}.range u{display:block;border-radius:0 0 6px 6px;background:#3f3f46;margin-top:2px}
+.fuel{border:3px dashed #00F0FF;background:rgba(0,240,255,.12)}
+.fuel-val{color:#00F0FF}
+.est{border:3px dashed #FF0080;background:rgba(255,0,128,.18)}
+.base{position:absolute;left:96px;right:96px;top:832px;border-top:1px solid rgba(255,255,255,.12)}
+.note{position:absolute;left:96px;top:944px;color:#71717A;font-size:17px;letter-spacing:.14em}
+footer{position:absolute;inset:auto 0 0 0;height:84px;background:#1b1033;display:flex;align-items:center;justify-content:space-between;padding:0 64px;color:#71717A;font-size:19px;letter-spacing:.32em}
+</style>
+<section class="slide">
+<header><div class="brand"><img src="../../../public/brand/source/logo-master-2048.png" alt="">Longmont AI</div><div class="count mono">08 / 10 &middot; November 25 briefing</div></header>
+<div class="eyebrow mono">+ Longmont AI / November 25 briefing</div>
+<h1>Starship came home</h1>
+<p class="dek">A tower caught the upper stage on Nov 14. That viral <b>“$2/kg”</b> counts fuel only.</p>
+<div class="chart">
+  <div class="col"><div class="val">$6k–25k/kg</div><div class="bar range"><i style="height:45px"></i><u style="height:283px"></u></div><div class="name">Older rockets</div></div>
+  <div class="col"><div class="val">~$2,600/kg</div><div class="bar" style="height:256px;background:#7c5640"></div><div class="name">Falcon 9</div></div>
+  <div class="col"><div class="val">~$1,500/kg</div><div class="bar" style="height:238px;background:#FF9E64"></div><div class="name">Falcon Heavy</div></div>
+  <div class="col"><div class="val">~$200/kg</div><div class="bar est" style="height:173px"></div><div class="name">Starship<small>full cost, projected</small></div></div>
+  <div class="col"><div class="val fuel-val">~$2.50/kg</div><div class="bar fuel" style="height:30px"></div><div class="name">Starship fuel<small>Musk’s target, fuel only</small></div></div>
+</div>
+<div class="note mono">Cost to low Earth orbit, $/kg, log scale &middot; estimates via Visual Capitalist &middot; fuel: Musk’s &lt;$500k ÷ 200 t, no date</div>
+<footer class="mono"><span>longmontai.com</span><span>Curated by intelligence.</span></footer>
+</section></html>

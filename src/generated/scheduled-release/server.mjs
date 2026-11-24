@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "0aff8a8bc86658871a92cd76",
+  "releaseRevision": "ddf4bd1702e7b5c15e47bac9",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,12 +12,12 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "38cbcd3ea2f100d9b52e51fb2c90d2ad5bcb77c03b221b6c329a7f82fe6c81a7"
+    "sha256": "96696eea222ac2c86cb838910423f928aeb2162689d819134d1a5d9019bebfdc"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
     "title": "From chatbot to teammate",
-    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch and launch costs, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
+    "description": "Ten minimal slides for November 11–25, 2026: AI moving from chatbots to teammates, Gemini 4 Neon's scores, OpenAI's MedChemBench, why Xhigh effort beat max effort, August's spike in exploited zero-days, Gallup's AI optimism survey, Starship's first upper-stage catch, launch costs, and where the \"$2/kg\" figure comes from, and a chart on billionaires and poverty. Vendor-reported figures are labeled on each slide and in the article.",
     "slides": [
       {
         "title": "From chatbot to teammate",
@@ -66,7 +66,7 @@ const release = Object.freeze({
       "file": "media/chatbot-to-teammate-briefing.pdf",
       "sourceUrl": "/documents/2026.11.25/chatbot-to-teammate-briefing.pdf",
       "contentType": "application/pdf",
-      "sha256": "91bcd9f2fc66624e46c56ba0c765926faa452e75dd2c8a74fac85c450e4870fa"
+      "sha256": "c9d113c2089757a1fdd1528a0f613457f4bae1ca943aca31be412147bb858a86"
     },
     "claude-ship-approvals-policy.png": {
       "file": "media/claude-ship-approvals-policy.png",
@@ -156,7 +156,7 @@ const release = Object.freeze({
       "file": "media/slide-08-starship-catch.png",
       "sourceUrl": "/weekly-screenshots/2026.11.25/slide-08-starship-catch.png",
       "contentType": "image/png",
-      "sha256": "8a3a46095a9e131320dfaaca42002da3d92fbdb7a62a2dbaf33b54d3466bd05a"
+      "sha256": "e19229d366fda3e973e9d221e447f25c0ffa5623034e992516f401cbb4ee191b"
     },
     "slide-09-billionaires-poverty.png": {
       "file": "media/slide-09-billionaires-poverty.png",
