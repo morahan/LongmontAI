@@ -1680,8 +1680,8 @@ test('constellation buckets preserve exact fixed brands and weighted alternative
   const buckets = Array.from({ length: CONSTELLATION_BUCKET_COUNT },
     (_, bucket) => getConstellationPhraseForBucket(bucket));
   assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_BRAND_PHRASE).length,
-    CONSTELLATION_BUCKET_COUNT * 0.35);
-  assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_SECOND_BRAND_PHRASE).length, CONSTELLATION_BUCKET_COUNT * 0.15);
+    CONSTELLATION_BUCKET_COUNT * 35 / 100);
+  assert.equal(buckets.filter((phrase) => phrase === STAR_TEXT_SECOND_BRAND_PHRASE).length, CONSTELLATION_BUCKET_COUNT * 15 / 100);
   STAR_TEXT_ALTERNATIVES.forEach(({ phrase, weightUnits }) => {
     assert.equal(buckets.filter((candidate) => candidate === phrase).length, weightUnits * 10, phrase);
   });

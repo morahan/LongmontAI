@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-12T04:49:18.121Z",
+  "checkedAt": "2026-11-24T13:00:20.771Z",
   "successfulSources": 10,
   "totalSources": 12,
   "detectedModels": [
@@ -31,6 +31,7 @@
     "GLM-5.1",
     "GLM-5.2",
     "GLM-5.3",
+    "GLM-5.4",
     "GPT-2",
     "GPT-3",
     "GPT-3.5",
@@ -54,6 +55,7 @@
     "GPT-6.1",
     "GPT-6.1 Sol",
     "GPT-6.1 Terra",
+    "GPT-6.2 Astra",
     "Gemini 3.5",
     "Gemini 3.5 Flash",
     "Gemini 3.6 Flash",
