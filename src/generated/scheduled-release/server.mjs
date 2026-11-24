@@ -4,7 +4,7 @@ const release = Object.freeze({
   "editionId": "edition-2026-11-25-chatbot-to-teammate",
   "publishAt": "2026-11-25T11:30:00-07:00",
   "publishAtMs": 1795631400000,
-  "releaseRevision": "70cbd42113f24a7594b5ed04",
+  "releaseRevision": "b567b23f78928c4e67d43eb6",
   "source": {
     "manifest": "src/articles/drafts/2026.11.25-chatbot-to-teammate.release.json",
     "article": "src/articles/drafts/2026.11.25-chatbot-to-teammate.md",
@@ -12,7 +12,7 @@ const release = Object.freeze({
   },
   "article": {
     "file": "article.md",
-    "sha256": "fb49bdedb3c4e2b6abb8629919fc9d6b376374894865b39a2024302d5f6751f4"
+    "sha256": "8cf00a17224fd2df9c33210dc723a23c4c15d5b9245ee91e2e61e1a024f21df8"
   },
   "slideshow": {
     "id": "chatbot-to-teammate",
@@ -187,6 +187,18 @@ const release = Object.freeze({
       "sourceUrl": null,
       "contentType": "image/png",
       "sha256": "b9fc8088e8e42be172217b9eed3550ba13cfc946ce6a05cf4630a9cce03d1698"
+    },
+    "tesla-fsd-v15-in-car.png": {
+      "file": "media/tesla-fsd-v15-in-car.png",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/tesla-fsd-v15-in-car.png",
+      "contentType": "image/png",
+      "sha256": "4956193a6fe4cfde4fe5b9a95732e3fb3333c54ab21611744e09e68b212023a2"
+    },
+    "tesla-fsd-v15-reality-view-shots.jpg": {
+      "file": "media/tesla-fsd-v15-reality-view-shots.jpg",
+      "sourceUrl": "/weekly-screenshots/2026.11.25/tesla-fsd-v15-reality-view-shots.jpg",
+      "contentType": "image/jpeg",
+      "sha256": "680d8aa9071489e8b3ea9a79e86d8b4eb7f1c6c66499ac58b6bf34e0e9e149ea"
     },
     "who-checks-the-work-01-cover.jpg": {
       "file": "media/who-checks-the-work-01-cover.jpg",

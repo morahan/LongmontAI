@@ -24,6 +24,7 @@ The thread running through all of it: **handing AI a whole task works only if so
 - **Google's middle model scores near the top**: Gemini 4 Neon by the numbers, and why it sits near the efficient frontier on cost per task
 - **Models are learning to read molecules**: OpenAI's MedChemBench
 - **Xhigh effort beat max effort**: why the priciest setting can score lower
+- **Tesla FSD v15: the car shows you its plan**, and why Tesla's driver still has to watch
 - **Security: patches become attacks faster**, and attackers bring agents
 - **California sues OpenAI**
 - **How the world feels about AI**: Gallup's 37-country survey
@@ -52,6 +53,7 @@ Here is what shipped between November 11 and November 25. Prices are the vendors
 | Nov 17 | GPT-6.2 Sol | OpenAI | Everyday work | $2 / $10 |
 | Nov 18 | **Gemini 4 Neon** | Google | Between Carbon and Hydrogen: complex work, faster | $3 / $15 |
 | Nov 19 | Genie 4 in the Gemini API | Google | Interactive generated worlds for developers | paid API tier |
+| Nov 21 | Tesla FSD (Supervised) v15 | Tesla | Driver assistance that shows its plan on screen; early rollout | included with FSD; AI4 (Hardware 4) cars |
 | Nov 23 | Claude Ship (Code Review GA; PR Steward and Claude Approvals in beta) | Anthropic | Agents that review, fix, and approve code changes on GitHub | billed by tokens; Team and Enterprise plans |
 | Nov 24 | Skills over MCP (beta), plus MCP Tasks and Elicitation | Anthropic | Connectors that bring their own know-how, run long jobs in the background, and ask you for input | included in paid plans; rolling out to Team and Enterprise |
 | Nov 24 | Install as app (beta) | Anthropic | Turn things Claude builds into Mac and Windows apps | all plans; counts toward plan usage limits |
@@ -227,6 +229,27 @@ Many AI tools now let you choose how hard a model "thinks." More thinking costs 
 Anthropic's launch chart for Claude Fable 5.2 (released November 9, just before this window) shows it on FrontierCode 2.0, a test of whether a model's code changes would be accepted by the people who maintain real open-source projects. At "Xhigh" effort it scored 49.1% at about $14 per task. At "Max" effort it cost about $45 per task, roughly three times more, and scored lower, 45.6% ([Anthropic](https://www.anthropic.com/claude-fable-and-mythos-5-2); per-task costs as read from Anthropic's chart by [Reconscribe](https://reconscribe.com/claude-fable-5-2/)). Anthropic also says Fable 5.2 at High effort roughly matched Opus 5.5's best score for about half the cost per task.
 
 The lesson for anyone paying for AI: start below the top setting, and pay for max only when you've seen it help on your own work.
+
+## Tesla FSD v15: the car shows you its plan
+
+![Six screenshots Tesla released of Reality View in FSD v15: the car's screen shows a live, generated view of the drive from just above and behind the car, with the planned path drawn in blue, on San Francisco streets at night, the Golden Gate Bridge, a coastal road, a highway, Lombard Street, and a city intersection. Image: Tesla, via Teslarati.](/weekly-screenshots/2026.11.25/tesla-fsd-v15-reality-view-shots.jpg)
+
+On November 21, Tesla began rolling out **FSD (Supervised) v15**, the newest version of its driver-assistance software, to a first small group of cars ([Tesla on X](https://x.com/Tesla/status/2124222447855743019); [release notes from Tesla's AI account](https://x.com/TeslaSI/status/2124223658680061958)). "Supervised" is the important word: the driver still has to pay attention and be ready to take over. The update is software version 2026.38.6.11, and release-note trackers list it for cars with Tesla's newer AI4 computer, also called Hardware 4 ([Not a Tesla App](https://www.notateslaapp.com/software-updates/version/2026.38.6.11/release-notes)).
+
+What Tesla says is new:
+
+- **Safety.** "25x better handling of safety critical cases," which Tesla credits to a new vision system it shares with its Robotaxi service and Optimus robot.
+- **Tesla Reality View.** Instead of the old cartoon-style display, the screen shows a live, generated picture of the drive, as if from a camera just above the car, so drivers can "see & control what FSD is planning to do."
+- **Seeing more.** Better detection of road signs, small animals, debris, potholes, and deep standing water.
+- **Speed and routes.** Speeds tuned to each driving profile, school zones, and bad weather; slowing for speed cameras; route choices learned from the fleet for the start and end of trips; and parking spots based on your history.
+- **Bike Rack Mode.** FSD works with a bike rack attached, and won't reverse.
+- **Driver monitoring.** The camera that checks whether you're paying attention now works through hats and sunglasses, and is less strict in the higher-speed driving profiles.
+
+![FSD v15 on a Tesla's center screen at night: Reality View shows a realistic, generated city street with the car's planned path, above the media and trip controls. Image: Tesla release notes, via Not a Tesla App.](/weekly-screenshots/2026.11.25/tesla-fsd-v15-in-car.png)
+
+**When everyone gets it.** Elon Musk posted that "FSD V15 goes to wide release next month," meaning December ([as quoted by Tesla Oracle](https://www.teslaoracle.com/2026/11/21/tesla-fsd-v15-to-go-wide-release-with-the-2026-holiday-update-and-mind-bending-reality-renders-in-december-says-musk/)). Early on November 21 he wrote that the new display "will re-render reality in a mind-bending way" ([Musk on X](https://x.com/elonmusk/status/2124051536170914023)). Asked about newer hardware, he said cars "will remain at AI4. That's enough to solve superhuman driving" ([Musk on X](https://x.com/elonmusk/status/2124475458150334900)).
+
+**What to keep in mind.** The 25x figure is Tesla's own, and Electrek points out that Tesla "still doesn't share the actual number, only the multiplier" ([Electrek](https://electrek.co/2026/11/21/tesla-fsd-v15-rollout-25x-safety-reality-view/)). Teslarati's first drive found Reality View running a fraction of a second behind the view through the windshield ([Teslarati](https://www.teslarati.com/tesla-full-self-driving-v15-rollout-begins-full-release-notes-improvements/)). And easing attention checks at higher speeds cuts against this edition's theme: the more a system does on its own, the more it matters that a person is still watching.
 
 ## Security: patches become attacks faster
 

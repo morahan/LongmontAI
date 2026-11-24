@@ -47,6 +47,10 @@
         "detail": "Anthropic's chart shows Claude Fable 5.2 scoring 49.1% on FrontierCode 2.0 at Xhigh effort and 45.6% at Max, which cost about three times more per task."
       },
       {
+        "headline": "Tesla starts rolling out FSD v15",
+        "detail": "Tesla's supervised driver assistance now shows a live, generated view of the drive and its plan. Tesla claims 25x better handling of safety-critical cases; Musk says wide release comes in December."
+      },
+      {
         "headline": "Patches become attacks faster",
         "detail": "Google Threat Intelligence Group says growth in exploited flaws is concentrated in quickly weaponized, already-disclosed bugs. Zero-days rose only marginally, apart from a jump to 22 in August."
       },
