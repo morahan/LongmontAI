@@ -5,7 +5,7 @@
    "url": "https://droneauthority.org/guides/drone-delivery-availability"
   },
   {
-   "name": "DroneXL Drone Delivery Tracker (FAA filings, operator markets; updated 2026-11-04)",
+   "name": "DroneXL Drone Delivery Tracker (FAA filings, operator markets; updated 2026-11-12)",
    "url": "https://dronexl.co/tracker/drone-delivery/"
   },
   {
@@ -285,8 +285,8 @@
   },
   "US-GA": {
    "level": "commercial",
-   "summary": "Wing flies Walmart orders in Metro Atlanta; Amazon Prime Air has announced Atlanta.",
-   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+   "summary": "Wing flies Walmart orders in Metro Atlanta; Amazon Prime Air began flying from Stone Mountain in November 2026.",
+   "source": "https://dronexl.co/2026/11/18/amazon-prime-air-atlanta-gwinnett-drone-delivery-launch/"
   },
   "US-ID": {
    "level": "commercial",
@@ -325,8 +325,8 @@
   },
   "US-OH": {
    "level": "commercial",
-   "summary": "Amazon Prime Air flies from North Randall and Zipline delivers Cleveland Clinic prescriptions from Beachwood.",
-   "source": "https://dronexl.co/tracker/drone-delivery/towns/north-randall-oh/"
+   "summary": "Amazon Prime Air flies from North Randall, Etna and Rossford, and Zipline delivers Cleveland Clinic prescriptions from Beachwood.",
+   "source": "https://dronexl.co/2026/11/23/amazon-prime-air-toledo-rossford-ohio-drone-delivery-launch/"
   },
   "US-OK": {
    "level": "commercial",
@@ -365,14 +365,14 @@
    "kind": "drone-hub",
    "name": "Amazon Prime Air Atlanta",
    "operator": "Amazon Prime Air",
-   "lat": 33.749,
-   "lon": -84.388,
+   "lat": 33.8082,
+   "lon": -84.1702,
    "precision": "town",
-   "place": "Atlanta, Georgia",
+   "place": "Stone Mountain, Georgia",
    "country": "USA",
-   "status": "announced",
-   "detail": "Amazon says Prime Air will launch soon in the Atlanta metro area.",
-   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+   "status": "commercial",
+   "detail": "First metro Atlanta deliveries on 14-15 November 2026 from the Stone Mountain fulfilment centre in Gwinnett County.",
+   "source": "https://dronexl.co/2026/11/18/amazon-prime-air-atlanta-gwinnett-drone-delivery-launch/"
   },
   {
    "id": "drone-amazon-baton-rouge",
@@ -401,6 +401,20 @@
    "status": "pilot",
    "detail": "Amazon's first site outside the US; a CAA trial capped at 100 flights a day runs through December 2026.",
    "source": "https://dronexl.co/2026/08/07/amazon-prime-air-uk-darlington-december-caa-verdict/"
+  },
+  {
+   "id": "drone-amazon-etna",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Etna",
+   "operator": "Amazon Prime Air",
+   "lat": 39.9573,
+   "lon": -82.6813,
+   "precision": "town",
+   "place": "Etna, Ohio",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Eastern Columbus deliveries within 7.5 miles of the CMH1 fulfilment centre, reported live on 17 November 2026.",
+   "source": "https://spectrumnews1.com/oh/dayton/news/2026/11/17/amazon-air-in-columbus"
   },
   {
    "id": "drone-amazon-hazel-park",
@@ -443,6 +457,20 @@
    "status": "commercial",
    "detail": "Amazon's first Illinois drone delivery centre, serving Chicago's south suburbs; official launch 10 November 2026.",
    "source": "https://www.wbez.org/business/2026/11/10/amazon-drone-delivery-center-in-markham-set-for-takeoff"
+  },
+  {
+   "id": "drone-amazon-mt-juliet",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Mt. Juliet",
+   "operator": "Amazon Prime Air",
+   "lat": 36.2001,
+   "lon": -86.5186,
+   "precision": "town",
+   "place": "Mt. Juliet, Tennessee",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Drones seen over Mt. Juliet in November 2026; Amazon's Prime Air site lists Nashville as coming soon.",
+   "source": "https://dronexl.co/2026/11/23/amazon-prime-air-drones-mt-juliet-tennessee-nashville-coming-soon"
   },
   {
    "id": "drone-amazon-nampa",
@@ -527,6 +555,20 @@
    "status": "commercial",
    "detail": "Houston-area Prime Air site on Amazon's list of 11 active US locations.",
    "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-rossford",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Rossford",
+   "operator": "Amazon Prime Air",
+   "lat": 41.6098,
+   "lon": -83.5644,
+   "precision": "town",
+   "place": "Rossford, Ohio",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Toledo-area deliveries within 7.5 miles of the Crossroads Parkway fulfilment centre, announced live 22 November 2026.",
+   "source": "https://dronexl.co/2026/11/23/amazon-prime-air-toledo-rossford-ohio-drone-delivery-launch/"
   },
   {
    "id": "drone-amazon-ruskin",
