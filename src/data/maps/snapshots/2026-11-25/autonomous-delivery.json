@@ -57,11 +57,15 @@
    "url": "https://admobility.gov.ae/en/news/pilot-autonomous-delivery-services-in-collaboration-with-masdar-city"
   },
   {
+   "name": "DoorDash newsroom: Dot deliveries in Fremont and Salt Lake City pilot (Nov 2026)",
+   "url": "https://about.doordash.com/en-us/news/doordash-dot-begins-deliveries-in-fremont"
+  },
+  {
    "name": "State statutes and legislature documents (see per-region source)",
    "url": "https://azleg.gov/ars/28/01222.htm"
   }
  ],
- "notes": "Ground delivery robots and driverless delivery vehicles as of 11 Nov 2026, one marker per city per operator. Starship ended US campus service in mid-2026 so those sites are omitted; China, Finland and campus fleets are far larger than the markers shown, and about 20 US states with no located statute are left as no data.",
+ "notes": "Ground delivery robots and driverless delivery vehicles as of 25 Nov 2026, one marker per city per operator. Starship ended US campus service in mid-2026 so those sites are omitted; China, Finland and campus fleets are far larger than the markers shown, and about 20 US states with no located statute are left as no data.",
  "regions": {
   "ARE": {
    "level": "commercial",
@@ -85,8 +89,8 @@
   },
   "CAN": {
    "level": "pilot",
-   "summary": "City by city: Toronto banned sidewalk robots in 2021, while Vancouver approved a six-month Serve Robotics pilot in May 2026.",
-   "source": "https://www.ctvnews.ca/vancouver/article/delivery-robots-rolling-onto-vancouvers-sidewalks-after-council-approves-pilot-project/"
+   "summary": "City by city: Toronto banned sidewalk robots in 2021, and Vancouver council voted in November 2026 to rescind its approved Serve Robotics pilot before it began.",
+   "source": "https://thetyee.ca/News/2026/11/20/Vancouver-Council-Passes-Peoples-Audit/"
   },
   "CHE": {
    "level": "pilot",
@@ -204,9 +208,9 @@
    "source": "https://www.axios.com/local/chicago/2026/09/21/chicago-delivery-robots-coco-serve-robotics"
   },
   "US-IN": {
-   "level": "permitted",
-   "summary": "Indiana Code 9-21-11.5 permits personal delivery devices that carry an identifier and a controlled-stop system.",
-   "source": "https://codes.findlaw.com/in/title-9-motor-vehicles/in-code-sect-9-21-11-5-5/"
+   "level": "commercial",
+   "summary": "Indiana Code 9-21-11.5 permits personal delivery devices; Avride and Grubhub robots deliver at Purdue University since November 2026.",
+   "source": "https://www.purdue.edu/operations/blog/2026/11/13/purdue-food-co-brings-delivery-robots-back-to-campus/"
   },
   "US-KS": {
    "level": "permitted",
@@ -333,15 +337,15 @@
    "id": "del-avride-arlington",
    "kind": "sidewalk-robot",
    "name": "Avride Arlington County",
-   "operator": "Avride, Grubhub",
+   "operator": "Avride, Uber Eats, Grubhub",
    "lat": 38.88,
    "lon": -77.107,
    "precision": "town",
    "place": "Arlington, Virginia",
    "country": "USA",
-   "status": "announced",
-   "detail": "Named in the October 2026 Wonder and Avride expansion on Grubhub.",
-   "source": "https://www.phillyvoice.com/wonder-delivery-robots-philly-grubhub-avride/"
+   "status": "commercial",
+   "detail": "Uber Eats robots began running in the Rosslyn-Ballston corridor in June 2026; Grubhub named in the October 2026 Wonder expansion.",
+   "source": "https://foodondemand.com/06172026/uber-avride-roll-out-autonomous-delivery-in-northern-virginia/"
   },
   {
    "id": "del-avride-austin",
@@ -381,9 +385,9 @@
    "precision": "town",
    "place": "Hoboken, New Jersey",
    "country": "USA",
-   "status": "announced",
-   "detail": "Named in the October 2026 Wonder and Avride expansion on Grubhub.",
-   "source": "https://www.phillyvoice.com/wonder-delivery-robots-philly-grubhub-avride/"
+   "status": "pilot",
+   "detail": "City council approved a 12-month pilot with 10 Avride robots in the First Ward, expected to start in September 2026; Grubhub named in the October 2026 Wonder expansion.",
+   "source": "https://www.hobokengirl.com/hoboken-robot-delivery-pilot-program-approved/"
   },
   {
    "id": "del-avride-jersey-city",
@@ -426,6 +430,20 @@
    "status": "commercial",
    "detail": "Uber Eats robots in Center City, Chinatown and Old City since March 2026; Grubhub being added.",
    "source": "https://www.phillyvoice.com/wonder-delivery-robots-philly-grubhub-avride/"
+  },
+  {
+   "id": "del-avride-purdue",
+   "kind": "sidewalk-robot",
+   "name": "Avride at Purdue University",
+   "operator": "Avride, Grubhub",
+   "lat": 40.424,
+   "lon": -86.921,
+   "precision": "site",
+   "place": "West Lafayette, Indiana",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Grubhub robot delivery for Purdue Food Co. on the residential side of campus from November 2026, with more areas planned after Thanksgiving.",
+   "source": "https://www.purdue.edu/operations/blog/2026/11/13/purdue-food-co-brings-delivery-robots-back-to-campus/"
   },
   {
    "id": "del-baemin-dilly-gangnam",
@@ -592,8 +610,8 @@
    "place": "Fremont, California",
    "country": "USA",
    "status": "pilot",
-   "detail": "Phased rollout with the City of Fremont, where Dot is manufactured.",
-   "source": "https://chainstoreage.com/doordash-brings-proprietary-delivery-robot-new-market"
+   "detail": "Dot began making deliveries in November 2026 in Downtown/City Center, Centerville and Irvington under a phased city permit; the next phase needs separate approval.",
+   "source": "https://about.doordash.com/en-us/news/doordash-dot-begins-deliveries-in-fremont"
   },
   {
    "id": "del-dot-mesa",
@@ -610,6 +628,20 @@
    "source": "https://chainstoreage.com/doordash-deploys-proprietary-delivery-robot"
   },
   {
+   "id": "del-dot-salt-lake-city",
+   "kind": "road-robot",
+   "name": "DoorDash Dot Salt Lake City weather pilot",
+   "operator": "DoorDash",
+   "lat": 40.761,
+   "lon": -111.891,
+   "precision": "town",
+   "place": "Salt Lake City, Utah",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Eight chaperoned Dot robots testing rain and snow driving downtown through winter 2026-27, with no customer deliveries yet.",
+   "source": "https://kutv.com/news/local/doordash-tests-eight-autonomous-delivery-robots-on-salt-lake-city-streets"
+  },
+  {
    "id": "del-dot-tempe",
    "kind": "road-robot",
    "name": "DoorDash Dot Tempe",
@@ -622,6 +654,20 @@
    "status": "pilot",
    "detail": "Early-access programme for Dot, which drives on roads, bike lanes and sidewalks at up to 20 mph.",
    "source": "https://chainstoreage.com/doordash-deploys-proprietary-delivery-robot"
+  },
+  {
+   "id": "del-innok-regenstauf",
+   "kind": "road-robot",
+   "name": "Innok Robotics and Rewe Regenstauf",
+   "operator": "Innok Robotics, Rewe",
+   "lat": 49.124,
+   "lon": 12.131,
+   "precision": "town",
+   "place": "Regenstauf",
+   "country": "DEU",
+   "status": "pilot",
+   "detail": "Bavaria's first delivery robot on public roads: a six-month pilot from November 2026 on a 1 km route from the local Rewe market.",
+   "source": "https://logistik-heute.de/en/news/delivery-robotics-pilot-project-bavaria-aims-overcome-deployment-limits-autonomous-vehicles-293623.html"
   },
   {
    "id": "del-jahez-riyadh-roshn-front",
@@ -650,6 +696,34 @@
    "status": "pilot",
    "detail": "Campus robots introduced through a UBC and Rogers innovation partnership announced September 2025.",
    "source": "https://news.ubc.ca/2025/09/kiwibots-coming-to-ubc-vancouver/"
+  },
+  {
+   "id": "del-kiwibot-uc-irvine",
+   "kind": "sidewalk-robot",
+   "name": "Robot.com and Grubhub at UC Irvine",
+   "operator": "Robot.com (Kiwibot), Grubhub",
+   "lat": 33.641,
+   "lon": -117.844,
+   "precision": "site",
+   "place": "Irvine, California",
+   "country": "USA",
+   "status": "announced",
+   "detail": "New robots seen on campus in November 2026 after Starship left, but not yet open for orders.",
+   "source": "https://newuniversity.org/2026/11/17/zot-bots-return-to-uci-with-a-new-operator/"
+  },
+  {
+   "id": "del-litil-weiz",
+   "kind": "road-robot",
+   "name": "LiTil Robots food delivery test, Weiz",
+   "operator": "LiTil Robots, TU Wien",
+   "lat": 47.219,
+   "lon": 15.625,
+   "precision": "town",
+   "place": "Weiz",
+   "country": "AUT",
+   "status": "pilot",
+   "detail": "Accompanied four-wheeled robot testing fast-food delivery on the town's cycle paths since November 2026.",
+   "source": "https://steiermark.orf.at/stories/3380074/"
   },
   {
    "id": "del-loxo-bern",
@@ -706,6 +780,20 @@
    "status": "commercial",
    "detail": "Meituan vehicles had completed about 5 million orders in Shenzhen by October 2025.",
    "source": "https://chozan.co/food-delivery-robots/"
+  },
+  {
+   "id": "del-naver-riyadh",
+   "kind": "sidewalk-robot",
+   "name": "Naver NURI outdoor delivery robot, Riyadh",
+   "operator": "Naver",
+   "lat": 24.713,
+   "lon": 46.675,
+   "precision": "town",
+   "place": "Riyadh",
+   "country": "SAU",
+   "status": "announced",
+   "detail": "Outdoor delivery robot service targeted for the first half of 2027 after demonstrations in Riyadh residential complexes.",
+   "source": "https://www.businesskorea.co.kr/news/articleView.html?idxno=281137"
   },
   {
    "id": "del-neolix-changsha",
@@ -804,6 +892,20 @@
    "status": "commercial",
    "detail": "Neolix unmanned delivery vehicles are licensed to operate on Shanghai roads.",
    "source": "https://autonews.gasgoo.com/articles/news/neolixs-unmanned-delivery-vehicle-licensed-to-operate-in-shanghai-70033280"
+  },
+  {
+   "id": "del-neolix-singapore",
+   "kind": "road-robot",
+   "name": "Neolix Singapore",
+   "operator": "Neolix",
+   "lat": 1.352,
+   "lon": 103.82,
+   "precision": "town",
+   "place": "Singapore",
+   "country": "SGP",
+   "status": "pilot",
+   "detail": "M1 permit in November 2026 for public-road testing of the Xolra 6 delivery vehicle; route not disclosed.",
+   "source": "https://technode.global/2026/11/25/neolix-singapore-m1-autonomous-vehicle-permit/"
   },
   {
    "id": "del-neubility-seongnam",
@@ -1000,20 +1102,6 @@
    "status": "commercial",
    "detail": "Launched in 2026 in partnership with DoorDash.",
    "source": "https://www.therobotreport.com/serve-robotics-deploys-autonomous-delivery-robots-grubhub/"
-  },
-  {
-   "id": "del-serve-vancouver",
-   "kind": "sidewalk-robot",
-   "name": "Serve Robotics Vancouver pilot",
-   "operator": "Serve Robotics",
-   "lat": 49.283,
-   "lon": -123.121,
-   "precision": "town",
-   "place": "Vancouver, British Columbia",
-   "country": "CAN",
-   "status": "announced",
-   "detail": "Council approved a six-month sidewalk robot pilot for downtown and Kitsilano in May 2026.",
-   "source": "https://www.ctvnews.ca/vancouver/article/delivery-robots-rolling-onto-vancouvers-sidewalks-after-council-approves-pilot-project/"
   },
   {
    "id": "del-serve-washington-dc",
