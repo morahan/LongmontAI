@@ -1,0 +1,1876 @@
+{
+ "sources": [
+  {
+   "name": "Drone Authority: Where drone delivery is available in the U.S. (verified 2026-11-11)",
+   "url": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  {
+   "name": "DroneXL Drone Delivery Tracker (FAA filings, operator markets; updated 2026-11-04)",
+   "url": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "name": "Amazon: Prime Air locations and expansion",
+   "url": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "name": "Wing: Wing and Walmart name seven new markets (2026-06-08)",
+   "url": "https://wing.com/news/wing-and-walmart-seven-new-markets-drone-delivery"
+  },
+  {
+   "name": "Walmart: 300 new Zipline sites (2026-11-05)",
+   "url": "https://corporate.walmart.com/news/2026/11/walmart-expands-drone-delivery-network-with-zipline"
+  },
+  {
+   "name": "Drone Authority: Part 108 BVLOS rule status (2026-11-07)",
+   "url": "https://droneauthority.org/laws/part-108"
+  },
+  {
+   "name": "Zipline newsroom: Houston and Phoenix expansion (2026-01-21)",
+   "url": "https://www.zipline.com/newsroom/zipline-surpasses-2-million-deliveries-raises-more-than-600m-to-power-next-phase-of-growth-and-expands-operations-to-houston-and-phoenix"
+  },
+  {
+   "name": "Zipline newsroom: Rwanda nationwide expansion (2026-02-05)",
+   "url": "https://www.zipline.com/newsroom/rwanda-expands-with-zipline-to-become-first-country-in-the-world-with-nationwide-autonomous-delivery-including-africa-s-first-urban-drone-delivery-network"
+  },
+  {
+   "name": "Matternet: NHS operations in Central London (2026-04-24)",
+   "url": "https://www.matternet.com/newsroom/matternet-launches-nhs-operations-in-london"
+  },
+  {
+   "name": "Wing: Apian and NHS South West London deliveries",
+   "url": "https://wing.com/news/elevating-healthcare-logistics-wing-apian-nhs-south-west-london-drone-deliveries"
+  },
+  {
+   "name": "RTE: Manna ends Irish drone deliveries (2026-06-19)",
+   "url": "https://www.rte.ie/news/business/2026/0619/1579350-manna-drones-ireland/"
+  },
+  {
+   "name": "TechCrunch: Manna plots major US expansion (2026-07-08)",
+   "url": "https://techcrunch.com/2026/07/08/autonomous-drone-delivery-startup-manna-plots-major-u-s-expansion/"
+  },
+  {
+   "name": "AIN: Speedbird gains Brazil approval for urban BVLOS flights (2026-03)",
+   "url": "https://www.ainonline.com/aviation-news/futureflight/2026-03-19/speedbird-gains-brazil-approval-urban-bvlos-flights"
+  },
+  {
+   "name": "Yicai Global: Meituan drone delivery infrastructure goes commercial (2026-05)",
+   "url": "https://www.yicaiglobal.com/news/meituan-puts-drone-delivery-infrastructure-into-commercial-use"
+  },
+  {
+   "name": "Unmanned Airspace: Korea announces expansion of K-Drone operations",
+   "url": "https://www.unmannedairspace.info/latest-news-and-information/korea-announces-expansion-of-k-drone-operations/"
+  },
+  {
+   "name": "ACSL press releases (Japan Level 4 demonstrations, 2026-02)",
+   "url": "https://www.acsl.co.jp/en/news-release/press-release/4573/"
+  },
+  {
+   "name": "Hong Kong Transport and Logistics Bureau: Low-altitude Economy Regulatory Sandbox",
+   "url": "https://www.tlb.gov.hk/eng/highlights/transport/low-altitude.html"
+  },
+  {
+   "name": "AESA Spain: first SAIL III cargo authorisation (2026-06-30)",
+   "url": "https://www.seguridadaerea.gob.es/en/noticias/aesa-emite-la-primera-autorizacion-en-sail-iii-de-espana-para-el-transporte-de-mercancias"
+  },
+  {
+   "name": "Singapore Ministry of Transport: low altitude economy speech (2026)",
+   "url": "https://www.mot.gov.sg/news-resources/newsroom/response-speech-to-the-adjournment-motion--low-altitude-economy--building-the-flying-car--air-tourism-and-drone-logistics-industry--by-senior-minister-of-state-for-transport-and-national-development-ms-sun-xueling/"
+  },
+  {
+   "name": "DoorDash Australia help centre: Wing ceased service 2026-01-19",
+   "url": "https://help.doordash.com/en-au/consumers/article/drone-delivery"
+  }
+ ],
+ "notes": "One marker per metro or hub town per operator, drawn mainly from the DroneXL and Drone Authority trackers and operator pages. Most coordinates are town centres, not launch pads. Services that ended or paused are left off: DroneUp, Wing Australia, Manna Ireland, and four suspended Zipline hubs in Ghana and Nigeria. The FAA had not finalised its Part 108 long-range rule as of this snapshot.",
+ "regions": {
+  "ARE": {
+   "level": "commercial",
+   "summary": "Dubai's civil aviation authority licenses commercial BVLOS delivery; Keeta Drone flies food orders in two districts.",
+   "source": "https://thearabianpost.com/keeta-drone-restores-dubai-delivery-flights/"
+  },
+  "ARG": {
+   "level": "pilot",
+   "summary": "ANAC has sanctioned only trial cargo drone flights, begun in 2025 by DronesVIP with Speedbird Aero.",
+   "source": "https://zagdaily.com/zag-air/argentina-launches-drone-cargo-trials-to-enhance-regional-logistics/"
+  },
+  "AUS": {
+   "level": "permitted",
+   "summary": "CASA approves BVLOS operators case by case and runs a broad-area BVLOS trial; Wing ended its delivery service in January 2026.",
+   "source": "https://www.unmannedairspace.info/uncategorized/casa-to-continue-broad-area-bvlos-trial-as-long-term-guidance-is-developed/"
+  },
+  "BEL": {
+   "level": "pilot",
+   "summary": "Trials only: BVLOS medical flights between the AZ Turnhout hospital campuses started in August 2025 under the BURDI project.",
+   "source": "https://insideunmannedsystems.com/unifly-utm-technology-supports-medical-drone-deliveries-in-belgium-through-burdi-project/"
+  },
+  "BRA": {
+   "level": "commercial",
+   "summary": "ANAC approved routine BVLOS flights over dense urban areas in March 2026; Speedbird Aero flies iFood orders in two cities.",
+   "source": "https://www.ainonline.com/aviation-news/futureflight/2026-03-19/speedbird-gains-brazil-approval-urban-bvlos-flights"
+  },
+  "CAN": {
+   "level": "permitted",
+   "summary": "Transport Canada rules in force since 4 November 2025 allow lower-risk BVLOS without a special certificate; delivery routes remain few.",
+   "source": "https://www.unmannedairspace.info/?p=32272"
+  },
+  "CHE": {
+   "level": "permitted",
+   "summary": "Switzerland applies the EU drone rules; FOCA has approved specific medical lab routes such as Jedsy's from Buchs.",
+   "source": "https://www.cittimagazine.co.uk/videos/swiss-trial-sees-lab-deliveries-made-via-drone.html"
+  },
+  "CHN": {
+   "level": "commercial",
+   "summary": "A revised Civil Aviation Law regulates drones nationally, and Meituan, JD and others run routine urban delivery routes.",
+   "source": "https://www.yicaiglobal.com/news/meituan-puts-drone-delivery-infrastructure-into-commercial-use"
+  },
+  "CIV": {
+   "level": "commercial",
+   "summary": "Zipline delivers medical supplies from Daloa; the government approved an eight-year plan to grow from one hub to ten.",
+   "source": "https://dronexl.co/2026/09/22/zipline-ivory-coast-10-hubs-300-percent-return/"
+  },
+  "COL": {
+   "level": "permitted",
+   "summary": "Aerocivil approved a first Colombian company for drone deliveries in 2025; no routine public service is confirmed.",
+   "source": "https://www.eltiempo.com/colombia/medellin/exclusivo-esta-es-la-primera-empresa-colombiana-que-recibio-aprobacion-de-la-aerocivil-para-entregas-con-drones-3471234"
+  },
+  "DEU": {
+   "level": "permitted",
+   "summary": "EU drone rules apply; regulators approved a first permanent scheduled delivery drone line in Lüdenscheid in February 2024.",
+   "source": "https://t3n.de/news/drohnenlieferdienst-koerschulte-1609259/"
+  },
+  "ESP": {
+   "level": "permitted",
+   "summary": "EU drone rules apply; AESA issued Spain's first SAIL III authorisation for cargo drones over populated areas in June 2026.",
+   "source": "https://www.seguridadaerea.gob.es/en/noticias/aesa-emite-la-primera-autorizacion-en-sail-iii-de-espana-para-el-transporte-de-mercancias"
+  },
+  "FIN": {
+   "level": "commercial",
+   "summary": "EU drone rules apply; Manna flies Wolt food orders by drone in Espoo with final permits from the authorities.",
+   "source": "https://techcrunch.com/2025/11/30/behind-the-scenes-of-drone-food-delivery-in-finland"
+  },
+  "FRA": {
+   "level": "permitted",
+   "summary": "EU drone rules apply; La Poste runs a few DGAC-authorised parcel drone lines, the third opened in the Vercors in 2024.",
+   "source": "https://www.revolution.aero/?p=6726"
+  },
+  "GBR": {
+   "level": "commercial",
+   "summary": "No general BVLOS rule; the CAA approves case by case. Routine NHS sample flights run in London while Amazon flies a capped trial.",
+   "source": "https://www.techuk.org/resource/britain-s-drone-economy-is-stuck-between-trial-and-take-off.html"
+  },
+  "GHA": {
+   "level": "commercial",
+   "summary": "Zipline flies medical supplies under a state contract; three of six hubs are suspended over unpaid government bills.",
+   "source": "https://www.myjoyonline.com/zipline-medical-drone-delivery-ghana-operations-decline-as-nigeria-expands-to-reach-100m-people/"
+  },
+  "HKG": {
+   "level": "pilot",
+   "summary": "Drone delivery runs only as pilot projects under the government's Low-altitude Economy Regulatory Sandbox.",
+   "source": "https://www.tlb.gov.hk/eng/highlights/transport/low-altitude.html"
+  },
+  "IDN": {
+   "level": "pilot",
+   "summary": "Trials only: Grab and SKYY Network run a BVLOS food delivery pilot in Bali.",
+   "source": "https://www.ajot.com/news/a2z-drone-delivery-chosen-as-technology-partner-for-indonesia-drone-delivery-trials"
+  },
+  "IND": {
+   "level": "commercial",
+   "summary": "BVLOS delivery is approved operator by operator under the Drone Rules 2021; Skye Air and India Post run routine flights.",
+   "source": "https://droneintelligence.ai/intelligence/india-drone-delivery-market"
+  },
+  "IRL": {
+   "level": "permitted",
+   "summary": "EU drone rules apply and a 2025 national framework exists, but Manna paused the only delivery service in June 2026.",
+   "source": "https://www.rte.ie/news/business/2026/0619/1579350-manna-drones-ireland/"
+  },
+  "ISR": {
+   "level": "pilot",
+   "summary": "Deliveries fly only inside the state-run National Drone Initiative, which is moving from tests to simulated commercial operations.",
+   "source": "https://www.jns.org/israel-advances-to-next-stage-of-drone-based-commercial-deliveries/"
+  },
+  "ITA": {
+   "level": "pilot",
+   "summary": "EU drone rules apply; ENAC authorises BVLOS medical flights project by project, such as the Niguarda hospital trial in Milan.",
+   "source": "https://en.ilsole24ore.com/art/drones-urgent-deliveries-medicines-and-test-tubes-from-niguarda-hospital-AJwUhxwB"
+  },
+  "JPN": {
+   "level": "permitted",
+   "summary": "Level 4 flight, BVLOS over people, has been legal since December 2022; deliveries so far are demonstrations.",
+   "source": "https://dronelife.com/2026/01/28/japan-announces-first-area-based-level-4-drone-delivery/"
+  },
+  "KEN": {
+   "level": "commercial",
+   "summary": "Zipline delivers medical supplies from Chemelil in Kisumu County with approvals from the KCAA and defence ministry.",
+   "source": "https://www.the-star.co.ke/health/2025-11-15-the-silent-aircrafts-behind-kenyas-fastest-medical-deliveries"
+  },
+  "KOR": {
+   "level": "commercial",
+   "summary": "The state-backed K-Drone Delivery programme serves islands and parks, with 23 local governments taking part.",
+   "source": "https://www.unmannedairspace.info/latest-news-and-information/korea-announces-expansion-of-k-drone-operations/"
+  },
+  "MEX": {
+   "level": "restricted",
+   "summary": "NOM-107 covers drones in general, but BVLOS requirements are still being drafted and no delivery service runs.",
+   "source": "https://www.itsitio.com/mx/distribucion/entrega-con-drones-en-mexico-que-falta-para-que-sean-viables/"
+  },
+  "MWI": {
+   "level": "permitted",
+   "summary": "Malawi granted Wingcopter a nationwide flight permit for medical deliveries first run in Kasungu district.",
+   "source": "https://wingcopter.com/project/malawi_medical_delivery"
+  },
+  "MYS": {
+   "level": "pilot",
+   "summary": "Trials only; the government roadmap expects freight drone operations from the first quarter of 2027.",
+   "source": "https://www.thevibes.com/articles/news/124285/malaysia-targets-commercial-drone-economy-by-2030-as-cargo-flights-set-for-early-rollout"
+  },
+  "NGA": {
+   "level": "commercial",
+   "summary": "Zipline delivers medical supplies in Kaduna, Cross River and Bayelsa states and plans 12 more hubs by 2028.",
+   "source": "https://dronexl.co/2026/06/01/zipline-nigeria-expansion-12-hubs-2028/"
+  },
+  "NLD": {
+   "level": "pilot",
+   "summary": "Trials only: the medical drone pilot between the Isala hospitals in Meppel and Zwolle is extended to mid-2027.",
+   "source": "https://www.kpn.com/overons/nieuws/en/medical-drone-flights-between-meppel-and-zwolle-extended-until-mid-2027/"
+  },
+  "NOR": {
+   "level": "permitted",
+   "summary": "EU drone rules apply via the EEA; Aviant launched its Kyte home delivery service for remote areas in 2023.",
+   "source": "https://aircargoweek.com/norwegian-drone-logistics-company-aviant-launches-home-delivery-service/"
+  },
+  "NZL": {
+   "level": "permitted",
+   "summary": "Operators need CAA Part 102 certification; SkyDrop was approved for regular drone deliveries in 2023.",
+   "source": "https://evtolinsights.com/skydrop-to-begin-regular-drone-deliveries-after-final-approval-from-new-zealands-caa/"
+  },
+  "RWA": {
+   "level": "commercial",
+   "summary": "Zipline has delivered medical supplies nationwide since 2016; a 2026 agreement adds urban delivery and a third hub.",
+   "source": "https://www.zipline.com/newsroom/rwanda-expands-with-zipline-to-become-first-country-in-the-world-with-nationwide-autonomous-delivery-including-africa-s-first-urban-drone-delivery-network"
+  },
+  "SAU": {
+   "level": "pilot",
+   "summary": "GACA issued its first drone delivery permit in May 2026, limited to medicines at the Hajj holy sites in Makkah.",
+   "source": "https://www.arabnews.pk/node/2644896"
+  },
+  "SGP": {
+   "level": "pilot",
+   "summary": "BVLOS flights need case-by-case permits; drones are being trialled for ship-to-shore deliveries at the port.",
+   "source": "https://www.mot.gov.sg/news-resources/newsroom/response-speech-to-the-adjournment-motion--low-altitude-economy--building-the-flying-car--air-tourism-and-drone-logistics-industry--by-senior-minister-of-state-for-transport-and-national-development-ms-sun-xueling/"
+  },
+  "SWE": {
+   "level": "permitted",
+   "summary": "EU drone rules apply; foodora, Tele2 and Aviant began a drone food delivery rollout on Värmdö near Stockholm in 2025.",
+   "source": "https://www.telecomtv.com/content/5g/tele2-and-foodora-launch-drone-deliveries-outside-stockholm-52339/"
+  },
+  "THA": {
+   "level": "pilot",
+   "summary": "Trials only: the aviation regulator announced delivery drone trials for Bangkok in 2025.",
+   "source": "https://www.thestar.com.my/aseanplus/aseanplus-news/2025/04/27/thailand-to-launch-delivery-drone-trials-in-bangkok-this-year"
+  },
+  "US-AR": {
+   "level": "commercial",
+   "summary": "Zipline flies Walmart orders from Pea Ridge to 12 communities in Northwest Arkansas and Missouri.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  "US-AZ": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from Tolleson in the Phoenix area; Wing and Zipline have announced Phoenix.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  "US-FL": {
+   "level": "commercial",
+   "summary": "Wing flies Walmart orders in Greater Orlando and Amazon Prime Air flies from Ruskin near Tampa.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  "US-GA": {
+   "level": "commercial",
+   "summary": "Wing flies Walmart orders in Metro Atlanta; Amazon Prime Air has announced Atlanta.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  "US-ID": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air began flying from Nampa, near Boise, on 30 October 2026.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  "US-IL": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from Markham in Chicago's south suburbs.",
+   "source": "https://www.wbez.org/business/2026/11/10/amazon-drone-delivery-center-in-markham-set-for-takeoff"
+  },
+  "US-KS": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from Kansas City, Kansas.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  "US-LA": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from Baton Rouge; Wing has announced New Orleans.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  "US-MI": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from Hazel Park and Pontiac in the Detroit area.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  "US-NC": {
+   "level": "commercial",
+   "summary": "Wing flies Walmart and DoorDash orders in the Charlotte area, including a Lowe's pilot in Matthews.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  "US-NE": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from Papillion in the Omaha area.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  "US-OH": {
+   "level": "commercial",
+   "summary": "Amazon Prime Air flies from North Randall and Zipline delivers Cleveland Clinic prescriptions from Beachwood.",
+   "source": "https://dronexl.co/tracker/drone-delivery/towns/north-randall-oh/"
+  },
+  "US-OK": {
+   "level": "commercial",
+   "summary": "Manna launched its first full-scale US metro operation in Tulsa in July 2026.",
+   "source": "https://dronelife.com/?p=110333"
+  },
+  "US-TN": {
+   "level": "commercial",
+   "summary": "Wing began Walmart drone delivery in the Memphis area on 10 November 2026.",
+   "source": "https://actionnews5.com/2026/11/10/pretty-cool-walmart-launches-drone-grocery-delivery-bartlett-cordova-west-memphis"
+  },
+  "US-TX": {
+   "level": "commercial",
+   "summary": "Wing, Zipline, Amazon Prime Air, Flytrex and Manna all fly in Dallas-Fort Worth; Wing, Zipline and Amazon also serve Houston.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  "US-VA": {
+   "level": "commercial",
+   "summary": "Wing has flown from Christiansburg since 2019; DoorDash lists drone checkout in Southwest Virginia.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  "USA": {
+   "level": "commercial",
+   "summary": "Federal law. Carriers fly BVLOS delivery under FAA Part 135 and exemptions; the Part 108 BVLOS rule is still in White House review, not final.",
+   "source": "https://droneauthority.org/laws/part-108"
+  },
+  "ZAF": {
+   "level": "restricted",
+   "summary": "Routine BVLOS flight is not generally permitted yet; the SACAA is still working on a framework.",
+   "source": "https://dronexl.co/2026/06/09/amazon-south-africa-prime-air/"
+  }
+ },
+ "points": [
+  {
+   "id": "drone-amazon-atlanta",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Atlanta",
+   "operator": "Amazon Prime Air",
+   "lat": 33.749,
+   "lon": -84.388,
+   "precision": "town",
+   "place": "Atlanta, Georgia",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Amazon says Prime Air will launch soon in the Atlanta metro area.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-baton-rouge",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Baton Rouge",
+   "operator": "Amazon Prime Air",
+   "lat": 30.4515,
+   "lon": -91.1871,
+   "precision": "town",
+   "place": "Baton Rouge, Louisiana",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-darlington",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Darlington",
+   "operator": "Amazon Prime Air",
+   "lat": 54.5236,
+   "lon": -1.5595,
+   "precision": "town",
+   "place": "Darlington, England",
+   "country": "GBR",
+   "status": "pilot",
+   "detail": "Amazon's first site outside the US; a CAA trial capped at 100 flights a day runs through December 2026.",
+   "source": "https://dronexl.co/2026/08/07/amazon-prime-air-uk-darlington-december-caa-verdict/"
+  },
+  {
+   "id": "drone-amazon-hazel-park",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Hazel Park",
+   "operator": "Amazon Prime Air",
+   "lat": 42.4625,
+   "lon": -83.1041,
+   "precision": "town",
+   "place": "Hazel Park, Michigan",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "One of two Detroit-area Prime Air sites on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-kansas-city",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Kansas City",
+   "operator": "Amazon Prime Air",
+   "lat": 39.1141,
+   "lon": -94.6275,
+   "precision": "town",
+   "place": "Kansas City, Kansas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-markham",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Markham",
+   "operator": "Amazon Prime Air",
+   "lat": 41.5936,
+   "lon": -87.6948,
+   "precision": "town",
+   "place": "Markham, Illinois",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Amazon's first Illinois drone delivery centre, serving Chicago's south suburbs; official launch 10 November 2026.",
+   "source": "https://www.wbez.org/business/2026/11/10/amazon-drone-delivery-center-in-markham-set-for-takeoff"
+  },
+  {
+   "id": "drone-amazon-nampa",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Nampa",
+   "operator": "Amazon Prime Air",
+   "lat": 43.5407,
+   "lon": -116.5635,
+   "precision": "town",
+   "place": "Nampa, Idaho",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "First Idaho site, operating since 30 October 2026; the 7.5-mile circle reaches Meridian and part of Boise.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-amazon-north-randall",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air North Randall",
+   "operator": "Amazon Prime Air",
+   "lat": 41.4348,
+   "lon": -81.5257,
+   "precision": "town",
+   "place": "North Randall, Ohio",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Cleveland-area site: MK30 drones have flown from the CLE2 warehouse since 24 September 2026.",
+   "source": "https://dronexl.co/tracker/drone-delivery/towns/north-randall-oh/"
+  },
+  {
+   "id": "drone-amazon-papillion",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Papillion",
+   "operator": "Amazon Prime Air",
+   "lat": 41.1544,
+   "lon": -96.0422,
+   "precision": "town",
+   "place": "Papillion, Nebraska",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Omaha-area Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-pontiac",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Pontiac",
+   "operator": "Amazon Prime Air",
+   "lat": 42.6389,
+   "lon": -83.291,
+   "precision": "town",
+   "place": "Pontiac, Michigan",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "One of two Detroit-area Prime Air sites on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-richardson",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Richardson",
+   "operator": "Amazon Prime Air",
+   "lat": 32.9483,
+   "lon": -96.7299,
+   "precision": "town",
+   "place": "Richardson, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Dallas-area Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-richmond-tx",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Richmond",
+   "operator": "Amazon Prime Air",
+   "lat": 29.5822,
+   "lon": -95.7608,
+   "precision": "town",
+   "place": "Richmond, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Houston-area Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-ruskin",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Ruskin",
+   "operator": "Amazon Prime Air",
+   "lat": 27.7209,
+   "lon": -82.4332,
+   "precision": "town",
+   "place": "Ruskin, Florida",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Tampa-area Prime Air site; each site serves roughly 175 square miles.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-san-antonio",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air San Antonio",
+   "operator": "Amazon Prime Air",
+   "lat": 29.4241,
+   "lon": -98.4936,
+   "precision": "town",
+   "place": "San Antonio, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-syracuse",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Syracuse",
+   "operator": "Amazon Prime Air",
+   "lat": 43.0481,
+   "lon": -76.1474,
+   "precision": "town",
+   "place": "Syracuse, New York",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Amazon says Prime Air will launch soon in the Syracuse metro area.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-tolleson",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Tolleson",
+   "operator": "Amazon Prime Air",
+   "lat": 33.45,
+   "lon": -112.2593,
+   "precision": "town",
+   "place": "Tolleson, Arizona",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Phoenix-area Prime Air site, flying MK30 drones since November 2024.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-amazon-waco",
+   "kind": "drone-hub",
+   "name": "Amazon Prime Air Waco",
+   "operator": "Amazon Prime Air",
+   "lat": 31.5493,
+   "lon": -97.1467,
+   "precision": "town",
+   "place": "Waco, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Prime Air site on Amazon's list of 11 active US locations.",
+   "source": "https://www.aboutamazon.com/news/transportation/amazon-prime-air-drone-delivery-expansion"
+  },
+  {
+   "id": "drone-antwork-hangzhou",
+   "kind": "drone-hub",
+   "name": "Antwork Hangzhou medical network",
+   "operator": "Antwork",
+   "lat": 30.2741,
+   "lon": 120.1551,
+   "precision": "town",
+   "place": "Hangzhou, China",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "5G medical drone network by China Telecom, Antwork and Zhejiang University moving blood, samples and medicines.",
+   "source": "https://www.connectivity.technology/2026/05/5g-takes-medical-delivery-to-skies-in.html"
+  },
+  {
+   "id": "drone-anwb-zwolle",
+   "kind": "drone-hub",
+   "name": "ANWB Medical Drones, Isala",
+   "operator": "ANWB Medical Drones",
+   "lat": 52.5168,
+   "lon": 6.083,
+   "precision": "town",
+   "place": "Zwolle, Netherlands",
+   "country": "NLD",
+   "status": "pilot",
+   "detail": "Medical flights between the Isala hospitals in Meppel and Zwolle; 800 in year one, pilot extended to mid-2027.",
+   "source": "https://www.kpn.com/overons/nieuws/en/medical-drone-flights-between-meppel-and-zwolle-extended-until-mid-2027/"
+  },
+  {
+   "id": "drone-apian-wing-guys",
+   "kind": "drone-hub",
+   "name": "Apian and Wing, Guy's and St Thomas'",
+   "operator": "Apian, Wing",
+   "lat": 51.5033,
+   "lon": -0.0871,
+   "precision": "site",
+   "place": "London, England",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "Blood samples flown between Guy's and St Thomas' hospitals since October 2024; 13,000 items across London.",
+   "source": "https://dronexl.co/2026/10/20/apian-drone-flight-paths-guys-st-thomas-london-render/"
+  },
+  {
+   "id": "drone-apian-wing-st-georges",
+   "kind": "drone-hub",
+   "name": "Apian and Wing, St George's",
+   "operator": "Apian, Wing",
+   "lat": 51.4269,
+   "lon": -0.175,
+   "precision": "site",
+   "place": "Tooting, London, England",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "NHS samples flown between Nelson Health Centre and St George's Hospital in south west London.",
+   "source": "https://wing.com/news/elevating-healthcare-logistics-wing-apian-nhs-south-west-london-drone-deliveries"
+  },
+  {
+   "id": "drone-aviant-gustavsberg",
+   "kind": "drone-hub",
+   "name": "Aviant and foodora, Värmdö",
+   "operator": "Aviant, foodora",
+   "lat": 59.3266,
+   "lon": 18.389,
+   "precision": "town",
+   "place": "Gustavsberg, Sweden",
+   "country": "SWE",
+   "status": "pilot",
+   "detail": "Drone food delivery rollout on Värmdö outside Stockholm, starting with Bastard Burgers in February 2025.",
+   "source": "https://www.telecomtv.com/content/5g/tele2-and-foodora-launch-drone-deliveries-outside-stockholm-52339/"
+  },
+  {
+   "id": "drone-ddc-edmonton",
+   "kind": "drone-hub",
+   "name": "Edmonton International Airport drone route",
+   "operator": "Drone Delivery Canada (Volatus)",
+   "lat": 53.3097,
+   "lon": -113.5797,
+   "precision": "site",
+   "place": "Leduc, Alberta",
+   "country": "CAN",
+   "status": "commercial",
+   "detail": "Airport drone logistics hub; phase two added a 10 km route to a First Nation medical clinic in Leduc.",
+   "source": "https://www.passengerterminaltoday.com/news/sustainability/edmonton-international-launches-phase-two-of-commercial-drone-project.html"
+  },
+  {
+   "id": "drone-flytrex-frisco",
+   "kind": "drone-hub",
+   "name": "Flytrex Frisco and Little Elm",
+   "operator": "Flytrex",
+   "lat": 33.1507,
+   "lon": -96.8236,
+   "precision": "town",
+   "place": "Frisco, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "DoorDash restaurant orders flown to homes in parts of Frisco and Little Elm since June 2025.",
+   "source": "https://dronelife.com/2025/06/26/doordash-and-flytrex-launch-drone-delivery-in-dallas-fort-worth/"
+  },
+  {
+   "id": "drone-flytrex-rowlett",
+   "kind": "drone-hub",
+   "name": "Flytrex Rowlett",
+   "operator": "Flytrex",
+   "lat": 32.9029,
+   "lon": -96.5639,
+   "precision": "town",
+   "place": "Rowlett, Texas",
+   "country": "USA",
+   "status": "announced",
+   "detail": "New site announced in May 2026; Flytrex targets 60 Dallas-Fort Worth sites by mid-2027.",
+   "source": "https://www.thedronegirl.com/2026/05/22/flytrex-manufacturing-texas/"
+  },
+  {
+   "id": "drone-india-post-hajo",
+   "kind": "drone-hub",
+   "name": "India Post drone mail, Hajo",
+   "operator": "India Post, Skye Air",
+   "lat": 26.245,
+   "lon": 91.525,
+   "precision": "town",
+   "place": "Hajo, India",
+   "country": "IND",
+   "status": "commercial",
+   "detail": "First drone postal flights in Assam, from Hajo sub-post office; nine routes are identified from Hajo.",
+   "source": "https://www.tribuneindia.com/news/business/from-postmen-to-drones-india-post-turns-to-drones-for-faster-remote-delivery/"
+  },
+  {
+   "id": "drone-india-post-mandi",
+   "kind": "drone-hub",
+   "name": "India Post drone mail, Mandi",
+   "operator": "India Post, Skye Air",
+   "lat": 31.708,
+   "lon": 76.932,
+   "precision": "town",
+   "place": "Mandi, India",
+   "country": "IND",
+   "status": "commercial",
+   "detail": "Drone mail between Mandi head post office and Rehardhar, operational since 12 June 2026: 12 km in seven minutes.",
+   "source": "https://www.itln.in/cargo-drones/india-post-launches-drone-mail-service-in-himachal-1359489"
+  },
+  {
+   "id": "drone-japan-post-toyooka",
+   "kind": "drone-hub",
+   "name": "Japan Post Toyooka",
+   "operator": "Japan Post, ACSL",
+   "lat": 35.544,
+   "lon": 134.82,
+   "precision": "town",
+   "place": "Toyooka, Japan",
+   "country": "JPN",
+   "status": "pilot",
+   "detail": "Japan Post flew two ACSL PF4 drones at once for deliveries from 24 February to 3 March 2026.",
+   "source": "https://www.acsl.co.jp/en/news-release/press-release/4564/"
+  },
+  {
+   "id": "drone-jd-chongqing",
+   "kind": "drone-hub",
+   "name": "JD Logistics Chongqing",
+   "operator": "JD Logistics",
+   "lat": 29.402,
+   "lon": 106.54,
+   "precision": "town",
+   "place": "Banan, Chongqing, China",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "JD Logistics runs 14 drone routes in Chongqing, cutting a 25-minute mountain drive to an 8-minute flight.",
+   "source": "https://www.ichongqing.info/?p=159264"
+  },
+  {
+   "id": "drone-jedsy-buchs",
+   "kind": "drone-hub",
+   "name": "Jedsy, Dr Risch labs",
+   "operator": "Jedsy",
+   "lat": 47.1654,
+   "lon": 9.4776,
+   "precision": "town",
+   "place": "Buchs, St. Gallen, Switzerland",
+   "country": "CHE",
+   "status": "pilot",
+   "detail": "Lab-sample trial for the Dr Risch group in 2022; FOCA approved a first route between Vaduz and Buchs SG.",
+   "source": "https://www.cittimagazine.co.uk/videos/swiss-trial-sees-lab-deliveries-made-via-drone.html"
+  },
+  {
+   "id": "drone-kasa-jinju",
+   "kind": "drone-hub",
+   "name": "Drone and robot delivery demonstration, Jinju",
+   "operator": "Korea AeroSpace Administration",
+   "lat": 35.18,
+   "lon": 128.1076,
+   "precision": "town",
+   "place": "Jinju, South Korea",
+   "country": "KOR",
+   "status": "pilot",
+   "detail": "August 2026 demonstration of drones handing parcels to robots at apartment complexes.",
+   "source": "https://en.fnnews.com/news/202608281010047247"
+  },
+  {
+   "id": "drone-kdrone-goheung",
+   "kind": "drone-hub",
+   "name": "K-Drone Delivery Goheung",
+   "operator": "Goheung County",
+   "lat": 34.611,
+   "lon": 127.285,
+   "precision": "town",
+   "place": "Goheung, South Korea",
+   "country": "KOR",
+   "status": "commercial",
+   "detail": "County drone delivery service for island residents and tourists, officially launched 5 August 2025.",
+   "source": "https://www.asiae.co.kr/en/article/2025080513394350799"
+  },
+  {
+   "id": "drone-kdrone-sangju",
+   "kind": "drone-hub",
+   "name": "K-Drone Delivery Sangju",
+   "operator": "Korea Airports Corporation",
+   "lat": 36.4109,
+   "lon": 128.159,
+   "precision": "town",
+   "place": "Sangju, South Korea",
+   "country": "KOR",
+   "status": "announced",
+   "detail": "Korea Airports Corporation said in March 2026 it would establish a K-Drone Delivery service by November.",
+   "source": "https://view.asiae.co.kr/en/article/2026031711410390024"
+  },
+  {
+   "id": "drone-kdrone-seongnam",
+   "kind": "drone-hub",
+   "name": "K-Drone Delivery Seongnam",
+   "operator": "Seongnam City",
+   "lat": 37.42,
+   "lon": 127.1265,
+   "precision": "town",
+   "place": "Seongnam, South Korea",
+   "country": "KOR",
+   "status": "commercial",
+   "detail": "Weekend park delivery at Central Park and the Tancheon water play zones, with drone-to-robot handoff in 2026.",
+   "source": "https://www.asiae.co.kr/en/article/2026051307044795865"
+  },
+  {
+   "id": "drone-kdrone-wonju",
+   "kind": "drone-hub",
+   "name": "K-Drone Delivery Wonju",
+   "operator": "Wonju City",
+   "lat": 37.3422,
+   "lon": 127.9202,
+   "precision": "town",
+   "place": "Wonju, South Korea",
+   "country": "KOR",
+   "status": "pilot",
+   "detail": "Pilot delivery of local food to five campsites from 13 June 2026, weekly and then twice weekly in summer.",
+   "source": "https://openvan.camp/en/news/opening/wonju-launches-kdrone-delivery-service-expansion"
+  },
+  {
+   "id": "drone-kdrone-yeosu",
+   "kind": "drone-hub",
+   "name": "K-Drone Delivery Yeosu",
+   "operator": "Yeosu City",
+   "lat": 34.7604,
+   "lon": 127.6622,
+   "precision": "town",
+   "place": "Yeosu, South Korea",
+   "country": "KOR",
+   "status": "pilot",
+   "detail": "Selected for the K-Drone Delivery programme for a third straight year in 2025, serving nearby islands.",
+   "source": "https://www.asiae.co.kr/en/article/2025031013551343015"
+  },
+  {
+   "id": "drone-keeta-dubai-silicon-oasis",
+   "kind": "drone-hub",
+   "name": "Keeta Drone, Dubai Silicon Oasis",
+   "operator": "Keeta Drone (Meituan)",
+   "lat": 25.1217,
+   "lon": 55.3855,
+   "precision": "town",
+   "place": "Dubai Silicon Oasis, Dubai, United Arab Emirates",
+   "country": "ARE",
+   "status": "commercial",
+   "detail": "Food orders flown from Silicon Central Mall to pickup lockers; service resumed September 2026 with DCAA approval.",
+   "source": "https://thearabianpost.com/keeta-drone-restores-dubai-delivery-flights/"
+  },
+  {
+   "id": "drone-keeta-hong-kong",
+   "kind": "drone-hub",
+   "name": "Keeta Drone, Hong Kong Science Park",
+   "operator": "Keeta Drone (Meituan)",
+   "lat": 22.427,
+   "lon": 114.21,
+   "precision": "site",
+   "place": "Sha Tin, Hong Kong",
+   "country": "HKG",
+   "status": "pilot",
+   "detail": "First Hong Kong route, launched 2025: 1.8 km over water from Science Park to Ma On Shan Promenade.",
+   "source": "https://www.thestandard.com.hk/tech-and-startup/article/304164/Meituans-Keeta-launches-first-drone-delivery-route-in-Hong-Kong-charges-HK30-per-order"
+  },
+  {
+   "id": "drone-keeta-nad-al-sheba",
+   "kind": "drone-hub",
+   "name": "Keeta Drone, Nad Al Sheba",
+   "operator": "Keeta Drone (Meituan)",
+   "lat": 25.1456,
+   "lon": 55.3643,
+   "precision": "town",
+   "place": "Nad Al Sheba, Dubai, United Arab Emirates",
+   "country": "ARE",
+   "status": "commercial",
+   "detail": "Route launched October 2025 from Nad Al Sheba Avenue Mall to homes near the Grand Mosque.",
+   "source": "https://gulfnews.com/business/markets/drone-delivery-takes-flight-in-nad-al-sheba-as-dubai-launches-smart-sustainable-route-1.500323073"
+  },
+  {
+   "id": "drone-koerschulte-ludenscheid",
+   "kind": "drone-hub",
+   "name": "Koerschulte drone line",
+   "operator": "Third Element Aviation, Koerschulte",
+   "lat": 51.2198,
+   "lon": 7.6273,
+   "precision": "town",
+   "place": "Lüdenscheid, Germany",
+   "country": "DEU",
+   "status": "commercial",
+   "detail": "Germany's first permanent scheduled delivery drone line, approved 21 February 2024 for business customers.",
+   "source": "https://t3n.de/news/drohnenlieferdienst-koerschulte-1609259/"
+  },
+  {
+   "id": "drone-laposte-vercors",
+   "kind": "drone-hub",
+   "name": "La Poste Vercors drone line",
+   "operator": "La Poste",
+   "lat": 45.07,
+   "lon": 5.551,
+   "precision": "town",
+   "place": "Villard-de-Lans, France",
+   "country": "FRA",
+   "status": "commercial",
+   "detail": "La Poste's third parcel drone route, Villard-de-Lans to Corrençon-en-Vercors, carrying up to 10 kg.",
+   "source": "https://www.revolution.aero/?p=6726"
+  },
+  {
+   "id": "drone-lodd-abu-dhabi",
+   "kind": "drone-hub",
+   "name": "LODD and 7X parcel trial",
+   "operator": "LODD, 7X",
+   "lat": 24.4008,
+   "lon": 54.5759,
+   "precision": "town",
+   "place": "Khalifa City, Abu Dhabi, United Arab Emirates",
+   "country": "ARE",
+   "status": "pilot",
+   "detail": "First Abu Dhabi parcel drone trial in June 2025, flying from a post office to a drop zone by winch.",
+   "source": "https://www.mediaoffice.abudhabi/en/economy/with-the-support-of-abu-dhabi-investment-office-lodd-and-7x-conduct-first-parcel-delivery-trial-by-drone-in-abu-dhabi/"
+  },
+  {
+   "id": "drone-manna-espoo",
+   "kind": "drone-hub",
+   "name": "Manna Espoo",
+   "operator": "Manna",
+   "lat": 60.1704,
+   "lon": 24.763,
+   "precision": "town",
+   "place": "Espoo, Finland",
+   "country": "FIN",
+   "status": "commercial",
+   "detail": "Wolt food orders from Huuva's Niittari kitchen delivered by drone, reported operating in late 2025.",
+   "source": "https://techcrunch.com/2025/11/30/behind-the-scenes-of-drone-food-delivery-in-finland"
+  },
+  {
+   "id": "drone-manna-fort-worth",
+   "kind": "drone-hub",
+   "name": "Manna AllianceTexas",
+   "operator": "Manna",
+   "lat": 32.993,
+   "lon": -97.3184,
+   "precision": "town",
+   "place": "Fort Worth, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Flying since 2023 in Hillwood's AllianceTexas Mobility Innovation Zone and expanding in Dallas-Fort Worth.",
+   "source": "https://techcrunch.com/2026/07/08/autonomous-drone-delivery-startup-manna-plots-major-u-s-expansion/"
+  },
+  {
+   "id": "drone-manna-tulsa",
+   "kind": "drone-hub",
+   "name": "Manna Tulsa",
+   "operator": "Manna",
+   "lat": 36.154,
+   "lon": -95.9928,
+   "precision": "town",
+   "place": "Tulsa, Oklahoma",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Manna's first full-scale US metro operation, launched July 2026 alongside a planned factory.",
+   "source": "https://dronelife.com/?p=110333"
+  },
+  {
+   "id": "drone-matternet-london",
+   "kind": "drone-hub",
+   "name": "Matternet Central London",
+   "operator": "Matternet, Apian",
+   "lat": 51.5074,
+   "lon": -0.1278,
+   "precision": "town",
+   "place": "London, England",
+   "country": "GBR",
+   "status": "commercial",
+   "detail": "NHS deliveries between two Central London hospital campuses began in April 2026.",
+   "source": "https://www.matternet.com/newsroom/matternet-launches-nhs-operations-in-london"
+  },
+  {
+   "id": "drone-matternet-mountain-view",
+   "kind": "drone-hub",
+   "name": "Matternet Mountain View",
+   "operator": "Matternet",
+   "lat": 37.3861,
+   "lon": -122.0839,
+   "precision": "town",
+   "place": "Mountain View, California",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Small-scale, controlled home deliveries in Silicon Valley; expansion planned with partner Beeline UAS.",
+   "source": "https://www.thedronegirl.com/2026/07/20/matternet-drone-delivery-expansion-beeline-uas-2026/"
+  },
+  {
+   "id": "drone-mcmc-tawau",
+   "kind": "drone-hub",
+   "name": "Tawau medicine delivery pilot",
+   "operator": "MCMC, Ministry of Health",
+   "lat": 4.244,
+   "lon": 117.891,
+   "precision": "town",
+   "place": "Tawau, Malaysia",
+   "country": "MYS",
+   "status": "announced",
+   "detail": "Drone medicine delivery pilot announced in July 2026 for Tawau, Sabah.",
+   "source": "https://www.nst.com.my/amp/news/regional/2026/07/1492285/mcmc-health-ministry-launch-drone-medicine-delivery-pilot-project"
+  },
+  {
+   "id": "drone-meituan-beijing",
+   "kind": "drone-hub",
+   "name": "Meituan Badaling Great Wall",
+   "operator": "Meituan",
+   "lat": 40.354,
+   "lon": 116.006,
+   "precision": "town",
+   "place": "Badaling, Beijing, China",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Drone route delivering drinks and essentials to visitors at the Badaling section of the Great Wall.",
+   "source": "https://enapp.chinadaily.com.cn/a/202503/24/AP67e0b052a3108e2d112ffa96.html"
+  },
+  {
+   "id": "drone-meituan-guangzhou",
+   "kind": "drone-hub",
+   "name": "Meituan Guangzhou",
+   "operator": "Meituan",
+   "lat": 23.1291,
+   "lon": 113.2644,
+   "precision": "town",
+   "place": "Guangzhou, China",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Listed among the cities with Meituan drone routes; the company counted 70 routes by the end of 2025.",
+   "source": "https://www.yicaiglobal.com/news/meituan-puts-drone-delivery-infrastructure-into-commercial-use"
+  },
+  {
+   "id": "drone-meituan-shanghai",
+   "kind": "drone-hub",
+   "name": "Meituan Shanghai West Bund",
+   "operator": "Meituan",
+   "lat": 31.17,
+   "lon": 121.46,
+   "precision": "town",
+   "place": "Shanghai, China",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "West Bund network opened 10 September 2026 with nearly 20 food and drink chains, Meituan's second city network.",
+   "source": "https://www.yicaiglobal.com/news/meituan-launches-its-second-drone-delivery-network-in-china-at-shanghai-west-bund"
+  },
+  {
+   "id": "drone-meituan-shenzhen",
+   "kind": "drone-hub",
+   "name": "Meituan Shenzhen",
+   "operator": "Meituan",
+   "lat": 22.5431,
+   "lon": 114.0579,
+   "precision": "town",
+   "place": "Shenzhen, China",
+   "country": "CHN",
+   "status": "commercial",
+   "detail": "Meituan's first and largest drone delivery city, flying since 2021; 70 routes company-wide by end of 2025.",
+   "source": "https://www.yicaiglobal.com/news/meituan-puts-drone-delivery-infrastructure-into-commercial-use"
+  },
+  {
+   "id": "drone-niguarda-milan",
+   "kind": "drone-hub",
+   "name": "Niguarda Hospital drone trial",
+   "operator": "Niguarda Hospital",
+   "lat": 45.5097,
+   "lon": 9.1889,
+   "precision": "site",
+   "place": "Milan, Italy",
+   "country": "ITA",
+   "status": "pilot",
+   "detail": "Trial of urgent BVLOS deliveries of medicines and test tubes, flown with ENAC authorisation.",
+   "source": "https://en.ilsole24ore.com/art/drones-urgent-deliveries-medicines-and-test-tubes-from-niguarda-hospital-AJwUhxwB"
+  },
+  {
+   "id": "drone-pahang-temerloh",
+   "kind": "drone-hub",
+   "name": "Pahang hospital blood sample trial",
+   "operator": "Pahang state health pilot",
+   "lat": 3.45,
+   "lon": 102.417,
+   "precision": "town",
+   "place": "Temerloh, Malaysia",
+   "country": "MYS",
+   "status": "pilot",
+   "detail": "Blood samples flown between Hospital Bera and Hospital Sultan Haji Ahmad Shah in a 2026 proof of concept.",
+   "source": "https://www.thevibes.com/articles/news/126390/pahang-hospitals-test-drones-to-deliver-blood-samples"
+  },
+  {
+   "id": "drone-skye-air-bengaluru",
+   "kind": "drone-hub",
+   "name": "Skye Air Bengaluru",
+   "operator": "Skye Air",
+   "lat": 12.9716,
+   "lon": 77.5946,
+   "precision": "town",
+   "place": "Bengaluru, India",
+   "country": "IND",
+   "status": "commercial",
+   "detail": "Urban hyperlocal drone delivery; Skye Air dominates the segment in the Delhi region and Bengaluru.",
+   "source": "https://droneintelligence.ai/intelligence/india-drone-delivery-market"
+  },
+  {
+   "id": "drone-skye-air-gurugram",
+   "kind": "drone-hub",
+   "name": "Skye Air Gurugram",
+   "operator": "Skye Air",
+   "lat": 28.4595,
+   "lon": 77.0266,
+   "precision": "town",
+   "place": "Gurugram, India",
+   "country": "IND",
+   "status": "commercial",
+   "detail": "Doorstep deliveries combining drones and AI robots began in February 2026 in Skye Air's home city.",
+   "source": "https://www.business-standard.com/industry/news/skye-air-begins-drone-ai-powered-doorstep-deliveries-in-gurugram-126022400167_1.html"
+  },
+  {
+   "id": "drone-skye-air-mumbai",
+   "kind": "drone-hub",
+   "name": "Skye Air Mumbai (Wadala)",
+   "operator": "Skye Air",
+   "lat": 19.017,
+   "lon": 72.864,
+   "precision": "town",
+   "place": "Mumbai, India",
+   "country": "IND",
+   "status": "announced",
+   "detail": "Agreement with Siddha Sejal Group for Mumbai's first residential drone delivery pod at Siddha Sky, Wadala.",
+   "source": "https://www.stattimes.com/drones/skye-air-to-introduce-drone-powered-deliveries-in-mumbai-1357120"
+  },
+  {
+   "id": "drone-skyports-new-york",
+   "kind": "drone-hub",
+   "name": "Skyports East River trial",
+   "operator": "Skyports Drone Services",
+   "lat": 40.684,
+   "lon": -74.009,
+   "precision": "town",
+   "place": "Brooklyn, New York",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Year-long Port Authority trial from April 2026 flying pharmaceuticals between Manhattan and Brooklyn.",
+   "source": "https://dronexl.co/2026/04/27/skyports-east-river-medical-drone-trial/"
+  },
+  {
+   "id": "drone-skyports-orkney",
+   "kind": "drone-hub",
+   "name": "Royal Mail Orkney drone service",
+   "operator": "Skyports Drone Services, Royal Mail",
+   "lat": 58.9609,
+   "lon": -3.299,
+   "precision": "town",
+   "place": "Stromness, Scotland",
+   "country": "GBR",
+   "status": "pilot",
+   "detail": "Daily mail flights from Stromness to Graemsay and Hoy since 2023, extended to at least February 2026.",
+   "source": "https://www.digit.fyi/uks-first-drone-mail-service-in-orkney-extended-to-2026/"
+  },
+  {
+   "id": "drone-skyports-singapore",
+   "kind": "drone-hub",
+   "name": "Skyports Maritime Drone Estate",
+   "operator": "Skyports Drone Services",
+   "lat": 1.2715,
+   "lon": 103.8628,
+   "precision": "town",
+   "place": "Marina South, Singapore",
+   "country": "SGP",
+   "status": "pilot",
+   "detail": "BVLOS shore-to-ship flights carrying bunker fuel samples to tankers, first completed in July 2025.",
+   "source": "https://www.unmannedairspace.info/uncategorized/first-drone-operations-involving-bunker-tanker-vessels-completed-in-singapore/"
+  },
+  {
+   "id": "drone-skyports-turnhout",
+   "kind": "drone-hub",
+   "name": "AZ Turnhout medical drone trial",
+   "operator": "Skyports Drone Services",
+   "lat": 51.3227,
+   "lon": 4.9447,
+   "precision": "town",
+   "place": "Turnhout, Belgium",
+   "country": "BEL",
+   "status": "pilot",
+   "detail": "BVLOS flights between AZ Turnhout hospital campuses since August 2025, piloted remotely from the UK.",
+   "source": "https://insideunmannedsystems.com/unifly-utm-technology-supports-medical-drone-deliveries-in-belgium-through-burdi-project/"
+  },
+  {
+   "id": "drone-skyy-bali",
+   "kind": "drone-hub",
+   "name": "Grab and SKYY Network, Bali",
+   "operator": "SKYY Network, Grab",
+   "lat": -8.6272,
+   "lon": 115.0991,
+   "precision": "town",
+   "place": "Tabanan, Bali, Indonesia",
+   "country": "IDN",
+   "status": "pilot",
+   "detail": "BVLOS food delivery pilot between Café del Mar Bali and Nuanu Creative City, reported October 2026.",
+   "source": "https://www.ajot.com/news/a2z-drone-delivery-chosen-as-technology-partner-for-indonesia-drone-delivery-trials"
+  },
+  {
+   "id": "drone-sora-iina-goto",
+   "kind": "drone-hub",
+   "name": "Sora-iina Goto Islands",
+   "operator": "Sora-iina (Toyota Tsusho)",
+   "lat": 32.6956,
+   "lon": 128.8408,
+   "precision": "town",
+   "place": "Goto, Japan",
+   "country": "JPN",
+   "status": "pilot",
+   "detail": "Area-based Level 4 medical delivery to a hospital rooftop demonstrated in Goto City in February 2026.",
+   "source": "https://www.acsl.co.jp/en/news-release/press-release/4573/"
+  },
+  {
+   "id": "drone-speedbird-aracaju",
+   "kind": "drone-hub",
+   "name": "iFood and Speedbird Aero, Aracaju",
+   "operator": "Speedbird Aero, iFood",
+   "lat": -10.9472,
+   "lon": -37.0731,
+   "precision": "town",
+   "place": "Aracaju, Brazil",
+   "country": "BRA",
+   "status": "commercial",
+   "detail": "iFood meals flown across the Sergipe River from a mall; more than 300 drone deliveries a month.",
+   "source": "https://mercadoeconsumo.com.br/13/12/2025/foodservice/ifood-realiza-mais-de-300-entregas-mensais-por-drones-em-aracaju/amp/"
+  },
+  {
+   "id": "drone-speedbird-barueri",
+   "kind": "drone-hub",
+   "name": "iFood and Speedbird Aero, Barueri",
+   "operator": "Speedbird Aero, iFood",
+   "lat": -23.5057,
+   "lon": -46.879,
+   "precision": "town",
+   "place": "Barueri, Brazil",
+   "country": "BRA",
+   "status": "commercial",
+   "detail": "Route opened 1 June 2026 from Shopping Iguatemi: 3.6 km in five minutes, then a courier's last leg.",
+   "source": "https://www.mobiletime.com.br/noticias/01/06/2026/ifood-com-drones-barueri/"
+  },
+  {
+   "id": "drone-terra-makkah",
+   "kind": "drone-hub",
+   "name": "Terra Drone Arabia Hajj medicine delivery",
+   "operator": "Terra Drone Arabia",
+   "lat": 21.3891,
+   "lon": 39.8579,
+   "precision": "town",
+   "place": "Makkah, Saudi Arabia",
+   "country": "SAU",
+   "status": "pilot",
+   "detail": "Saudi Arabia's first drone delivery permit, for medicines within the holy sites during the 2026 Hajj.",
+   "source": "https://www.arabnews.pk/node/2644896"
+  },
+  {
+   "id": "drone-volatus-halton",
+   "kind": "drone-hub",
+   "name": "Volatus Halton Healthcare",
+   "operator": "Volatus Aerospace",
+   "lat": 43.4675,
+   "lon": -79.6877,
+   "precision": "town",
+   "place": "Oakville, Ontario",
+   "country": "CAN",
+   "status": "pilot",
+   "detail": "Transport Canada approved BVLOS medical delivery operations for Halton Healthcare hospitals.",
+   "source": "https://insideunmannedsystems.com/volatus-aerospace-secures-to-launch-scalable-automated-drone-services-in-canada/"
+  },
+  {
+   "id": "drone-wing-atlanta",
+   "kind": "drone-hub",
+   "name": "Wing Metro Atlanta",
+   "operator": "Wing",
+   "lat": 33.749,
+   "lon": -84.388,
+   "precision": "town",
+   "place": "Atlanta, Georgia",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart and DoorDash orders across Metro Atlanta; the FAA authorised up to 43 nests in August 2026.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-bay-area",
+   "kind": "drone-hub",
+   "name": "Wing San Francisco Bay Area",
+   "operator": "Wing",
+   "lat": 37.7749,
+   "lon": -122.4194,
+   "precision": "town",
+   "place": "San Francisco, California",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Bay Area service announced March 2026 and again with Walmart in June; no city named yet.",
+   "source": "https://dronexl.co/2026/03/24/wing-brings-drone-delivery-to-bay-area/"
+  },
+  {
+   "id": "drone-wing-charlotte",
+   "kind": "drone-hub",
+   "name": "Wing Charlotte",
+   "operator": "Wing",
+   "lat": 35.2271,
+   "lon": -80.8431,
+   "precision": "town",
+   "place": "Charlotte, North Carolina",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart and DoorDash orders in the Charlotte area, FAA-authorised for up to 25 hubs.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-christiansburg",
+   "kind": "drone-hub",
+   "name": "Wing Christiansburg",
+   "operator": "Wing",
+   "lat": 37.1299,
+   "lon": -80.4089,
+   "precision": "town",
+   "place": "Christiansburg, Virginia",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Wing's first US site, flying since 2019 from a single nest; current scale is small.",
+   "source": "https://dronexl.co/tracker/drone-delivery/operators/wing/"
+  },
+  {
+   "id": "drone-wing-cincinnati",
+   "kind": "drone-hub",
+   "name": "Wing Cincinnati",
+   "operator": "Wing",
+   "lat": 39.1031,
+   "lon": -84.512,
+   "precision": "town",
+   "place": "Cincinnati, Ohio",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named with Walmart in January 2026 and reported in testing by June 2026; not yet open to customers.",
+   "source": "https://dronexl.co/2026/06/27/walmart-wing-drones-cincinnati-kroger/"
+  },
+  {
+   "id": "drone-wing-dallas-fort-worth",
+   "kind": "drone-hub",
+   "name": "Wing Dallas-Fort Worth",
+   "operator": "Wing",
+   "lat": 32.7767,
+   "lon": -96.797,
+   "precision": "town",
+   "place": "Dallas, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Wing's largest network: Walmart stores across the metroplex since 2023, FAA-authorised for up to 75 nests.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-denver",
+   "kind": "drone-hub",
+   "name": "Wing Denver",
+   "operator": "Wing",
+   "lat": 39.7392,
+   "lon": -104.9903,
+   "precision": "town",
+   "place": "Denver, Colorado",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Announced with Walmart on 5 October 2026 for a 2027 launch.",
+   "source": "https://dronexl.co/2026/10/05/wing-walmart-denver-seattle-drone-delivery-2027/"
+  },
+  {
+   "id": "drone-wing-houston",
+   "kind": "drone-hub",
+   "name": "Wing Greater Houston",
+   "operator": "Wing",
+   "lat": 29.7604,
+   "lon": -95.3698,
+   "precision": "town",
+   "place": "Houston, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart delivery buildout began January 2026; the FAA authorised up to 75 nests in August 2026.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-los-angeles",
+   "kind": "drone-hub",
+   "name": "Wing Los Angeles",
+   "operator": "Wing",
+   "lat": 34.0522,
+   "lon": -118.2437,
+   "precision": "town",
+   "place": "Los Angeles, California",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named with Walmart in January 2026; Wing lists the metro as coming soon.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-matthews",
+   "kind": "drone-hub",
+   "name": "Lowe's by Drone, Matthews",
+   "operator": "Wing",
+   "lat": 35.1168,
+   "lon": -80.7237,
+   "precision": "town",
+   "place": "Matthews, North Carolina",
+   "country": "USA",
+   "status": "pilot",
+   "detail": "Lowe's pilot since 24 September 2026: Wing flies DoorDash orders within about 5 miles of the Matthews store.",
+   "source": "https://dronexl.co/2026/09/24/lowes-wing-doordash-drone-delivery-matthews/"
+  },
+  {
+   "id": "drone-wing-memphis",
+   "kind": "drone-hub",
+   "name": "Wing Memphis",
+   "operator": "Wing",
+   "lat": 35.1495,
+   "lon": -90.049,
+   "precision": "town",
+   "place": "Memphis, Tennessee",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart delivery launched 10 November 2026 from stores in Bartlett, Cordova and West Memphis.",
+   "source": "https://actionnews5.com/2026/11/10/pretty-cool-walmart-launches-drone-grocery-delivery-bartlett-cordova-west-memphis"
+  },
+  {
+   "id": "drone-wing-miami",
+   "kind": "drone-hub",
+   "name": "Wing Miami",
+   "operator": "Wing",
+   "lat": 25.7617,
+   "lon": -80.1918,
+   "precision": "town",
+   "place": "Miami, Florida",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named with Walmart in January 2026; Wing lists the metro as coming soon.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-new-orleans",
+   "kind": "drone-hub",
+   "name": "Wing New Orleans",
+   "operator": "Wing",
+   "lat": 29.9511,
+   "lon": -90.0715,
+   "precision": "town",
+   "place": "New Orleans, Louisiana",
+   "country": "USA",
+   "status": "announced",
+   "detail": "One of seven Walmart metros Wing named on 8 June 2026; not yet flying.",
+   "source": "https://wing.com/news/wing-and-walmart-seven-new-markets-drone-delivery"
+  },
+  {
+   "id": "drone-wing-orlando",
+   "kind": "drone-hub",
+   "name": "Wing Greater Orlando",
+   "operator": "Wing",
+   "lat": 28.5383,
+   "lon": -81.3792,
+   "precision": "town",
+   "place": "Orlando, Florida",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart delivery launched 29 July 2026 from two stores, Wing's first Florida market.",
+   "source": "https://dronexl.co/2026/07/29/wing-walmart-orlando-drone-delivery-florida-law/"
+  },
+  {
+   "id": "drone-wing-philadelphia",
+   "kind": "drone-hub",
+   "name": "Wing Philadelphia",
+   "operator": "Wing",
+   "lat": 39.9526,
+   "lon": -75.1652,
+   "precision": "town",
+   "place": "Philadelphia, Pennsylvania",
+   "country": "USA",
+   "status": "announced",
+   "detail": "One of seven Walmart metros Wing named on 8 June 2026; not yet flying.",
+   "source": "https://wing.com/news/wing-and-walmart-seven-new-markets-drone-delivery"
+  },
+  {
+   "id": "drone-wing-phoenix",
+   "kind": "drone-hub",
+   "name": "Wing Phoenix",
+   "operator": "Wing",
+   "lat": 33.4484,
+   "lon": -112.074,
+   "precision": "town",
+   "place": "Phoenix, Arizona",
+   "country": "USA",
+   "status": "announced",
+   "detail": "One of seven Walmart metros Wing named on 8 June 2026; not yet flying.",
+   "source": "https://wing.com/news/wing-and-walmart-seven-new-markets-drone-delivery"
+  },
+  {
+   "id": "drone-wing-salt-lake-city",
+   "kind": "drone-hub",
+   "name": "Wing Salt Lake City",
+   "operator": "Wing",
+   "lat": 40.7608,
+   "lon": -111.891,
+   "precision": "town",
+   "place": "Salt Lake City, Utah",
+   "country": "USA",
+   "status": "announced",
+   "detail": "One of seven Walmart metros Wing named on 8 June 2026; not yet flying.",
+   "source": "https://wing.com/news/wing-and-walmart-seven-new-markets-drone-delivery"
+  },
+  {
+   "id": "drone-wing-san-diego",
+   "kind": "drone-hub",
+   "name": "Wing San Diego",
+   "operator": "Wing",
+   "lat": 32.7157,
+   "lon": -117.1611,
+   "precision": "town",
+   "place": "San Diego, California",
+   "country": "USA",
+   "status": "announced",
+   "detail": "One of seven Walmart metros Wing named on 8 June 2026; not yet flying.",
+   "source": "https://wing.com/news/wing-and-walmart-seven-new-markets-drone-delivery"
+  },
+  {
+   "id": "drone-wing-seattle",
+   "kind": "drone-hub",
+   "name": "Wing Seattle",
+   "operator": "Wing",
+   "lat": 47.6062,
+   "lon": -122.3321,
+   "precision": "town",
+   "place": "Seattle, Washington",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Announced with Walmart on 5 October 2026 for a 2027 launch.",
+   "source": "https://dronexl.co/2026/10/05/wing-walmart-denver-seattle-drone-delivery-2027/"
+  },
+  {
+   "id": "drone-wing-st-louis",
+   "kind": "drone-hub",
+   "name": "Wing St. Louis",
+   "operator": "Wing",
+   "lat": 38.627,
+   "lon": -90.1994,
+   "precision": "town",
+   "place": "St. Louis, Missouri",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named with Walmart in January 2026; Wing lists the metro as coming soon.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wing-tampa",
+   "kind": "drone-hub",
+   "name": "Wing Tampa",
+   "operator": "Wing",
+   "lat": 27.9506,
+   "lon": -82.4572,
+   "precision": "town",
+   "place": "Tampa, Florida",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Named with Walmart in June 2025; inside Wing's 150-nest Central Florida FAA authorisation, not yet flying.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-wingcopter-kasungu",
+   "kind": "drone-hub",
+   "name": "Wingcopter Kasungu",
+   "operator": "Wingcopter",
+   "lat": -13.0333,
+   "lon": 33.4833,
+   "precision": "town",
+   "place": "Kasungu, Malawi",
+   "country": "MWI",
+   "status": "pilot",
+   "detail": "Medicines flown from Kasungu Airport to rural health centres under the Drone and Data Aid project.",
+   "source": "https://wingcopter.com/project/malawi_medical_delivery"
+  },
+  {
+   "id": "drone-zipline-austin",
+   "kind": "drone-hub",
+   "name": "Zipline Austin (Round Rock)",
+   "operator": "Zipline",
+   "lat": 30.5083,
+   "lon": -97.6789,
+   "precision": "town",
+   "place": "Round Rock, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Austin-area early access opened in Round Rock on 9 October 2026.",
+   "source": "https://droneauthority.org/guides/drone-delivery-availability"
+  },
+  {
+   "id": "drone-zipline-chemelil",
+   "kind": "drone-hub",
+   "name": "Zipline Kisumu",
+   "operator": "Zipline",
+   "lat": -0.085,
+   "lon": 35.13,
+   "precision": "town",
+   "place": "Chemelil, Kenya",
+   "country": "KEN",
+   "status": "commercial",
+   "detail": "Hub at Chemelil in Kisumu County, set up in 2022 and flying medical supplies since 2023.",
+   "source": "https://www.the-star.co.ke/health/2025-11-15-the-silent-aircrafts-behind-kenyas-fastest-medical-deliveries"
+  },
+  {
+   "id": "drone-zipline-cleveland",
+   "kind": "drone-hub",
+   "name": "Zipline Cleveland Clinic",
+   "operator": "Zipline",
+   "lat": 41.4645,
+   "lon": -81.5087,
+   "precision": "town",
+   "place": "Beachwood, Ohio",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Prescription home delivery for Cleveland Clinic patients within 5 miles of the Beachwood campus, about 20 a week.",
+   "source": "https://dronexl.co/2026/08/31/cleveland-clinic-zipline-20-deliveries-a-week/"
+  },
+  {
+   "id": "drone-zipline-dallas-fort-worth",
+   "kind": "drone-hub",
+   "name": "Zipline Dallas-Fort Worth",
+   "operator": "Zipline",
+   "lat": 32.7668,
+   "lon": -96.5992,
+   "precision": "town",
+   "place": "Mesquite, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart and restaurant delivery, first flown from Mesquite in April 2025; FAA-authorised for up to 75 sites.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-zipline-daloa",
+   "kind": "drone-hub",
+   "name": "Zipline Daloa",
+   "operator": "Zipline",
+   "lat": 6.8774,
+   "lon": -6.4502,
+   "precision": "town",
+   "place": "Daloa, Cote d'Ivoire",
+   "country": "CIV",
+   "status": "commercial",
+   "detail": "Zipline's single Ivorian distribution centre; nine more are planned under an eight-year state partnership.",
+   "source": "https://dronexl.co/2026/09/22/zipline-ivory-coast-10-hubs-300-percent-return/"
+  },
+  {
+   "id": "drone-zipline-houston",
+   "kind": "drone-hub",
+   "name": "Zipline Houston (Cypress)",
+   "operator": "Zipline",
+   "lat": 29.9691,
+   "lon": -95.6972,
+   "precision": "town",
+   "place": "Cypress, Texas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Houston early-access service flying from the Cypress suburb; flights confirmed in September 2026.",
+   "source": "https://dronexl.co/2026/09/05/zipline-drone-parachute-highway-6-houston-cypress/"
+  },
+  {
+   "id": "drone-zipline-karongi",
+   "kind": "drone-hub",
+   "name": "Zipline Karongi",
+   "operator": "Zipline",
+   "lat": -2.061,
+   "lon": 29.348,
+   "precision": "town",
+   "place": "Karongi, Rwanda",
+   "country": "RWA",
+   "status": "announced",
+   "detail": "Third long-range hub agreed in February 2026; cabinet approved the land lease in June 2026.",
+   "source": "https://www.ktpress.rw/2026/06/beyond-emergency-blood-deliveries-drones-are-now-poised-to-deliver-groceries/"
+  },
+  {
+   "id": "drone-zipline-kayonza",
+   "kind": "drone-hub",
+   "name": "Zipline Kayonza",
+   "operator": "Zipline",
+   "lat": -1.9003,
+   "lon": 30.5074,
+   "precision": "town",
+   "place": "Kayonza, Rwanda",
+   "country": "RWA",
+   "status": "commercial",
+   "detail": "Second Rwandan distribution centre, serving the east of the country.",
+   "source": "https://www.zipline.com/newsroom/rwanda-expands-with-zipline-to-become-first-country-in-the-world-with-nationwide-autonomous-delivery-including-africa-s-first-urban-drone-delivery-network"
+  },
+  {
+   "id": "drone-zipline-kigali",
+   "kind": "drone-hub",
+   "name": "Zipline Kigali",
+   "operator": "Zipline",
+   "lat": -1.9441,
+   "lon": 30.0619,
+   "precision": "town",
+   "place": "Kigali, Rwanda",
+   "country": "RWA",
+   "status": "announced",
+   "detail": "Urban home delivery for Kigali agreed in February 2026, billed as Africa's first urban drone network.",
+   "source": "https://www.zipline.com/newsroom/rwanda-expands-with-zipline-to-become-first-country-in-the-world-with-nationwide-autonomous-delivery-including-africa-s-first-urban-drone-delivery-network"
+  },
+  {
+   "id": "drone-zipline-mampong",
+   "kind": "drone-hub",
+   "name": "Zipline Ashanti Mampong",
+   "operator": "Zipline",
+   "lat": 7.0627,
+   "lon": -1.4001,
+   "precision": "town",
+   "place": "Mampong, Ghana",
+   "country": "GHA",
+   "status": "commercial",
+   "detail": "One of six Ghanaian distribution centres, each with a 110 km delivery radius.",
+   "source": "https://starrfm.com.gh/zipline-hits-over-500000-medical-delivery-milestone"
+  },
+  {
+   "id": "drone-zipline-muhanga",
+   "kind": "drone-hub",
+   "name": "Zipline Muhanga",
+   "operator": "Zipline",
+   "lat": -2.0744,
+   "lon": 29.7567,
+   "precision": "town",
+   "place": "Muhanga, Rwanda",
+   "country": "RWA",
+   "status": "commercial",
+   "detail": "Zipline's first distribution centre, delivering blood and medical supplies since 2016.",
+   "source": "https://www.zipline.com/newsroom/rwanda-expands-with-zipline-to-become-first-country-in-the-world-with-nationwide-autonomous-delivery-including-africa-s-first-urban-drone-delivery-network"
+  },
+  {
+   "id": "drone-zipline-ogoja",
+   "kind": "drone-hub",
+   "name": "Zipline Cross River",
+   "operator": "Zipline",
+   "lat": 6.5921,
+   "lon": 8.7933,
+   "precision": "town",
+   "place": "Ogoja, Nigeria",
+   "country": "NGA",
+   "status": "commercial",
+   "detail": "Distribution centre at Ndok community in Ogoja, delivering vaccines, blood and medicines.",
+   "source": "https://www.myjoyonline.com/zipline-commissions-drone-delivery-centre-in-cross-river-state-of-nigeria-to-improve-uhc/"
+  },
+  {
+   "id": "drone-zipline-omenako",
+   "kind": "drone-hub",
+   "name": "Zipline Omenako",
+   "operator": "Zipline",
+   "lat": 6.0705,
+   "lon": -0.468,
+   "precision": "town",
+   "place": "Omenako, Ghana",
+   "country": "GHA",
+   "status": "commercial",
+   "detail": "One of six Ghanaian distribution centres, each with a 110 km delivery radius.",
+   "source": "https://starrfm.com.gh/zipline-hits-over-500000-medical-delivery-milestone"
+  },
+  {
+   "id": "drone-zipline-pea-ridge",
+   "kind": "drone-hub",
+   "name": "Zipline Pea Ridge",
+   "operator": "Zipline",
+   "lat": 36.454,
+   "lon": -94.1152,
+   "precision": "town",
+   "place": "Pea Ridge, Arkansas",
+   "country": "USA",
+   "status": "commercial",
+   "detail": "Walmart delivery to 12 communities in Northwest Arkansas and Missouri; 400 flights a day allowed since March 2026.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-zipline-phoenix",
+   "kind": "drone-hub",
+   "name": "Zipline Phoenix",
+   "operator": "Zipline",
+   "lat": 33.4484,
+   "lon": -112.074,
+   "precision": "town",
+   "place": "Phoenix, Arizona",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Announced January 2026 for an early 2026 start; no live launch was confirmed by November 2026.",
+   "source": "https://www.abc15.com/news/business/drone-delivery-startup-zipline-expands-to-phoenix-backed-by-600m-funding"
+  },
+  {
+   "id": "drone-zipline-seattle",
+   "kind": "drone-hub",
+   "name": "Zipline Seattle",
+   "operator": "Zipline",
+   "lat": 47.6062,
+   "lon": -122.3321,
+   "precision": "town",
+   "place": "Seattle, Washington",
+   "country": "USA",
+   "status": "announced",
+   "detail": "FAA draft review for up to 75 sites has been open since September 2025 with no decision posted.",
+   "source": "https://dronexl.co/tracker/drone-delivery/"
+  },
+  {
+   "id": "drone-zipline-tampa",
+   "kind": "drone-hub",
+   "name": "Zipline Tampa Bay (BayCare)",
+   "operator": "Zipline",
+   "lat": 27.9506,
+   "lon": -82.4572,
+   "precision": "town",
+   "place": "Tampa, Florida",
+   "country": "USA",
+   "status": "announced",
+   "detail": "Medical delivery partnership with BayCare health system announced in July 2026.",
+   "source": "https://dronexl.co/2026/07/02/zipline-baycare-florida-medical-drone/"
+  },
+  {
+   "id": "drone-zipline-vobsi",
+   "kind": "drone-hub",
+   "name": "Zipline Vobsi",
+   "operator": "Zipline",
+   "lat": 10.3477,
+   "lon": -0.8023,
+   "precision": "town",
+   "place": "Walewale, Ghana",
+   "country": "GHA",
+   "status": "commercial",
+   "detail": "Northern Ghana distribution centre at Vobsi, one of six with a 110 km delivery radius.",
+   "source": "https://starrfm.com.gh/zipline-hits-over-500000-medical-delivery-milestone"
+  },
+  {
+   "id": "drone-zipline-yenagoa",
+   "kind": "drone-hub",
+   "name": "Zipline Bayelsa",
+   "operator": "Zipline",
+   "lat": 4.9267,
+   "lon": 6.2676,
+   "precision": "town",
+   "place": "Yenagoa, Nigeria",
+   "country": "NGA",
+   "status": "commercial",
+   "detail": "Distribution centre in Yenagoa commissioned by the health minister and Bayelsa governor.",
+   "source": "https://www.zipline.com/newsroom/nigeria-s-minister-of-health-and-bayelsa-state-governor-commission-zipline-s-drone-delivery-distribution-centre-to-improve-healthcare-access-and-resilience"
+  }
+ ]
+}
