@@ -99,10 +99,30 @@
   {
    "name": "OpenStreetMap (Nominatim geocoding and data centre features, ODbL)",
    "url": "https://www.openstreetmap.org/copyright"
+  },
+  {
+   "name": "US Data Center Projects (news tracker of filings and operator posts)",
+   "url": "https://usdatacenterprojects.com/"
   }
  ],
  "notes": "Campuses with a published power figure of 25 MW or more. This is not a full census. Operators such as AWS, Microsoft, Google, Meta and Equinix rarely publish power per site, so many of their campuses are missing, and mainland China, Taiwan, Latin America and the Gulf are thin. Power for an operational site is live load where a tracker measures it and the operator's design capacity otherwise, so treat it as an upper bound. Grey sites show planned full build-out. Tracker ranges are drawn at their lower bound. Crypto-only mines are left out.",
  "points": [
+  {
+   "id": "dc-am-5c-project-phoenix-mount-carmel",
+   "kind": "data-center",
+   "name": "5C Project Phoenix",
+   "operator": "5C Data Centers (AMD tenant)",
+   "lat": 40.7968,
+   "lon": -76.4131,
+   "precision": "town",
+   "place": "Mount Carmel, Pennsylvania",
+   "country": "USA",
+   "status": "proposed",
+   "mw": 160,
+   "mwBasis": "planned",
+   "detail": "First building planned at 160 MW of IT (224 MW design power) on former mining land in Mount Carmel Township, with AMD named as tenant; conditional use still under township review.",
+   "source": "https://baxtel.com/news/amd-named-tenant-for-5c-s-160mw-project-phoenix-data-center"
+  },
   {
    "id": "dc-am-9lives-data-center-niagara-falls-niagara-falls",
    "kind": "data-center",
@@ -278,6 +298,22 @@
    "mwBasis": "planned",
    "detail": "Listed as approved, permitted or under construction in FracTracker's tracker at 350 MW.",
    "source": "https://fractracker.org/2026/04/open-u-s-data-centers-tracker/"
+  },
+  {
+   "id": "dc-am-amazon-attalia",
+   "kind": "data-center",
+   "name": "Amazon Attalia Data Center Campus",
+   "operator": "Amazon",
+   "lat": 46.1983,
+   "lon": -118.9714,
+   "precision": "town",
+   "place": "Burbank, Washington",
+   "country": "USA",
+   "status": "proposed",
+   "mw": 300,
+   "mwBasis": "planned",
+   "detail": "Three buildings on 134 acres in the Wallula Gap Business Park with 300 MW of expected power capacity; county SEPA review pending.",
+   "source": "https://baxtel.com/news/aws-reveals-300mw-data-center-campus-plan-in-walla-walla-county"
   },
   {
    "id": "dc-am-amazon-aws-gilroy-gilroy",
@@ -465,11 +501,11 @@
    "precision": "site",
    "place": "Harwood, North Dakota",
    "country": "USA",
-   "status": "proposed",
-   "mw": 280,
-   "mwBasis": "planned",
-   "detail": "Listed as approved, permitted or under construction in FracTracker's tracker at 280 MW.",
-   "source": "https://fractracker.org/2026/04/open-u-s-data-centers-tracker/"
+   "status": "operational",
+   "mw": 25,
+   "mwBasis": "live",
+   "detail": "First 25 MW reached Ready for Service on 24 November 2026, with base-build commissioning done for the first 75 MW of the initial 150 MW building. FracTracker lists 280 MW for the campus.",
+   "source": "https://ir.applieddigital.com/news-events/press-releases/detail/166/applied-digital-achieves-initial-25-mw-ready-for-service-in"
   },
   {
    "id": "dc-am-applied-digital-project-dorothy-2-and-3-silverton-silverton",
@@ -1320,6 +1356,22 @@
    "source": "https://cleanview.co/data-centers/texas"
   },
   {
+   "id": "dc-am-core-scientific-quinlan",
+   "kind": "data-center",
+   "name": "Core Scientific Quinlan (Telios Quinlan One)",
+   "operator": "Core Scientific",
+   "lat": 32.9105,
+   "lon": -96.1335,
+   "precision": "town",
+   "place": "Quinlan, Texas",
+   "country": "USA",
+   "status": "proposed",
+   "mw": 285,
+   "mwBasis": "planned",
+   "detail": "Texas licensing filing in November 2026 for a $1.3bn build at the Hunt County site, which Core Scientific's March 2026 acquisition announcement put at 285 MW leasable (430 MW gross).",
+   "source": "https://usdatacenterprojects.com/texas/core-scientific-files-usd-1-3-billion-buildout-for-285-mw-hunt-county-data-center-campus"
+  },
+  {
    "id": "dc-am-coresite-de3-data-center-denver-denver",
    "kind": "data-center",
    "name": "CoreSite DE3 Data Center (Denver)",
@@ -2070,6 +2122,22 @@
    "mwBasis": "live",
    "detail": "Cleanview lists 258 MW operating as of November 2026.",
    "source": "https://cleanview.co/data-centers/arizona"
+  },
+  {
+   "id": "dc-am-edgecore-reno",
+   "kind": "data-center",
+   "name": "EdgeCore Reno Campus",
+   "operator": "EdgeCore",
+   "lat": 39.556,
+   "lon": -119.4903,
+   "precision": "town",
+   "place": "McCarran, Nevada",
+   "country": "USA",
+   "status": "operational",
+   "mw": 216,
+   "mwBasis": "planned",
+   "detail": "In the Tahoe-Reno Industrial Center. RN01 opened in November 2026 and RN02 topped out; three buildings with 216 MW of IT capacity at full build-out.",
+   "source": "https://usdatacenterprojects.com/nevada/edgecore-launches-first-facility-and-completes-structural-milestone-at-second-data-center-in-216-mw-reno-campus-nevada"
   },
   {
    "id": "dc-am-edged-atl01-2-data-center-atlanta-atlanta",
@@ -3304,6 +3372,22 @@
    "source": "https://fractracker.org/2026/04/open-u-s-data-centers-tracker/"
   },
   {
+   "id": "dc-am-kraft-sutton",
+   "kind": "data-center",
+   "name": "Kraft Group Sutton campus",
+   "operator": "The Kraft Group / Unified Global Packaging Group",
+   "lat": 42.1499,
+   "lon": -71.763,
+   "precision": "town",
+   "place": "Sutton, Massachusetts",
+   "country": "USA",
+   "status": "proposed",
+   "mw": 900,
+   "mwBasis": "planned",
+   "detail": "Tentative proposal for up to ten buildings at Unified Parkway, about 900 MW at full build-out, first buildings in 2029.",
+   "source": "https://baxtel.com/news/kraft-group-proposes-900mw-16b-data-center-campus-in-sutton-massachusetts"
+  },
+  {
    "id": "dc-am-lakeland-equity-group-slavic-village-data-center-cleveland-c",
    "kind": "data-center",
    "name": "Lakeland Equity Group Slavic Village Data Center (Cleveland)",
@@ -4150,6 +4234,22 @@
    "mwBasis": "live",
    "detail": "Cleanview lists 200–999 MW operating; shown at the lower bound.",
    "source": "https://cleanview.co/data-centers/washington"
+  },
+  {
+   "id": "dc-am-microsoft-rome",
+   "kind": "data-center",
+   "name": "Microsoft Rome campus",
+   "operator": "Microsoft",
+   "lat": 34.257,
+   "lon": -85.1647,
+   "precision": "town",
+   "place": "Rome, Georgia",
+   "country": "USA",
+   "status": "proposed",
+   "mw": 422,
+   "mwBasis": "planned",
+   "detail": "Development of Regional Impact filing for three buildings on 349 acres at Huffaker Road with 422 MW planned.",
+   "source": "https://baxtel.com/news/microsoft-files-for-422mw-three-building-data-center-campus-in-rome-georgia"
   },
   {
    "id": "dc-am-microsoft-sat14",
@@ -5704,6 +5804,22 @@
    "source": "https://epoch.ai/data/data-centers"
   },
   {
+   "id": "dc-am-stn-odessa",
+   "kind": "data-center",
+   "name": "STN Odessa AI Campus",
+   "operator": "STN / ChronoScale",
+   "lat": 31.8457,
+   "lon": -102.3677,
+   "precision": "town",
+   "place": "Odessa, Texas",
+   "country": "USA",
+   "status": "construction",
+   "mw": 350,
+   "mwBasis": "planned",
+   "detail": "Up to 350 MW in three phases; construction began May 2026 and ChronoScale took a 50% stake in November 2026, with the first 65 MW due in the first half of 2027.",
+   "source": "https://baxtel.com/news/chronoscale-takes-50-stake-in-stn-s-350mw-odessa-ai-campus"
+  },
+  {
    "id": "dc-am-stokes-data-center-wheeling-wheeling",
    "kind": "data-center",
    "name": "Stokes Data Center (Wheeling)",
@@ -5937,11 +6053,11 @@
    "precision": "site",
    "place": "Hawesville, Kentucky",
    "country": "USA",
-   "status": "proposed",
+   "status": "construction",
    "mw": 480,
    "mwBasis": "planned",
-   "detail": "Listed as proposed in FracTracker's tracker at 480 MW.",
-   "source": "https://fractracker.org/2026/04/open-u-s-data-centers-tracker/"
+   "detail": "Justified Data Campus, 480 MW, built for Anthropic; first structural steel went up in November 2026, with the first building due online in 2027.",
+   "source": "https://usdatacenterprojects.com/kentucky/terawulf-erects-structural-steel-at-480-mw-kentucky-ai-campus-for-anthropic"
   },
   {
    "id": "dc-am-terawulf-data-center-newburg-newburg",
@@ -7224,6 +7340,22 @@
    "source": "https://w.media/cdc-rethinks-576mw-canberra-data-centre-after-planning-setback/"
   },
   {
+   "id": "dc-apac-cdc-kemps-creek",
+   "kind": "data-center",
+   "name": "CDC Kemps Creek campus",
+   "operator": "CDC Data Centres",
+   "lat": -33.8813,
+   "lon": 150.7837,
+   "precision": "town",
+   "place": "Kemps Creek, New South Wales",
+   "country": "AUS",
+   "status": "proposed",
+   "mw": 1400,
+   "mwBasis": "planned",
+   "detail": "Refiled in November 2026 as six buildings at 859-901 Mamre Road with 1.4 GW (SSD-133677993), up from a single 144 MW building.",
+   "source": "https://baxtel.com/news/cdc-refiles-kemps-creek-plan-lifting-sydney-campus-to-1-4gw"
+  },
+  {
    "id": "dc-apac-cdc-maddington",
    "kind": "data-center",
    "name": "CDC Maddington campus",
@@ -7350,6 +7482,22 @@
    "mwBasis": "planned",
    "detail": "Opened in 2025 with 16 MW IT load in phase 1; four phases planned to scale beyond 60 MW.",
    "source": "https://w.media/ctrls-datacenters-unveils-greenfield-dc-in-kolkata/"
+  },
+  {
+   "id": "dc-apac-cyrusone-kep-osk1",
+   "kind": "data-center",
+   "name": "CyrusOne KEP OSK1",
+   "operator": "CyrusOne, Kansai Electric Power",
+   "lat": 34.7609,
+   "lon": 135.7858,
+   "precision": "town",
+   "place": "Seika, Kyoto",
+   "country": "JPN",
+   "status": "construction",
+   "mw": 48,
+   "mwBasis": "planned",
+   "detail": "Topped out in November 2026; 48 MW of IT, first 16 MW due in the first quarter of 2028.",
+   "source": "https://baxtel.com/news/cyrusone-and-kep-top-out-48mw-osk1-data-center-in-japan"
   },
   {
    "id": "dc-apac-datagrid-southland",
@@ -8502,6 +8650,22 @@
    "mwBasis": "planned",
    "detail": "Six-phase AI campus with site, permits and a 300 MW KEPCO supply agreement secured.",
    "source": "https://w.media/nfd-korea-plans-300-mw-ai-dc-campus-in-south-korea/"
+  },
+  {
+   "id": "dc-apac-ntt-bgrimm-amata",
+   "kind": "data-center",
+   "name": "NTT / B.Grimm Amata City campus",
+   "operator": "NTT Global Data Centers, B.Grimm",
+   "lat": 13.4214,
+   "lon": 101.0041,
+   "precision": "town",
+   "place": "Amata City, Chonburi",
+   "country": "THA",
+   "status": "proposed",
+   "mw": 400,
+   "mwBasis": "planned",
+   "detail": "Non-binding MoU signed 19 November 2026 for a 400 MW campus in Amata City Chonburi Industrial Estate, pending a feasibility study.",
+   "source": "https://baxtel.com/news/ntt-signs-mou-with-b-grimm-for-400mw-thailand-data-center-campus"
   },
   {
    "id": "dc-apac-ntt-gelang-patah",
@@ -9912,6 +10076,22 @@
    "source": "https://baxtel.com/data-center/vienna"
   },
   {
+   "id": "dc-emea-drax-power-station",
+   "kind": "data-center",
+   "name": "Drax Power Station AI data centre",
+   "operator": "Drax, Brookfield, Radiant",
+   "lat": 53.7255,
+   "lon": -0.9815,
+   "precision": "town",
+   "place": "Drax, North Yorkshire",
+   "country": "GBR",
+   "status": "proposed",
+   "mw": 1000,
+   "mwBasis": "planned",
+   "detail": "Partnership for a data centre of more than 1 GW on the power station estate: up to 100 MW from 2028, 500 MW by 2031. Subject to planning.",
+   "source": "https://www.drax.com/?p=19945"
+  },
+  {
    "id": "dc-emea-east-havering",
    "kind": "data-center",
    "name": "East Havering Data Centre Campus",
@@ -10086,6 +10266,22 @@
    "mwBasis": "planned",
    "detail": "Data centre beside Energia's Huntstown power station; Baxtel lists 36 MW under construction for Q1 2027.",
    "source": "https://baxtel.com/data-center/dublin"
+  },
+  {
+   "id": "dc-emea-enlight-shemen-haifa",
+   "kind": "data-center",
+   "name": "Enlight / Shemen Haifa data centre",
+   "operator": "Enlight Renewable Energy, Shemen",
+   "lat": 32.8191,
+   "lon": 34.9984,
+   "precision": "town",
+   "place": "Haifa",
+   "country": "ISR",
+   "status": "proposed",
+   "mw": 150,
+   "mwBasis": "planned",
+   "detail": "Agreement signed 16 November 2026 for up to 150 MW at Hof Shemen near Haifa port; final size depends on grid approval.",
+   "source": "https://baxtel.com/news/enlight-and-shemen-sign-25-year-lease-for-150mw-haifa-data-center"
   },
   {
    "id": "dc-emea-evroc-mougins",
@@ -10438,6 +10634,38 @@
    "mwBasis": "planned",
    "detail": "Khazna-Benya hyperscale site at Maadi Technology Park; Baxtel lists 25 MW under construction for Q3 2027.",
    "source": "https://baxtel.com/data-center/cairo"
+  },
+  {
+   "id": "dc-emea-mega-dc-beit-shemesh",
+   "kind": "data-center",
+   "name": "Mega DC Beit Shemesh (MDCIL-4)",
+   "operator": "Mega DC (Mega Or), Nebius tenant",
+   "lat": 31.7462,
+   "lon": 34.9887,
+   "precision": "town",
+   "place": "Beit Shemesh",
+   "country": "ISR",
+   "status": "construction",
+   "mw": 135,
+   "mwBasis": "planned",
+   "detail": "Facility rated for up to 135 MW; Nebius expanded its lease by 134 MW across Beit Shemesh and Masmiya in November 2026, due by mid-2028.",
+   "source": "https://baxtel.com/news/nebius-expands-israel-data-center-lease-with-mega-or-by-134mw"
+  },
+  {
+   "id": "dc-emea-meridian-one-hickstead",
+   "kind": "data-center",
+   "name": "Meridian One Northlands Enterprise Park",
+   "operator": "Meridian One",
+   "lat": 50.966,
+   "lon": -0.1953,
+   "precision": "town",
+   "place": "Hickstead, West Sussex",
+   "country": "GBR",
+   "status": "proposed",
+   "mw": 100,
+   "mwBasis": "planned",
+   "detail": "Pre-planning for a 100 MW campus; no application yet at Mid Sussex District Council.",
+   "source": "https://baxtel.com/news/meridian-one-plans-100mw-sussex-data-center-pace-dc-eyes-bedfordshire-campus"
   },
   {
    "id": "dc-emea-merlin-edged-arasur",
