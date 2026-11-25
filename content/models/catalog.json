@@ -13,7 +13,7 @@
       ],
       "availability": "Paid Claude plans and API",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Primary release identity reviewed.",
       "supersedes": "claude-fable-5-1",
       "benchmarks": {
@@ -44,7 +44,7 @@
       ],
       "availability": "Approved organizations only",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Less-restricted twin of Claude Fable 5.2 for approved security and biomedical research organizations.",
       "benchmarks": {
         "inputCost": {
@@ -87,7 +87,7 @@
       ],
       "availability": "ChatGPT Plus, Pro, Enterprise and Edu plans, Codex, and API",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "OpenAI frontier model for professional and scientific work, priced 20% below its predecessor. Benchmark claims are OpenAI-reported.",
       "supersedes": "gpt-6-astra",
       "benchmarks": {
@@ -173,7 +173,7 @@
       ],
       "availability": "Generally available",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Primary release identity reviewed.",
       "benchmarks": {
         "inputCost": {
@@ -200,7 +200,7 @@
       ],
       "availability": "Gemini API, Gemini for business, and Google AI Ultra",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Primary release identity reviewed.",
       "benchmarks": {
         "inputCost": {
@@ -227,7 +227,7 @@
       ],
       "availability": "Gemini API, Google AI Studio, Gemini for business, the Gemini app and Google Search",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Google's fast Gemini 4 model for everyday coding and agent work, priced flat across its 1M-token context. Editorial quality/cost candidate.",
       "benchmarks": {
         "inputCost": {
@@ -254,7 +254,7 @@
       ],
       "availability": "Gemini API, Google AI Studio, Gemini for business, Google Antigravity, and the Gemini app for Pro and Ultra subscribers",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Gemini 4 model placed between Carbon and Hydrogen, with a 1M-token context. Editorial quality/cost candidate; benchmark claims are Google-reported.",
       "benchmarks": {
         "inputCost": {
@@ -279,7 +279,7 @@
       ],
       "availability": "Meta developer API and Muse Code",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Meta Superintelligence Labs frontier model; the larger Wonder Full is limited to Muse Code subscribers.",
       "benchmarks": {}
     },
@@ -311,7 +311,7 @@
       ],
       "availability": "API and open weights",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Dated refresh of DeepSeek V4.1 Flash. Editorial quality/cost candidate; benchmark gains are DeepSeek-reported.",
       "supersedes": "deepseek-v4-1-flash",
       "benchmarks": {
@@ -412,7 +412,7 @@
       ],
       "availability": "ChatGPT Plus, Pro, Enterprise and Edu plans, Codex, and API",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "OpenAI everyday model at the same API prices as GPT-6.1 Sol. Editorial quality/cost candidate; benchmark claims are OpenAI-reported.",
       "supersedes": "gpt-6-1-sol",
       "benchmarks": {
@@ -443,7 +443,7 @@
       ],
       "availability": "Released",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Editorial quality/cost candidate; not an independently established benchmark frontier.",
       "benchmarks": {
         "inputCost": {
@@ -530,7 +530,7 @@
       ],
       "availability": "Meta developer API",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Meta's smallest and cheapest Muse model, built for repeated agent steps. Editorial quality/cost candidate.",
       "benchmarks": {
         "inputCost": {
@@ -559,6 +559,19 @@
       "reason": "Preview opened October 6; open weights followed October 29 under a modified MIT license."
     },
     {
+      "id": "sarvam-105b-1711",
+      "phrase": "Sarvam-105B-1711",
+      "provider": "Sarvam AI",
+      "releaseDate": "2026-11-22",
+      "sourceUrl": "https://www.sarvam.ai/blogs/sarvam-105b-1711",
+      "category": "base",
+      "priorities": [],
+      "availability": "Open weights on Hugging Face and Sarvam Token Factory API",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "New open-weight checkpoint of Sarvam 105B for high-volume work, with better tool calling and Indian-language performance."
+    },
+    {
       "id": "muse-spark-open",
       "phrase": "Muse Spark Open",
       "provider": "Meta",
@@ -568,7 +581,7 @@
       "priorities": [],
       "availability": "Open weights",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Open-weight 816B mixture-of-experts model under the Muse Model License."
     },
     {
@@ -581,7 +594,7 @@
       "priorities": [],
       "availability": "API and open weights",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "API release October 23; weights published November 4 under a custom license."
     },
     {
@@ -594,7 +607,7 @@
       "priorities": [],
       "availability": "Alibaba Cloud Model Studio API (international) and Qwen apps",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Production release of Alibaba's Qwen4 flagship after the November 11 preview. Smaller Qwen4 models are promised as open source.",
       "benchmarks": {
         "inputCost": {
@@ -631,10 +644,10 @@
       "sourceUrl": "https://thinkingmachines.ai/news/inkling-2-small/",
       "category": "base",
       "priorities": [],
-      "availability": "Tinker platform; weights promised",
+      "availability": "Tinker platform; open weights on Hugging Face",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
-      "reason": "Hosted 594B model that accepts images; Apache 2.0 weights promised after external safety testing."
+      "reviewedAt": "2026-11-25",
+      "reason": "594B model that accepts images. Weights were published on Hugging Face on November 12."
     },
     {
       "id": "inkling-2-mini",
@@ -646,7 +659,7 @@
       "priorities": [],
       "availability": "Open weights and Tinker platform",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Looped mixture-of-experts model with 26.4B parameters and a 20GB footprint, small enough to run on a laptop. Benchmark claims are Thinking Machines-reported."
     },
     {
@@ -659,7 +672,7 @@
       "priorities": [],
       "availability": "GitHub Copilot",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Microsoft AI coding model for everyday enterprise work, released with the cheaper MAI Code 2 Flash. Benchmark claims are Microsoft-reported."
     },
     {
@@ -670,9 +683,9 @@
       "sourceUrl": "https://z.ai/blog/glm-5.4",
       "category": "base",
       "priorities": [],
-      "availability": "GLM Coding Plan only; API after a security assessment",
+      "availability": "GLM Coding Plan; API after a security assessment",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Z.ai flagship and its first Loop Transformer model, with a 1M-token context and image and video input."
     },
     {
@@ -685,7 +698,7 @@
       "priorities": [],
       "availability": "Approved customers only",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Security-research model restricted to approved customers."
     },
     {
@@ -698,7 +711,7 @@
       "priorities": [],
       "availability": "Baidu Qianfan API; weights promised",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "First post-trained model on ERNIE 5.5 Flash Base, 280B parameters with 14B active. Apache 2.0 weights promised but not yet published when reviewed."
     },
     {
@@ -711,8 +724,21 @@
       "priorities": [],
       "availability": "Devin Desktop and CLI",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Cognition's small coding model, trained on top of Inkling-Small. Weights go only to partners and researchers through a planned program."
+    },
+    {
+      "id": "swe-2-1",
+      "phrase": "SWE-2.1",
+      "provider": "Cognition",
+      "releaseDate": "2026-11-24",
+      "sourceUrl": "https://cognition.com/blog/swe-2-1",
+      "category": "base",
+      "priorities": [],
+      "availability": "Devin Desktop, Cloud and CLI",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Cognition's upgrade over SWE-2, released with SWE-2.1 Ultrafast and SWE-2.1 Cyber. Benchmark claims are Cognition-reported."
     },
     {
       "id": "jev",
@@ -767,6 +793,32 @@
       "reason": "Primary release identity reviewed."
     },
     {
+      "id": "clairic",
+      "phrase": "Clairic",
+      "provider": "Cloudflare",
+      "releaseDate": "2026-11-18",
+      "sourceUrl": "https://blog.cloudflare.com/open-clairic/",
+      "category": "decision",
+      "priorities": [],
+      "availability": "Open weights on Hugging Face and Workers AI",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Updated 27B System One extraction model, out of preview and open-weight. Bills input tokens only."
+    },
+    {
+      "id": "clairic-flash",
+      "phrase": "Clairic-flash",
+      "provider": "Cloudflare",
+      "releaseDate": "2026-11-18",
+      "sourceUrl": "https://blog.cloudflare.com/open-clairic/",
+      "category": "decision",
+      "priorities": [],
+      "availability": "Open weights on Hugging Face and Workers AI",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Lighter, faster 9B version of Clairic for structured extraction."
+    },
+    {
       "id": "gemini-decision-1",
       "phrase": "Gemini Decision 1",
       "provider": "Google",
@@ -776,7 +828,7 @@
       "priorities": [],
       "availability": "Gemini API and Google AI Studio",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Closed-set decision model behind the Gemini Decisions API; benchmark claims are Google-reported."
     },
     {
@@ -789,7 +841,7 @@
       "priorities": [],
       "availability": "Subquadratic console and API",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Long-context decision model; existing Snap users are upgraded automatically. Benchmark claims are Subquadratic-reported."
     },
     {
@@ -802,7 +854,7 @@
       "priorities": [],
       "availability": "Baseten Model APIs and open weights",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Decision model built on Gemma 4 with a 128k context and image input, released with the smaller groundhog-1. Ranking claims are Baseten-reported."
     },
     {
@@ -860,6 +912,20 @@
       "supersedes": "pi-1-5-2"
     },
     {
+      "id": "pi-1-6-1",
+      "phrase": "Pi 1.6.1",
+      "provider": "Pi",
+      "releaseDate": "2026-11-25",
+      "sourceUrl": "https://pi.dev/changelog",
+      "category": "tools",
+      "priorities": [],
+      "availability": "Versioned coding harness release",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Current versioned release in the Pi changelog.",
+      "supersedes": "pi-1-6-0"
+    },
+    {
       "id": "hermes-agent-0-21-6",
       "phrase": "Hermes Agent 0.21.6",
       "provider": "Nous Research",
@@ -910,7 +976,7 @@
       "priorities": [],
       "availability": "Versioned agent harness release",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Current stable patch release on GitHub.",
       "supersedes": "hermes-agent-0-23-2"
     },
@@ -935,10 +1001,10 @@
       "sourceUrl": "https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/",
       "category": "world",
       "priorities": [],
-      "availability": "Google AI Ultra subscribers in Project Genie",
+      "availability": "Google AI Ultra subscribers in Project Genie; Gemini API paid tier",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
-      "reason": "Interactive world model that adds generated sound and live text steering. Opened to Google AI Ultra subscribers on November 18.",
+      "reviewedAt": "2026-11-25",
+      "reason": "Interactive world model that adds generated sound and live text steering. Opened to Google AI Ultra subscribers on November 18 and to the Gemini API on November 19.",
       "supersedes": "genie-3"
     },
     {
@@ -951,7 +1017,7 @@
       "priorities": [],
       "availability": "Open weights under Apache 2.0",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Open general-purpose world model released with weights and training code. Ranking claims are IFM-reported."
     },
     {
@@ -964,7 +1030,7 @@
       "priorities": [],
       "availability": "AlphaGenome API for non-commercial research",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Genomics model that predicts how DNA variants act in specific cell types; results are DeepMind-reported and not validated for clinical use."
     },
     {
@@ -990,7 +1056,7 @@
       "priorities": [],
       "availability": "Fish Audio app and API",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Text-to-speech model directed with plain-language performance instructions."
     },
     {
@@ -1003,7 +1069,7 @@
       "priorities": [],
       "availability": "ACE Music app only; no API",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Closed music model. ACE Studio published no launch date, so this uses the date of its Artificial Analysis vocal-leaderboard debut."
     },
     {
@@ -1016,7 +1082,7 @@
       "priorities": [],
       "availability": "Fish Agent Platform and API; on-premises for enterprises",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Full-duplex voice model that keeps listening while it speaks. English only at release."
     },
     {
@@ -1029,8 +1095,21 @@
       "priorities": [],
       "availability": "ElevenAPI; Scribe v3 Live also in ElevenAgents",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Speech-to-text model released with a real-time Scribe v3 Live variant. Accuracy claims are ElevenLabs-reported."
+    },
+    {
+      "id": "assemblyai-stt-3-7",
+      "phrase": "AssemblyAI-STT-3.7",
+      "provider": "AssemblyAI",
+      "releaseDate": "2026-11-18",
+      "sourceUrl": "https://www.assemblyai.com/blog/introducing-assemblyai-stt-3-7",
+      "category": "audio",
+      "priorities": [],
+      "availability": "AssemblyAI pre-recorded and realtime Speech-to-Text APIs",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Speech-to-text model in 32 languages, released with Realtime and Realtime-Agent variants for live calls and voice agents."
     },
     {
       "id": "mai-realtime-1",
@@ -1042,7 +1121,7 @@
       "priorities": [],
       "availability": "MAI Labs; limited-access preview in Microsoft Foundry",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Microsoft AI first speech-to-speech model, compatible with the OpenAI Realtime API. Benchmark claims are Microsoft-reported."
     },
     {
@@ -1055,7 +1134,7 @@
       "priorities": [],
       "availability": "Alibaba Cloud Model Studio API (international, Singapore region)",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Real-time voice model that keeps talking with the user while an application or background model finishes a task."
     },
     {
@@ -1068,7 +1147,7 @@
       "priorities": [],
       "availability": "ChatGPT, Codex, and Image API",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Higher-quality model of ChatGPT Images 2.6, released alongside the faster GPT-Image-2.6 Flare."
     },
     {
@@ -1081,7 +1160,7 @@
       "priorities": [],
       "availability": "Open weights; MiniMax API Platform, MiniMax Code and Hailuo AI",
       "disposition": "include",
-      "reviewedAt": "2026-11-17",
+      "reviewedAt": "2026-11-25",
       "reason": "Open-weight image generation and editing model that renders 4K images."
     },
     {
@@ -1094,8 +1173,21 @@
       "priorities": [],
       "availability": "Public preview in Microsoft Foundry",
       "disposition": "include",
-      "reviewedAt": "2026-11-24",
+      "reviewedAt": "2026-11-25",
       "reason": "Image generation and editing model released with the faster MAI Image 2.7 Flash. Ranking claims are Microsoft-reported."
+    },
+    {
+      "id": "kling-image-4-0",
+      "phrase": "Kling Image 4.0",
+      "provider": "Kling AI",
+      "releaseDate": "2026-11-18",
+      "sourceUrl": "https://kling.ai/blog/kling-image-4-stunningly-realistic-sharp-precise",
+      "category": "image",
+      "priorities": [],
+      "availability": "Kling Creative Studio for all users, and API for enterprises and developers",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Image model with native 8K output, up to 2,000 characters of in-image text and sets of up to 10 coordinated images."
     },
     {
       "id": "gemini-omni-1-2-flash",
@@ -1107,7 +1199,7 @@
       "priorities": [],
       "availability": "Gemini API",
       "disposition": "include",
-      "reviewedAt": "2026-11-12",
+      "reviewedAt": "2026-11-25",
       "reason": "Short-clip video model with 15-second generation and lower pricing.",
       "supersedes": "gemini-omni-1-1-flash"
     },
@@ -1136,6 +1228,33 @@
       "disposition": "hold",
       "reviewedAt": "2026-10-10",
       "reason": "Older than 30 days; current category-frontier standing not verified."
+    },
+    {
+      "id": "grok-bot-1-0",
+      "phrase": "Grok Bot 1.0",
+      "provider": "xAI",
+      "releaseDate": "2026-11-11",
+      "sourceUrl": "https://x.ai/news/grok-bot-1-0",
+      "category": "tools",
+      "priorities": [],
+      "availability": "Team and Enterprise plans; Meetings also on Ultra",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "AI teammates shared across a team in Slack, Microsoft Teams and video calls, asking approval before sensitive actions.",
+      "supersedes": "grok-bot"
+    },
+    {
+      "id": "claude-ship",
+      "phrase": "Claude Ship",
+      "provider": "Anthropic",
+      "releaseDate": "2026-11-23",
+      "sourceUrl": "https://claude.com/resources/articles/introducing-claude-ship",
+      "category": "tools",
+      "priorities": [],
+      "availability": "Claude Team and Enterprise plans for GitHub repositories; Code Review generally available, PR Steward and Claude Approvals in beta",
+      "disposition": "include",
+      "reviewedAt": "2026-11-25",
+      "reason": "Agents that review, fix and approve pull requests under a team-written policy, plus a /ship command in Claude Code. Billed on tokens."
     },
     {
       "id": "atlas",
