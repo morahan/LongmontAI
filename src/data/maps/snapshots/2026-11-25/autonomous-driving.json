@@ -175,6 +175,10 @@
   {
    "name": "therobotreport.com (Yutong)",
    "url": "https://www.therobotreport.com/weride-raises-200m-partners-yutong-chinese-autonomous-driving-deal/"
+  },
+  {
+   "name": "electrive.com (Tesla Gigafactory Berlin-Brandenburg)",
+   "url": "https://electrive.com/2026/11/16/tesla-announces-multi-billion-euro-expansion-of-gigafactory-grunheide"
   }
  ],
  "notes": "US state law follows the IIHS table, with service status from robotaxi trackers. Most non-US records rest on secondary trackers, law-firm notes and press, not regulators. Tesla \"unsupervised\" means the Tesla Robotaxi fleet in Texas and Florida only. No customer-owned car runs unsupervised. Robotaxi markers show one record per city with the most advanced operator status, and cities with testing but no riders are marked announced. Chinese cities beyond the big four and several factory locations rest on older or secondary sources.",
@@ -290,8 +294,8 @@
   "HUN": {
    "level": "supervised",
    "fsd": "none",
-   "summary": "Hungary has made no national decision on Tesla FSD and is following EU developments.",
-   "source": "https://notanfsdtracker.com/eu-tracker"
+   "summary": "Hungary has not approved Tesla FSD; in November 2026 the government announced official authority-run testing of it, separate from the EU process.",
+   "source": "https://www.autonavigator.hu/autosvilag_hirei/magyarorszagra-is-jonnek-az-onvezeto-autok-kezdik-a-hatosagi-tesztelest"
   },
   "IDN": {
    "level": "restricted",
@@ -319,9 +323,9 @@
   },
   "ITA": {
    "level": "supervised",
-   "fsd": "none",
-   "summary": "Rules cover supervised road testing only; Italy has not recognised the Dutch approval of Tesla FSD and backs an EU-wide decision.",
-   "source": "https://notanfsdtracker.com/eu-tracker"
+   "fsd": "supervised",
+   "summary": "Rules cover supervised road testing only; Italy recognised the Dutch approval of Tesla FSD Supervised on 19 November 2026, and the ministry says rollout has begun for some drivers.",
+   "source": "https://www.tesla-mag.com/en/tesla-fsd-italy-ministry-statement-rollout-begun/"
   },
   "JPN": {
    "level": "driverless-permitted",
@@ -512,8 +516,8 @@
   "US-DC": {
    "level": "supervised",
    "fsd": "supervised",
-   "summary": "Testing only: a test operator must be in the vehicle at first, and paid service is not authorized; a robotaxi bill is before the Council.",
-   "source": "https://www.iihs.org/topics/advanced-driver-assistance/highly-automated-vehicle-laws"
+   "summary": "Testing only, with a human driver on board, and paid service is not authorized; a bill to allow robotaxis was killed in a Council committee vote on 12 November 2026.",
+   "source": "https://www.fox5dc.com/news/legislation-bring-autonomous-vehicles-dc-fails"
   },
   "US-DE": {
    "level": "restricted",
@@ -936,6 +940,21 @@
    "vehicle": "Aurora Driver International LT trucks; Kodiak Driver trucks",
    "detail": "Roush upfits driverless trucks for Aurora (target 20 a week by Dec 2026) and for Kodiak in Livonia.",
    "source": "https://www.ttnews.com/index%2Ephp/articles/aurora-earnings-q3-2026"
+  },
+  {
+   "id": "fac-tesla-giga-berlin",
+   "kind": "factory",
+   "name": "Tesla Gigafactory Berlin-Brandenburg",
+   "operator": "Tesla",
+   "lat": 52.3972,
+   "lon": 13.7948,
+   "precision": "site",
+   "place": "Gruenheide, Brandenburg",
+   "country": "DEU",
+   "status": "announced",
+   "vehicle": "Tesla Cybercab",
+   "detail": "Tesla plans a 3 billion euro hall for up to 1 million Cybercabs a year; construction from H1 2027, production in 2029, permit pending.",
+   "source": "https://electrive.com/2026/11/16/tesla-announces-multi-billion-euro-expansion-of-gigafactory-grunheide"
   },
   {
    "id": "fac-tesla-giga-texas",
@@ -1701,9 +1720,9 @@
    "precision": "town",
    "place": "Munich",
    "country": "DEU",
-   "status": "announced",
-   "detail": "Waymo announced Munich in Aug 2026 with public rides aimed for end of 2027; Uber plans with Momenta and Autobrains.",
-   "source": "https://golanoo.com/robotaxis-in-europe"
+   "status": "safety-driver",
+   "detail": "Uber and Momenta launched free trial rides in Munich, reported 18 Nov 2026, with a safety supervisor on board; Waymo aims for public rides by end of 2027.",
+   "source": "https://electrive.com/2026/11/18/uber-and-momenta-test-autonomous-taxi-in-munich"
   },
   {
    "id": "rt-nashville",
