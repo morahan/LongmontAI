@@ -408,7 +408,7 @@ export const modelWatchSnapshots: ModelWatchSnapshot[] = [
   {
     company: 'Google',
     model: 'Gemini 4 Neon',
-    update: 'Gemini 4 Neon sits between Carbon and Hydrogen, aimed at fast end-to-end work in software engineering, knowledge work, and science, with a 1M-token context. Gemini API, Gemini for business, Antigravity, and the Gemini app for Pro and Ultra subscribers, at $3 input / $15 output per 1M tokens.',
+    update: 'Google describes Gemini 4 Neon as balancing depth and efficiency, aimed at fast end-to-end work in software engineering, knowledge work, and science, with a 1M-token context. Gemini API, Gemini for business, Antigravity, and the Gemini app for Pro and Ultra subscribers, at $3 input / $15 output per 1M tokens.',
     date: 'Nov 18, 2026',
     lane: 'Quality/cost model',
     url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-neon/',
